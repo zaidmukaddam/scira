@@ -2,9 +2,10 @@
 
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
-import { signIn } from '@/lib/auth-client';
+import { authClient, signIn } from '@/lib/auth-client';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
 
 type AuthProvider = 'github' | 'google' | 'twitter' | 'microsoft';
 
@@ -78,30 +79,39 @@ interface AuthCardProps {
 /**
  * Button component for social authentication providers
  */
-const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon }: SignInButtonProps) => (
-  <button
-    className="relative w-full h-12 text-sm font-normal bg-muted/50 hover:bg-muted transition-all duration-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-start px-4 gap-3 group"
-    disabled={loading}
-    onClick={async () => {
-      await signIn.social(
-        {
-          provider,
-          callbackURL,
-        },
-        {
-          onRequest: () => {
-            setLoading(true);
+const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon }: SignInButtonProps) => {
+  const lastMethod = authClient.getLastUsedLoginMethod();
+
+  return (
+    <button
+      className="relative w-full h-12 text-sm font-normal bg-muted/50 hover:bg-muted transition-all duration-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-start px-4 gap-3 group"
+      disabled={loading}
+      onClick={async () => {
+        await signIn.social(
+          {
+            provider,
+            callbackURL,
           },
-        },
-      );
-    }}
-  >
-    <div className="w-5 h-5 flex items-center justify-center">
-      {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : icon}
-    </div>
-    <span className="text-foreground/80 group-hover:text-foreground transition-colors">Sign in with {title}</span>
-  </button>
-);
+          {
+            onRequest: () => {
+              setLoading(true);
+            },
+          },
+        );
+      }}
+    >
+      <div className="w-5 h-5 flex items-center justify-center">
+        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : icon}
+      </div>
+      <span className="text-foreground/80 group-hover:text-foreground transition-colors">Sign in with {title}</span>
+      {lastMethod === provider && (
+        <Badge variant="default" className="absolute -top-2 -right-2 pointer-events-none z-10">
+          Last used
+        </Badge>
+      )}
+    </button>
+  );
+};
 
 /**
  * Authentication component with social provider options
@@ -120,7 +130,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
           <p className="text-sm text-muted-foreground/80">{description}</p>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-4">
           <SignInButton
             title="GitHub"
             provider="github"

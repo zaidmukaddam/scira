@@ -29,10 +29,10 @@ import {
   XLogoIcon,
   InstagramLogoIcon,
 } from '@phosphor-icons/react';
-import { HugeiconsIcon } from '@hugeicons/react';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import { BinocularsIcon } from '@hugeicons/core-free-icons';
 import { cn } from '@/lib/utils';
-import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useSyncedPreferences } from '@/hooks/use-synced-preferences';
 import { ThemeSwitcher } from './theme-switcher';
 import { useRouter } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -72,7 +72,7 @@ const NavigationMenu = memo(() => {
       <Tooltip>
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
-            <div className="flex items-center justify-center hover:bg-accent hover:text-accent-foreground rounded-md transition-colors cursor-pointer !size-6 !p-0 !m-0">
+            <div className="flex items-center justify-center hover:bg-accent hover:text-accent-foreground rounded-md transition-colors cursor-pointer size-6! p-0! m-0!">
               <SettingsIcon ref={settingsIconRef} size={18} />
             </div>
           </DropdownMenuTrigger>
@@ -167,7 +167,7 @@ const NavigationMenu = memo(() => {
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
           <a
-            href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,E2B_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,SCIRA_PUBLIC_API_KEY,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
+            href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,E2B_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,SUPADATA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,SCIRA_PUBLIC_API_KEY,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
             target="_blank"
             className="w-full flex items-center gap-2"
           >
@@ -217,7 +217,7 @@ const UserProfile = memo(
     const [signingIn, setSigningIn] = useState(false);
     const [signInDialogOpen, setSignInDialogOpen] = useState(false);
     const [showEmail, setShowEmail] = useState(false);
-    const [blurPersonalInfo] = useLocalStorage<boolean>('scira-blur-personal-info', false);
+    const [blurPersonalInfo] = useSyncedPreferences<boolean>('scira-blur-personal-info', false);
     const { data: session, isPending } = useSession();
     const router = useRouter();
 
@@ -273,16 +273,16 @@ const UserProfile = memo(
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={cn('!p-0 !m-0', signingOut && 'animate-pulse', className)}
+                  className={cn('p-0! m-0!', signingOut && 'animate-pulse', className)}
                     asChild
                   >
-                    <Avatar className="size-6 rounded-full border border-neutral-200 dark:border-neutral-700 !p-0 !m-0">
+                    <Avatar className="size-6 rounded-full border border-neutral-200 dark:border-neutral-700 p-0! m-0!">
                       <AvatarImage
                         src={currentUser?.image ?? ''}
                         alt={currentUser?.name ?? ''}
-                        className="rounded-md !p-0 !m-0 size-6"
+                        className="rounded-md p-0! m-0! size-6"
                       />
-                      <AvatarFallback className="rounded-md text-sm !p-0 !m-0 size-6">
+                      <AvatarFallback className="rounded-md text-sm p-0! m-0! size-6">
                         {currentUser?.name?.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
@@ -296,13 +296,13 @@ const UserProfile = memo(
             <DropdownMenuContent className="w-[240px] z-[110] mr-5">
               <div className="p-3">
                 <div className="flex items-center gap-2">
-                  <Avatar className="size-8 shrink-0 rounded-md border border-neutral-200 dark:border-neutral-700">
+                  <Avatar className="size-8 shrink-0 rounded-md border border-neutral-200 dark:border-neutral-700 overflow-hidden mask-[radial-gradient(white,black)] [-webkit-mask-image:-webkit-radial-gradient(white,black)]">
                     <AvatarImage
                       src={currentUser?.image ?? ''}
                       alt={currentUser?.name ?? ''}
-                      className={cn('rounded-md p-0 m-0 size-8', blurPersonalInfo && 'blur-sm')}
+                      className={cn('p-0 m-0 size-8', blurPersonalInfo && 'blur-sm')}
                     />
-                    <AvatarFallback className={cn('rounded-md p-0 m-0 size-8', blurPersonalInfo && 'blur-sm')}>
+                    <AvatarFallback className={cn('p-0 m-0 size-8', blurPersonalInfo && 'blur-sm')}>
                       {currentUser?.name?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>

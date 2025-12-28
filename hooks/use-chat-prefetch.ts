@@ -17,7 +17,7 @@ export function useChatPrefetch() {
         prefetched.current.add(path);
       } catch {}
     },
-    [router]
+    [router],
   );
 
   const prefetchOnHover = useCallback(
@@ -25,21 +25,21 @@ export function useChatPrefetch() {
       const tid = setTimeout(() => prefetchChatRoute(chatId), 200);
       return () => clearTimeout(tid);
     },
-    [prefetchChatRoute]
+    [prefetchChatRoute],
   );
 
   const prefetchOnFocus = useCallback(
     (chatId: string) => {
       prefetchChatRoute(chatId);
     },
-    [prefetchChatRoute]
+    [prefetchChatRoute],
   );
 
   const prefetchChats = useCallback(
     (chatIds: string[]) => {
       chatIds.forEach((id) => prefetchChatRoute(id));
     },
-    [prefetchChatRoute]
+    [prefetchChatRoute],
   );
 
   return { prefetchChats, prefetchOnHover, prefetchOnFocus, prefetchChatRoute };

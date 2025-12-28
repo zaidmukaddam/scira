@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import { Alert02Icon, AlarmClockIcon } from '@hugeicons/core-free-icons';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -43,7 +43,7 @@ export function WarningCard({ type, icon, message, className = '' }: WarningCard
           size={16}
           color="currentColor"
           strokeWidth={1.5}
-          className="text-orange-600 dark:text-orange-400 flex-shrink-0"
+          className="text-orange-600 dark:text-orange-400 shrink-0"
         />
         <p className="text-sm text-orange-600 dark:text-orange-400">{displayMessage}</p>
       </CardContent>

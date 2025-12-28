@@ -49,52 +49,52 @@ export type DataQueryCompletionPart = {
 export type DataExtremeSearchPart = {
   type: 'data-extreme_search';
   data:
-  | {
-    kind: 'plan';
-    status: { title: string };
-    plan?: Array<{ title: string; todos: string[] }>;
-  }
-  | {
-    kind: 'query';
-    queryId: string;
-    query: string;
-    status: 'started' | 'reading_content' | 'completed' | 'error';
-  }
-  | {
-    kind: 'source';
-    queryId: string;
-    source: { title: string; url: string; favicon?: string };
-  }
-  | {
-    kind: 'content';
-    queryId: string;
-    content: { title: string; url: string; text: string; favicon?: string };
-  }
-  | {
-    kind: 'code';
-    codeId: string;
-    title: string;
-    code: string;
-    status: 'running' | 'completed' | 'error';
-    result?: string;
-    charts?: any[];
-  }
-  | {
-    kind: 'x_search';
-    xSearchId: string;
-    query: string;
-    startDate: string;
-    endDate: string;
-    handles?: string[];
-    status: 'started' | 'completed' | 'error';
-    result?: {
-      content: string;
-      citations: any[];
-      sources: Array<{ text: string; link: string; title?: string }>;
-      dateRange: string;
-      handles: string[];
-    };
-  };
+    | {
+        kind: 'plan';
+        status: { title: string };
+        plan?: Array<{ title: string; todos: string[] }>;
+      }
+    | {
+        kind: 'query';
+        queryId: string;
+        query: string;
+        status: 'started' | 'reading_content' | 'completed' | 'error';
+      }
+    | {
+        kind: 'source';
+        queryId: string;
+        source: { title: string; url: string; favicon?: string };
+      }
+    | {
+        kind: 'content';
+        queryId: string;
+        content: { title: string; url: string; text: string; favicon?: string };
+      }
+    | {
+        kind: 'code';
+        codeId: string;
+        title: string;
+        code: string;
+        status: 'running' | 'completed' | 'error';
+        result?: string;
+        charts?: any[];
+      }
+    | {
+        kind: 'x_search';
+        xSearchId: string;
+        query: string;
+        startDate: string;
+        endDate: string;
+        handles?: string[];
+        status: 'started' | 'completed' | 'error';
+        result?: {
+          content: string;
+          citations: any[];
+          sources: Array<{ text: string; link: string; title?: string }>;
+          dateRange: string;
+          handles: string[];
+        };
+      };
 };
 
 export const messageMetadataSchema = z.object({
@@ -109,16 +109,16 @@ export const messageMetadataSchema = z.object({
 export type MessageMetadata = z.infer<typeof messageMetadataSchema>;
 
 type weatherTool = InferUITool<typeof weatherTool>;
-type academicSearchTool = InferUITool<typeof academicSearchTool>;
+type academicSearchTool = InferUITool<ReturnType<typeof academicSearchTool>>;
 type codeInterpreterTool = InferUITool<typeof codeInterpreterTool>;
 type coinDataTool = InferUITool<typeof coinDataTool>;
 type coinOhlcTool = InferUITool<typeof coinOhlcTool>;
 type currencyConverterTool = InferUITool<typeof currencyConverterTool>;
-type redditSearchTool = InferUITool<typeof redditSearchTool>;
+type redditSearchTool = InferUITool<ReturnType<typeof redditSearchTool>>;
 type retrieveTool = InferUITool<typeof retrieveTool>;
 type trendingMoviesTool = InferUITool<typeof trendingMoviesTool>;
 type textTranslateTool = InferUITool<typeof textTranslateTool>;
-type xSearchTool = InferUITool<typeof xSearchTool>;
+type xSearchTool = InferUITool<ReturnType<typeof xSearchTool>>;
 type stockChartTool = InferUITool<typeof stockChartTool>;
 type greetingTool = InferUITool<ReturnType<typeof greetingTool>>;
 type flightTrackerTool = InferUITool<typeof flightTrackerTool>;
@@ -192,6 +192,7 @@ export type CustomUIDataTypes = {
     imagesCount: number;
   };
   extreme_search: DataExtremeSearchPart['data'];
+  chat_title: { title: string };
 };
 
 export type ChatMessage = UIMessage<MessageMetadata, CustomUIDataTypes, ChatTools>;

@@ -6,7 +6,10 @@ import { motion } from 'framer-motion';
 import { XLogoIcon } from '@phosphor-icons/react';
 import { Tweet } from 'react-tweet';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import { CustomUIDataTypes, DataQueryCompletionPart } from '@/lib/types';
+import type { DataUIPart } from 'ai';
 
 // Custom Premium Icons
 const Icons = {
@@ -84,86 +87,173 @@ interface NormalizedXSearchArgs {
 }
 
 interface XSearchProps {
-  result: XSearchResponse;
+  result: XSearchResponse | null;
   args: XSearchArgs;
+  annotations?: DataQueryCompletionPart[];
 }
 
-const XSearchLoadingState = () => {
+function extractTweetId(url?: string | null) {
+  if (!url) return null;
+  return url.match(/\/status\/(\d+)/)?.[1] ?? null;
+}
+
+const XSearchLoadingState: React.FC<{ queries: string[]; annotations: DataUIPart<CustomUIDataTypes>[] }> = ({ queries, annotations }) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const loadingQueryTagsRef = React.useRef<HTMLDivElement>(null);
+  const totalSources = annotations.reduce((sum, a) => sum + (a.data.resultsCount || 0), 0);
+
+  const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    if (e.deltaY === 0) return;
+    const canScrollHorizontally = container.scrollWidth > container.clientWidth;
+    if (!canScrollHorizontally) return;
+    e.stopPropagation();
+    const isAtLeftEdge = container.scrollLeft <= 1;
+    const isAtRightEdge = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
+    if (!isAtLeftEdge && !isAtRightEdge) {
+      e.preventDefault();
+      container.scrollLeft += e.deltaY;
+    } else if (isAtLeftEdge && e.deltaY > 0) {
+      e.preventDefault();
+      container.scrollLeft += e.deltaY;
+    } else if (isAtRightEdge && e.deltaY < 0) {
+      e.preventDefault();
+      container.scrollLeft += e.deltaY;
+    }
+  };
+
   return (
-    <div className="w-full my-2 border border-border/60 rounded-lg overflow-hidden bg-card/50">
-      <div className="px-3 py-2 border-b border-border/60">
-        <div className="flex items-center gap-2">
-          <div className="p-1 rounded bg-muted animate-pulse">
-            <XLogoIcon className="h-3 w-3 text-muted-foreground" />
+    <div className="w-full my-3">
+      <div className="border border-border rounded-lg overflow-hidden bg-card">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-accent/50 transition-colors"
+        >
+          <div className="flex items-center gap-2.5">
+            <XLogoIcon className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">X Search</span>
+            <span className="text-[11px] text-muted-foreground">{totalSources || 0} posts</span>
           </div>
-          <div className="space-y-1 flex-1">
-            <div className="h-3 w-24 bg-muted rounded animate-pulse" />
-            <div className="h-2 w-36 bg-muted/60 rounded animate-pulse" />
-          </div>
-        </div>
-      </div>
-      <div className="p-2.5 space-y-2">
-        {[...Array(2)].map((_, i) => (
-          <div key={i} className="p-2 border border-border/60 rounded animate-pulse">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5">
-                <div className="h-5 w-5 bg-muted rounded-full" />
-                <div className="h-2.5 w-20 bg-muted rounded" />
-              </div>
-              <div className="space-y-1">
-                <div className="h-2 w-full bg-muted rounded" />
-                <div className="h-2 w-2/3 bg-muted rounded" />
-              </div>
+          <Icons.ChevronDown
+            className={cn(
+              'h-3.5 w-3.5 text-muted-foreground transition-transform duration-200',
+              isExpanded && 'rotate-180',
+            )}
+          />
+        </button>
+
+        {isExpanded && (
+          <div className="px-3 pb-3 space-y-2.5 border-t border-border">
+            <div
+              ref={loadingQueryTagsRef}
+              className="flex gap-1.5 overflow-x-auto no-scrollbar pt-2.5"
+              onWheel={handleWheelScroll}
+            >
+              {queries.length ? (
+                queries.map((query, i) => {
+                  const isCompleted = annotations.some((a) => a.data.query === query && a.data.status === 'completed');
+                  const annotation = annotations.find((a) => a.data.query === query);
+                  const sourcesCount = annotation?.data.resultsCount || 0;
+                  return (
+                    <span
+                      key={i}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] shrink-0 border',
+                        isCompleted
+                          ? 'bg-muted border-border text-foreground'
+                          : 'bg-card border-border/60 text-muted-foreground',
+                      )}
+                    >
+                      {isCompleted ? (
+                        <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                      ) : (
+                        <Spinner className="w-2.5 h-2.5" />
+                      )}
+                      <span className="font-medium">{query}</span>
+                      {sourcesCount > 0 && (
+                        <span className="text-[10px] opacity-70">({sourcesCount})</span>
+                      )}
+                    </span>
+                  );
+                })
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] shrink-0 border border-border bg-card text-muted-foreground">
+                  <Spinner className="w-2.5 h-2.5" />
+                  <span className="font-medium">Searching X...</span>
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-px">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="py-2.5 px-3 border-b border-border last:border-0">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-4 h-4 mt-0.5 rounded-full bg-muted animate-pulse flex items-center justify-center">
+                      <XLogoIcon className="h-2.5 w-2.5 text-muted-foreground/30" />
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3 bg-muted rounded animate-pulse w-3/4" />
+                      <div className="h-2.5 bg-muted rounded animate-pulse w-1/2" />
+                      <div className="h-2.5 bg-muted rounded animate-pulse w-full" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
+        )}
       </div>
     </div>
   );
 };
 
-const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
+const XSearch: React.FC<XSearchProps> = ({ result, args, annotations = [] }) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Normalize args to ensure required arrays for UI rendering
-  const normalizedArgs = useMemo<NormalizedXSearchArgs>(
-    () => ({
-      queries: (Array.isArray(args.queries) ? args.queries : [args.queries ?? '']).filter(
-        (q): q is string => typeof q === 'string' && q.length > 0
-      ),
-      maxResults: (Array.isArray(args.maxResults) ? args.maxResults : [args.maxResults ?? 15]).filter(
-        (n): n is number => typeof n === 'number'
-      ),
-    }),
-    [args]
-  );
+  const normalizedQueries = useMemo(() => {
+    const raw = Array.isArray(args?.queries) ? args.queries : [args?.queries ?? ''];
+    return raw.filter((q): q is string => typeof q === 'string' && q.length > 0);
+  }, [args?.queries]);
 
-  if (!result) {
-    return <XSearchLoadingState />;
-  }
+  const searches = useMemo(() => {
+    const raw = result?.searches;
+    return Array.isArray(raw) ? raw : [];
+  }, [result?.searches]);
 
   // Aggregate all citations and sources from all searches
-  const allCitations = result.searches.flatMap((search) => search.citations);
-  const allSources = result.searches.flatMap((search) => search.sources);
+  const allCitations = useMemo(() => searches.flatMap((search) => search.citations ?? []), [searches]);
+  const allSources = useMemo(() => searches.flatMap((search) => search.sources ?? []), [searches]);
+  const uniqueSources = useMemo(() => {
+    const seen = new Set<string>();
+    return allSources.filter((source) => {
+      const key = extractTweetId(source.link) ?? source.link ?? source.text;
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [allSources]);
 
   // Extract tweet IDs from citations
   const tweetCitations = useMemo(() => {
+    const seen = new Set<string>();
     return allCitations
       .filter((citation) => {
-        // Handle both string URLs and objects with url property
         const url = typeof citation === 'string' ? citation : citation.url;
         return url && url.includes('x.com');
       })
       .map((citation) => {
-        // Handle both string URLs and objects with url property
         const url = typeof citation === 'string' ? citation : citation.url;
-        const match = url.match(/\/status\/(\d+)/);
+        const tweetId = extractTweetId(url);
         let title = typeof citation === 'object' ? citation.title : '';
 
-        // If no title from citation, try to get it from sources with generated titles
-        if (!title && allSources) {
-          const matchingSource = allSources.find((source) => source.link === url);
+        if (!title && uniqueSources.length) {
+          const matchingSource = uniqueSources.find((source) => {
+            const sourceId = extractTweetId(source.link);
+            return sourceId && sourceId === tweetId;
+          });
           title = matchingSource?.title || '';
         }
 
@@ -171,11 +261,18 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
           url,
           title,
           description: typeof citation === 'object' ? citation.description : '',
-          tweet_id: match ? match[1] : null,
+          tweet_id: tweetId,
         };
       })
-      .filter((citation) => citation.tweet_id);
-  }, [allCitations, allSources]);
+      .filter((citation) => {
+        if (!citation.tweet_id) return false;
+        if (seen.has(citation.tweet_id)) {
+          return false;
+        }
+        seen.add(citation.tweet_id);
+        return true;
+      });
+  }, [allCitations, uniqueSources]);
 
   const displayedTweets = useMemo(() => {
     return tweetCitations.slice(0, 3);
@@ -185,23 +282,35 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
     return tweetCitations.slice(3);
   }, [tweetCitations]);
 
-  const formatDateRange = (dateRange: string) => {
-    const [start, end] = dateRange.split(' to ');
+  const formatDateRange = (dateRange?: string) => {
+    if (!dateRange) {
+      return { start: 'Unknown', end: 'Unknown' };
+    }
+
+    const [startRaw = '', endRaw = ''] = dateRange.split(' to ');
+
+    const toDisplayDate = (value: string) => {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime())
+        ? 'Unknown'
+        : date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          });
+    };
+
     return {
-      start: new Date(start).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
-      end: new Date(end).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      }),
+      start: toDisplayDate(startRaw),
+      end: toDisplayDate(endRaw),
     };
   };
 
-  const { start, end } = formatDateRange(result.dateRange);
+  const { start, end } = formatDateRange(result?.dateRange);
+
+  if (!result) {
+    return <XSearchLoadingState queries={normalizedQueries} annotations={annotations} />;
+  }
 
   return (
     <div className="w-full my-2">
@@ -212,7 +321,7 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
           className="w-full px-3 py-2 flex items-center justify-between hover:bg-accent/20 transition-colors group"
         >
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <div className="p-1 rounded bg-black dark:bg-white flex-shrink-0">
+            <div className="p-1 rounded bg-black dark:bg-white shrink-0">
               <XLogoIcon className="h-3 w-3 text-white dark:text-black" />
             </div>
             <div className="text-left min-w-0 flex-1">
@@ -222,16 +331,16 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            {result.searches.length > 1 && (
+          <div className="flex items-center gap-2 shrink-0">
+            {searches.length > 1 && (
               <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-muted/50 text-muted-foreground">
-                {result.searches.length} queries
+                {searches.length} queries
               </span>
             )}
             <Icons.ChevronDown
               className={cn(
                 'h-3 w-3 text-muted-foreground/60 transition-transform duration-200 group-hover:text-muted-foreground',
-                isExpanded && 'rotate-180'
+                isExpanded && 'rotate-180',
               )}
             />
           </div>
@@ -241,9 +350,9 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
         {isExpanded && (
           <div className="border-t border-border/40">
             {/* Query tags - more compact */}
-            {result.searches.length > 0 && (
+            {searches.length > 0 && (
               <div className="px-2.5 py-1.5 flex gap-1 overflow-x-auto no-scrollbar bg-transparent">
-                {result.searches.map((search, i) => (
+                {searches.map((search, i) => (
                   <span
                     key={i}
                     className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] shrink-0 bg-background border border-border/40 text-foreground/90"
@@ -264,7 +373,7 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                       initial={{ opacity: 0, scale: 0.96 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: index * 0.03 }}
-                      className="flex-shrink-0 w-[260px] sm:w-[300px]"
+                      className="shrink-0 w-[260px] sm:w-[300px]"
                     >
                       {citation.tweet_id && (
                         <div className="tweet-wrapper">
@@ -279,20 +388,15 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                     <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                       <button
                         onClick={() => setIsSheetOpen(true)}
-                        className="flex-shrink-0 w-[260px] sm:w-[300px] min-h-[160px] border border-dashed border-border/60 dark:border-2 dark:border-solid dark:border-border rounded-lg flex flex-col items-center justify-center hover:border-border dark:hover:border-border hover:bg-accent/20 transition-colors group"
+                        className="shrink-0 w-[260px] sm:w-[300px] min-h-[160px] border border-dashed border-border/60 dark:border-2 dark:border-solid dark:border-border rounded-lg flex flex-col items-center justify-center hover:border-border dark:hover:border-border hover:bg-accent/20 transition-colors group"
                       >
                         <div className="p-2 rounded-full bg-muted/50 mb-2 group-hover:bg-muted transition-colors">
                           <Icons.Messages className="h-4 w-4 text-muted-foreground" />
                         </div>
-                        <p className="font-medium text-xs text-foreground">
-                          +{remainingTweets.length} more
-                        </p>
+                        <p className="font-medium text-xs text-foreground">+{remainingTweets.length} more</p>
                         <p className="text-[10px] text-muted-foreground/70 mt-0.5">View all posts</p>
                       </button>
-                      <SheetContent
-                        side="right"
-                        className="w-full sm:w-[480px] md:w-[550px] sm:max-w-[90vw] p-0"
-                      >
+                      <SheetContent side="right" className="w-full sm:w-[480px] md:w-[550px] sm:max-w-[90vw] p-0">
                         <div className="flex flex-col h-full bg-background">
                           <SheetHeader className="px-4 py-3 border-b border-border/40">
                             <SheetTitle className="flex items-center gap-2 text-sm">
@@ -363,11 +467,9 @@ const XSearch: React.FC<XSearchProps> = ({ result, args }) => {
                           className="flex items-center gap-1.5 py-1.5 px-2 rounded hover:bg-accent/20 transition-colors group"
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="text-[11px] text-foreground/90 truncate leading-tight">
-                              {title}
-                            </p>
+                            <p className="text-[11px] text-foreground/90 truncate leading-tight">{title}</p>
                           </div>
-                          <Icons.ExternalLink className="h-2.5 w-2.5 text-muted-foreground/50 group-hover:text-muted-foreground flex-shrink-0 transition-colors" />
+                          <Icons.ExternalLink className="h-2.5 w-2.5 text-muted-foreground/50 group-hover:text-muted-foreground shrink-0 transition-colors" />
                         </a>
                       );
                     })}

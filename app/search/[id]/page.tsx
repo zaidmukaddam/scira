@@ -19,14 +19,28 @@ async function fetchChatWithBackoff(id: string): Promise<Chat | undefined> {
   const deadline = Date.now() + maximumWaitMs;
 
   // First immediate attempt
-  let chat = await getChatById({ id });
-  if (chat) return chat;
+  try {
+    let chat = await getChatById({ id });
+    if (chat) return chat;
+  } catch (error) {
+    // Continue to retry on error
+    console.log('Error in initial fetchChatWithBackoff attempt:', error);
+  }
 
   while (Date.now() < deadline) {
     const remainingMs = deadline - Date.now();
+    if (remainingMs <= 0) break;
+    
     await sleep(Math.min(delayMs, remainingMs));
-    chat = await getChatById({ id });
-    if (chat) return chat;
+    
+    try {
+      const chat = await getChatById({ id });
+      if (chat) return chat;
+    } catch (error) {
+      // Continue to retry on error
+      console.log('Error in fetchChatWithBackoff retry:', error);
+    }
+    
     delayMs = Math.min(delayMs * 2, maximumWaitMs);
   }
 
@@ -237,12 +251,11 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   const user = await getUser();
 
   // Use optimized combined query to get chat, user, and messages in fewer DB calls
-  const { chat, messages: messagesFromDb } =
-    await getChatWithUserAndInitialMessages({
-      id,
-      messageLimit: 20,
-      messageOffset: 0,
-    });
+  const { chat, messages: messagesFromDb } = await getChatWithUserAndInitialMessages({
+    id,
+    messageLimit: 20,
+    messageOffset: 0,
+  });
 
   if (!chat) {
     notFound();
@@ -276,6 +289,7 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
       initialMessages={initialMessages}
       initialVisibility={chat.visibility as 'public' | 'private'}
       isOwner={isOwner}
+      chatTitle={chat.title}
     />
   );
 }

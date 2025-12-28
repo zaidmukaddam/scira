@@ -37,6 +37,7 @@ export const serverEnv = createEnv({
     BLOB_READ_WRITE_TOKEN: z.string().min(1),
     SMITHERY_API_KEY: z.string().min(1),
     COINGECKO_API_KEY: z.string().min(1),
+    SUPADATA_API_KEY: z.string().min(1),
     QSTASH_TOKEN: z.string().min(1),
     RESEND_API_KEY: z.string().min(1),
     SUPERMEMORY_API_KEY: z.string().min(1),

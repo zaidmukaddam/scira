@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { serverEnv } from '@/env/server';
 
 export const codeContextTool = tool({
-  name: 'code-context',
   description: 'Get the context about coding, programming, and development libraries, frameworks, and tools',
   inputSchema: z.object({
     query: z.string().min(1).max(100).describe('The query to search for'),

@@ -71,7 +71,7 @@ export const greetingTool = (timezone?: string) =>
       ];
 
       // Random selection
-      const randomFrom = <T,>(array: readonly T[]) => array[Math.floor(Math.random() * array.length)];
+      const randomFrom = <T>(array: readonly T[]) => array[Math.floor(Math.random() * array.length)];
 
       const selectedStyle = (style || 'professional') as keyof typeof styleGreetings;
       const mainGreeting = randomFrom(styleGreetings[selectedStyle]);

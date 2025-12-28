@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { HugeiconsIcon } from '@hugeicons/react';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import { Crown02Icon, DatabaseIcon, Search01Icon } from '@hugeicons/core-free-icons';
 import { XLogoIcon, CodeIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';

@@ -264,15 +264,10 @@ export const stockChartTool = tool({
       exaPromises.push({ company, index: promiseIndex });
       allPromises.push(
         exa
-          .searchAndContents(`${company} financial report analysis`, {
-            text: true,
+          .search(`${company} financial report analysis`, {
             category: 'financial report',
-            livecrawl: 'preferred',
             type: 'hybrid',
             numResults: 10,
-            summary: {
-              query: 'all important information relevent to the important for investors',
-            },
           })
           .catch((error: any) => {
             console.error(`Exa search error for ${company}:`, error);
@@ -716,6 +711,17 @@ export const stockChartTool = tool({
     // Process stock data
     if (stockResponse && Array.isArray(stockResponse.results)) {
       valyuResults = (stockResponse.results as unknown[]).filter(isValyuResult) as ValyuResult[];
+      console.log('Parsed Valyu stock results count:', valyuResults.length);
+      if (valyuResults.length > 0) {
+        try {
+          const tickersPreview = valyuResults
+            .slice(0, 5)
+            .map((r) => ((getTickerFromResult as any) ? r.metadata?.ticker || r.title : r.title));
+          console.log('Sample stock result identifiers:', tickersPreview);
+        } catch (e) {
+          console.log('Could not preview tickers from Valyu results');
+        }
+      }
     }
 
     // Process earnings data (only if user is pro)
@@ -765,6 +771,18 @@ export const stockChartTool = tool({
       };
     });
 
+    console.log('Chart elements built:', elements.length);
+    if (elements.length > 0) {
+      const first = elements[0];
+      console.log('First element summary:', {
+        label: first.label,
+        ticker: first.ticker,
+        numPoints: first.points.length,
+        firstPoint: first.points[0],
+        lastPoint: first.points[first.points.length - 1],
+      });
+    }
+
     const chartData = {
       type: 'line',
       title,
@@ -775,7 +793,14 @@ export const stockChartTool = tool({
       png: undefined,
     };
 
+    console.log('Chart data prepared:', {
+      type: chartData.type,
+      title: chartData.title,
+      elements: chartData.elements.length,
+    });
+
     const outputCurrencyCodes = currency_symbols || elements.map(() => 'USD');
+    console.log('Output currency codes:', outputCurrencyCodes);
 
     // Process earnings data
     const earningsData = valyuEarningsResults.map((earningsResult) => {
@@ -789,6 +814,17 @@ export const stockChartTool = tool({
         metadata: earningsResult.metadata,
       };
     });
+
+    console.log('Earnings datasets built:', earningsData.length);
+    if (earningsData.length > 0) {
+      const first = earningsData[0];
+      console.log('First earnings summary:', {
+        ticker: first.ticker,
+        companyName: first.companyName,
+        numRecords: first.earnings.length,
+        mostRecent: first.earnings[0]?.date,
+      });
+    }
 
     // Fetch SEC filings from Valyu
     // Type definitions for all financial data

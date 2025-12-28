@@ -3,27 +3,35 @@ import 'katex/dist/katex.min.css';
 import 'leaflet/dist/leaflet.css';
 
 import { Metadata, Viewport } from 'next';
-import { Be_Vietnam_Pro, Inter, Baumans } from 'next/font/google';
+import { Be_Vietnam_Pro, Baumans } from 'next/font/google';
+import localFont from 'next/font/local';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from '@/components/ui/sonner';
 import { ClientAnalytics } from '@/components/client-analytics';
-// import { Databuddy } from '@databuddy/sdk';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://scira.ai'),
   title: {
-    default: 'Scira AI - Fastest AI research engine, Perplexity alternative',
+    default: 'Scira AI - Agentic Research Platform.',
     template: '%s | Scira AI',
   },
   description:
-    'Scira is a free AI research engine that finds, analyzes, and cites the live web. $15/month—fast answers; 10k+ stars on GitHub.',
+    'Scira is a free Agentic Research Platform that finds, analyzes, and cites information from the live web. $15/month—fast answers; 11000+ stars on GitHub.',
   openGraph: {
     url: 'https://scira.ai',
     siteName: 'Scira AI',
   },
   keywords: [
+    'agentic research platform',
+    'agentic research',
+    'agentic search',
+    'agentic search engine',
+    'agentic search platform',
+    'agentic search tool',
+    'agentic search tool',
     'scira.ai',
     'free ai search',
     'ai search',
@@ -89,11 +97,21 @@ export const viewport: Viewport = {
   ],
 };
 
-const inter = Inter({
-  subsets: ['latin'],
+const sfPro = localFont({
+  src: [
+    {
+      path: '../public/fonts/SF-Pro.ttf',
+      weight: '100 900',
+      style: 'normal',
+    },
+    {
+      path: '../public/fonts/SF-Pro-Italic.ttf',
+      weight: '100 900',
+      style: 'italic',
+    },
+  ],
   variable: '--font-sans',
   preload: true,
-  weight: 'variable',
   display: 'swap',
 });
 
@@ -121,16 +139,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${beVietnamPro.variable} ${baumans.variable} font-sans antialiased`}
+        className={`${sfPro.variable} ${beVietnamPro.variable} ${baumans.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <NuqsAdapter>
           <Providers>
-            <Toaster position="top-center" />
-            {children}
+            <SidebarProvider defaultOpen={true}>
+              <Toaster position="top-center" />
+              {children}
+            </SidebarProvider>
           </Providers>
         </NuqsAdapter>
-        {/* <Databuddy clientId={process.env.DATABUDDY_CLIENT_ID!} enableBatching={true} trackSessions={true} /> */}
         <ClientAnalytics />
       </body>
     </html>

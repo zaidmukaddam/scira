@@ -9,14 +9,7 @@ import type { extremeSearchTool, Research } from '@/lib/tools/extreme-search';
 import type { UIToolInvocation } from 'ai';
 import React, { useEffect, useState, memo, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  ChevronDown,
-  ChevronRight,
-  Search,
-  Target,
-  Zap,
-  FlaskConical,
-} from 'lucide-react';
+import { ChevronDown, ChevronRight, Search, Target, Zap, FlaskConical } from 'lucide-react';
 
 // Custom minimal icons
 const Icons = {
@@ -77,13 +70,40 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
       return {};
     }
 
+    // Helper function to format large numbers compactly
+    const formatNumber = (value: number): string => {
+      // Don't format years (4-digit numbers like 2017, 2018)
+      if (value >= 1900 && value <= 2100 && value % 1 === 0) {
+        return value.toString();
+      }
+
+      const abs = Math.abs(value);
+      const sign = value < 0 ? '-' : '';
+
+      if (abs >= 1e12) {
+        const formatted = abs / 1e12;
+        return sign + (formatted % 1 === 0 ? formatted.toFixed(0) : formatted.toFixed(1)) + 'T';
+      } else if (abs >= 1e9) {
+        const formatted = abs / 1e9;
+        return sign + (formatted % 1 === 0 ? formatted.toFixed(0) : formatted.toFixed(1)) + 'B';
+      } else if (abs >= 1e6) {
+        const formatted = abs / 1e6;
+        return sign + (formatted % 1 === 0 ? formatted.toFixed(0) : formatted.toFixed(1)) + 'M';
+      } else if (abs >= 1e4) {
+        const formatted = abs / 1e3;
+        return sign + (formatted % 1 === 0 ? formatted.toFixed(0) : formatted.toFixed(1)) + 'K';
+      }
+
+      return value.toString();
+    };
+
     const baseOption: EChartsOption = {
       backgroundColor: 'transparent',
       grid: {
         top: isMobile ? 55 : 70,
-        right: isMobile ? 25 : 35,
+        right: isMobile ? 15 : 20,
         bottom: isMobile ? 55 : 65,
-        left: isMobile ? 55 : 70,
+        left: isMobile ? 20 : 30,
         containLabel: true,
       },
       title: {
@@ -357,21 +377,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
             ...axisStyle.axisLabel,
             interval: 'auto',
             rotate: isMobile ? 45 : 0,
-            formatter: function (value: number) {
-              // Don't format years (4-digit numbers like 2017, 2018)
-              if (value >= 1900 && value <= 2100 && value % 1 === 0) {
-                return value.toString();
-              }
-              // Format large numbers with K/M
-              if (value >= 1000000) {
-                const millions = value / 1000000;
-                return (millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)) + 'M';
-              } else if (value >= 10000) {
-                const thousands = value / 1000;
-                return (thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)) + 'K';
-              }
-              return value.toString();
-            },
+            formatter: formatNumber,
           },
         },
         yAxis: {
@@ -391,17 +397,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
           // Prevent label overlapping
           axisLabel: {
             ...axisStyle.axisLabel,
-            formatter: function (value: number) {
-              // Format numbers nicely - use K for thousands, M for millions
-              if (value >= 1000000) {
-                const millions = value / 1000000;
-                return (millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)) + 'M';
-              } else if (value >= 1000) {
-                const thousands = value / 1000;
-                return (thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)) + 'K';
-              }
-              return value.toString();
-            },
+            formatter: formatNumber,
           },
         },
         series:
@@ -501,17 +497,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
           // Prevent label overlapping
           axisLabel: {
             ...axisStyle.axisLabel,
-            formatter: function (value: number) {
-              // Format numbers nicely - use K for thousands, M for millions
-              if (value >= 1000000) {
-                const millions = value / 1000000;
-                return (millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)) + 'M';
-              } else if (value >= 1000) {
-                const thousands = value / 1000;
-                return (thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)) + 'K';
-              }
-              return value.toString();
-            },
+            formatter: formatNumber,
           },
         },
         series: [
@@ -589,19 +575,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
           ...axisStyle,
           axisLabel: {
             ...axisStyle.axisLabel,
-            formatter: function (value: number) {
-              if (value >= 1900 && value <= 2100 && value % 1 === 0) {
-                return value.toString();
-              }
-              if (value >= 1000000) {
-                const millions = value / 1000000;
-                return (millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)) + 'M';
-              } else if (value >= 10000) {
-                const thousands = value / 1000;
-                return (thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)) + 'K';
-              }
-              return value.toString();
-            },
+            formatter: formatNumber,
           },
         },
         yAxis: {
@@ -619,16 +593,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
           ...axisStyle,
           axisLabel: {
             ...axisStyle.axisLabel,
-            formatter: function (value: number) {
-              if (value >= 1000000) {
-                const millions = value / 1000000;
-                return (millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)) + 'M';
-              } else if (value >= 1000) {
-                const thousands = value / 1000;
-                return (thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)) + 'K';
-              }
-              return value.toString();
-            },
+            formatter: formatNumber,
           },
         },
         series:
@@ -729,16 +694,7 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
           ...axisStyle,
           axisLabel: {
             ...axisStyle.axisLabel,
-            formatter: function (value: number) {
-              if (value >= 1000000) {
-                const millions = value / 1000000;
-                return (millions % 1 === 0 ? millions.toFixed(0) : millions.toFixed(1)) + 'M';
-              } else if (value >= 1000) {
-                const thousands = value / 1000;
-                return (thousands % 1 === 0 ? thousands.toFixed(0) : thousands.toFixed(1)) + 'K';
-              }
-              return value.toString();
-            },
+            formatter: formatNumber,
           },
         },
         series: [
@@ -801,24 +757,24 @@ const ExtremeChart = memo(({ chart }: { chart: any }) => {
     );
   }
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="bg-background border border-border rounded-lg shadow-none overflow-hidden h-full"
-    >
-      <div className="w-full p-3 h-64 sm:h-72">
-        <ReactECharts
-          option={chartOptions}
-          style={{ height: '100%', width: '100%' }}
-          theme={isDark ? 'dark' : ''}
-          opts={{ renderer: 'canvas', locale: 'en' }}
-          notMerge={true}
-        />
-      </div>
-    </motion.div>
-  );
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="bg-card border border-border rounded-lg shadow-none overflow-hidden h-full"
+      >
+        <div className="w-full p-4 h-80 sm:h-96 lg:h-[500px]">
+          <ReactECharts
+            option={chartOptions}
+            style={{ height: '100%', width: '100%' }}
+            theme={isDark ? 'dark' : ''}
+            opts={{ renderer: 'canvas', locale: 'en' }}
+            notMerge={true}
+          />
+        </div>
+      </motion.div>
+    );
 });
 
 ExtremeChart.displayName = 'ExtremeChart';
@@ -862,22 +818,22 @@ const ExtremeSourceCard: React.FC<{
   return (
     <div
       className={cn(
-        'group py-2.5 px-3 flex items-start gap-2.5',
+        'group py-3 px-4 flex items-start gap-3',
         'border-b border-border last:border-0',
-        'hover:bg-accent/50 transition-colors',
+        'hover:bg-accent/50 transition-colors duration-200',
         onClick && 'cursor-pointer',
       )}
       onClick={onClick}
     >
       {/* Favicon */}
-      <div className="relative w-4 h-4 mt-0.5 flex items-center justify-center shrink-0 rounded-full overflow-hidden bg-muted">
+      <div className="relative w-5 h-5 mt-0.5 flex items-center justify-center shrink-0 rounded-md overflow-hidden bg-muted border border-border/50">
         {faviconUrl ? (
           <img
             src={faviconUrl}
             alt=""
             width={16}
             height={16}
-            className={cn('object-contain opacity-60', !imageLoaded && 'opacity-0')}
+            className={cn('object-contain opacity-70', !imageLoaded && 'opacity-0')}
             onLoad={() => setImageLoaded(true)}
             onError={(e) => {
               setImageLoaded(true);
@@ -891,20 +847,18 @@ const ExtremeSourceCard: React.FC<{
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2 mb-1">
-          <h3 className="font-medium text-sm text-foreground line-clamp-1">
-            {source.title || hostname}
-          </h3>
-          <Icons.ArrowUpRight className="w-3 h-3 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="flex items-start justify-between gap-2 mb-1.5">
+          <h3 className="font-medium text-sm text-foreground line-clamp-1">{source.title || hostname}</h3>
+          <Icons.ArrowUpRight className="w-3.5 h-3.5 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
         </div>
-        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-1.5">
+        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-2">
           {source.content || 'Loading content...'}
         </p>
         <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-          <span className="truncate">{hostname}</span>
+          <span className="truncate font-medium">{hostname}</span>
           {source.author && (
             <>
-              <span>·</span>
+              <span className="text-muted-foreground/50">·</span>
               <span className="truncate">{source.author}</span>
             </>
           )}
@@ -927,18 +881,20 @@ const ExtremeSourcesSheet: React.FC<{
 
   return (
     <SheetWrapper open={open} onOpenChange={onOpenChange}>
-      <SheetContentWrapper className={cn(isMobile ? 'h-[85vh]' : 'w-[600px] sm:max-w-[600px]', 'p-0 bg-background border-border')}>
+      <SheetContentWrapper
+        className={cn(isMobile ? 'h-[85vh]' : 'w-[600px] sm:max-w-[600px]', 'p-0 bg-background border-border')}
+      >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="px-6 py-5 border-b border-border">
+          <div className="px-6 py-5 border-b border-border bg-card">
             <div>
               <h2 className="text-lg font-semibold text-foreground">All Sources</h2>
-              <p className="text-sm text-muted-foreground mt-0.5">{sources.length} research sources</p>
+              <p className="text-sm text-muted-foreground mt-1">{sources.length} research sources</p>
             </div>
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto bg-background">
             <div className="divide-y divide-border">
               {sources.map((source, index) => (
                 <a key={index} href={source.url} target="_blank" className="block">
@@ -1590,7 +1546,7 @@ const ExtremeSearchComponent = ({
   }, [searchQueries, codeExecutions, xSearchExecutions, userExpandedItems, isCompleted]);
 
   const renderTimeline = () => (
-    <div className="space-y-1 relative ml-4 mb-2">
+    <div className="space-y-0 relative ml-4 mb-1">
       <AnimatePresence>
         {combinedTimelineItems.map((timelineItem, itemIndex) => {
           if (timelineItem.kind === 'query') {
@@ -1604,7 +1560,7 @@ const ExtremeSearchComponent = ({
               ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!'
               : hasResults
                 ? 'bg-primary'
-                : 'bg-yellow-500';
+                : 'bg-muted-foreground/50';
 
             return (
               <motion.div
@@ -1616,52 +1572,52 @@ const ExtremeSearchComponent = ({
                 transition={{ duration: 0.1, delay: itemIndex * 0.01 }}
               >
                 <div
-                  className="absolute rounded-full bg-background z-5"
+                  className="absolute rounded-full z-5"
                   style={{ left: '-0.6rem', top: '4px', width: '10px', height: '10px', transform: 'translateX(-50%)' }}
                 />
 
                 <div
                   className={`absolute rounded-full ${bulletColor} transition-colors duration-300 z-10`}
-                  style={{ left: '-0.6rem', top: '6px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
+                  style={{ left: '-0.6rem', top: '5px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
                   title={`Status: ${query.status}`}
                 />
 
                 {itemIndex > 0 && (
                   <div
-                    className="absolute bg-border"
+                    className="absolute bg-secondary"
                     style={{
                       left: '-0.6rem',
-                      top: '-6px',
+                      top: '0',
                       width: '2px',
-                      height: '14px',
+                      height: '5px',
                       transform: 'translateX(-50%)',
                     }}
                   />
                 )}
 
                 <div
-                  className="absolute bg-border"
+                  className="absolute bg-secondary"
                   style={{
                     left: '-0.6rem',
-                    top: '7px',
+                    top: '13px',
                     width: '2px',
                     height: expandedItems[query.id]
                       ? itemIndex === combinedTimelineItems.length - 1
-                        ? 'calc(100% - 9px)'
-                        : '100%'
+                        ? 'calc(100% - 13px)'
+                        : 'calc(100% - 13px)'
                       : itemIndex === combinedTimelineItems.length - 1
-                        ? '9px'
-                        : '16px',
+                        ? '0'
+                        : 'calc(100% - 9px)',
                     transform: 'translateX(-50%)',
                   }}
                 />
 
                 <div
-                  className="flex items-center gap-1 cursor-pointer py-0.5 px-1 hover:bg-muted rounded-sm relative min-h-[18px]"
+                  className="flex items-start gap-1.5 cursor-pointer py-1 px-1.5 hover:bg-accent/50 rounded-md transition-colors duration-150 relative"
                   onClick={() => toggleItemExpansion(query.id)}
                 >
-                  <Search className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0" />
-                  <span className="text-foreground text-xs min-w-0 flex-1">
+                  <Search className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+                  <span className="text-foreground text-[11px] min-w-0 flex-1 wrap-break-word leading-snug">
                     {isLoading && !isCompleted ? (
                       <TextShimmer className="w-full" duration={1.5}>
                         {query.query}
@@ -1671,9 +1627,9 @@ const ExtremeSearchComponent = ({
                     )}
                   </span>
                   {expandedItems[query.id] ? (
-                    <ChevronDown className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
+                    <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
                   ) : (
-                    <ChevronRight className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
+                    <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
                   )}
                 </div>
 
@@ -1687,20 +1643,20 @@ const ExtremeSearchComponent = ({
                       transition={{ height: { duration: 0.2, ease: 'easeOut' }, opacity: { duration: 0.15 } }}
                       className="overflow-hidden"
                     >
-                      <div className="pl-0.5 py-0.5">
+                  <div className="pl-0.5 py-0.5">
                         {query.sources.length > 0 && (
                           <motion.div
-                            className="flex flex-wrap gap-1 py-0.5"
+                            className="flex flex-wrap gap-0.5 py-0.5"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.15 }}
                           >
-                            {query.sources.map((source: any, index: number) => (
+                            {query.sources.map((source, index) => (
                               <motion.a
                                 key={index}
                                 href={source.url}
                                 target="_blank"
-                                className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded-full text-xs hover:bg-muted/80 transition-colors"
+                                className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded-full text-[10px] hover:bg-accent transition-colors duration-150 border border-border/50"
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ duration: 0.15, delay: index * 0.02 }}
@@ -1716,7 +1672,7 @@ const ExtremeSearchComponent = ({
                                   }}
                                 />
                                 <span
-                                  className="text-muted-foreground truncate max-w-[100px]"
+                                  className="text-muted-foreground truncate max-w-[80px]"
                                   title={source.title || 'source'}
                                 >
                                   {source.title || 'source'}
@@ -1741,7 +1697,7 @@ const ExtremeSearchComponent = ({
                             );
                           } else if (query.sources.length === 0 && !isLoading) {
                             return (
-                              <p className="text-xs text-muted-foreground py-1 mt-1">
+                              <p className="text-[11px] text-muted-foreground py-0.5 mt-0.5">
                                 No sources found for this query.
                               </p>
                             );
@@ -1766,7 +1722,7 @@ const ExtremeSearchComponent = ({
               ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!'
               : hasResults
                 ? 'bg-primary'
-                : 'bg-yellow-500';
+                : 'bg-muted-foreground/50';
 
             return (
               <motion.div
@@ -1778,54 +1734,54 @@ const ExtremeSearchComponent = ({
                 transition={{ duration: 0.1, delay: itemIndex * 0.01 }}
               >
                 <div
-                  className="absolute w-1.5 h-1.5 rounded-full bg-background z-5"
-                  style={{ left: '-0.6rem', top: '5px', transform: 'translateX(-50%)' }}
+                  className="absolute rounded-full bg-background z-5"
+                  style={{ left: '-0.6rem', top: '4px', width: '10px', height: '10px', transform: 'translateX(-50%)' }}
                 />
 
                 <div
                   className={`absolute rounded-full ${bulletColor} transition-colors duration-300 z-10`}
-                  style={{ left: '-0.6rem', top: '6px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
+                  style={{ left: '-0.6rem', top: '5px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
                   title={`Status: ${xSearch.status}`}
                 />
 
                 {itemIndex > 0 && (
                   <div
-                    className="absolute bg-border"
+                    className="absolute bg-secondary"
                     style={{
                       left: '-0.6rem',
-                      top: '-6px',
+                      top: '0',
                       width: '2px',
-                      height: '14px',
+                      height: '5px',
                       transform: 'translateX(-50%)',
                     }}
                   />
                 )}
 
                 <div
-                  className="absolute bg-border"
+                  className="absolute bg-secondary"
                   style={{
                     left: '-0.6rem',
-                    top: '7px',
+                    top: '13px',
                     width: '2px',
                     height: expandedItems[xSearch.id]
                       ? itemIndex === combinedTimelineItems.length - 1
-                        ? 'calc(100% - 9px)'
-                        : '100%'
+                        ? 'calc(100% - 13px)'
+                        : 'calc(100% - 13px)'
                       : itemIndex === combinedTimelineItems.length - 1
-                        ? '9px'
-                        : '16px',
+                        ? '0'
+                        : 'calc(100% - 9px)',
                     transform: 'translateX(-50%)',
                   }}
                 />
 
                 <div
-                  className="flex items-center gap-1 cursor-pointer py-0.5 px-1 hover:bg-muted rounded-sm relative min-h-[18px]"
+                  className="flex items-start gap-1.5 cursor-pointer py-1 px-1.5 hover:bg-accent/50 rounded-md transition-colors duration-150 relative"
                   onClick={() => toggleItemExpansion(xSearch.id)}
                 >
-                  <div className="p-0.5 rounded bg-black dark:bg-white flex-shrink-0">
-                    <XLogoIcon className="size-2.5 text-white dark:text-black" />
+                  <div className="p-0.5 rounded bg-foreground shrink-0 mt-0.5">
+                    <XLogoIcon className="size-2.5 text-background" />
                   </div>
-                  <span className="text-foreground text-xs min-w-0 flex-1">
+                  <span className="text-foreground text-[11px] min-w-0 flex-1 wrap-break-word leading-snug">
                     {isLoading && !isCompleted ? (
                       <TextShimmer className="w-full" duration={1.5}>{`X search: ${xSearch.query}`}</TextShimmer>
                     ) : (
@@ -1833,14 +1789,14 @@ const ExtremeSearchComponent = ({
                     )}
                   </span>
                   {xSearch.handles && xSearch.handles.length > 0 && (
-                    <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted">
+                    <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted border border-border/50 shrink-0">
                       {xSearch.handles.length} handles
                     </span>
                   )}
                   {expandedItems[xSearch.id] ? (
-                    <ChevronDown className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
+                    <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
                   ) : (
-                    <ChevronRight className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
+                    <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
                   )}
                 </div>
 
@@ -1855,12 +1811,12 @@ const ExtremeSearchComponent = ({
                       className="overflow-hidden"
                     >
                       <div className="pl-0.5 py-0.5">
-                        <div className="text-[10px] text-muted-foreground mb-1">
+                        <div className="text-[10px] text-muted-foreground mb-0.5">
                           {xSearch.startDate} to {xSearch.endDate}
                         </div>
                         {xSearch.result && xSearch.result.citations.length > 0 && (
                           <motion.div
-                            className="flex flex-wrap gap-1 py-0.5"
+                            className="flex flex-wrap gap-0.5 py-0.5"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.15 }}
@@ -1879,15 +1835,15 @@ const ExtremeSearchComponent = ({
                                   key={index}
                                   href={url}
                                   target="_blank"
-                                  className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded-full text-xs hover:bg-muted/80 transition-colors"
+                                  className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded-full text-[10px] hover:bg-accent transition-colors duration-150 border border-border/50"
                                   initial={{ opacity: 0 }}
                                   animate={{ opacity: 1 }}
                                   transition={{ duration: 0.15, delay: index * 0.02 }}
                                 >
-                                  <div className="p-0.5 rounded bg-black dark:bg-white flex-shrink-0">
-                                    <XLogoIcon className="size-2.5 text-white dark:text-black" />
+                                  <div className="p-0.5 rounded bg-foreground shrink-0">
+                                    <XLogoIcon className="size-2.5 text-background" />
                                   </div>
-                                  <span className="text-muted-foreground truncate max-w-[140px]" title={title}>
+                                  <span className="text-muted-foreground truncate max-w-[120px]" title={title}>
                                     {title}
                                   </span>
                                 </motion.a>
@@ -1904,7 +1860,9 @@ const ExtremeSearchComponent = ({
 
                         {xSearch.status === 'completed' &&
                           (!xSearch.result || xSearch.result.citations.length === 0) && (
-                            <p className="text-xs text-muted-foreground py-1 mt-1">No X posts found for this query.</p>
+                            <p className="text-[11px] text-muted-foreground py-0.5 mt-0.5">
+                              No X posts found for this query.
+                            </p>
                           )}
                       </div>
                     </motion.div>
@@ -1935,40 +1893,40 @@ const ExtremeSearchComponent = ({
 
               <div
                 className={`absolute rounded-full ${bulletColor} transition-colors duration-300 z-10`}
-                style={{ left: '-0.6rem', top: '6px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
+                style={{ left: '-0.6rem', top: '5px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
                 title={`Status: ${code.status}`}
               />
 
               {itemIndex > 0 && (
                 <div
-                  className="absolute bg-border"
-                  style={{ left: '-0.6rem', top: '-6px', width: '2px', height: '14px', transform: 'translateX(-50%)' }}
+                  className="absolute bg-secondary"
+                  style={{ left: '-0.6rem', top: '0', width: '2px', height: '5px', transform: 'translateX(-50%)' }}
                 />
               )}
 
               <div
-                className="absolute bg-border"
+                className="absolute bg-secondary"
                 style={{
                   left: '-0.6rem',
-                  top: '7px',
+                  top: '13px',
                   width: '2px',
                   height: expandedItems[code.id]
                     ? itemIndex === combinedTimelineItems.length - 1
-                      ? 'calc(100% - 9px)'
-                      : '100%'
+                      ? 'calc(100% - 13px)'
+                      : 'calc(100% - 13px)'
                     : itemIndex === combinedTimelineItems.length - 1
-                      ? '9px'
-                      : '16px',
+                      ? '0'
+                      : 'calc(100% - 9px)',
                   transform: 'translateX(-50%)',
                 }}
               />
 
               <div
-                className="flex items-center gap-1 cursor-pointer py-0.5 px-1 hover:bg-muted rounded-sm relative min-h-[18px]"
+                className="flex items-start gap-1.5 cursor-pointer py-1 px-1.5 hover:bg-accent/50 rounded-md transition-colors duration-150 relative"
                 onClick={() => toggleItemExpansion(code.id)}
               >
-                <Zap className="w-2.5 h-2.5 text-primary flex-shrink-0" />
-                <span className="text-foreground text-xs min-w-0 flex-1">
+                <Zap className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                <span className="text-foreground text-[11px] min-w-0 flex-1 wrap-break-word leading-snug">
                   {isLoading && !isCompleted ? (
                     <TextShimmer className="w-full" duration={1.5}>
                       {code.title}
@@ -1978,9 +1936,9 @@ const ExtremeSearchComponent = ({
                   )}
                 </span>
                 {expandedItems[code.id] ? (
-                  <ChevronDown className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
+                  <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
                 ) : (
-                  <ChevronRight className="w-2.5 h-2.5 text-muted-foreground flex-shrink-0 ml-auto" />
+                  <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
                 )}
               </div>
 
@@ -1995,14 +1953,14 @@ const ExtremeSearchComponent = ({
                     className="overflow-hidden"
                   >
                     <div className="pl-0.5 py-0.5">
-                      <div className="bg-muted p-2 rounded-md my-1 overflow-auto max-h-[150px] text-xs font-mono">
-                        <pre className="whitespace-pre-wrap break-words text-foreground">{code.code}</pre>
+                    <div className="bg-muted/50 border border-border p-2 rounded-lg my-1.5 overflow-auto max-h-[120px] text-[11px] font-mono">
+                        <pre className="whitespace-pre-wrap wrap-break-word text-foreground">{code.code}</pre>
                       </div>
                       {code.result && (
-                        <div className="mt-2">
-                          <div className="text-xs text-muted-foreground font-medium mb-1">Result:</div>
-                          <div className="bg-muted p-2 rounded-md overflow-auto max-h-[100px] text-xs font-mono">
-                            <pre className="whitespace-pre-wrap break-words text-foreground">{code.result}</pre>
+                        <div className="mt-3">
+                          <div className="text-[11px] text-muted-foreground font-medium mb-1">Result:</div>
+                          <div className="bg-muted/50 border border-border p-2 rounded-lg overflow-auto max-h-[90px] text-[11px] font-mono">
+                            <pre className="whitespace-pre-wrap wrap-break-word text-foreground">{code.result}</pre>
                           </div>
                         </div>
                       )}
@@ -2068,16 +2026,16 @@ const ExtremeSearchComponent = ({
     console.log('[ExtremeSearch] Sources data:', sources);
 
     return (
-      <div className="w-full border border-border rounded-lg overflow-hidden bg-card">
+      <div className="w-full border border-border rounded-lg overflow-hidden bg-card shadow-none">
         <button
           onClick={() => setSourcesAccordionOpen(!sourcesAccordionOpen)}
-          className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-accent/50 transition-colors"
+          className="w-full px-5 py-3 flex items-center justify-between hover:bg-accent/50 transition-colors duration-200"
         >
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 rounded-md bg-muted">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-md bg-muted border border-border/50">
               <Icons.Globe className="h-3.5 w-3.5 text-muted-foreground" />
             </div>
-            <h2 className="font-medium text-sm text-foreground">Sources</h2>
+            <h2 className="font-semibold text-sm text-foreground">Sources</h2>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">{sources.length} sources</span>
@@ -2087,7 +2045,7 @@ const ExtremeSearchComponent = ({
                   e.stopPropagation();
                   setSourcesSheetOpen(true);
                 }}
-                className="flex items-center gap-1 text-xs text-foreground hover:text-foreground/80 px-2 py-1 rounded-md hover:bg-accent/50 transition-colors"
+                className="flex items-center gap-1.5 text-xs text-foreground hover:text-foreground/80 px-2.5 py-1.5 rounded-md hover:bg-accent/50 transition-colors duration-150"
               >
                 View all
                 <Icons.ArrowUpRight className="w-3 h-3" />
@@ -2103,7 +2061,7 @@ const ExtremeSearchComponent = ({
         </button>
 
         {sourcesAccordionOpen && (
-          <div className="border-t border-border">
+          <div className="border-t border-border bg-background">
             <div className="divide-y divide-border max-h-[400px] overflow-y-auto">
               {sources.length > 0 ? (
                 sources.map((source, index) => (
@@ -2112,7 +2070,7 @@ const ExtremeSearchComponent = ({
                   </a>
                 ))
               ) : (
-                <div className="p-4 text-center">
+                <div className="p-6 text-center">
                   <p className="text-muted-foreground text-sm">No sources found</p>
                 </div>
               )}
@@ -2132,16 +2090,16 @@ const ExtremeSearchComponent = ({
     return (
       <div className="space-y-2">
         {/* Research Process */}
-        <div className="border border-border rounded-lg overflow-hidden bg-card">
+        <div className="border border-border rounded-lg overflow-hidden bg-card shadow-none">
           <button
             onClick={() => setResearchProcessOpen(!researchProcessOpen)}
-            className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-accent/50 transition-colors"
+            className="w-full px-5 py-3 flex items-center justify-between hover:bg-accent/50 transition-colors duration-200"
           >
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-md bg-muted">
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-md bg-muted border border-border/50">
                 <FlaskConical className="h-3.5 w-3.5 text-muted-foreground" />
               </div>
-              <h3 className="font-medium text-sm text-foreground">Research Process</h3>
+              <h3 className="font-semibold text-sm text-foreground">Research Process</h3>
             </div>
             <ChevronDown
               className={cn(
@@ -2152,24 +2110,28 @@ const ExtremeSearchComponent = ({
           </button>
 
           {researchProcessOpen && (
-            <div className="border-t border-border">
-              <div className="p-3 max-h-[300px] overflow-y-auto">
-                {renderTimeline()}
-              </div>
+            <div className="border-t border-border bg-background">
+              <div className="p-4 max-h-[300px] overflow-y-auto">{renderTimeline()}</div>
             </div>
           )}
         </div>
 
         {/* Charts */}
         {allCharts.length > 0 && (
-          <div className="border border-border rounded-lg overflow-hidden bg-card">
+          <div className="border border-border rounded-lg overflow-hidden bg-card shadow-none">
             <button
               onClick={() => setVisualizationsOpen(!visualizationsOpen)}
-              className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-accent/50 transition-colors"
+              className="w-full px-5 py-3 flex items-center justify-between hover:bg-accent/50 transition-colors duration-200"
             >
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-md bg-muted">
-                  <svg className="h-3.5 w-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+              <div className="flex items-center gap-2.5">
+                <div className="p-1.5 rounded-md bg-muted border border-border/50">
+                  <svg
+                    className="h-3.5 w-3.5 text-muted-foreground"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -2177,10 +2139,12 @@ const ExtremeSearchComponent = ({
                     />
                   </svg>
                 </div>
-                <h3 className="font-medium text-sm text-foreground">Visualizations</h3>
+                <h3 className="font-semibold text-sm text-foreground">Visualizations</h3>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">{allCharts.length} {allCharts.length === 1 ? 'chart' : 'charts'}</span>
+                <span className="text-xs text-muted-foreground">
+                  {allCharts.length} {allCharts.length === 1 ? 'chart' : 'charts'}
+                </span>
                 <ChevronDown
                   className={cn(
                     'h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200',
@@ -2191,8 +2155,8 @@ const ExtremeSearchComponent = ({
             </button>
 
             {visualizationsOpen && (
-              <div className="border-t border-border">
-                <div className="p-3 space-y-4">
+              <div className="border-t border-border bg-background">
+                <div className="p-5 sm:p-6 space-y-6">
                   {allCharts.map((chart, index) => (
                     <ExtremeChart key={index} chart={chart} />
                   ))}
@@ -2206,23 +2170,45 @@ const ExtremeSearchComponent = ({
         {(() => {
           const completedX = xSearchExecutions.filter((x) => x.status === 'completed' && x.result);
           if (completedX.length === 0) return null;
-          const combined = {
+
+          const handles = Array.from(
+            new Set(
+              completedX
+                .flatMap((x) => x.handles || [])
+                .filter((handle): handle is string => typeof handle === 'string' && handle.length > 0),
+            ),
+          );
+
+          const combinedSearch = {
             content: completedX.map((x) => x.result!.content).join('\n\n'),
             citations: completedX.flatMap((x) => x.result!.citations || []),
             sources: completedX.flatMap((x) => x.result!.sources || []),
-            query: completedX.map((x) => x.query).join(' | '),
+            query: completedX
+              .map((x) => x.query)
+              .filter(Boolean)
+              .join(' | '),
             dateRange: `${completedX[0].startDate || ''} to ${completedX[completedX.length - 1].endDate || ''}`,
-            handles: Array.from(new Set(completedX.flatMap((x) => x.handles || []))),
+            handles,
           };
+
+          const combinedResult = {
+            searches: [combinedSearch],
+            dateRange: combinedSearch.dateRange,
+            handles,
+          };
+
           const combinedArgs = {
-            query: combined.query,
+            queries: completedX
+              .map((x) => x.query)
+              .filter((query): query is string => typeof query === 'string' && query.length > 0),
             startDate: completedX[0].startDate,
             endDate: completedX[completedX.length - 1].endDate,
-            xHandles: Array.from(new Set(completedX.flatMap((x) => x.handles || []))),
+            includeXHandles: handles,
           };
+
           return (
             <div className="space-y-3">
-              <XSearch result={combined as any} args={combinedArgs} />
+              <XSearch result={combinedResult} args={combinedArgs} />
             </div>
           );
         })()}
@@ -2239,8 +2225,8 @@ const ExtremeSearchComponent = ({
 
   // In-progress view
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-card">
-      <div className="py-3 px-4 border-b border-border bg-muted/30">
+    <div className="border border-border rounded-lg overflow-hidden bg-card shadow-none">
+      <div className="py-2.5 px-4 border-b border-border bg-muted/30">
         <div className="text-sm font-medium text-foreground">
           {state === 'input-streaming' || state === 'input-available' ? (
             <TextShimmer duration={2}>{currentStatus}</TextShimmer>
@@ -2253,13 +2239,13 @@ const ExtremeSearchComponent = ({
       <div className="p-4">
         {/* Show plan if available and no timeline items yet */}
         {planData && searchQueries.length === 0 && codeExecutions.length === 0 && xSearchExecutions.length === 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-3">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-2.5">
             <div className="flex items-center gap-1.5 mb-2">
-              <Target className="w-3.5 h-3.5 text-primary" />
-              <h4 className="text-sm font-medium text-foreground">Research Strategy</h4>
+              <Target className="w-4 h-4 text-primary" />
+              <h4 className="text-[13px] font-semibold text-foreground">Research Strategy</h4>
             </div>
 
-            <div className="space-y-1 relative ml-3">
+            <div className="space-y-0.5 relative ml-3">
               {planData.map((item: any, index: number) => (
                 <motion.div
                   key={index}
@@ -2270,20 +2256,24 @@ const ExtremeSearchComponent = ({
                 >
                   {/* Background circle to prevent line showing through */}
                   <div
-                    className="absolute w-1.5 h-1.5 rounded-full bg-background z-5"
+                    className="absolute rounded-full bg-card z-5"
                     style={{
                       left: '-0.6rem',
-                      top: '5px',
+                      top: '4px',
+                      width: '10px',
+                      height: '10px',
                       transform: 'translateX(-50%)',
                     }}
                   />
 
                   {/* Timeline bullet */}
                   <div
-                    className="absolute size-1 rounded-full bg-primary transition-colors duration-300 z-10"
+                    className="absolute rounded-full bg-primary transition-colors duration-300 z-10"
                     style={{
                       left: '-0.6rem',
-                      top: '5.5px',
+                      top: '5px',
+                      width: '8px',
+                      height: '8px',
                       transform: 'translateX(-50%)',
                     }}
                   />
@@ -2291,11 +2281,12 @@ const ExtremeSearchComponent = ({
                   {/* Vertical line above bullet */}
                   {index > 0 && (
                     <div
-                      className="absolute w-0.25 bg-border"
+                      className="absolute bg-secondary"
                       style={{
                         left: '-0.6rem',
-                        top: '-6px',
-                        height: '12px',
+                        top: '0',
+                        width: '2px',
+                        height: '5px',
                         transform: 'translateX(-50%)',
                       }}
                     />
@@ -2304,19 +2295,24 @@ const ExtremeSearchComponent = ({
                   {/* Vertical line below bullet */}
                   {index < planData.length - 1 && (
                     <div
-                      className="absolute w-0.25 bg-border"
+                      className="absolute bg-secondary"
                       style={{
                         left: '-0.6rem',
-                        top: '6px',
-                        height: '14px',
+                        top: '13px',
+                        width: '2px',
+                        height: 'calc(100% - 9px)',
                         transform: 'translateX(-50%)',
                       }}
                     />
                   )}
 
-                  <div className="flex items-center gap-1 py-0.5 px-1 rounded-sm relative min-h-[18px]">
-                    <span className="text-foreground text-xs min-w-0 flex-1 font-medium">{item.title}</span>
-                    <span className="text-xs text-muted-foreground">{item.todos?.length || 0} tasks</span>
+                  <div className="flex items-start gap-1.5 py-1 px-1.5 rounded-md relative">
+                    <span className="text-foreground text-[11px] min-w-0 flex-1 font-medium wrap-break-word leading-snug">
+                      {item.title}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground shrink-0 bg-muted px-1.5 py-0.5 rounded-full">
+                      {item.todos?.length || 0} tasks
+                    </span>
                   </div>
                 </motion.div>
               ))}
@@ -2326,31 +2322,35 @@ const ExtremeSearchComponent = ({
 
         {/* Show loading skeletons when no plan and no items */}
         {!planData && searchQueries.length === 0 && codeExecutions.length === 0 && xSearchExecutions.length === 0 && (
-          <div className="mb-3">
+          <div className="mb-2.5">
             <div className="flex items-center gap-1.5 mb-2">
-              <Target className="w-3.5 h-3.5 text-primary/50" />
-              <h4 className="text-sm font-medium text-foreground">Preparing Research Strategy</h4>
+              <Target className="w-4 h-4 text-primary/50" />
+              <h4 className="text-[13px] font-semibold text-foreground">Preparing Research Strategy</h4>
             </div>
 
-            <div className="space-y-1 relative ml-3">
+            <div className="space-y-0.5 relative ml-3">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="space-y-0 relative">
                   {/* Background circle skeleton */}
                   <div
-                    className="absolute w-1.5 h-1.5 rounded-full bg-background z-5"
+                    className="absolute rounded-full bg-card z-5"
                     style={{
                       left: '-0.6rem',
-                      top: '5px',
+                      top: '4px',
+                      width: '10px',
+                      height: '10px',
                       transform: 'translateX(-50%)',
                     }}
                   />
 
                   {/* Timeline bullet skeleton */}
                   <Skeleton
-                    className="absolute size-1 rounded-full z-10"
+                    className="absolute rounded-full z-10"
                     style={{
                       left: '-0.6rem',
-                      top: '5.5px',
+                      top: '5px',
+                      width: '8px',
+                      height: '8px',
                       transform: 'translateX(-50%)',
                     }}
                   />
@@ -2358,11 +2358,12 @@ const ExtremeSearchComponent = ({
                   {/* Vertical line above bullet */}
                   {i > 1 && (
                     <div
-                      className="absolute w-0.25 bg-border"
+                      className="absolute bg-secondary"
                       style={{
                         left: '-0.6rem',
-                        top: '-6px',
-                        height: '12px',
+                        top: '0',
+                        width: '2px',
+                        height: '5px',
                         transform: 'translateX(-50%)',
                       }}
                     />
@@ -2371,20 +2372,21 @@ const ExtremeSearchComponent = ({
                   {/* Vertical line below bullet */}
                   {i < 3 && (
                     <div
-                      className="absolute w-0.25 bg-border"
+                      className="absolute bg-secondary"
                       style={{
                         left: '-0.6rem',
-                        top: '6px',
-                        height: '14px',
+                        top: '13px',
+                        width: '2px',
+                        height: 'calc(100% - 9px)',
                         transform: 'translateX(-50%)',
                       }}
                     />
                   )}
 
-                  <div className="flex items-center gap-1 py-0.5 px-1 rounded-sm relative min-h-[18px]">
-                    <Skeleton className="w-2.5 h-2.5 rounded-full flex-shrink-0" />
+                  <div className="flex items-start gap-1.5 py-1 px-1.5 rounded-md relative">
+                    <Skeleton className="w-3 h-3 rounded-full shrink-0 mt-0.5" />
                     <Skeleton className="h-3 flex-1" />
-                    <Skeleton className="h-3 w-12" />
+                    <Skeleton className="h-3 w-12 shrink-0 rounded-full" />
                   </div>
                 </div>
               ))}
@@ -2394,11 +2396,7 @@ const ExtremeSearchComponent = ({
 
         {/* Show timeline when items are available */}
         {(searchQueries.length > 0 || codeExecutions.length > 0 || xSearchExecutions.length > 0) && (
-          <div
-            ref={timelineRef}
-            className="max-h-[300px] overflow-y-auto pr-1"
-            onScroll={markManualScroll}
-          >
+          <div ref={timelineRef} className="max-h-[300px] overflow-y-auto pr-2" onScroll={markManualScroll}>
             {renderTimeline()}
           </div>
         )}

@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { toast } from 'sonner';
 import {
   ArrowRight,
@@ -23,25 +24,26 @@ import {
   AlertCircle,
   RefreshCw,
   LogIn,
+  CornerDownRight,
 } from 'lucide-react';
 import { UIMessagePart } from 'ai';
 import { MarkdownRenderer } from '@/components/markdown';
-import { ChatTextHighlighter } from '@/components/chat-text-highlighter';
 import { deleteTrailingMessages } from '@/app/actions';
 import { getErrorActions, getErrorIcon, isSignInRequired, isProRequired, isRateLimited } from '@/lib/errors';
 import { UserIcon } from '@phosphor-icons/react';
-import { HugeiconsIcon } from '@hugeicons/react';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import {
   Copy01Icon,
   Crown02Icon,
   PencilEdit02Icon,
-  PlusSignCircleIcon,
   UserCircleIcon,
 } from '@hugeicons/core-free-icons';
 import { Attachment, ChatMessage, ChatTools, CustomUIDataTypes } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 import { cn } from '@/lib/utils';
+import remend from 'remend';
+import { useDataStream } from './data-stream-provider';
 
 // Enhanced Error Display Component
 interface EnhancedErrorDisplayProps {
@@ -197,7 +199,7 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
 
   return (
     <div className="mt-3">
-      <div className={`rounded-lg border ${colors.border} bg-background dark:bg-background shadow-sm overflow-hidden`}>
+      <div className={`rounded-lg border ${colors.border} bg-background dark:bg-background overflow-hidden`}>
         <div className={`${colors.bg} px-4 py-3 border-b ${colors.border} flex items-start gap-3`}>
           <div className="mt-0.5">
             <div className={`${colors.iconBg} p-1.5 rounded-full`}>{getIconComponent()}</div>
@@ -347,176 +349,156 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
     adjustHeight();
   };
 
-  return (
-    <div className="group relative mt-2">
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          if (!draftContent.trim()) {
-            toast.error('Please enter a valid message.');
-            return;
-          }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!draftContent.trim()) {
+      toast.error('Please enter a valid message.');
+      return;
+    }
 
-          try {
-            setIsSubmitting(true);
+    try {
+      setIsSubmitting(true);
 
-            if (user && message.id) {
-              await deleteTrailingMessages({
-                id: message.id,
-              });
-            }
+      if (user && message.id) {
+        await deleteTrailingMessages({
+          id: message.id,
+        });
+      }
 
-            setMessages((messages) => {
-              const index = messages.findIndex((m) => m.id === message.id);
+      setMessages((messages) => {
+        const index = messages.findIndex((m) => m.id === message.id);
 
-              if (index !== -1) {
-                const originalParts = Array.isArray(message.parts) ? message.parts : [];
+        if (index !== -1) {
+          const originalParts = Array.isArray(message.parts) ? message.parts : [];
 
-                // Replace existing text part(s) with a single updated text part, preserving non-text parts and order
-                const updatedTextPart = { type: 'text', text: draftContent } as ChatMessage['parts'][number];
-                const mergedParts: ChatMessage['parts'][number][] = [];
-                let textInserted = false;
+          // Replace existing text part(s) with a single updated text part, preserving non-text parts and order
+          const updatedTextPart = { type: 'text', text: draftContent } as ChatMessage['parts'][number];
+          const mergedParts: ChatMessage['parts'][number][] = [];
+          let textInserted = false;
 
-                for (const p of originalParts) {
-                  if (p.type === 'text') {
-                    if (!textInserted) {
-                      mergedParts.push(updatedTextPart);
-                      textInserted = true;
-                    }
-                  } else {
-                    mergedParts.push(p);
-                  }
-                }
-
-                if (!textInserted) {
-                  mergedParts.unshift(updatedTextPart);
-                }
-
-                const updatedMessage: ChatMessage = {
-                  ...message,
-                  parts: mergedParts,
-                };
-
-                const before = messages.slice(0, index);
-                return [...before, updatedMessage];
+          for (const p of originalParts) {
+            if (p.type === 'text') {
+              if (!textInserted) {
+                mergedParts.push(updatedTextPart);
+                textInserted = true;
               }
-
-              return messages;
-            });
-
-            setSuggestedQuestions([]);
-
-            setMode('view');
-
-            await regenerate();
-          } catch (error) {
-            console.error('Error updating message:', error);
-            toast.error('Failed to update message. Please try again.');
-          } finally {
-            setIsSubmitting(false);
+            } else {
+              mergedParts.push(p);
+            }
           }
-        }}
-        className="w-full"
-      >
-        <div className="flex items-start gap-2">
-          {user ? (
-            <Avatar className="size-7 rounded-md !p-0 !m-0 flex-shrink-0 self-start">
-              <AvatarImage src={user.image ?? ''} alt={user.name ?? ''} className="rounded-md !p-0 !m-0 size-7" />
-              <AvatarFallback className="rounded-md text-sm p-0 m-0 size-7">
-                {(user.name || user.email || '?').charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-          ) : (
-            <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7 flex-shrink-0 self-start" />
-          )}
-          <div className="flex-1 grow min-w-0 bg-accent/80 rounded-2xl p-2 relative">
-            <Textarea
-              ref={textareaRef}
-              value={draftContent}
-              onChange={handleInput}
-              autoFocus
-              className="prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden
-              font-sans font-normal max-w-none !text-base sm:!text-lg text-foreground dark:text-foreground pr-10 sm:pr-12 overflow-hidden
-              relative w-full resize-none
-              border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0 outline-none min-h-[auto]
-              transition-colors !bg-transparent"
-              placeholder="Edit your message..."
-              style={{
-                lineHeight: '1.25',
+
+          if (!textInserted) {
+            mergedParts.unshift(updatedTextPart);
+          }
+
+          const updatedMessage: ChatMessage = {
+            ...message,
+            parts: mergedParts,
+          };
+
+          const before = messages.slice(0, index);
+          return [...before, updatedMessage];
+        }
+
+        return messages;
+      });
+
+      setSuggestedQuestions([]);
+
+      setMode('view');
+
+      await regenerate();
+    } catch (error) {
+      console.error('Error updating message:', error);
+      toast.error('Failed to update message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const isUnchanged = draftContent.trim() === message.parts
+    ?.map((part) => (part.type === 'text' ? part.text : ''))
+    .join('')
+    .trim();
+
+  return (
+    <form onSubmit={handleSubmit} className="w-full space-y-3">
+      {/* Editor area */}
+      <div className="w-full rounded-2xl border border-border bg-accent/80 px-4 py-3">
+        <Textarea
+          ref={textareaRef}
+          value={draftContent}
+          onChange={handleInput}
+          autoFocus
+          className="prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-0 prose-pre:my-1 prose-code:before:hidden prose-code:after:hidden
+          font-sans font-normal max-w-none text-base! text-foreground dark:text-foreground overflow-hidden
+          w-full resize-none border-none shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 p-0! outline-none min-h-0!
+          transition-colors bg-transparent!"
+          placeholder="Edit your message..."
+          style={{
+            lineHeight: '1.5',
+          }}
+        />
+
+        {/* Show editable attachments inside editor */}
+        {message.parts && message.parts.filter((part) => part.type === 'file').length > 0 && (
+          <div className="mt-3">
+            <EditableAttachmentsBadge
+              attachments={message.parts.filter((part) => part.type === 'file') as unknown as Attachment[]}
+              onRemoveAttachment={(index) => {
+                const updatedAttachments = message.parts.filter(
+                  (_: ChatMessage['parts'][number], i: number) => i !== index,
+                );
+                setMessages((messages) => {
+                  const messageIndex = messages.findIndex((m) => m.id === message.id);
+                  if (messageIndex !== -1) {
+                    const updatedMessage = {
+                      ...message,
+                      parts: updatedAttachments,
+                    };
+                    const updatedMessages = [...messages];
+                    updatedMessages[messageIndex] = updatedMessage;
+                    return updatedMessages;
+                  }
+                  return messages;
+                });
               }}
             />
-
-            {/* Show editable attachments inside bubble */}
-            {message.parts && message.parts.filter((part) => part.type === 'file').length > 0 && (
-              <div className="mt-2">
-                <EditableAttachmentsBadge
-                  attachments={message.parts.filter((part) => part.type === 'file') as unknown as Attachment[]}
-                  onRemoveAttachment={(index) => {
-                    // Handle attachment removal
-                    const updatedAttachments = message.parts.filter(
-                      (_: ChatMessage['parts'][number], i: number) => i !== index,
-                    );
-                    // Update the message with new attachments
-                    setMessages((messages) => {
-                      const messageIndex = messages.findIndex((m) => m.id === message.id);
-                      if (messageIndex !== -1) {
-                        const updatedMessage = {
-                          ...message,
-                          parts: updatedAttachments,
-                        };
-                        const updatedMessages = [...messages];
-                        updatedMessages[messageIndex] = updatedMessage;
-                        return updatedMessages;
-                      }
-                      return messages;
-                    });
-                  }}
-                />
-              </div>
-            )}
-
-            <div className="absolute -right-2 -bottom-4 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm">
-              <Button
-                type="submit"
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 rounded-l-md rounded-r-none text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors"
-                disabled={
-                  isSubmitting ||
-                  draftContent.trim() ===
-                  message.parts
-                    ?.map((part) => (part.type === 'text' ? part.text : ''))
-                    .join('')
-                    .trim()
-                }
-              >
-                {isSubmitting ? (
-                  <div className="h-3.5 w-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <ArrowRight className="h-3.5 w-3.5" />
-                )}
-              </Button>
-              <Separator orientation="vertical" className="h-5 bg-border dark:bg-border" />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setMode('view')}
-                className="h-7 w-7 rounded-r-md rounded-l-none text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors"
-                disabled={isSubmitting}
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
           </div>
-        </div>
-      </form>
-    </div>
+        )}
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setMode('view')}
+          disabled={isSubmitting}
+          className="rounded-lg px-4"
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          size="sm"
+          disabled={isSubmitting || isUnchanged}
+          className="rounded-lg px-5 bg-primary hover:bg-primary/90"
+        >
+          {isSubmitting ? (
+            <div className="size-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
+          ) : (
+            'Done'
+          )}
+        </Button>
+      </div>
+    </form>
   );
 };
 
 // Max height for collapsed user messages (in pixels)
-const USER_MESSAGE_MAX_HEIGHT = 120;
+const USER_MESSAGE_MAX_HEIGHT = 125;
 
 export const Message: React.FC<MessageProps> = ({
   message,
@@ -548,6 +530,8 @@ export const Message: React.FC<MessageProps> = ({
   const messageContentRef = React.useRef<HTMLDivElement>(null);
   // Mode state for editing
   const [mode, setMode] = useState<'view' | 'edit'>('view');
+
+  useDataStream();
 
   // Determine if user message should top-align avatar based on combined text length
   const combinedUserText: string = React.useMemo(() => {
@@ -599,7 +583,7 @@ export const Message: React.FC<MessageProps> = ({
 
       setSuggestedQuestions([]);
 
-      await sendMessage({
+      sendMessage({
         parts: [{ type: 'text', text: question.trim() } as UIMessagePart<CustomUIDataTypes, ChatTools>],
         role: 'user',
       });
@@ -611,7 +595,7 @@ export const Message: React.FC<MessageProps> = ({
     // Check if the message has parts that should be rendered
     if (message.parts && Array.isArray(message.parts) && message.parts.length > 0) {
       return (
-        <div className="!mb-0 px-0">
+        <div className="mb-0! px-0">
           <div className="grow min-w-0">
             {mode === 'edit' ? (
               <MessageEditor
@@ -624,172 +608,86 @@ export const Message: React.FC<MessageProps> = ({
                 user={user}
               />
             ) : (
-              <div className="group relative">
-                <div className="relative">
-                  {/* Render user message parts */}
-                  {message.parts?.map((part: ChatMessage['parts'][number], partIndex: number) => {
-                    if (part.type === 'text') {
-                      return (
-                        <div
-                          key={`user-${index}-${partIndex}`}
-                          ref={messageContentRef}
-                          className={`mt-2 prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:!font-be-vietnam-pro font-be-vietnam-pro font-normal max-w-none ${getDynamicFontSize(part.text)} text-foreground dark:text-foreground overflow-hidden relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[120px]' : ''
-                            }`}
-                        >
-                          <div
-                            className={`flex ${shouldTopAlignUser ? 'items-start' : 'items-center'} justify-start gap-2`}
-                          >
-                            {user ? (
-                              <Avatar className="size-7 rounded-md !p-0 !m-0 flex-shrink-0 self-start">
-                                <AvatarImage
-                                  src={user.image ?? ''}
-                                  alt={user.name ?? ''}
-                                  className="rounded-md !p-0 !m-0 size-7 "
-                                />
-                                <AvatarFallback className="rounded-md text-sm p-0 m-0 size-7">
-                                  {(user.name || user.email || '?').charAt(0)}
-                                </AvatarFallback>
-                              </Avatar>
-                            ) : (
-                              <HugeiconsIcon
-                                icon={UserCircleIcon}
-                                size={24}
-                                className="size-7 flex-shrink-0 self-start"
-                              />
-                            )}
-                            <div className="flex-1 grow min-w-0 bg-accent/80 rounded-2xl p-2">
-                              <MarkdownRenderer content={part.text} isUserMessage={true} />
-                              {message.parts?.filter((part) => part.type === 'file') &&
-                                message.parts?.filter((part) => part.type === 'file').length > 0 && (
-                                  <div className="mt-2">
-                                    <AttachmentsBadge
-                                      attachments={
-                                        message.parts?.filter((part) => part.type === 'file') as unknown as Attachment[]
-                                      }
-                                    />
-                                  </div>
-                                )}
-                            </div>
-                          </div>
-
-                          {!isExpanded && exceedsMaxHeight && (
-                            <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-                          )}
-                        </div>
-                      );
-                    }
-                    return null; // Skip non-text parts for user messages
-                  })}
-
-                  {/* If no parts have text, fall back to the content property */}
-                  {(!message.parts || !message.parts.some((part) => part.type === 'text' && part.text)) && (
-                    <div
-                      ref={messageContentRef}
-                      className={`mt-2 prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-1 sm:prose-p:my-2 prose-p:mt-0 sm:prose-p:mt-0 prose-pre:my-1 sm:prose-pre:my-2 prose-code:before:hidden prose-code:after:hidden [&>*]:!font-be-vietnam-pro font-normal max-w-none ${getDynamicFontSize(
-                        message.parts
-                          ?.map((part) => (part.type === 'text' ? part.text : ''))
-                          .join('')
-                          .trim() || '',
-                      )} text-foreground dark:text-foreground overflow-hidden relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[120px]' : ''
-                        }`}
-                    >
-                      <div
-                        className={`flex ${shouldTopAlignUser ? 'items-start' : 'items-center'} justify-start gap-2`}
-                      >
-                        {user ? (
-                          <Avatar className="size-7 rounded-md !p-0 !m-0 flex-shrink-0 self-start">
-                            <AvatarImage
-                              src={user.image ?? ''}
-                              alt={user.name ?? ''}
-                              className="rounded-md !p-0 !m-0 size-7"
-                            />
-                            <AvatarFallback className="rounded-md text-sm p-0 m-0 size-7">
-                              {(user.name || user.email || '?').charAt(0)}
-                            </AvatarFallback>
-                          </Avatar>
-                        ) : (
-                          <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7 flex-shrink-0 self-start" />
-                        )}
-                        <div className="flex-1 grow min-w-0 bg-accent/80 rounded-2xl p-2">
-                          <MarkdownRenderer
-                            content={
-                              message.parts
-                                ?.map((part) => (part.type === 'text' ? part.text : ''))
-                                .join('')
-                                .trim() || ''
-                            }
-                            isUserMessage={true}
-                          />
-                          {message.parts?.filter((part) => part.type === 'file') &&
-                            message.parts?.filter((part) => part.type === 'file').length > 0 && (
-                              <div className="mt-2">
-                                <AttachmentsBadge
-                                  attachments={
-                                    message.parts?.filter((part) => part.type === 'file') as unknown as Attachment[]
-                                  }
-                                />
-                              </div>
-                            )}
-                        </div>
-                      </div>
-
-                      {!isExpanded && exceedsMaxHeight && (
-                        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent pointer-events-none" />
-                      )}
-                    </div>
-                  )}
-
-                  {exceedsMaxHeight && (
-                    <div className="flex justify-center mt-0.5">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setIsExpanded(!isExpanded)}
-                        className="h-6 w-6 p-0 rounded-full text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground hover:bg-transparent"
-                        aria-label={isExpanded ? 'Show less' : 'Show more'}
-                      >
-                        {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                      </Button>
-                    </div>
-                  )}
-
-                  <div className="absolute right-0 -bottom-4 opacity-100 xl:opacity-0 xl:group-hover:opacity-100 transition-all duration-200 transform xl:group-hover:translate-x-0 xl:translate-x-2 bg-background/95 dark:bg-background/95 backdrop-blur-sm rounded-md border border-border dark:border-border flex items-center shadow-sm hover:shadow-md">
-                    {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="icon"
+              <div className="group relative flex items-center gap-3 justify-end">
+                {/* Actions on the left - vertically centered */}
+                <div className="flex items-center gap-0.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-200">
+                  {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
                           onClick={() => setMode('edit')}
-                          className="h-7 w-7 rounded-l-md rounded-r-none text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors"
+                          className="p-1.5 rounded-full hover:bg-accent/80 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
                           disabled={status === 'submitted' || status === 'streaming'}
                           aria-label="Edit message"
                         >
-                          <HugeiconsIcon icon={PencilEdit02Icon} size={24} className="flex-shrink-0 pl-1 size-6" />
-                        </Button>
-                      </>
+                          <HugeiconsIcon icon={PencilEdit02Icon} size={18} className="size-[18px]" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Edit message</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(
+                            message.parts
+                              ?.map((part) => (part.type === 'text' ? part.text : ''))
+                              .join('')
+                              .trim() || '',
+                          );
+                          toast.success('Copied to clipboard');
+                        }}
+                        className="p-1.5 rounded-full hover:bg-accent/80 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                        aria-label="Copy message"
+                      >
+                        <HugeiconsIcon icon={Copy01Icon} size={18} className="size-[18px]" />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Copy message</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+
+                {/* Message content */}
+                <div className="max-w-full">
+                  <div
+                    ref={messageContentRef}
+                    className={`relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[125px] overflow-hidden' : ''}`}
+                  >
+                    <div className="bg-accent/80 rounded-md px-4 py-2.5">
+                      <div className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-0 prose-pre:my-1 prose-code:before:hidden prose-code:after:hidden font-sans font-normal max-w-none ${getDynamicFontSize(combinedUserText)} text-foreground dark:text-foreground`}>
+                        <MarkdownRenderer content={remend(combinedUserText)} isUserMessage={true} />
+                      </div>
+                      {message.parts?.filter((part) => part.type === 'file') &&
+                        message.parts?.filter((part) => part.type === 'file').length > 0 && (
+                          <div className="mt-2">
+                            <AttachmentsBadge
+                              attachments={
+                                message.parts?.filter((part) => part.type === 'file') as unknown as Attachment[]
+                              }
+                            />
+                          </div>
+                        )}
+                    </div>
+
+                    {!isExpanded && exceedsMaxHeight && (
+                      <div className="absolute bottom-0 left-0 right-0 h-16 bg-linear-to-t from-background via-background/80 to-transparent pointer-events-none" />
                     )}
-                    <Separator orientation="vertical" className="h-5 bg-black dark:bg-white" />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        navigator.clipboard.writeText(
-                          message.parts
-                            ?.map((part) => (part.type === 'text' ? part.text : ''))
-                            .join('')
-                            .trim() || '',
-                        );
-                        toast.success('Copied to clipboard');
-                      }}
-                      className={`h-7 w-7 ${(!user || !isOwner) && selectedVisibilityType === 'public'
-                        ? 'rounded-md'
-                        : 'rounded-r-md rounded-l-none'
-                        } text-muted-foreground dark:text-muted-foreground hover:text-primary hover:bg-muted dark:hover:bg-muted transition-colors`}
-                      aria-label="Copy message"
-                    >
-                      <HugeiconsIcon icon={Copy01Icon} size={24} className="flex-shrink-0 pr-1 size-6" />
-                    </Button>
                   </div>
+
+                  {exceedsMaxHeight && (
+                    <button
+                      onClick={() => setIsExpanded(!isExpanded)}
+                      className="text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded px-1 py-0.5 mt-1 transition-colors inline-flex items-center gap-1"
+                    >
+                      <span>{isExpanded ? 'Show less' : 'Show more'}</span>
+                      {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -819,7 +717,7 @@ export const Message: React.FC<MessageProps> = ({
               <div className="flex flex-col gap-4 bg-primary/10 border border-primary/20 dark:border-primary/20 rounded-lg p-4">
                 <div className=" mb-4 max-w-2xl">
                   <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-secondary-foreground dark:text-secondary-foreground mt-0.5 flex-shrink-0" />
+                    <AlertCircle className="h-5 w-5 text-secondary-foreground dark:text-secondary-foreground mt-0.5 shrink-0" />
                     <div className="flex-1">
                       <h3 className="font-medium text-secondary-foreground dark:text-secondary-foreground mb-1">
                         No response generated
@@ -867,19 +765,19 @@ export const Message: React.FC<MessageProps> = ({
           <div className="w-full max-w-xl sm:max-w-2xl mt-4">
             <div className="flex items-center gap-1.5 mb-2 pr-3">
               <AlignLeft size={16} className="text-muted-foreground dark:text-muted-foreground" />
-              <h2 className="font-medium texl-lg text-foreground dark:text-foreground">Suggested questions</h2>
+              <h2 className="font-medium texl-lg text-foreground dark:text-foreground">Follow-up</h2>
             </div>
             <div className="flex flex-col border-t border-border dark:border-border">
               {suggestedQuestions.map((question, i) => (
                 <button
                   key={i}
                   onClick={() => handleSuggestedQuestionClick(question)}
-                  className="w-full py-2.5 px-1 text-left flex justify-between items-center border-b last:border-none border-border dark:border-border"
+                  className="w-full py-2.5 px-1 text-left flex justify-start items-center border-b last:border-none border-border dark:border-border"
                 >
+                  <CornerDownRight size={16} className="text-primary shrink-0 pr-1" />
                   <span className="text-foreground text-sm dark:text-foreground font-normal pr-3 hover:text-primary/80 dark:hover:text-primary/80">
                     {question}
                   </span>
-                  <HugeiconsIcon icon={PlusSignCircleIcon} size={22} className="text-primary flex-shrink-0 pr-1" />
                 </button>
               ))}
             </div>

@@ -3,11 +3,12 @@ import { Message } from '@/components/message';
 import { DataUIPart, isToolUIPart } from 'ai';
 import { EnhancedErrorDisplay } from '@/components/message';
 import { MessagePartRenderer } from '@/components/message-parts';
-import { SciraLogoHeader } from '@/components/scira-logo-header';
+// import { SciraLogoHeader } from '@/components/scira-logo-header';
 import { deleteTrailingMessages } from '@/app/actions';
 import { ChatMessage, CustomUIDataTypes } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
+import { useDataStream } from './data-stream-provider';
 
 // Define interface for part, messageIndex and partIndex objects
 interface PartInfo {
@@ -61,6 +62,8 @@ const Messages: React.FC<MessagesProps> = ({
   const reasoningScrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [hasInitialScrolled, setHasInitialScrolled] = useState(false);
+
+  useDataStream();
 
   // Scroll to bottom immediately (without animation) when opening existing chat
   useEffect(() => {
@@ -125,13 +128,16 @@ const Messages: React.FC<MessagesProps> = ({
     return false;
   }, [memoizedMessages, status]);
 
-  // Check if we need to show retry due to missing assistant response (different from error status)
-  const isMissingAssistantResponse = useMemo(() => {
-    const lastMessage = memoizedMessages[memoizedMessages.length - 1];
+  // Compute the index of the message that is missing an assistant response.
+  // This is scoped to the last message in the conversation only, so older chats
+  // do not incorrectly show the "No response generated" block.
+  const missingAssistantResponseIndex = useMemo(() => {
+    const lastIndex = memoizedMessages.length - 1;
+    const lastMessage = memoizedMessages[lastIndex];
 
     // Case 1: Last message is user and no assistant response yet
     if (lastMessage?.role === 'user' && status === 'ready' && !error) {
-      return true;
+      return lastIndex;
     }
 
     // Case 2: Last message is assistant but lacks visible content
@@ -146,11 +152,11 @@ const Messages: React.FC<MessagesProps> = ({
 
       // If there is no visible content at all, consider the response missing
       if (!hasVisibleContent) {
-        return true;
+        return lastIndex;
       }
     }
 
-    return false;
+    return -1;
   }, [memoizedMessages, status, error]);
 
   // Memoize the retry handler
@@ -345,8 +351,8 @@ const Messages: React.FC<MessagesProps> = ({
   console.log('✅ Proceeding to render', memoizedMessages.length, 'messages');
 
   return (
-    <div className="space-y-0 !mb-34 sm:!mb-36 flex flex-col">
-      <div className="flex-grow">
+    <div className="space-y-0 mb-38! sm:mb-42! flex flex-col">
+      <div className="grow">
         {memoizedMessages.map((message, index) => {
           console.log(`=== RENDERING MESSAGE ${index} ===`);
           console.log('Message role:', message.role);
@@ -367,7 +373,7 @@ const Messages: React.FC<MessagesProps> = ({
             messageClasses = 'mb-0';
           } else if (isCurrentMessageAssistant && index < memoizedMessages.length - 1) {
             // Add border and spacing only if this is not the last assistant message
-            messageClasses = 'mb-6 pb-6 border-b border-border dark:border-border';
+            messageClasses = 'mb-8 pb-6 border-b border-border dark:border-border';
           } else if (isCurrentMessageAssistant && index === memoizedMessages.length - 1) {
             // Last assistant message should have no bottom margin (min-height is now handled in Message component)
             messageClasses = 'mb-0';
@@ -394,7 +400,7 @@ const Messages: React.FC<MessagesProps> = ({
                 selectedVisibilityType={selectedVisibilityType}
                 isLastMessage={isLastMessage}
                 error={error}
-                isMissingAssistantResponse={isMissingAssistantResponse}
+                isMissingAssistantResponse={index === missingAssistantResponseIndex}
                 handleRetry={handleRetry}
                 isOwner={isOwner}
                 onHighlight={onHighlight}
@@ -420,21 +426,21 @@ const Messages: React.FC<MessagesProps> = ({
       {/* Loading animation when status is submitted or streaming with minimal assistant content */}
       {shouldShowLoading && (
         <div
-          className={`flex items-start ${shouldReserveLoaderMinHeight ? 'min-h-[calc(100vh-18rem)]' : ''} !m-0 !p-0`}
+          className={`flex items-start ${shouldReserveLoaderMinHeight ? 'min-h-[calc(100vh-18rem)]' : ''} m-0! p-0!`}
         >
-          <div className="w-full !m-0 !p-0">
-            <SciraLogoHeader />
-            <div className="flex space-x-2 ml-8 mt-2">
+          <div className="w-full m-0! p-0!">
+            {/* <SciraLogoHeader /> */}
+            <div className="flex space-x-2 mt-5 ml-2">
               <div
-                className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
+                className="size-3 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
                 style={{ animationDelay: '0ms' }}
               ></div>
               <div
-                className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
+                className="size-3 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
                 style={{ animationDelay: '150ms' }}
               ></div>
               <div
-                className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
+                className="size-3 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
                 style={{ animationDelay: '300ms' }}
               ></div>
             </div>

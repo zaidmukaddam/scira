@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import { PlusSignIcon, BinocularsIcon, RefreshIcon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,13 +21,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/contexts/user-context';
 import { useLookouts } from '@/hooks/use-lookouts';
-import { SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { LookoutDetailsSidebar } from './components/lookout-details-sidebar';
 import { toast } from 'sonner';
 
 // Import our new components
-import { Navbar } from './components/navbar';
 import { LoadingSkeletons } from './components/loading-skeleton';
 import { NoActiveLookoutsEmpty, NoArchivedLookoutsEmpty } from './components/empty-state';
 import { TotalLimitWarning, DailyLimitWarning } from './components/warning-card';
@@ -231,14 +230,11 @@ export default function LookoutPage() {
   // Show loading state while checking authentication
   if (isProStatusLoading) {
     return (
-      <>
-        <Navbar user={user} isProUser={isProUser} isProStatusLoading={isProStatusLoading} showProBadge={false} />
-        <div className="flex-1 flex flex-col justify-center py-8">
-          <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
-            <LoadingSkeletons count={3} />
-          </div>
+      <div className="flex-1 flex flex-col justify-center py-8">
+        <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+          <LoadingSkeletons count={3} />
         </div>
-      </>
+      </div>
     );
   }
 
@@ -300,16 +296,17 @@ export default function LookoutPage() {
       )}
 
       <div className="flex-1 min-h-screen flex flex-col justify-center">
-        {/* Navbar */}
-        <Navbar user={user} isProUser={isProUser} isProStatusLoading={isProStatusLoading} showProBadge={true} />
-
         {/* Main Content */}
         <div className="flex-1 flex flex-col justify-center py-8">
           <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
             {/* Header with Title, Tabs and Actions */}
             <div className="mb-6 space-y-4">
               {/* Title - Always at top */}
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center justify-center gap-2 relative">
+                {/* Mobile sidebar trigger */}
+                <div className="md:hidden absolute left-0">
+                  <SidebarTrigger />
+                </div>
                 <HugeiconsIcon icon={BinocularsIcon} size={32} color="currentColor" strokeWidth={1.5} />
                 <h1 className="text-2xl font-semibold font-be-vietnam-pro">Scira Lookout</h1>
               </div>

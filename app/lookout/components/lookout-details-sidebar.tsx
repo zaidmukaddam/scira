@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { format } from 'date-fns';
-import { HugeiconsIcon } from '@hugeicons/react';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import {
   Activity01Icon,
   CheckmarkCircle01Icon,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { HugeiconsIcon } from '@hugeicons/react';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import { BinocularsIcon, BookOpen01Icon } from '@hugeicons/core-free-icons';
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog';
 import { ChatHistoryDialog } from '@/components/chat-history-dialog';
@@ -34,7 +34,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
     const fetchDiscountConfig = async () => {
       try {
         const config = await getDiscountConfigAction();
-        setDiscountConfig(config);
+        setDiscountConfig(config as DiscountConfig);
       } catch (error) {
         console.warn('Failed to fetch discount config:', error);
       }
@@ -49,43 +49,22 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
     const defaultUSDPrice = PRICING.PRO_MONTHLY;
     const defaultINRPrice = PRICING.PRO_MONTHLY_INR;
 
-    if (!discountConfig) {
+    if (!discountConfig || !discountConfig.enabled || !discountConfig.isStudentDiscount) {
       return {
         usd: { finalPrice: defaultUSDPrice, hasDiscount: false, originalPrice: defaultUSDPrice },
         inr: { finalPrice: defaultINRPrice, hasDiscount: false, originalPrice: defaultINRPrice },
       };
     }
 
-    // Check if discount should be applied
-    const isDevMode = discountConfig?.dev || process.env.NODE_ENV === 'development';
-    const shouldApplyDiscount = isDevMode
-      ? discountConfig?.code && discountConfig?.message
-      : discountConfig?.enabled && discountConfig?.code && discountConfig?.message;
-
-    // Calculate USD pricing with discount
+    // Calculate USD pricing with student discount
     const usdOriginalPrice: number = defaultUSDPrice;
-    let usdFinalPrice: number = defaultUSDPrice;
-    let hasUSDDiscount = false;
+    const usdFinalPrice: number = discountConfig.finalPrice || defaultUSDPrice;
+    const hasUSDDiscount = !!discountConfig.finalPrice && discountConfig.finalPrice < defaultUSDPrice;
 
-    if (shouldApplyDiscount) {
-      if (discountConfig.finalPrice && discountConfig.finalPrice < defaultUSDPrice) {
-        usdFinalPrice = discountConfig.finalPrice;
-        hasUSDDiscount = true;
-      } else if (discountConfig.percentage) {
-        usdFinalPrice = Number((defaultUSDPrice * (1 - discountConfig.percentage / 100)).toFixed(2));
-        hasUSDDiscount = true;
-      }
-    }
-
-    // Calculate INR pricing with discount
+    // Calculate INR pricing with student discount
     const inrOriginalPrice: number = defaultINRPrice;
-    let inrFinalPrice: number = defaultINRPrice;
-    let hasINRDiscount = false;
-
-    if (shouldApplyDiscount && discountConfig.inrPrice && discountConfig.inrPrice < defaultINRPrice) {
-      inrFinalPrice = discountConfig.inrPrice;
-      hasINRDiscount = true;
-    }
+    const inrFinalPrice: number = discountConfig.inrPrice || defaultINRPrice;
+    const hasINRDiscount = !!discountConfig.inrPrice && discountConfig.inrPrice < defaultINRPrice;
 
     return {
       usd: {
@@ -118,25 +97,11 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
             <div className="absolute bottom-6 left-6 right-6">
               <div className="mb-3">
-                {discountConfig &&
-                  (() => {
-                    const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
-                    const shouldShowDiscount = isDevMode
-                      ? discountConfig.code && discountConfig.message
-                      : discountConfig.enabled && discountConfig.code && discountConfig.message;
-
-                    return (
-                      shouldShowDiscount && (
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium">
-                          {pricing.usd.hasDiscount
-                            ? discountConfig.percentage
-                              ? `${discountConfig.percentage}% OFF`
-                              : `$${(pricing.usd.originalPrice - pricing.usd.finalPrice).toFixed(2)} OFF`
-                            : discountConfig.message || 'Special Offer'}
-                        </div>
-                      )
-                    );
-                  })()}
+                {discountConfig && discountConfig.enabled && discountConfig.isStudentDiscount && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/20 text-white text-sm font-medium">
+                    🎓 {discountConfig.message || 'Student Discount'}
+                  </div>
+                )}
               </div>
               <DialogTitle className="flex items-center gap-3 text-white mb-2">
                 <span className="text-4xl font-medium flex items-center gap-2 font-be-vietnam-pro">
@@ -179,7 +144,7 @@ export const PostMessageUpgradeDialog = React.memo(({ open, onOpenChange }: Post
                 }}
                 className="backdrop-blur-md bg-white/90 border border-white/20 text-black hover:bg-white w-full font-medium mt-3"
               >
-                {discountConfig?.buttonText || 'Upgrade to Pro'}
+                Upgrade to Pro
               </Button>
             </div>
           </div>
@@ -335,7 +300,7 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
                 }}
                 className="w-full sm:flex-1 group"
               >
-                <HugeiconsIcon icon={BinocularsIcon} size={16} color="currentColor" strokeWidth={2} className="mr-2" />
+                <HugeiconsIcon icon={BinocularsIcon} size={16} color="currentColor" className="mr-2" />
                 Explore Lookout
                 <span className="sm:ml-auto text-xs font-mono hidden sm:inline opacity-60">⌘ ⏎</span>
               </Button>
@@ -347,7 +312,7 @@ export const LookoutAnnouncementDialog = React.memo(({ open, onOpenChange }: Loo
                 }}
                 className="w-full sm:flex-1 group shadow-none"
               >
-                <HugeiconsIcon icon={BookOpen01Icon} size={16} color="currentColor" strokeWidth={2} className="mr-2" />
+                <HugeiconsIcon icon={BookOpen01Icon} size={16} color="currentColor" className="mr-2" />
                 Read Blog
                 <span className="sm:ml-auto font-mono text-xs hidden sm:inline opacity-60">
                   {isMac ? '⌘' : 'Ctrl'} B

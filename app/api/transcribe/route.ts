@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await transcribe({
-      model: groq.transcription('whisper-large-v3'),
+      model: elevenlabs.transcription('scribe_v1'),
       audio: await audio.arrayBuffer(),
     });
 

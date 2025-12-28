@@ -27,7 +27,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     return new ChatSDKError('unauthorized:chat').toResponse();
   }
 
-  let chat: Chat;
+  let chat: Chat | null;
   if (!chatId) {
     return new ChatSDKError('bad_request:api').toResponse();
   }
@@ -59,7 +59,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   }
 
   const emptyDataStream = createUIMessageStream<ChatMessage>({
-    execute: () => { },
+    execute: () => {},
   });
 
   const stream = await streamContext.resumableStream(recentStreamId, () =>

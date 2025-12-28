@@ -51,9 +51,7 @@ const Icons = {
       <path d="M20 6L9 17l-5-5" />
     </svg>
   ),
-  Sparkle: ({ className }: { className?: string }) => (
-    <SparklesIcon className={className} />
-  ),
+  Sparkle: ({ className }: { className?: string }) => <SparklesIcon className={className} />,
   Layers: ({ className }: { className?: string }) => (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
       <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
@@ -155,9 +153,7 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
         <div className="flex-1 min-w-0 space-y-1">
           {/* Title and Domain */}
           <div className="flex items-baseline gap-1.5">
-            <h3 className="font-medium text-[13px] text-foreground line-clamp-1 flex-1">
-              {result.title}
-            </h3>
+            <h3 className="font-medium text-[13px] text-foreground line-clamp-1 flex-1">{result.title}</h3>
             <Icons.ArrowUpRight className="w-3 h-3 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
 
@@ -173,9 +169,7 @@ const SourceCard: React.FC<{ result: SearchResult; onClick?: () => void }> = ({ 
           </div>
 
           {/* Description */}
-          <p className="text-[12px] text-muted-foreground line-clamp-2 leading-relaxed">
-            {result.content}
-          </p>
+          <p className="text-[12px] text-muted-foreground line-clamp-2 leading-relaxed">{result.content}</p>
         </div>
       </div>
     </div>
@@ -214,12 +208,8 @@ const SourcesSheet: React.FC<{
               <div key={searchIndex} className="border-b border-border last:border-0">
                 <div className="px-5 py-2.5 bg-muted/40 border-b border-border/60">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium text-foreground">
-                      {search.query}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground">
-                      {search.results.length}
-                    </span>
+                    <span className="text-xs font-medium text-foreground">{search.query}</span>
+                    <span className="text-[10px] text-muted-foreground">{search.results.length}</span>
                   </div>
                 </div>
 
@@ -258,10 +248,7 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
     setIsClient(true);
   }, []);
 
-  const validImages = React.useMemo(
-    () => images.filter(img => !failedImages.has(img.url)),
-    [images, failedImages]
-  );
+  const validImages = React.useMemo(() => images.filter((img) => !failedImages.has(img.url)), [images, failedImages]);
 
   // Keyboard navigation
   React.useEffect(() => {
@@ -288,10 +275,7 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, validImages.length]);
 
-  const displayImages = React.useMemo(
-    () => validImages.slice(0, PREVIEW_IMAGE_COUNT),
-    [validImages]
-  );
+  const displayImages = React.useMemo(() => validImages.slice(0, PREVIEW_IMAGE_COUNT), [validImages]);
   const hasMore = validImages.length > PREVIEW_IMAGE_COUNT;
 
   const ImageViewer = React.useMemo(() => (isMobile ? Drawer : Dialog), [isMobile]);
@@ -332,9 +316,9 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
         'transition-all duration-150 hover:opacity-90',
         'focus:outline-none focus:ring-1 focus:ring-ring',
         'cursor-pointer',
-        'w-[240px] h-[135px]'
+        'w-[240px] h-[120px]',
       ),
-    []
+    [],
   );
 
   const shouldShowOverlay = React.useCallback(
@@ -353,9 +337,9 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
         'backdrop-blur-xl',
         'transition-all duration-200',
         'hover:scale-105',
-        'shadow-md hover:shadow-lg'
+        'shadow-md hover:shadow-lg',
       ),
-    []
+    [],
   );
 
   const viewerContentClassName = React.useMemo(
@@ -377,11 +361,7 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
       {/* Image Gallery - Horizontal Scroll */}
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
         {displayImages.map((image, index) => (
-          <button
-            key={`${image.url}-${index}`}
-            onClick={() => handleImageClick(index)}
-            className={gridItemClassName()}
-          >
+          <button key={`${image.url}-${index}`} onClick={() => handleImageClick(index)} className={gridItemClassName()}>
             <img
               src={image.url}
               alt={image.description || ''}
@@ -392,7 +372,9 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
             {/* Overlay for last image if there are more */}
             {shouldShowOverlay(index) && (
               <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                <span className="text-white text-sm font-medium">+{validImages.length - displayImages.length} more</span>
+                <span className="text-white text-sm font-medium">
+                  +{validImages.length - displayImages.length} more
+                </span>
               </div>
             )}
           </button>
@@ -411,9 +393,7 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
                     {selectedImage + 1} / {validImages.length}
                   </span>
                   {currentImage?.description && !isMobile && (
-                    <span className="text-xs text-muted-foreground max-w-md truncate">
-                      {currentImage.description}
-                    </span>
+                    <span className="text-xs text-muted-foreground max-w-md truncate">{currentImage.description}</span>
                   )}
                 </div>
                 <Button
@@ -439,7 +419,7 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
                       'w-full h-full object-contain rounded-lg transition-all duration-300',
                       imageTransition === 'next' && 'opacity-0 scale-95',
                       imageTransition === 'prev' && 'opacity-0 scale-95',
-                      !imageTransition && 'opacity-100 scale-100'
+                      !imageTransition && 'opacity-100 scale-100',
                     )}
                     onError={() => handleImageError(currentImage.url)}
                   />
@@ -452,20 +432,14 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
               <>
                 <button
                   onClick={handlePrevious}
-                  className={cn(
-                    'absolute left-6 top-1/2 -translate-y-1/2 z-40',
-                    navigationButtonClassName
-                  )}
+                  className={cn('absolute left-6 top-1/2 -translate-y-1/2 z-40', navigationButtonClassName)}
                   aria-label="Previous image"
                 >
                   <Icons.ChevronLeft className="h-4.5 w-4.5 text-foreground/90" />
                 </button>
                 <button
                   onClick={handleNext}
-                  className={cn(
-                    'absolute right-6 top-1/2 -translate-y-1/2 z-40',
-                    navigationButtonClassName
-                  )}
+                  className={cn('absolute right-6 top-1/2 -translate-y-1/2 z-40', navigationButtonClassName)}
                   aria-label="Next image"
                 >
                   <Icons.ChevronRight className="h-4.5 w-4.5 text-foreground/90" />
@@ -492,7 +466,7 @@ const ImageGallery = React.memo(({ images }: { images: SearchImage[] }) => {
                         'bg-muted',
                         selectedImage === index
                           ? 'border-foreground ring-1 ring-foreground/20'
-                          : 'border-border opacity-60 hover:opacity-100'
+                          : 'border-border opacity-60 hover:opacity-100',
                       )}
                       aria-label={`View image ${index + 1}`}
                     >
@@ -582,7 +556,7 @@ const LoadingState: React.FC<{
           <Icons.ChevronDown
             className={cn(
               'h-3.5 w-3.5 text-muted-foreground transition-transform duration-200',
-              isExpanded && 'rotate-180'
+              isExpanded && 'rotate-180',
             )}
           />
         </button>
@@ -606,14 +580,10 @@ const LoadingState: React.FC<{
                       'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] shrink-0 border',
                       isCompleted
                         ? 'bg-muted border-border text-foreground'
-                        : 'bg-card border-border/60 text-muted-foreground'
+                        : 'bg-card border-border/60 text-muted-foreground',
                     )}
                   >
-                    {isCompleted ? (
-                      <Icons.Check className="w-2.5 h-2.5" />
-                    ) : (
-                      <Spinner className="w-2.5 h-2.5" />
-                    )}
+                    {isCompleted ? <Icons.Check className="w-2.5 h-2.5" /> : <Spinner className="w-2.5 h-2.5" />}
                     <span className="font-medium">{query}</span>
                     {currentQuality === 'best' && (
                       <Icons.Sparkle className="w-2.5 h-2.5 text-blue-600 dark:text-blue-400" />
@@ -626,10 +596,7 @@ const LoadingState: React.FC<{
             {/* Skeleton items */}
             <div className="space-y-px">
               {[...Array(3)].map((_, i) => (
-                <div
-                  key={i}
-                  className="py-2.5 px-3 border-b border-border last:border-0"
-                >
+                <div key={i} className="py-2.5 px-3 border-b border-border last:border-0">
                   <div className="flex items-start gap-2.5">
                     <div className="w-4 h-4 mt-0.5 rounded-full bg-muted animate-pulse" />
                     <div className="flex-1 space-y-1.5">
@@ -648,10 +615,7 @@ const LoadingState: React.FC<{
       {/* Images skeleton */}
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
         {[...Array(5)].map((_, i) => (
-          <div
-            key={i}
-            className="w-[240px] h-[135px] shrink-0 rounded-md bg-muted animate-pulse"
-          />
+          <div key={i} className="w-[240px] h-[120px] shrink-0 rounded-md bg-muted animate-pulse" />
         ))}
       </div>
     </div>
@@ -681,19 +645,19 @@ const MultiSearch = ({
   const normalizedArgs = React.useMemo<NormalizedMultiSearchArgs>(
     () => ({
       queries: (Array.isArray(args.queries) ? args.queries : [args.queries ?? '']).filter(
-        (q): q is string => typeof q === 'string' && q.length > 0
+        (q): q is string => typeof q === 'string' && q.length > 0,
       ),
       maxResults: (Array.isArray(args.maxResults) ? args.maxResults : [args.maxResults ?? 10]).filter(
-        (n): n is number => typeof n === 'number'
+        (n): n is number => typeof n === 'number',
       ),
       topics: (Array.isArray(args.topics) ? args.topics : [args.topics ?? 'general']).filter(
-        (t): t is Topic => t === 'general' || t === 'news'
+        (t): t is Topic => t === 'general' || t === 'news',
       ),
       quality: (Array.isArray(args.quality) ? args.quality : [args.quality ?? 'default']).filter(
-        (q): q is 'default' | 'best' => q === 'default' || q === 'best'
+        (q): q is 'default' | 'best' => q === 'default' || q === 'best',
       ),
     }),
-    [args]
+    [args],
   );
 
   if (!result) {
@@ -710,7 +674,7 @@ const MultiSearch = ({
   }
 
   return (
-    <div className="w-full space-y-3">
+    <div className="w-full space-y-3 p-0! rounded-lg">
       {/* Sources Section */}
       <div className="border border-border rounded-lg overflow-hidden bg-card">
         {/* Header */}
@@ -741,7 +705,7 @@ const MultiSearch = ({
             <Icons.ChevronDown
               className={cn(
                 'h-3.5 w-3.5 text-muted-foreground transition-transform duration-200',
-                isExpanded && 'rotate-180'
+                isExpanded && 'rotate-180',
               )}
             />
           </div>
@@ -751,7 +715,7 @@ const MultiSearch = ({
         {isExpanded && (
           <div className="border-t border-border">
             {/* Query tags */}
-            <div className="px-3 pt-2.5 pb-2 flex gap-1.5 overflow-x-auto no-scrollbar border-b border-border">
+            <div className="px-3 pt-2.5 pb-2 flex gap-1.5 overflow-x-auto no-scrollbar">
               {result.searches.map((search, i) => {
                 const currentQuality = normalizedArgs.quality[i] || 'default';
                 return (
@@ -771,13 +735,7 @@ const MultiSearch = ({
             {/* Results list */}
             <div className="max-h-80 overflow-y-auto">
               {allResults.map((result, i) => (
-                <a
-                  key={i}
-                  href={result.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block last:border-0"
-                >
+                <a key={i} href={result.url} target="_blank" rel="noopener noreferrer" className="block last:border-0">
                   <SourceCard result={result} />
                 </a>
               ))}

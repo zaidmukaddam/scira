@@ -1,16 +1,14 @@
 import 'server-only';
 
 import { eq, and, desc } from 'drizzle-orm';
-import { subscription, payment, user } from './db/schema';
-import { db } from './db';
+import { subscription, dodosubscription, user } from './db/schema';
+import { getReadReplica, maindb } from './db';
 import { auth } from './auth';
 import { headers } from 'next/headers';
-import { getPaymentsByUserId, getDodoPaymentsExpirationInfo } from './db/queries';
-import { getCustomInstructionsByUserId } from './db/queries';
-import type { CustomInstructions } from './db/schema';
-
-// Configurable subscription duration for DodoPayments (in months)
-const DODO_SUBSCRIPTION_DURATION_MONTHS = parseInt(process.env.DODO_SUBSCRIPTION_DURATION_MONTHS || '1');
+import { getDodoSubscriptionExpirationInfo } from './db/queries';
+import { getCustomInstructionsByUserId, getUserPreferencesByUserId } from './db/queries';
+import type { CustomInstructions, UserPreferences } from './db/schema';
+import { getDodoProStatus, setDodoProStatus } from './performance-cache';
 
 // Single comprehensive user data type
 export type ComprehensiveUserData = {
@@ -36,16 +34,16 @@ export type ComprehensiveUserData = {
     cancelAtPeriodEnd: boolean;
     canceledAt: Date | null;
   };
-  dodoPayments?: {
-    hasPayments: boolean;
+  dodoSubscription?: {
+    hasSubscriptions: boolean;
     expiresAt: Date | null;
-    mostRecentPayment?: Date;
+    mostRecentSubscription?: Date;
     daysUntilExpiration?: number;
     isExpired: boolean;
     isExpiringSoon: boolean;
   };
-  // Payment history
-  paymentHistory: any[];
+  // Subscription history
+  subscriptionHistory: any[];
 };
 
 // Lightweight user auth type for fast checks
@@ -71,6 +69,17 @@ const customInstructionsCache = new Map<
 >();
 const CUSTOM_INSTRUCTIONS_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
+// User preferences cache (per-user)
+const userPreferencesCache = new Map<
+  string,
+  {
+    preferences: UserPreferences | null;
+    timestamp: number;
+    ttl: number;
+  }
+>();
+const USER_PREFERENCES_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 function getCachedUserData(userId: string): ComprehensiveUserData | null {
   const cached = userDataCache.get(userId);
   if (cached && cached.expiresAt > Date.now()) {
@@ -95,12 +104,15 @@ export function clearUserDataCache(userId: string): void {
   lightweightAuthCache.delete(userId);
   // Clear any per-user custom instructions cache
   customInstructionsCache.delete(userId);
+  // Clear any per-user preferences cache
+  userPreferencesCache.delete(userId);
 }
 
 export function clearAllUserDataCache(): void {
   userDataCache.clear();
   lightweightAuthCache.clear();
   customInstructionsCache.clear();
+  userPreferencesCache.clear();
 }
 
 function getCachedLightweightAuth(userId: string): LightweightUserAuth | null {
@@ -153,6 +165,37 @@ export function clearCustomInstructionsCache(userId?: string): void {
 }
 
 /**
+ * Get user preferences for a user with in-memory caching.
+ * Falls back to DB via getUserPreferencesByUserId when cache miss/expired.
+ */
+export async function getCachedUserPreferencesByUserId(
+  userId: string,
+  options?: { ttlMs?: number },
+): Promise<UserPreferences | null> {
+  const ttlMs = options?.ttlMs ?? USER_PREFERENCES_CACHE_TTL_MS;
+  const cached = userPreferencesCache.get(userId);
+  if (cached && Date.now() - cached.timestamp < cached.ttl) {
+    return cached.preferences;
+  }
+
+  const preferences = await getUserPreferencesByUserId({ userId });
+  userPreferencesCache.set(userId, {
+    preferences: preferences ?? null,
+    timestamp: Date.now(),
+    ttl: ttlMs,
+  });
+  return preferences ?? null;
+}
+
+export function clearUserPreferencesCache(userId?: string): void {
+  if (userId) {
+    userPreferencesCache.delete(userId);
+  } else {
+    userPreferencesCache.clear();
+  }
+}
+
+/**
  * Lightweight authentication check that only fetches minimal user data.
  * This is much faster than getComprehensiveUserData() and should be used
  * for early auth checks before fetching full user details.
@@ -189,8 +232,10 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
       return lightweightData;
     }
 
+    const readDb = getReadReplica();
+
     // Optimized query: Use JOIN to fetch user + subscription status in a single query
-    const result = await db
+    const result = await readDb
       .select({
         userId: user.id,
         email: user.email,
@@ -199,8 +244,7 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
       })
       .from(user)
       .leftJoin(subscription, eq(subscription.userId, user.id))
-      .where(eq(user.id, userId))
-      .$withCache();
+      .where(eq(user.id, userId));
 
     if (!result || result.length === 0) {
       return null;
@@ -209,25 +253,46 @@ export async function getLightweightUserAuth(): Promise<LightweightUserAuth | nu
     // Check for active Polar subscription (quick check)
     const hasActivePolarSub = result.some((row) => row.subscriptionStatus === 'active');
 
-    // For DodoPayments, we need to do a quick check
-    // Only fetch the most recent successful payment for quick pro status check
+    // For Dodo Subscriptions, check cache first, then DB only if needed
     let isDodoActive = false;
-    if (!hasActivePolarSub) {
-      const recentDodoPayment = await db
-        .select({
-          createdAt: payment.createdAt,
-        })
-        .from(payment)
-        .where(and(eq(payment.userId, userId), eq(payment.status, 'succeeded')))
-        .orderBy(desc(payment.createdAt))
-        .limit(1)
-        .$withCache();
 
-      if (recentDodoPayment.length > 0) {
-        const paymentDate = new Date(recentDodoPayment[0].createdAt);
-        const subscriptionEndDate = new Date(paymentDate);
-        subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + DODO_SUBSCRIPTION_DURATION_MONTHS);
-        isDodoActive = subscriptionEndDate > new Date();
+    if (!hasActivePolarSub) {
+      // Check cache first (fast path)
+      const cachedDodoStatus = getDodoProStatus(userId);
+      if (cachedDodoStatus !== null) {
+        // Backward compatibility: handle both old (hasSubscriptions) and new (isProUser) cache formats
+        isDodoActive = cachedDodoStatus.isProUser ?? cachedDodoStatus.hasSubscriptions ?? false;
+      } else {
+        // Cache miss: query DB (use maindb to avoid replication lag)
+        const recentDodoSubscription = await maindb
+          .select({
+            createdAt: dodosubscription.createdAt,
+            currentPeriodEnd: dodosubscription.currentPeriodEnd,
+            status: dodosubscription.status,
+            cancelAtPeriodEnd: dodosubscription.cancelAtPeriodEnd,
+          })
+          .from(dodosubscription)
+          .where(eq(dodosubscription.userId, userId))
+          .orderBy(desc(dodosubscription.createdAt))
+          .limit(1);
+
+        if (recentDodoSubscription.length > 0) {
+          const sub = recentDodoSubscription[0];
+          const now = new Date();
+          const periodEnd = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd) : null;
+          const isWithinPeriod = !periodEnd || periodEnd > now;
+
+          // Check if subscription is active or cancelled but still within period
+          if (
+            (sub.status === 'active' || (sub.status === 'cancelled' && sub.cancelAtPeriodEnd === true)) &&
+            isWithinPeriod
+          ) {
+            isDodoActive = true;
+          }
+        }
+
+        // Cache the result for next time
+        setDodoProStatus(userId, { isProUser: isDodoActive, hasSubscriptions: isDodoActive });
       }
     }
 
@@ -268,7 +333,9 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
 
     // OPTIMIZED: Use JOIN query to reduce DB round trips
     // Fetch user + subscriptions in a single query
-    const userWithSubscriptions = await db
+    const readDb = getReadReplica();
+
+    const userWithSubscriptions = await readDb
       .select({
         // User fields
         userId: user.id,
@@ -293,8 +360,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       })
       .from(user)
       .leftJoin(subscription, eq(subscription.userId, user.id))
-      .where(eq(user.id, userId))
-      .$withCache();
+      .where(eq(user.id, userId));
 
     if (!userWithSubscriptions || userWithSubscriptions.length === 0) {
       return null;
@@ -302,11 +368,29 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
 
     const userData = userWithSubscriptions[0];
 
-    // Fetch payment data in parallel (still separate as it's less commonly needed)
-    const [dodoPayments, dodoExpirationInfo] = await Promise.all([
-      getPaymentsByUserId({ userId }),
-      getDodoPaymentsExpirationInfo({ userId }),
-    ]);
+    // Fetch Dodo subscription data separately with optimized query
+    // IMPORTANT: Use maindb for critical subscription queries to avoid replication lag
+    const dodoSubscriptions = await maindb
+      .select({
+        id: dodosubscription.id,
+        createdAt: dodosubscription.createdAt,
+        status: dodosubscription.status,
+        amount: dodosubscription.amount,
+        currency: dodosubscription.currency,
+        interval: dodosubscription.interval,
+        intervalCount: dodosubscription.intervalCount,
+        currentPeriodStart: dodosubscription.currentPeriodStart,
+        currentPeriodEnd: dodosubscription.currentPeriodEnd,
+        cancelledAt: dodosubscription.cancelledAt,
+        cancelAtPeriodEnd: dodosubscription.cancelAtPeriodEnd,
+        endedAt: dodosubscription.endedAt,
+        productId: dodosubscription.productId,
+      })
+      .from(dodosubscription)
+      .where(eq(dodosubscription.userId, userId));
+
+    // Calculate expiration info from subscriptions
+    const dodoExpirationInfo = await getDodoSubscriptionExpirationInfo({ userId });
 
     // Process Polar subscriptions from the joined data
     const polarSubscriptions = userWithSubscriptions
@@ -330,20 +414,44 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       .filter((sub) => sub.status === 'active')
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 
-    // Process DodoPayments
-    const successfulDodoPayments = dodoPayments
-      .filter((p: any) => p.status === 'succeeded')
+    // Process Dodo Subscriptions
+    // Include both active subscriptions and cancelled subscriptions that are still within their paid period
+    const now = new Date();
+    const activeDodoSubscriptions = dodoSubscriptions
+      .filter((sub: any) => {
+        const periodEnd = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd) : null;
+        const isWithinPeriod = !periodEnd || periodEnd > now;
+
+        // Active subscription
+        if (sub.status === 'active' && isWithinPeriod) {
+          return true;
+        }
+
+        // Cancelled but still within paid period
+        if (
+          sub.status === 'cancelled' &&
+          sub.cancelAtPeriodEnd === true &&
+          isWithinPeriod
+        ) {
+          return true;
+        }
+
+        return false;
+      })
       .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    const hasDodoPayments = successfulDodoPayments.length > 0;
+    const hasDodoSubscriptions = activeDodoSubscriptions.length > 0;
     let isDodoActive = false;
 
-    if (hasDodoPayments) {
-      const mostRecentPayment = successfulDodoPayments[0];
-      const paymentDate = new Date(mostRecentPayment.createdAt);
-      const subscriptionEndDate = new Date(paymentDate);
-      subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + DODO_SUBSCRIPTION_DURATION_MONTHS);
-      isDodoActive = subscriptionEndDate > new Date();
+    if (hasDodoSubscriptions) {
+      const mostRecentSubscription = activeDodoSubscriptions[0];
+      // Check if subscription is still within its period
+      if (mostRecentSubscription.currentPeriodEnd) {
+        isDodoActive = new Date(mostRecentSubscription.currentPeriodEnd) > now;
+      } else {
+        // If no end date, consider it active
+        isDodoActive = true;
+      }
     }
 
     // Determine overall Pro status and source
@@ -390,7 +498,7 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       isProUser,
       proSource,
       subscriptionStatus,
-      paymentHistory: dodoPayments,
+      subscriptionHistory: dodoSubscriptions,
     };
 
     // Add Polar subscription details if exists
@@ -409,12 +517,12 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       };
     }
 
-    // Always add DodoPayments details if user has any payments or dodo pro status
-    if (dodoPayments.length > 0 || proSource === 'dodo') {
-      comprehensiveData.dodoPayments = {
-        hasPayments: hasDodoPayments,
+    // Always add Dodo Subscription details if user has any subscriptions or dodo pro status
+    if (dodoSubscriptions.length > 0 || proSource === 'dodo') {
+      comprehensiveData.dodoSubscription = {
+        hasSubscriptions: hasDodoSubscriptions,
         expiresAt: dodoExpirationInfo?.expirationDate || null,
-        mostRecentPayment: hasDodoPayments ? successfulDodoPayments[0].createdAt : undefined,
+        mostRecentSubscription: hasDodoSubscriptions ? activeDodoSubscriptions[0].createdAt : undefined,
         daysUntilExpiration: dodoExpirationInfo?.daysUntilExpiration,
         isExpired: dodoExpirationInfo?.isExpired || false,
         isExpiringSoon: dodoExpirationInfo?.isExpiringSoon || false,

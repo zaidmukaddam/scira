@@ -4,6 +4,7 @@ import { Minimize2, Maximize2, ChevronDown, ChevronUp, Sparkles } from 'lucide-r
 import { cn } from '@/lib/utils';
 import Marked from 'marked-react';
 import { ReasoningUIPart } from 'ai';
+import remend from 'remend';
 
 interface ReasoningPartViewProps {
   part: ReasoningUIPart;
@@ -72,7 +73,7 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
       );
     },
     heading(text: ReactNode, level: number) {
-      const Tag = `h${level}` as keyof React.JSX.IntrinsicElements;
+      const Tag = `h${level}` as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
       const classes = {
         h1: 'text-lg font-semibold mb-2 mt-3 text-foreground',
         h2: 'text-base font-semibold mb-1.5 mt-2.5 text-foreground',
@@ -149,17 +150,17 @@ const MarkdownRenderer = React.memo(({ content }: { content: string }) => {
     tableCell(children: ReactNode[], flags: TableFlags) {
       const align = flags.align ? `text-${flags.align}` : '';
 
+      // Map children with stable keys
+      const childrenWithKeys = Array.isArray(children)
+        ? children.map((child, index) => <React.Fragment key={`cell-child-${index}`}>{child}</React.Fragment>)
+        : children;
+
       return flags.header ? (
-        <th
-          key={Math.random()}
-          className={`px-1.5 py-1 font-medium bg-muted/60 text-foreground border border-border/60 ${align}`}
-        >
-          {children}
+        <th className={`px-1.5 py-1 font-medium bg-muted/60 text-foreground border border-border/60 ${align}`}>
+          {childrenWithKeys}
         </th>
       ) : (
-        <td key={Math.random()} className={`px-1.5 py-1 text-muted-foreground border border-border/60 ${align}`}>
-          {children}
-        </td>
+        <td className={`px-1.5 py-1 text-muted-foreground border border-border/60 ${align}`}>{childrenWithKeys}</td>
       );
     },
   };
@@ -299,7 +300,7 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                   >
                     <div className="px-2.5 py-2 text-xs leading-relaxed">
                       <div className="text-muted-foreground prose prose-sm max-w-none">
-                        <MarkdownRenderer content={part.text} />
+                        <MarkdownRenderer content={remend(part.text)} />
                       </div>
                     </div>
                   </div>

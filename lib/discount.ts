@@ -2,23 +2,12 @@ import { get } from '@vercel/edge-config';
 
 export interface DiscountConfig {
   enabled: boolean;
-  code?: string;
   message?: string;
-  percentage?: number;
-  originalPrice?: number;
-  finalPrice?: number;
-  firstMonthPrice?: number;
-  inrPrice?: number;
-  isFirstMonthOnly?: boolean;
-  startsAt?: Date;
-  expiresAt?: Date;
-  buttonText?: string;
-  variant?: 'default' | 'urgent' | 'success';
-  discountAvail?: string;
-  dev?: boolean;
-  discountId?: string;
-  isStudentDiscount?: boolean;
-  showPrice?: boolean;
+  finalPrice?: number; // USD price for students
+  inrPrice?: number; // INR price for students
+  isStudentDiscount: boolean;
+  dodoDiscountId?: string; // Dodo Payments discount ID for Indian users
+  discountId?: string; // Polar discount ID for non-Indian users
 }
 
 /**
@@ -48,16 +37,17 @@ export function isStudentEmail(email: string, studentDomains: string[]): boolean
 }
 
 /**
- * Fetches discount configuration from Edge Config only
- * Returns disabled config if no Edge Config or no discount found
+ * Fetches student discount configuration
+ * Returns enabled config only for verified student emails
  */
-export async function getDiscountConfig(userEmail?: string): Promise<DiscountConfig> {
+export async function getDiscountConfig(userEmail?: string, isIndianUser?: boolean): Promise<DiscountConfig> {
   const defaultConfig: DiscountConfig = {
     enabled: false,
+    isStudentDiscount: false,
   };
 
-  // Allow complete disable via environment variable
-  if (process.env.DISABLE_DISCOUNTS === 'true') {
+  // No email provided
+  if (!userEmail) {
     return defaultConfig;
   }
 
@@ -75,94 +65,31 @@ export async function getDiscountConfig(userEmail?: string): Promise<DiscountCon
   } catch (error) {
     console.warn('Failed to fetch student domains from Edge Config:', error);
     // Fallback to hardcoded domains
-    studentDomains = ['.edu', '.ac.in'];
+    studentDomains = ['.edu', '.ac.in', '.edu.in'];
   }
 
   // Check if user is a student
-  const isStudent = userEmail ? isStudentEmail(userEmail, studentDomains) : false;
+  const isStudent = isStudentEmail(userEmail, studentDomains);
 
-  try {
-    const edgeDiscountConfig = await get('discount');
-
-    if (edgeDiscountConfig && typeof edgeDiscountConfig === 'object') {
-      const config = {
-        enabled: Boolean((edgeDiscountConfig as any).enabled),
-        code: (edgeDiscountConfig as any).code,
-        message: (edgeDiscountConfig as any).message,
-        percentage: Number((edgeDiscountConfig as any).percentage) || undefined,
-        originalPrice: Number((edgeDiscountConfig as any).originalPrice) || undefined,
-        finalPrice: Number((edgeDiscountConfig as any).finalPrice) || undefined,
-        firstMonthPrice: Number((edgeDiscountConfig as any).firstMonthPrice) || undefined,
-        inrPrice: Number((edgeDiscountConfig as any).inrPrice) || undefined,
-        isFirstMonthOnly: Boolean((edgeDiscountConfig as any).isFirstMonthOnly),
-        startsAt: (edgeDiscountConfig as any).startsAt ? new Date((edgeDiscountConfig as any).startsAt) : undefined,
-        expiresAt: (edgeDiscountConfig as any).expiresAt ? new Date((edgeDiscountConfig as any).expiresAt) : undefined,
-        buttonText: (edgeDiscountConfig as any).buttonText,
-        variant: (edgeDiscountConfig as any).variant || 'default',
-        discountAvail: (edgeDiscountConfig as any).discountAvail,
-        dev: Boolean((edgeDiscountConfig as any).dev),
-        discountId: (edgeDiscountConfig as any).discountId,
-        isStudentDiscount: false,
-        showPrice: Boolean((edgeDiscountConfig as any).showPrice),
-      };
-
-      // If user is a student, apply student discount logic
-      if (isStudent) {
-        const studentDiscountId = process.env.NEXT_PUBLIC_STUDENT_DISCOUNT_ID_USD;
-        if (studentDiscountId) {
-          return {
-            ...config,
-            enabled: true,
-            code: 'STUDENT',
-            message: '🎓 Student discount applied automatically',
-            finalPrice: 5, // Flat $5 price for students
-            discountId: studentDiscountId,
-            isStudentDiscount: true,
-            variant: 'success',
-            buttonText: 'Get Student Pro',
-            discountAvail: 'Student discount automatically applied',
-            showPrice: true,
-          };
-        }
-      }
-
-      const now = new Date();
-
-      // In dev mode or development environment, bypass timing checks
-      const isDevMode = config.dev || process.env.NODE_ENV === 'development';
-
-      if (!isDevMode) {
-        // Check if discount has not started yet
-        if (config.startsAt && config.startsAt > now) {
-          return defaultConfig;
-        }
-
-        // Check if discount has expired
-        if (config.expiresAt && config.expiresAt < now) {
-          return defaultConfig;
-        }
-      }
-
-      // In dev mode, ignore enabled flag; otherwise check if enabled and has required fields
-      // Allow force disable with a special flag
-      const forceDisabled = config.enabled === false && !isDevMode;
-      const shouldShow = forceDisabled
-        ? false
-        : isDevMode
-          ? config.code && config.message
-          : config.enabled && config.code && config.message;
-
-      if (shouldShow) {
-        return {
-          ...config,
-          // Add discount ID from environment if available and not already set
-          discountId: config.discountId || process.env.NEXT_PUBLIC_DISCOUNT_ID_USD,
-        };
-      }
-    }
-  } catch (error) {
-    console.warn('Failed to fetch discount config from Edge Config:', error);
+  // If not a student, return default config
+  if (!isStudent) {
+    return defaultConfig;
   }
 
-  return defaultConfig;
+  // Student discount available - DodoPayments for all countries
+  const dodoStudentDiscountId = process.env.DODO_STUD_DISC_ID;
+
+  if (!dodoStudentDiscountId) {
+    return defaultConfig;
+  }
+
+  return {
+    enabled: true,
+    message: '🎓 Student discount applied',
+    finalPrice: 5, // $5/month for students (USD)
+    inrPrice: 450, // ₹450/month for students (INR)
+    isStudentDiscount: true,
+    dodoDiscountId: dodoStudentDiscountId,
+    discountId: dodoStudentDiscountId, // Use same ID for all
+  };
 }

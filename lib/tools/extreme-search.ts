@@ -17,6 +17,7 @@ import { ChatMessage } from '../types';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { getTweet } from 'react-tweet/api';
 import { XaiProviderOptions, xai } from '@ai-sdk/xai';
+import Parallel from 'parallel-web';
 
 const pythonLibsAvailable = [
   'pandas',
@@ -48,8 +49,189 @@ const runCode = async (code: string, installLibs: string[] = []) => {
   return result;
 };
 
-const exa = new Exa(serverEnv.EXA_API_KEY);
-const firecrawl = new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY });
+// Content extraction provider strategies
+interface ContentExtractionStrategy {
+  getContents(links: string[]): Promise<SearchResult[]>;
+}
+
+// Exa content extraction strategy
+class ExaContentStrategy implements ContentExtractionStrategy {
+  constructor(
+    private exa: Exa,
+    private firecrawl: FirecrawlApp,
+  ) {}
+
+  async getContents(links: string[]): Promise<SearchResult[]> {
+    console.log(`[Exa] getContents called with ${links.length} URLs:`, links);
+    const results: SearchResult[] = [];
+    const failedUrls: string[] = [];
+
+    // First, try Exa for all URLs
+    try {
+      const result = await this.exa.getContents(links, {
+        text: {
+          maxCharacters: 3000,
+          includeHtmlTags: false,
+        },
+        livecrawl: 'preferred',
+      });
+      console.log(`[Exa] getContents received ${result.results.length} results from Exa API`);
+
+      // Process Exa results
+      for (const r of result.results) {
+        if (r.text && r.text.trim()) {
+          results.push({
+            title: r.title || r.url.split('/').pop() || 'Retrieved Content',
+            url: r.url,
+            content: r.text,
+            publishedDate: r.publishedDate || '',
+            favicon: r.favicon || `https://www.google.com/s2/favicons?domain=${new URL(r.url).hostname}&sz=128`,
+          });
+        } else {
+          // Add URLs with no content to failed list for Firecrawl fallback
+          failedUrls.push(r.url);
+        }
+      }
+
+      // Add any URLs that weren't returned by Exa to the failed list
+      const exaUrls = result.results.map((r) => r.url);
+      const missingUrls = links.filter((url) => !exaUrls.includes(url));
+      failedUrls.push(...missingUrls);
+    } catch (error) {
+      console.error('[Exa] API error:', error);
+      console.log('[Exa] Adding all URLs to Firecrawl fallback list');
+      failedUrls.push(...links);
+    }
+
+    // Use Firecrawl as fallback for failed URLs
+    if (failedUrls.length > 0) {
+      console.log(`[Exa] Using Firecrawl fallback for ${failedUrls.length} URLs:`, failedUrls);
+
+      for (const url of failedUrls) {
+        try {
+          const scrapeResponse = await this.firecrawl.scrape(url, {
+            formats: ['markdown'],
+            proxy: 'auto',
+            storeInCache: true,
+            parsers: ['pdf'],
+          });
+
+          if (scrapeResponse.markdown) {
+            console.log(`[Exa] Firecrawl successfully scraped ${url}`);
+
+            results.push({
+              title: scrapeResponse.metadata?.title || url.split('/').pop() || 'Retrieved Content',
+              url: url,
+              content: scrapeResponse.markdown.slice(0, 3000), // Match maxCharacters from Exa
+              publishedDate: (scrapeResponse.metadata?.publishedDate as string) || '',
+              favicon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`,
+            });
+          } else {
+            console.error(`[Exa] Firecrawl failed for ${url}:`, scrapeResponse);
+          }
+        } catch (firecrawlError) {
+          console.error(`[Exa] Firecrawl error for ${url}:`, firecrawlError);
+        }
+      }
+    }
+
+    console.log(`[Exa] getContents returning ${results.length} total results`);
+    return results;
+  }
+}
+
+// Parallel content extraction strategy
+class ParallelContentStrategy implements ContentExtractionStrategy {
+  constructor(
+    private parallel: Parallel,
+    private firecrawl: FirecrawlApp,
+  ) {}
+
+  async getContents(links: string[]): Promise<SearchResult[]> {
+    console.log(`[Parallel] getContents called with ${links.length} URLs:`, links);
+    const results: SearchResult[] = [];
+    const failedUrls: string[] = [];
+
+    // Try Parallel extract for all URLs
+    try {
+      const parallelResult = await this.parallel.beta.extract({
+        urls: links,
+        excerpts: false,
+        full_content: true,
+        betas: ['search-extract-2025-10-10'],
+      });
+
+      console.log(`[Parallel] Extract received ${parallelResult.results.length} results`);
+
+      // Process Parallel results
+      for (const extractResult of parallelResult.results) {
+        if (extractResult.full_content && extractResult.full_content.trim()) {
+          results.push({
+            title: extractResult.title || extractResult.url.split('/').pop() || 'Retrieved Content',
+            url: extractResult.url,
+            content: extractResult.full_content,
+            publishedDate: extractResult.publish_date || '',
+            favicon: `https://www.google.com/s2/favicons?domain=${new URL(extractResult.url).hostname}&sz=128`,
+          });
+        } else {
+          // Add URLs with no content to failed list for Firecrawl fallback
+          failedUrls.push(extractResult.url);
+        }
+      }
+
+      // Add any URLs that weren't returned by Parallel to the failed list
+      const parallelUrls = parallelResult.results.map((r) => r.url);
+      const missingUrls = links.filter((url) => !parallelUrls.includes(url));
+      failedUrls.push(...missingUrls);
+
+      // Also check for errors
+      if (parallelResult.errors && parallelResult.errors.length > 0) {
+        const errorUrls = parallelResult.errors.map((e) => e.url);
+        failedUrls.push(...errorUrls);
+        console.log(`[Parallel] ${parallelResult.errors.length} URLs failed with errors`);
+      }
+    } catch (error) {
+      console.error('[Parallel] API error:', error);
+      console.log('[Parallel] Adding all URLs to Firecrawl fallback list');
+      failedUrls.push(...links);
+    }
+
+    // Use Firecrawl as fallback for failed URLs
+    if (failedUrls.length > 0) {
+      console.log(`[Parallel] Using Firecrawl fallback for ${failedUrls.length} URLs:`, failedUrls);
+
+      for (const url of failedUrls) {
+        try {
+          const scrapeResponse = await this.firecrawl.scrape(url, {
+            formats: ['markdown'],
+            proxy: 'auto',
+            storeInCache: true,
+            parsers: ['pdf'],
+          });
+
+          if (scrapeResponse.markdown) {
+            console.log(`[Parallel] Firecrawl successfully scraped ${url}`);
+
+            results.push({
+              title: scrapeResponse.metadata?.title || url.split('/').pop() || 'Retrieved Content',
+              url: url,
+              content: scrapeResponse.markdown.slice(0, 3000),
+              publishedDate: (scrapeResponse.metadata?.publishedDate as string) || '',
+              favicon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`,
+            });
+          } else {
+            console.error(`[Parallel] Firecrawl failed for ${url}:`, scrapeResponse);
+          }
+        } catch (firecrawlError) {
+          console.error(`[Parallel] Firecrawl error for ${url}:`, firecrawlError);
+        }
+      }
+    }
+
+    console.log(`[Parallel] getContents returning ${results.length} total results`);
+    return results;
+  }
+}
 
 type SearchResult = {
   title: string;
@@ -60,7 +242,7 @@ type SearchResult = {
 };
 
 export type Research = {
-  text: string;
+  // text: string;
   toolResults: any[];
   sources: SearchResult[];
   charts: any[];
@@ -74,126 +256,111 @@ enum SearchCategory {
   FINANCIAL_REPORT = 'financial report',
 }
 
-const searchWeb = async (query: string, category?: SearchCategory, include_domains?: string[]) => {
-  console.log(`searchWeb called with query: "${query}", category: ${category}`);
-  try {
-    const { results } = await exa.searchAndContents(query, {
-      numResults: 8,
-      type: 'auto',
-      ...(category
-        ? {
-            category: category as SearchCategory,
-          }
-        : {}),
-      ...(include_domains
-        ? {
-            include_domains: include_domains,
-          }
-        : {}),
-    });
-    console.log(`searchWeb received ${results.length} results from Exa API`);
+// Search provider strategy interface
+interface SearchProviderStrategy {
+  search(query: string, category?: SearchCategory, include_domains?: string[]): Promise<SearchResult[]>;
+}
 
-    const mappedResults = results.map((r) => ({
-      title: r.title,
-      url: r.url,
-      content: r.text,
-      publishedDate: r.publishedDate,
-      favicon: r.favicon,
-    })) as SearchResult[];
+// Exa search strategy
+class ExaSearchStrategy implements SearchProviderStrategy {
+  constructor(private exa: Exa) {}
 
-    console.log(`searchWeb returning ${mappedResults.length} results`);
-    return mappedResults;
-  } catch (error) {
-    console.error('Error in searchWeb:', error);
-    return [];
-  }
-};
+  async search(query: string, category?: SearchCategory, include_domains?: string[]): Promise<SearchResult[]> {
+    console.log(`[Exa] searchWeb called with query: "${query}", category: ${category}`);
+    try {
+      const { results } = await this.exa.search(query, {
+        numResults: 8,
+        type: 'fast',
+        ...(category
+          ? {
+              category: category as SearchCategory,
+            }
+          : {}),
+        ...(include_domains
+          ? {
+              include_domains: include_domains,
+            }
+          : {}),
+      });
+      console.log(`[Exa] searchWeb received ${results.length} results from Exa API`);
 
-const getContents = async (links: string[]) => {
-  console.log(`getContents called with ${links.length} URLs:`, links);
-  const results: SearchResult[] = [];
-  const failedUrls: string[] = [];
+      const mappedResults = results.map((r) => ({
+        title: r.title,
+        url: r.url,
+        content: r.text,
+        publishedDate: r.publishedDate,
+        favicon: r.favicon,
+      })) as SearchResult[];
 
-  // First, try Exa for all URLs
-  try {
-    const result = await exa.getContents(links, {
-      text: {
-        maxCharacters: 3000,
-        includeHtmlTags: false,
-      },
-      livecrawl: 'preferred',
-    });
-    console.log(`getContents received ${result.results.length} results from Exa API`);
-
-    // Process Exa results
-    for (const r of result.results) {
-      if (r.text && r.text.trim()) {
-        results.push({
-          title: r.title || r.url.split('/').pop() || 'Retrieved Content',
-          url: r.url,
-          content: r.text,
-          publishedDate: r.publishedDate || '',
-          favicon: r.favicon || `https://www.google.com/s2/favicons?domain=${new URL(r.url).hostname}&sz=128`,
-        });
-      } else {
-        // Add URLs with no content to failed list for Firecrawl fallback
-        failedUrls.push(r.url);
-      }
-    }
-
-    // Add any URLs that weren't returned by Exa to the failed list
-    const exaUrls = result.results.map((r) => r.url);
-    const missingUrls = links.filter((url) => !exaUrls.includes(url));
-    failedUrls.push(...missingUrls);
-  } catch (error) {
-    console.error('Exa API error:', error);
-    console.log('Adding all URLs to Firecrawl fallback list');
-    failedUrls.push(...links);
-  }
-
-  // Use Firecrawl as fallback for failed URLs
-  if (failedUrls.length > 0) {
-    console.log(`Using Firecrawl fallback for ${failedUrls.length} URLs:`, failedUrls);
-
-    for (const url of failedUrls) {
-      try {
-        const scrapeResponse = await firecrawl.scrape(url, {
-          formats: ['markdown'],
-          proxy: 'auto',
-          storeInCache: true,
-          parsers: ['pdf'],
-        });
-
-        if (scrapeResponse.markdown) {
-          console.log(`Firecrawl successfully scraped ${url}`);
-
-          results.push({
-            title: scrapeResponse.metadata?.title || url.split('/').pop() || 'Retrieved Content',
-            url: url,
-            content: scrapeResponse.markdown.slice(0, 3000), // Match maxCharacters from Exa
-            publishedDate: (scrapeResponse.metadata?.publishedDate as string) || '',
-            favicon: `https://www.google.com/s2/favicons?domain=${new URL(url).hostname}&sz=128`,
-          });
-        } else {
-          console.error(`Firecrawl failed for ${url}:`, scrapeResponse);
-        }
-      } catch (firecrawlError) {
-        console.error(`Firecrawl error for ${url}:`, firecrawlError);
-      }
+      console.log(`[Exa] searchWeb returning ${mappedResults.length} results`);
+      return mappedResults;
+    } catch (error) {
+      console.error('[Exa] Error in searchWeb:', error);
+      return [];
     }
   }
+}
 
-  console.log(
-    `getContents returning ${results.length} total results (${results.length - failedUrls.length + results.filter((r) => failedUrls.includes(r.url)).length} from Exa, ${results.filter((r) => failedUrls.includes(r.url)).length} from Firecrawl)`,
-  );
-  return results;
-};
+// Parallel search strategy
+class ParallelSearchStrategyForExtreme implements SearchProviderStrategy {
+  constructor(private parallel: Parallel) {}
+
+  async search(query: string, category?: SearchCategory, include_domains?: string[]): Promise<SearchResult[]> {
+    console.log(`[Parallel] searchWeb called with query: "${query}", category: ${category}`);
+    try {
+      const response = await this.parallel.beta.search({
+        objective: query,
+        mode: 'agentic',
+        max_results: 5,
+        max_chars_per_result: 2000,
+        source_policy: {
+          include_domains: include_domains || [],
+        },
+      });
+
+      console.log(`[Parallel] searchWeb received ${response.results?.length || 0} results from Parallel API`);
+
+      const mappedResults = (response.results || []).map((r) => ({
+        title: r.title || '',
+        url: r.url,
+        content: Array.isArray(r.excerpts)
+          ? r.excerpts.join(' ').substring(0, 1000)
+          : (r.excerpts as unknown as string[]).join(' ').substring(0, 1000),
+        publishedDate: '',
+        favicon: `https://www.google.com/s2/favicons?domain=${new URL(r.url).hostname}&sz=128`,
+      })) as SearchResult[];
+
+      console.log(`[Parallel] searchWeb returning ${mappedResults.length} results`);
+      return mappedResults;
+    } catch (error) {
+      console.error('[Parallel] Error in searchWeb:', error);
+      return [];
+    }
+  }
+}
 
 async function extremeSearch(
   prompt: string,
   dataStream: UIMessageStreamWriter<ChatMessage> | undefined,
+  contentProvider: 'exa' | 'parallel' = 'exa',
 ): Promise<Research> {
   const allSources: SearchResult[] = [];
+
+  // Initialize clients
+  const exa = new Exa(serverEnv.EXA_API_KEY);
+  const parallel = new Parallel({ apiKey: serverEnv.PARALLEL_API_KEY });
+  const firecrawl = new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY });
+
+  // Create search and content extraction strategies based on provider
+  const searchStrategy: SearchProviderStrategy =
+    contentProvider === 'parallel' ? new ParallelSearchStrategyForExtreme(parallel) : new ExaSearchStrategy(exa);
+
+  const contentStrategy: ContentExtractionStrategy =
+    contentProvider === 'parallel'
+      ? new ParallelContentStrategy(parallel, firecrawl)
+      : new ExaContentStrategy(exa, firecrawl);
+
+  console.log(`[ExtremeSearch] Using ${contentProvider} as search and content extraction provider`);
 
   if (dataStream) {
     dataStream.write({
@@ -207,7 +374,7 @@ async function extremeSearch(
 
   // plan out the research
   const { object: result } = await generateObject({
-    model: scira.languageModel('scira-grok-4-fast-think'),
+    model: scira.languageModel('scira-grok-4'),
     schema: z.object({
       plan: z
         .array(
@@ -263,18 +430,24 @@ Plan Guidelines:
 
   // Create the autonomous research agent with tools
   const { text } = await generateText({
-    model: scira.languageModel('scira-grok-4-fast-think'),
+    model: xai('grok-4-1-fast'),
     stopWhen: stepCountIs(totalTodos),
+    activeTools: ['codeRunner', 'webSearch', 'xSearch'],
     system: `
-You are an autonomous deep research analyst. Your goal is to research the given research plan thoroughly with the given tools.
+You are an autonomous deep research analyst. Your goal run a focused research plan thoroughly with the given tools.
 
 Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}.
 
-### PRIMARY FOCUS: SEARCH-DRIVEN RESEARCH (95% of your work)
+### PRIMARY FOCUS: SEARCH-DRIVEN RESEARCH (90% of your work)
 Your main job is to SEARCH extensively and gather comprehensive information. Search should be your go-to approach for almost everything.
 Make sure to be mindful of today's date and time and use it to your advantage when searching for information.
+Go blindly and extremely deep in the search for information without any prior knowledge or context, just search for information till you have even more than enough information to answer the user's question.
+The best way to do this is that all information you gather is not completely complete, just gather as much information as possible with the tools in your arsenal.
+DO NOT BELIEVE THE SOURCES YOU FIND ARE CORRECT OR ACCURATE, JUST KEEP GATHERING MORE AND MORE INFORMATION.
+YOUR KNOWLEDGE BASE IS ZERO, SO YOU MUST GATHER AS MUCH INFORMATION AS POSSIBLE FROM THE TOOLS YOU HAVE.
 
-⚠️ IMP: Total Assistant function-call turns limit: at most ${totalTodos}! You must reach this limit strictly!
+⚠️ IMP: Total Assistant function-call turns limit: at most ${totalTodos}! You must reach this limit and not exceed it!
+⚠️ IMP: DO NOT RUN PARALLEL TOOL CALLS FOR SEARCHING!
 
 For searching:
 - PRIORITIZE SEARCH OVER CODE - Search first, search often, search comprehensively
@@ -286,7 +459,9 @@ For searching:
 - Use different categories strategically: news, research papers, company info, financial reports, github
 - Use X search for real-time discussions, public opinion, breaking news, and social media trends
 - Follow up initial searches with more targeted queries based on what you learn
-- Cross-reference information by searching for the same topic from different angles
+- Cross-verify information by searching for the same topic from different angles
+- Do not use the same query twice to avoid duplicates
+- Add more searches if needed to get the most information after the initial searches
 - Search for contradictory information to get balanced perspectives
 - Include exact metrics, dates, technical terms, and proper nouns in queries
 - Make searches progressively more specific as you gather context
@@ -316,6 +491,7 @@ Only use code when:
 - Mathematical calculations are required that cannot be found through search
 - Creating visualizations of data trends that were discovered through research
 - The research plan specifically requests data analysis or calculations
+- Do not use code for absurd or silly questions or topics, only use code when it is absolutely necessary and relevant to the research topic
 
 Code guidelines (when absolutely necessary):
 - Keep code simple and focused on the specific calculation or analysis needed
@@ -340,11 +516,11 @@ Research Plan:
 ${JSON.stringify(plan)}
 `,
     prompt,
-    temperature: 0,
+    temperature: 1,
     providerOptions: {
       xai: {
-        parallel_tool_calls: 'false',
-      },
+        parallel_function_calling: false,
+      } satisfies XaiProviderOptions,
     },
     tools: {
       codeRunner: {
@@ -431,7 +607,7 @@ ${JSON.stringify(plan)}
             });
           }
           // Query annotation already sent above
-          let results = await searchWeb(query, category, includeDomains);
+          let results = await searchStrategy.search(query, category, includeDomains);
           console.log(`Found ${results.length} results for query "${query}"`);
 
           // Add these sources to our total collection
@@ -471,8 +647,8 @@ ${JSON.stringify(plan)}
               // Get the URLs from the results
               const urls = results.map((r) => r.url);
 
-              // Get the full content using getContents
-              const contentsResults = await getContents(urls);
+              // Get the full content using the selected content strategy
+              const contentsResults = await contentStrategy.getContents(urls);
 
               // Only update results if we actually got content results
               if (contentsResults && contentsResults.length > 0) {
@@ -581,21 +757,19 @@ ${JSON.stringify(plan)}
             const searchEndDate = endDate || new Date().toISOString().split('T')[0];
 
             const { text, sources } = await generateText({
-              model: xai('grok-4-fast-non-reasoning'),
+              model: xai.responses('grok-4-1-fast-reasoning'),
               system: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and a list of X handles to search from. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
-              messages: [{ role: 'user', content: query }],
+              messages: [{
+                role: 'user',
+                content: query
+              }],
               maxOutputTokens: 10,
-              providerOptions: {
-                xai: {
-                  searchParameters: {
-                    mode: 'on',
-                    fromDate: searchStartDate,
-                    toDate: searchEndDate,
-                    maxSearchResults: maxResults < 15 ? 15 : maxResults,
-                    returnCitations: true,
-                    sources: [xHandles && xHandles.length > 0 ? { type: 'x', xHandles: xHandles } : { type: 'x' }],
-                  },
-                } satisfies XaiProviderOptions,
+              tools: {
+                xSearch: xai.tools.xSearch({
+                  fromDate: searchStartDate,
+                  toDate: searchEndDate,
+                  ...(xHandles && xHandles.length > 0 ? { allowedXHandles: xHandles } : {}),
+                }),
               },
             });
 
@@ -639,7 +813,9 @@ ${JSON.stringify(plan)}
             const result = {
               content: text,
               citations: citations,
-              sources: allSources.filter((source): source is { text: string; link: string; title: string } => source !== null),
+              sources: allSources.filter(
+                (source): source is { text: string; link: string; title: string } => source !== null,
+              ),
               dateRange: `${searchStartDate} to ${searchEndDate}`,
               handles: xHandles || [],
             };
@@ -721,7 +897,7 @@ ${JSON.stringify(plan)}
   console.log('Source 2:', allSources[2]);
 
   return {
-    text,
+    // text,
     toolResults,
     sources: Array.from(
       new Map(allSources.map((s) => [s.url, { ...s, content: s.content.slice(0, 3000) + '...' }])).values(),
@@ -730,9 +906,12 @@ ${JSON.stringify(plan)}
   };
 }
 
-export function extremeSearchTool(dataStream: UIMessageStreamWriter<ChatMessage> | undefined) {
+export function extremeSearchTool(
+  dataStream: UIMessageStreamWriter<ChatMessage> | undefined,
+  contentProvider: 'exa' | 'parallel' = 'exa',
+) {
   return tool({
-    description: 'Use this tool to conduct an extreme search on a given topic.',
+    description: `Use this tool to conduct an extreme search on a given topic. Using ${contentProvider} for content extraction.`,
     inputSchema: z.object({
       prompt: z
         .string()
@@ -741,13 +920,13 @@ export function extremeSearchTool(dataStream: UIMessageStreamWriter<ChatMessage>
         ),
     }),
     execute: async ({ prompt }) => {
-      console.log({ prompt });
+      console.log({ prompt, contentProvider });
 
-      const research = await extremeSearch(prompt, dataStream);
+      const research = await extremeSearch(prompt, dataStream, contentProvider);
 
       return {
         research: {
-          text: research.text,
+          // text: research.text,
           toolResults: research.toolResults,
           sources: research.sources,
           charts: research.charts,

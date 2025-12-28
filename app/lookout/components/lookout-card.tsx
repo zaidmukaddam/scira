@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { HugeiconsIcon } from '@hugeicons/react';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import { BinocularsIcon } from '@hugeicons/core-free-icons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BorderTrail } from '@/components/core/border-trail';

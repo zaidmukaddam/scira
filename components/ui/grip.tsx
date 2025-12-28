@@ -51,7 +51,7 @@ const GripIcon = forwardRef<GripIconHandle, GripIconProps>(
           onMouseEnter?.(e);
         }
       },
-      [onMouseEnter]
+      [onMouseEnter],
     );
 
     const handleMouseLeave = useCallback(
@@ -62,18 +62,18 @@ const GripIcon = forwardRef<GripIconHandle, GripIconProps>(
           onMouseLeave?.(e);
         }
       },
-      [onMouseLeave]
+      [onMouseLeave],
     );
 
     useEffect(() => {
       const animateCircles = async () => {
         if (isHovered && !animationRef.current) {
           animationRef.current = true;
-          
+
           // Continuous loop animation
           while (animationRef.current) {
             if (!animationRef.current) break;
-            
+
             await controls.start((i) => ({
               opacity: 0.3,
               transition: {
@@ -81,9 +81,9 @@ const GripIcon = forwardRef<GripIconHandle, GripIconProps>(
                 duration: 0.2,
               },
             }));
-            
+
             if (!animationRef.current) break;
-            
+
             await controls.start((i) => ({
               opacity: 1,
               transition: {
@@ -91,16 +91,16 @@ const GripIcon = forwardRef<GripIconHandle, GripIconProps>(
                 duration: 0.2,
               },
             }));
-            
+
             // Small pause before next cycle
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise((resolve) => setTimeout(resolve, 300));
           }
         } else if (!isHovered && animationRef.current) {
           animationRef.current = false;
           // Reset to normal state when stopped
           controls.start({
             opacity: 1,
-            transition: { duration: 0.1 }
+            transition: { duration: 0.1 },
           });
         }
       };
@@ -109,12 +109,7 @@ const GripIcon = forwardRef<GripIconHandle, GripIconProps>(
     }, [isHovered, controls]);
 
     return (
-      <div
-        className={cn(className)}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        {...props}
-      >
+      <div className={cn(className)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} {...props}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width={size}
@@ -148,7 +143,7 @@ const GripIcon = forwardRef<GripIconHandle, GripIconProps>(
         </svg>
       </div>
     );
-  }
+  },
 );
 
 GripIcon.displayName = 'GripIcon';

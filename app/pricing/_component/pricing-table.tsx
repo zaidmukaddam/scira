@@ -10,7 +10,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { PRICING, SEARCH_LIMITS } from '@/lib/constants';
-import { DiscountBanner } from '@/components/ui/discount-banner';
 import { getDiscountConfigAction } from '@/app/actions';
 import { DiscountConfig } from '@/lib/discount';
 import { useLocation } from '@/hooks/use-location';
@@ -47,116 +46,49 @@ interface PricingTableProps {
 export default function PricingTable({ subscriptionDetails, user }: PricingTableProps) {
   const router = useRouter();
   const location = useLocation();
+  const userEmail = user?.email?.toLowerCase() ?? '';
+  const derivedIsIndianStudentEmail = Boolean(
+    userEmail && (userEmail.endsWith('.ac.in') || userEmail.endsWith('.edu.in')),
+  );
 
-  // Debug logging (can be removed in production)
-  console.log('PricingTable Debug:', {
-    subscriptionDetails,
-    userProStatus: user
-      ? {
-        id: user.id,
-        isProUser: user.isProUser,
-        proSource: user.proSource,
-        hasPolarSubscription: !!user.polarSubscription,
-        polarSubStatus: user.polarSubscription?.status,
-        polarSubProductId: user.polarSubscription?.productId,
-      }
-      : null,
+  const [discountConfig, setDiscountConfig] = useState<DiscountConfig>({
+    enabled: false,
+    isStudentDiscount: false,
   });
-
-  const [discountConfig, setDiscountConfig] = useState<DiscountConfig>({ enabled: false });
 
   useEffect(() => {
     const fetchDiscountConfig = async () => {
       try {
-        const config = await getDiscountConfigAction();
-        const isDevMode = config.dev || process.env.NODE_ENV === 'development';
-
-        console.log('Discount Config Debug:', {
-          config,
-          isDevMode,
-          nodeEnv: process.env.NODE_ENV,
-          hasCode: !!config.code,
-          hasMessage: !!config.message,
-          enabled: config.enabled,
-          dev: config.dev
+        const config = await getDiscountConfigAction({
+          email: user?.email,
+          isIndianUser: location.isIndia || derivedIsIndianStudentEmail,
         });
 
-        if ((config.enabled || isDevMode) && !config.originalPrice) {
-          config.originalPrice = PRICING.PRO_MONTHLY;
-        }
-        setDiscountConfig(config);
+        setDiscountConfig(config as DiscountConfig);
       } catch (error) {
         console.error('Failed to fetch discount config:', error);
       }
     };
 
     fetchDiscountConfig();
-  }, []);
+  }, [location.isIndia, user?.email, derivedIsIndianStudentEmail]);
 
-  // Helper function to calculate discounted price
-  const getDiscountedPrice = (originalPrice: number, isINR: boolean = false) => {
-    // TEMPORARY: Force disable all discounts
-    if (process.env.NEXT_PUBLIC_DISABLE_DISCOUNTS === 'true') {
-      return originalPrice;
+  // Helper function to get student discount price
+  const getStudentPrice = (isINR: boolean = false) => {
+    if (!discountConfig.enabled || !discountConfig.isStudentDiscount) {
+      return null;
     }
 
-    const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
-    const shouldApplyDiscount = isDevMode
-      ? discountConfig.code && discountConfig.message
-      : discountConfig.enabled && discountConfig.code && discountConfig.message;
-
-    if (!shouldApplyDiscount) {
-      return originalPrice;
+    if (isINR) {
+      return discountConfig.inrPrice || null;
+    } else {
+      return discountConfig.finalPrice || null;
     }
-
-    // Use INR price directly if available
-    if (isINR && discountConfig.inrPrice) {
-      return discountConfig.inrPrice;
-    }
-
-    // Use final price directly if available (for student discounts)
-    if (!isINR && discountConfig.finalPrice) {
-      return discountConfig.finalPrice;
-    }
-
-    // Apply percentage discount
-    if (discountConfig.percentage) {
-      return Math.round(originalPrice - (originalPrice * discountConfig.percentage) / 100);
-    }
-
-    return originalPrice;
   };
 
-  // Check if discount should be shown
-  const shouldShowDiscount = () => {
-    // TEMPORARY: Force disable all discounts
-    if (process.env.NEXT_PUBLIC_DISABLE_DISCOUNTS === 'true') {
-      console.log('Discounts disabled via NEXT_PUBLIC_DISABLE_DISCOUNTS');
-      return false;
-    }
-
-    const isDevMode = discountConfig.dev || process.env.NODE_ENV === 'development';
-    const hasRequiredFields = discountConfig.code && discountConfig.message;
-    const hasDiscountValue = discountConfig.percentage || discountConfig.inrPrice || discountConfig.finalPrice;
-
-    const result = isDevMode
-      ? hasRequiredFields && hasDiscountValue
-      : discountConfig.enabled && hasRequiredFields && hasDiscountValue;
-
-    console.log('shouldShowDiscount Debug:', {
-      isDevMode,
-      hasCode: !!discountConfig.code,
-      hasMessage: !!discountConfig.message,
-      hasPercentage: !!discountConfig.percentage,
-      hasInrPrice: !!discountConfig.inrPrice,
-      hasFinalPrice: !!discountConfig.finalPrice,
-      enabled: discountConfig.enabled,
-      hasRequiredFields,
-      hasDiscountValue,
-      result
-    });
-
-    return result;
+  // Check if student discount is active
+  const hasStudentDiscount = () => {
+    return discountConfig.enabled && discountConfig.isStudentDiscount;
   };
 
   const handleCheckout = async (productId: string, slug: string, paymentMethod?: 'dodo' | 'polar') => {
@@ -166,36 +98,55 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     }
 
     try {
-      if (paymentMethod === 'dodo') {
-        router.push('/checkout');
-      } else {
-        // Auto-apply discount if available
-        const discountIdToUse = discountConfig.discountId || '';
+      // Use DodoPayments checkout for all new subscriptions
+      toast.loading('Redirecting to checkout...');
 
-        // TEMPORARY: Force disable all discounts
-        const discountsDisabled = process.env.NEXT_PUBLIC_DISABLE_DISCOUNTS === 'true';
+      const { data: checkout, error } = await betterauthClient.dodopayments.checkoutSession({
+        slug: process.env.NEXT_PUBLIC_PREMIUM_SLUG,
+        customer: {
+          email: user.email || '',
+          name: user.name || '',
+        },
+        billing_currency: location.isIndia ? 'INR' : 'USD',
+        allowed_payment_method_types: [
+          'credit',
+          'debit',
+          'upi_collect',
+          'upi_intent',
+          'apple_pay',
+          'google_pay',
+          'amazon_pay',
+          'sepa',
+          'ach',
+          'klarna',
+          'affirm',
+          'afterpay_clearpay',
+        ],
+        referenceId: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        ...(hasStudentDiscount() && discountConfig.dodoDiscountId && { discount_code: 'SCIRASTUD' }),
+      });
 
-        // Show special messaging for student discounts
-        if (!discountsDisabled && discountConfig.isStudentDiscount) {
-          toast.success('🎓 Student discount applied automatically!');
-        } else if (!discountsDisabled && discountIdToUse && (discountConfig.enabled || (discountConfig.dev || process.env.NODE_ENV === 'development'))) {
-          toast.success(`💰 Discount "${discountConfig.code}" applied automatically!`);
+      if (error) {
+        toast.dismiss();
+        throw new Error(error.message || 'Checkout failed');
+      }
+
+      if (checkout?.url) {
+        // Show success message for student discount
+        if (hasStudentDiscount()) {
+          toast.dismiss();
+          toast.success('🎓 Student discount applied!');
         }
-
-        await authClient.checkout({
-          products: [productId],
-          slug: slug,
-          allowDiscountCodes: true,
-          ...(discountIdToUse !== '' &&
-            !discountsDisabled &&
-            (discountConfig.enabled || (discountConfig.dev || process.env.NODE_ENV === 'development')) && {
-            discountId: discountIdToUse,
-          }),
-        });
+        // Redirect to DodoPayments checkout
+        window.location.href = checkout.url;
+      } else {
+        toast.dismiss();
+        throw new Error('No checkout URL received');
       }
     } catch (error) {
       console.error('Checkout failed:', error);
-      toast.error('Something went wrong. Please try again.');
+      toast.dismiss();
+      toast.error(error instanceof Error ? error.message : 'Something went wrong. Please try again.');
     }
   };
 
@@ -272,20 +223,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
         <div className="text-center mb-16">
           <h1 className="text-4xl font-medium text-foreground mb-4 font-be-vietnam-pro">Pricing</h1>
           <p className="text-xl text-muted-foreground">Choose the plan that works for you</p>
-          {!location.loading && location.isIndia && !discountConfig.isStudentDiscount && (
-            <Badge variant="secondary" className="mt-4">
-              🇮🇳 Special India pricing available
-            </Badge>
-          )}
         </div>
       </div>
-
-      {/* Discount Banner */}
-      {shouldShowDiscount() && (
-        <div className="max-w-4xl mx-auto px-6 sm:px-16 mb-8">
-          <DiscountBanner discountConfig={discountConfig} className="mx-auto" />
-        </div>
-      )}
 
       {/* Pricing Cards */}
       <div className="max-w-4xl mx-auto px-6 pb-24">
@@ -302,15 +241,15 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
             <CardContent className="space-y-6">
               <ul className="space-y-3">
                 <li className="flex items-center text-muted-foreground">
-                  <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full mr-3 flex-shrink-0"></div>
+                  <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full mr-3 shrink-0"></div>
                   {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches per day
                 </li>
                 <li className="flex items-center text-muted-foreground">
-                  <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full mr-3 flex-shrink-0"></div>
+                  <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full mr-3 shrink-0"></div>
                   Basic AI models
                 </li>
                 <li className="flex items-center text-muted-foreground">
-                  <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full mr-3 flex-shrink-0"></div>
+                  <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full mr-3 shrink-0"></div>
                   Search history
                 </li>
               </ul>
@@ -328,15 +267,9 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                 <Badge className="bg-primary text-primary-foreground">Current plan</Badge>
               </div>
             )}
-            {!hasProAccess() && shouldShowDiscount() && (
+            {!hasProAccess() && hasStudentDiscount() && (
               <div className="absolute -top-3 right-4 z-10">
-                <Badge variant="secondary">
-                  {discountConfig.showPrice && discountConfig.finalPrice
-                    ? `$${PRICING.PRO_MONTHLY - discountConfig.finalPrice} OFF for a year`
-                    : discountConfig.percentage
-                      ? `${discountConfig.percentage}% OFF`
-                      : 'DISCOUNT'}
-                </Badge>
+                <Badge>🎓 Student Discount</Badge>
               </div>
             )}
 
@@ -346,13 +279,13 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                 <Badge variant="secondary">Popular</Badge>
               </div>
 
-              {/* Pricing Display */}
+              {/* Pricing Display - Show currency based on location */}
               {hasProAccess() ? (
                 // Show user's current pricing method
                 getProAccessSource() === 'dodo' ? (
                   <div className="flex items-baseline">
                     <span className="text-4xl font-light">₹{PRICING.PRO_MONTHLY_INR}</span>
-                    <span className="text-muted-foreground ml-2">+GST</span>
+                    <span className="text-muted-foreground ml-2">(excl. GST)/month</span>
                   </div>
                 ) : (
                   <div className="flex items-baseline">
@@ -360,59 +293,39 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                     <span className="text-muted-foreground ml-2">/month</span>
                   </div>
                 )
-              ) : !location.loading && location.isIndia && !discountConfig.isStudentDiscount ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* INR Option */}
-                    <div className="p-3 border rounded-lg bg-muted/50">
-                      <div className="space-y-1">
-                        {shouldShowDiscount() ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground line-through">
-                              ₹{PRICING.PRO_MONTHLY_INR}
-                            </span>
-                            <span className="text-xl font-light">
-                              ₹{getDiscountedPrice(PRICING.PRO_MONTHLY_INR, true)}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-xl font-light">₹{PRICING.PRO_MONTHLY_INR}</span>
-                        )}
-                        <div className="text-xs text-muted-foreground">+18% GST</div>
-                        <div className="text-xs">1 month access</div>
-                        <div className="text-xs text-muted-foreground">🇮🇳 UPI, Cards, QR</div>
-                      </div>
-                    </div>
-
-                    {/* USD Option */}
-                    <div className="p-3 border rounded-lg">
-                      <div className="space-y-1">
-                        {shouldShowDiscount() ? (
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground line-through">${PRICING.PRO_MONTHLY}</span>
-                            <span className="text-xl font-light">${getDiscountedPrice(PRICING.PRO_MONTHLY)}</span>
-                          </div>
-                        ) : (
-                          <span className="text-xl font-light">${PRICING.PRO_MONTHLY}</span>
-                        )}
-                        <div className="text-xs text-muted-foreground">USD</div>
-                        <div className="text-xs">Monthly subscription</div>
-                        <div className="text-xs text-muted-foreground">💳 Card payment</div>
-                      </div>
-                    </div>
+              ) : location.isIndia || derivedIsIndianStudentEmail ? (
+                // Show INR pricing for Indian users
+                <div className="space-y-1">
+                  <div className="flex items-baseline">
+                    {getStudentPrice(true) ? (
+                      <>
+                        <span className="text-2xl text-muted-foreground line-through mr-2">
+                          ₹{PRICING.PRO_MONTHLY_INR}
+                        </span>
+                        <span className="text-4xl font-light">₹{getStudentPrice(true)}</span>
+                      </>
+                    ) : (
+                      <span className="text-4xl font-light">₹{PRICING.PRO_MONTHLY_INR}</span>
+                    )}
+                    <span className="text-muted-foreground ml-2">(excl. GST)/month</span>
                   </div>
+                  <p className="text-xs text-muted-foreground">Approx. $15/month</p>
                 </div>
               ) : (
-                <div className="flex items-baseline">
-                  {shouldShowDiscount() ? (
-                    <div className="flex items-baseline gap-3">
-                      <span className="text-xl text-muted-foreground line-through">$15</span>
-                      <span className="text-4xl font-light">${getDiscountedPrice(PRICING.PRO_MONTHLY)}</span>
-                    </div>
-                  ) : (
-                    <span className="text-4xl font-light">$15</span>
-                  )}
-                  <span className="text-muted-foreground ml-2">/month</span>
+                // Show USD pricing for non-Indian users
+                <div className="space-y-1">
+                  <div className="flex items-baseline">
+                    {getStudentPrice(false) ? (
+                      <>
+                        <span className="text-2xl text-muted-foreground line-through mr-2">$15</span>
+                        <span className="text-4xl font-light">${getStudentPrice(false)}</span>
+                      </>
+                    ) : (
+                      <span className="text-4xl font-light">$15</span>
+                    )}
+                    <span className="text-muted-foreground ml-2">/month</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Approx. ₹{PRICING.PRO_MONTHLY_INR}/month</p>
                 </div>
               )}
             </CardHeader>
@@ -420,23 +333,23 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
             <CardContent className="space-y-6">
               <ul className="space-y-3">
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 flex-shrink-0"></div>
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 shrink-0"></div>
                   Unlimited searches
                 </li>
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 flex-shrink-0"></div>
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 shrink-0"></div>
                   All AI models
                 </li>
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 flex-shrink-0"></div>
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 shrink-0"></div>
                   PDF analysis
                 </li>
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 flex-shrink-0"></div>
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 shrink-0"></div>
                   Priority support
                 </li>
                 <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 flex-shrink-0"></div>
+                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 shrink-0"></div>
                   Scira Lookout
                 </li>
               </ul>
@@ -453,69 +366,71 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                         : `Renews ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`}
                     </p>
                   )}
-                  {getProAccessSource() === 'dodo' && user?.dodoPayments?.expiresAt && (
+                  {getProAccessSource() === 'dodo' && user?.dodoSubscription?.expiresAt && (
                     <p className="text-sm text-muted-foreground text-center">
-                      Access expires {formatDate(new Date(user.dodoPayments.expiresAt))}
+                      Access expires {formatDate(new Date(user.dodoSubscription.expiresAt))}
                     </p>
                   )}
                 </div>
-              ) : !location.loading && location.isIndia && !discountConfig.isStudentDiscount ? (
-                !user ? (
-                  <Button className="w-full group" onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}>
-                    Sign up for Pro
-                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="border border-border/60 rounded-md p-3 bg-muted/30">
-                      <p className="text-xs text-muted-foreground">
-                        UPI AutoPay coming soon. Use subscription below.
-                      </p>
-                    </div>
-                    <Button 
-                      variant="outline"
-                      className="w-full opacity-50 cursor-not-allowed" 
-                      disabled
-                    >
-                      Pay ₹{getDiscountedPrice(PRICING.PRO_MONTHLY_INR, true)} (Unavailable)
-                    </Button>
-                    <Button
-                      className="w-full group"
-                      onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'polar')}
-                    >
-                      Subscribe ${getDiscountedPrice(PRICING.PRO_MONTHLY)}/month
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                    {shouldShowDiscount() && discountConfig.discountAvail && (
-                      <p className="text-xs text-primary text-center font-medium">{discountConfig.discountAvail}</p>
-                    )}
-                  </div>
-                )
-              ) : (
-                <Button
-                  className="w-full group"
-                  onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}
-                  disabled={location.loading}
-                >
-                  {location.loading ? 'Loading...' : !user ? 'Sign up for Pro' : 'Upgrade to Pro'}
-                  {!location.loading && (
-                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                  )}
+              ) : !user ? (
+                <Button className="w-full group" onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}>
+                  Sign up for Pro
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
+              ) : (
+                <div className="space-y-3">
+                  <Button
+                    className="w-full group"
+                    onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'dodo')}
+                    disabled={location.loading}
+                  >
+                    {location.loading
+                      ? 'Loading...'
+                      : location.isIndia || derivedIsIndianStudentEmail
+                        ? getStudentPrice(true)
+                          ? `Subscribe ₹${getStudentPrice(true)}/month`
+                          : `Subscribe ₹${PRICING.PRO_MONTHLY_INR}/month`
+                        : getStudentPrice(false)
+                          ? `Subscribe $${getStudentPrice(false)}/month`
+                          : 'Subscribe $15/month'}
+                    {!location.loading && (
+                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    )}
+                  </Button>
+                  <div className="text-xs text-center text-muted-foreground">
+                    💳{' '}
+                    {location.isIndia || derivedIsIndianStudentEmail
+                      ? 'UPI, Cards, Net Banking & more'
+                      : 'Credit/Debit Cards, UPI & more'}{' '}
+                    (auto-renews monthly)
+                  </div>
+                  {(location.isIndia || derivedIsIndianStudentEmail) && (
+                    <div className="text-xs text-center text-amber-600 dark:text-amber-400">
+                      💡 Tip: UPI payments have a higher success rate on PC/Desktop
+                    </div>
+                  )}
+                  {hasStudentDiscount() && discountConfig.message && (
+                    <p className="text-xs text-green-600 dark:text-green-400 text-center font-medium">
+                      {discountConfig.message}
+                    </p>
+                  )}
+                </div>
               )}
             </CardContent>
           </Card>
         </div>
 
         {/* Student Discount */}
-        {!discountConfig.isStudentDiscount && (
+        {!hasStudentDiscount() && (
           <Card className="max-w-2xl mx-auto mt-16">
             <CardContent className="p-6">
               <div className="text-center">
                 <h3 className="font-medium mb-2">🎓 Student discount available</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Get Pro for just $5/month! Simply sign up with your university email address and the discount will be
-                  applied automatically.
+                  {location.isIndia || derivedIsIndianStudentEmail
+                    ? 'Get Pro for just ₹450/month (approx. $5)!'
+                    : 'Get Pro for just $5/month (approx. ₹450)!'}{' '}
+                  Simply sign up with your university email address and the discount will be applied automatically.
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
                   <SupportedDomainsList />
@@ -531,13 +446,17 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
         )}
 
         {/* Student Discount Active */}
-        {discountConfig.isStudentDiscount && !hasProAccess() && (
-          <Card className="max-w-2xl mx-auto mt-16 border-primary/20 bg-primary/5">
+        {hasStudentDiscount() && !hasProAccess() && (
+          <Card className="max-w-2xl mx-auto mt-16 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
             <CardContent className="p-6">
               <div className="text-center">
-                <h3 className="font-medium mb-2 text-primary">🎓 Student discount active!</h3>
+                <h3 className="font-medium mb-2 text-green-700 dark:text-green-300">🎓 Student discount active!</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Your university email domain has been automatically recognized. Get Pro for just $5/month.
+                  Your university email domain has been automatically recognized. Get Pro for just{' '}
+                  {location.isIndia || derivedIsIndianStudentEmail
+                    ? `₹${getStudentPrice(true) || 450}/month (approx. $5)`
+                    : `$${getStudentPrice(false) || 5}/month (approx. ₹${getStudentPrice(true) || 450})`}
+                  .
                 </p>
                 <p className="text-xs text-muted-foreground">Discount automatically applied at checkout</p>
               </div>

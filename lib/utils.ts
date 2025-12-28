@@ -45,13 +45,13 @@ export const searchProviderInfo = {
 export type SearchProvider = keyof typeof searchProviderInfo;
 
 // Function to get dynamic web search description based on selected provider
-export function getWebSearchDescription(provider: SearchProvider = 'parallel'): string {
+export function getWebSearchDescription(provider: SearchProvider = 'exa'): string {
   const providerName = searchProviderInfo[provider];
   return `Search across the entire internet powered by ${providerName}`;
 }
 
 // Function to get search groups with dynamic descriptions
-export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
+export function getSearchGroups(searchProvider: SearchProvider = 'exa') {
   return [
     {
       id: 'web' as const,
@@ -100,7 +100,7 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
     {
       id: 'academic' as const,
       name: 'Academic',
-      description: 'Search academic papers powered by Exa',
+      description: 'Search academic papers and pdfs powered by Firecrawl',
       icon: MicroscopeIcon,
       show: true,
     },
@@ -123,7 +123,7 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
     {
       id: 'reddit' as const,
       name: 'Reddit',
-      description: 'Search Reddit posts',
+      description: 'Search Reddit posts powered by Parallel',
       icon: RedditIcon,
       show: true,
     },
@@ -137,7 +137,7 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
     {
       id: 'youtube' as const,
       name: 'YouTube',
-      description: 'Search YouTube videos powered by Exa',
+      description: 'Search content inside YouTube videos, channels and playlists',
       icon: YoutubeIcon,
       show: true,
     },
@@ -148,10 +148,3 @@ export function getSearchGroups(searchProvider: SearchProvider = 'parallel') {
 export const searchGroups = getSearchGroups();
 
 export type SearchGroup = (typeof searchGroups)[number];
-
-export function invalidateChatsCache() {
-  if (typeof window !== 'undefined') {
-    const event = new CustomEvent('invalidate-chats-cache');
-    window.dispatchEvent(event);
-  }
-}

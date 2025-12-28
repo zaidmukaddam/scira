@@ -1,6 +1,6 @@
+import { Supadata } from '@supadata/js';
 import { tool } from 'ai';
 import { z } from 'zod';
-import Exa from 'exa-js';
 import { serverEnv } from '@/env/server';
 import { getSubtitles, getVideoDetails } from 'youtube-caption-extractor';
 
@@ -12,6 +12,14 @@ interface VideoDetails {
   type?: string;
   provider_name?: string;
   provider_url?: string;
+  author_avatar_url?: string;
+}
+
+interface VideoStats {
+  views?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
 }
 
 interface VideoResult {
@@ -20,10 +28,13 @@ interface VideoResult {
   details?: VideoDetails;
   captions?: string;
   timestamps?: string[];
-  views?: string;
-  likes?: string;
+  views?: number | string;
+  likes?: number | string;
   summary?: string;
   publishedDate?: string;
+  durationSeconds?: number;
+  stats?: VideoStats;
+  tags?: string[];
 }
 
 interface SubtitleFragment {
@@ -32,366 +43,493 @@ interface SubtitleFragment {
   text: string;
 }
 
+type TimeRange = 'day' | 'week' | 'month' | 'year' | 'anytime';
+
+interface SupadataYouTubeChannel {
+  id?: string;
+  name?: string;
+  thumbnail?: string;
+  url?: string;
+}
+
+interface SupadataYouTubeVideo {
+  type?: string;
+  id?: string;
+  title?: string;
+  description?: string;
+  thumbnail?: string;
+  duration?: number;
+  viewCount?: number;
+  uploadDate?: string;
+  channel?: SupadataYouTubeChannel;
+  tags?: string[];
+  url?: string;
+}
+
+const BATCH_SIZE = 4;
+const SEARCH_LIMIT = 12;
+const YOUTUBE_BASE_URL = 'https://www.youtube.com/watch?v=';
+const searchModeEnum = z.enum(['general', 'channel', 'playlist']);
+const channelVideoTypeEnum = z.enum(['all', 'video', 'short', 'live']);
+type SearchMode = z.infer<typeof searchModeEnum>;
+type ChannelVideoType = z.infer<typeof channelVideoTypeEnum>;
+
+const timeRangeToUploadDate: Record<Exclude<TimeRange, 'anytime'>, 'hour' | 'today' | 'week' | 'month' | 'year'> = {
+  day: 'today',
+  week: 'week',
+  month: 'month',
+  year: 'year',
+};
+
+const chapterRegex = /^\s*((?:\d+:)?\d{1,2}:\d{2})\s*[-–—]?\s*(.+)$/i;
+
+function chunkArray<T>(items: T[], chunkSize: number): T[][] {
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += chunkSize) {
+    chunks.push(items.slice(i, i + chunkSize));
+  }
+  return chunks;
+}
+
+function dedupeVideos(videos: SupadataYouTubeVideo[]) {
+  const seen = new Set<string>();
+  return videos.filter((video) => {
+    const videoId = video.id;
+    if (!videoId) return false;
+    if (seen.has(videoId)) return false;
+    seen.add(videoId);
+    return true;
+  });
+}
+
+function extractChaptersFromDescription(description?: string): string[] | undefined {
+  if (!description) return undefined;
+  const chapters: string[] = [];
+  const lines = description.split(/\r?\n/);
+  for (const line of lines) {
+    const match = line.match(chapterRegex);
+    if (match) {
+      const [, time, title] = match;
+      if (time && title) {
+        chapters.push(`${time} - ${title.trim()}`);
+      }
+    }
+  }
+  return chapters.length > 0 ? chapters : undefined;
+}
+
+function generateChaptersFromSubtitles(
+  subs: SubtitleFragment[] | undefined,
+  targetCount: number = 30,
+): string[] | undefined {
+  if (!subs || subs.length === 0) return undefined;
+
+  const parseSeconds = (s: string) => {
+    const n = Number(s);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  const last = subs[subs.length - 1];
+  const totalDurationSec = Math.max(0, parseSeconds(last.start) + parseSeconds(last.dur));
+  if (totalDurationSec <= 1) return undefined;
+
+  const interval = Math.max(10, Math.floor(totalDurationSec / targetCount));
+
+  const formatTime = (secondsTotal: number) => {
+    const seconds = Math.max(1, Math.floor(secondsTotal)); // avoid 0:00 which UI filters out
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+  };
+
+  const chapters: string[] = [];
+  const usedTimes = new Set<number>();
+  for (let t = interval; t < totalDurationSec; t += interval) {
+    const idx = subs.findIndex((sf) => parseSeconds(sf.start) >= t);
+    const chosen = idx >= 0 ? subs[idx] : subs[subs.length - 1];
+    const text = chosen.text?.replace(/\s+/g, ' ').trim();
+    if (!text) continue;
+    const key = Math.floor(parseSeconds(chosen.start));
+    if (usedTimes.has(key)) continue;
+    usedTimes.add(key);
+    chapters.push(`${formatTime(key)} - ${text}`);
+    if (chapters.length >= targetCount) break;
+  }
+
+  return chapters.length > 0 ? chapters : undefined;
+}
+
+async function buildTranscriptArtifacts(videoId: string, fallbackDescription?: string) {
+  const details = await getVideoDetails({ videoID: videoId, lang: 'en' }).catch((error: unknown) => {
+    console.warn(`⚠️ getVideoDetails failed for ${videoId}:`, error);
+    return null;
+  });
+
+  let subtitleSource: SubtitleFragment[] | undefined =
+    Array.isArray(details?.subtitles) && details!.subtitles.length > 0
+      ? (details!.subtitles as SubtitleFragment[])
+      : undefined;
+
+  if (!subtitleSource) {
+    subtitleSource = (await getSubtitles({ videoID: videoId, lang: 'en' }).catch((error: unknown) => {
+      console.warn(`⚠️ getSubtitles failed for ${videoId}:`, error);
+      return null;
+    })) as SubtitleFragment[] | undefined;
+  }
+
+  const transcriptText = subtitleSource?.map((s) => s.text).join('\n');
+
+  const timestampsFromDescription = extractChaptersFromDescription(details?.description ?? fallbackDescription);
+  const timestamps = timestampsFromDescription ?? generateChaptersFromSubtitles(subtitleSource);
+
+  return {
+    transcriptText,
+    timestamps,
+    description: details?.description ?? fallbackDescription,
+    subtitles: subtitleSource,
+  };
+}
+
+function mapTimeRangeToSupadata(timeRange: TimeRange) {
+  if (timeRange === 'anytime') return undefined;
+  return timeRangeToUploadDate[timeRange];
+}
+
+function resolveNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function flattenVideoIds(ids?: { videoIds?: string[]; shortIds?: string[]; liveIds?: string[] }) {
+  if (!ids) return [];
+  return [...(ids.videoIds ?? []), ...(ids.shortIds ?? []), ...(ids.liveIds ?? [])];
+}
+
+function normalizeHandle(query: string) {
+  return query.trim().replace(/^@/, '');
+}
+
+function extractPlaylistId(query: string) {
+  const trimmed = query.trim();
+  if (!trimmed) return null;
+  const urlMatch = trimmed.match(/[?&]list=([^&]+)/i);
+  if (urlMatch?.[1]) {
+    return urlMatch[1];
+  }
+  if (trimmed.startsWith('PL') || trimmed.startsWith('UU') || trimmed.startsWith('LL')) {
+    return trimmed;
+  }
+  return null;
+}
+
+async function resolveChannelIdFromQuery(supadata: Supadata, query: string) {
+  const normalized = normalizeHandle(query);
+  if (!normalized) return null;
+
+  try {
+    const searchResult = await supadata.youtube.search({
+      query: normalized,
+      type: 'channel',
+      limit: 5,
+      sortBy: 'relevance',
+    });
+
+    const channelResults = (searchResult?.results ?? []) as Array<{
+      type?: string;
+      id?: string;
+      handle?: string;
+      name?: string;
+    }>;
+
+    const cleanedHandle = normalized.toLowerCase();
+
+    const handleMatch = channelResults.find((result) => {
+      if (result.type !== 'channel' || !result.handle) return false;
+      const candidate = result.handle.replace(/^@/, '').toLowerCase();
+      return candidate === cleanedHandle;
+    });
+
+    const chosenChannel = handleMatch ?? channelResults.find((result) => result.type === 'channel');
+    if (!chosenChannel) return null;
+    return chosenChannel.id || chosenChannel.handle || null;
+  } catch (error) {
+    console.warn('⚠️ Failed to resolve channel ID from query', { query, error });
+    return null;
+  }
+}
+
+async function resolvePlaylistIdFromQuery(supadata: Supadata, query: string) {
+  const playlistId = extractPlaylistId(query);
+  if (playlistId) return playlistId;
+
+  const trimmed = query.trim();
+  if (!trimmed) return null;
+
+  try {
+    const searchResult = await supadata.youtube.search({
+      query: trimmed,
+      type: 'playlist',
+      limit: 5,
+      sortBy: 'relevance',
+    });
+
+    const playlistResults = (searchResult?.results ?? []) as Array<{
+      type?: string;
+      id?: string;
+      title?: string;
+    }>;
+
+    const chosenPlaylist = playlistResults.find((result) => result.type === 'playlist');
+    return chosenPlaylist?.id ?? null;
+  } catch (error) {
+    console.warn('⚠️ Failed to resolve playlist ID from query', { query, error });
+    return null;
+  }
+}
+
+async function getVideosForMode({
+  supadata,
+  query,
+  timeRange,
+  mode,
+  channelVideoType,
+}: {
+  supadata: Supadata;
+  query: string;
+  timeRange: TimeRange;
+  mode: SearchMode;
+  channelVideoType?: ChannelVideoType;
+}) {
+  if (mode === 'general') {
+    const uploadDateFilter = mapTimeRangeToSupadata(timeRange);
+    const searchResult = await supadata.youtube.search({
+      query,
+      type: 'video',
+      ...(uploadDateFilter ? { uploadDate: uploadDateFilter } : {}),
+      limit: SEARCH_LIMIT,
+      sortBy: 'relevance',
+    });
+
+    const rawVideos = (searchResult?.results ?? []) as SupadataYouTubeVideo[];
+    return dedupeVideos(rawVideos.filter((result) => result.type === 'video'));
+  }
+
+  const fetchChannelVideos = async (channelQuery: string) => {
+    if (!channelQuery.trim()) return [];
+    try {
+      const ids = await supadata.youtube.channel.videos({
+        id: channelQuery,
+        limit: SEARCH_LIMIT,
+        type: channelVideoType ?? 'all',
+      });
+      return flattenVideoIds(ids);
+    } catch (error) {
+      console.warn('⚠️ Supadata channel.videos failed', { channelQuery, error });
+      return [];
+    }
+  };
+
+  const fetchPlaylistVideos = async (playlistId: string | null) => {
+    if (!playlistId) return [];
+    try {
+      const ids = await supadata.youtube.playlist.videos({
+        id: playlistId,
+        limit: SEARCH_LIMIT,
+      });
+      return flattenVideoIds(ids);
+    } catch (error) {
+      console.warn('⚠️ Supadata playlist.videos failed', { playlistId, error });
+      return [];
+    }
+  };
+
+  const normalizedIds =
+    mode === 'channel'
+      ? await (async () => {
+          // First, try to resolve the channel identifier from the query
+          const resolvedId = await resolveChannelIdFromQuery(supadata, query);
+          const channelIdentifier = resolvedId || query;
+
+          // Now fetch videos using the resolved identifier
+          const ids = await fetchChannelVideos(channelIdentifier);
+          return ids;
+        })()
+      : await (async () => {
+          const preExtractedId = extractPlaylistId(query);
+          const directIds = await fetchPlaylistVideos(preExtractedId ?? query);
+          if (directIds.length > 0) return directIds;
+
+          const resolvedId = await resolvePlaylistIdFromQuery(supadata, query);
+          if (!resolvedId) return directIds;
+          return fetchPlaylistVideos(resolvedId);
+        })();
+
+  if (normalizedIds.length === 0) {
+    console.warn(`⚠️ No video IDs resolved for mode="${mode}". Falling back to general search.`);
+    return getVideosForMode({
+      supadata,
+      query,
+      timeRange,
+      mode: 'general',
+    });
+  }
+
+  const uniqueIds = Array.from(new Set(normalizedIds)).slice(0, SEARCH_LIMIT);
+  return uniqueIds.map((id) => ({
+    id,
+    type: 'video',
+    url: `${YOUTUBE_BASE_URL}${id}`,
+  }));
+}
+
 export const youtubeSearchTool = tool({
-  description: 'Search YouTube videos using Exa AI and get detailed video information.',
+  description: 'Search YouTube videos using Supadata and enrich them with transcripts, stats, and metadata.',
   inputSchema: z.object({
     query: z.string().describe('The search query for YouTube videos'),
     timeRange: z.enum(['day', 'week', 'month', 'year', 'anytime']),
+    mode: searchModeEnum.default('general').describe('general search, channel videos, or playlist videos'),
+    channelVideoType: channelVideoTypeEnum.optional().describe('When mode=channel, filter to video/short/live/all'),
   }),
   execute: async ({
     query,
     timeRange,
+    mode = 'general',
+    channelVideoType,
   }: {
     query: string;
     timeRange: 'day' | 'week' | 'month' | 'year' | 'anytime';
+    mode?: SearchMode;
+    channelVideoType?: ChannelVideoType;
   }) => {
     try {
-      const exa = new Exa(serverEnv.EXA_API_KEY as string);
+      const supadata = new Supadata({
+        apiKey: serverEnv.SUPADATA_API_KEY,
+      });
 
-      console.log('query', query);
-      console.log('timeRange', timeRange);
-      let startDate: string | undefined;
-      let endDate: string | undefined;
+      console.log('🔎 Supadata YouTube search', { query, timeRange, mode, channelVideoType });
 
-      const now = new Date();
-      const formatDate = (date: Date) => date.toISOString().split('T')[0];
-
-      switch (timeRange) {
-        case 'day':
-          startDate = formatDate(new Date(now.getTime() - 24 * 60 * 60 * 1000));
-          endDate = formatDate(now);
-          break;
-        case 'week':
-          startDate = formatDate(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
-          endDate = formatDate(now);
-          break;
-        case 'month':
-          startDate = formatDate(new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000));
-          endDate = formatDate(now);
-          break;
-        case 'year':
-          startDate = formatDate(new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000));
-          endDate = formatDate(now);
-          break;
-        case 'anytime':
-          // Don't set dates for anytime - let Exa use its defaults
-          break;
-      }
-
-      interface ExaSearchOptions {
-        type?: 'auto' | 'neural' | 'keyword' | 'hybrid' | 'fast';
-        numResults?: number;
-        includeDomains?: string[];
-        startPublishedDate?: string;
-        endPublishedDate?: string;
-      }
-
-      const searchOptions: ExaSearchOptions = {
-        type: 'auto',
-        numResults: 5,
-        includeDomains: ['youtube.com', 'youtu.be', 'm.youtube.com'],
-      };
-
-      if (startDate) {
-        searchOptions.startPublishedDate = startDate;
-      }
-      if (endDate) {
-        searchOptions.endPublishedDate = endDate;
-      }
-
-      console.log('📅 Search date range:', {
+      const videoResults = await getVideosForMode({
+        supadata,
+        query,
         timeRange,
-        startDate,
-        endDate,
-        searchOptions,
+        mode,
+        channelVideoType,
       });
 
-      const searchResult = await exa.searchAndContents(query, searchOptions);
+      if (videoResults.length === 0) {
+        console.log('ℹ️ Supadata returned no video IDs for the provided input');
+        return { results: [] };
+      }
 
-      console.log('🎥 YouTube Search Results:', searchResult);
+      console.log(`🎥 Resolved ${videoResults.length} video candidates for mode="${mode}"`);
 
-      // Deduplicate videos by ID to avoid redundant API calls
-      const uniqueResults = searchResult.results.reduce((acc, result) => {
-        const videoIdMatch = result.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?/]+)/);
-        const videoId = videoIdMatch?.[1];
-
-        if (videoId && !acc.has(videoId)) {
-          acc.set(videoId, result);
-        }
-        return acc;
-      }, new Map());
-
-      console.log(
-        `🔍 Processing ${uniqueResults.size} unique videos from ${searchResult.results.length} search results`,
-      );
-
-      // Process videos in smaller batches to avoid overwhelming the API
-      const batchSize = 5;
-      console.log(`📦 Creating batches from ${uniqueResults.size} unique videos with batch size ${batchSize}`);
-
-      const uniqueResultsArray = Array.from(uniqueResults.values());
-      console.log(
-        `🔗 Unique video URLs:`,
-        uniqueResultsArray.map((r) => r.url),
-      );
-
-      const batches = uniqueResultsArray.reduce(
-        (acc: Array<Array<(typeof searchResult.results)[0]>>, result, index) => {
-          const batchIndex = Math.floor(index / batchSize);
-          if (!acc[batchIndex]) {
-            acc[batchIndex] = [];
-            console.log(`📝 Created new batch ${batchIndex + 1}`);
-          }
-          acc[batchIndex].push(result);
-          console.log(`➕ Added video ${index + 1} (${result.url}) to batch ${batchIndex + 1}`);
-          return acc;
-        },
-        [] as Array<Array<(typeof searchResult.results)[0]>>,
-      );
-
-      console.log(`📊 Batch creation complete: ${batches.length} batches created`);
-      batches.forEach((batch, index) => {
-        console.log(`📋 Batch ${index + 1}: ${batch.length} videos`);
-        batch.forEach((video, videoIndex) => {
-          const videoId = video.url.match(
-            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?/]+)/,
-          )?.[1];
-          console.log(`  ${videoIndex + 1}. ${videoId} - ${video.url}`);
-        });
-      });
-
+      const batches = chunkArray(videoResults, BATCH_SIZE);
       const processedResults: VideoResult[] = [];
-
-      console.log(`🚀 Starting batch processing: ${batches.length} batches total`);
 
       for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
         const batch = batches[batchIndex];
-        console.log(`🔄 [BATCH ${batchIndex + 1}/${batches.length}] Processing ${batch.length} videos`);
-        console.log(
-          `📋 [BATCH ${batchIndex + 1}] Video IDs in this batch:`,
-          batch.map((r) => {
-            const match = r.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?/]+)/);
-            return match?.[1] || 'unknown';
-          }),
-        );
-
         try {
           const batchResults = await Promise.allSettled(
-            batch.map(async (result: (typeof searchResult.results)[0]): Promise<VideoResult | null> => {
-              const videoIdMatch = result.url.match(
-                /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&?/]+)/,
-              );
-              const videoId = videoIdMatch?.[1];
-
+            batch.map(async (video): Promise<VideoResult | null> => {
+              const videoId = video.id;
               if (!videoId) {
-                console.warn(`⚠️  No video ID found for URL: ${result.url}`);
+                console.warn('⚠️ Video missing ID from Supadata result, skipping');
                 return null;
               }
 
+              const videoUrl = `${YOUTUBE_BASE_URL}${videoId}`;
+
               const baseResult: VideoResult = {
                 videoId,
-                url: result.url,
-                publishedDate: result.publishedDate,
+                url: video.url ?? videoUrl,
+                publishedDate: video.uploadDate,
               };
 
               try {
-                console.log(`📹 Processing video ${videoId}...`);
-
-                // Fetch details and subtitles using youtube-caption-extractor
-                const details = await getVideoDetails({ videoID: videoId, lang: 'en' }).catch((e: unknown) => {
-                  console.warn(`⚠️ getVideoDetails failed for ${videoId}:`, e);
-                  return null;
-                });
- 
-                // Extract transcript text from subtitles (prefer details.subtitles, fallback to direct API)
-                let transcriptText: string | undefined = undefined;
-                if (details && Array.isArray(details.subtitles) && details.subtitles.length > 0) {
-                  transcriptText = details.subtitles.map((s) => s.text).join('\n');
-                } else {
-                  const subs = await getSubtitles({ videoID: videoId, lang: 'en' }).catch((e: unknown) => {
-                    console.warn(`⚠️ getSubtitles failed for ${videoId}:`, e);
+                const [transcripts, metadata] = await Promise.all([
+                  buildTranscriptArtifacts(videoId, video.description),
+                  supadata.metadata({ url: video.url ?? videoUrl }).catch((error: unknown) => {
+                    console.warn(`⚠️ Supadata metadata failed for ${videoId}:`, error);
                     return null;
-                  });
-                  if (subs && Array.isArray(subs) && subs.length > 0) {
-                    transcriptText = subs.map((s) => s.text).join('\n');
-                  }
-                }
+                  }),
+                ]);
 
-                // Derive chapters from description if available (lines like "0:00 Intro" or "1:02:30 Deep dive")
-                const extractChaptersFromDescription = (description: string | undefined): string[] | undefined => {
-                  if (!description) return undefined;
-                  const lines = description.split(/\r?\n/);
-                  const chapterRegex = /^\s*((?:\d+:)?\d{1,2}:\d{2})\s*[\-|–|—]?\s*(.+)$/i;
-                  const chapters: string[] = [];
-                  for (const line of lines) {
-                    const match = line.match(chapterRegex);
-                    if (match) {
-                      const time = match[1];
-                      const title = match[2].trim();
-                      if (time && title) {
-                        chapters.push(`${time} - ${title}`);
+                const metadataAuthor = metadata?.author;
+                const metadataStats = metadata?.stats;
+                const metadataMedia = metadata?.media as { duration?: number; thumbnailUrl?: string } | undefined;
+
+                const stats: VideoStats | undefined =
+                  metadataStats != null || video.viewCount != null
+                    ? {
+                        views: resolveNumber(metadataStats?.views ?? video.viewCount),
+                        likes: resolveNumber(metadataStats?.likes),
+                        comments: resolveNumber(metadataStats?.comments),
+                        shares: resolveNumber(metadataStats?.shares),
                       }
-                    }
-                  }
-                  return chapters.length > 0 ? chapters : undefined;
-                };
-
-                // Fallback: generate chapters from subtitles when description has no chapters
-                const generateChaptersFromSubtitles = (
-                  subs: SubtitleFragment[] | undefined,
-                  targetCount: number = 30,
-                ): string[] | undefined => {
-                  if (!subs || subs.length === 0) return undefined;
-
-                  const parseSeconds = (s: string) => {
-                    const n = Number(s);
-                    return Number.isFinite(n) ? n : 0;
-                  };
-
-                  const last = subs[subs.length - 1];
-                  const totalDurationSec = Math.max(0, parseSeconds(last.start) + parseSeconds(last.dur));
-                  if (totalDurationSec <= 1) return undefined;
-
-                  const interval = Math.max(10, Math.floor(totalDurationSec / targetCount));
-
-                  const formatTime = (secondsTotal: number) => {
-                    const seconds = Math.max(1, Math.floor(secondsTotal)); // avoid 0:00 which UI filters out
-                    const h = Math.floor(seconds / 3600);
-                    const m = Math.floor((seconds % 3600) / 60);
-                    const s = seconds % 60;
-                    const pad = (n: number) => n.toString().padStart(2, '0');
-                    return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
-                  };
-
-                  const chapters: string[] = [];
-                  const usedTimes = new Set<number>();
-                  for (let t = interval; t < totalDurationSec; t += interval) {
-                    // find first subtitle starting at or after t
-                    const idx = subs.findIndex((sf) => parseSeconds(sf.start) >= t);
-                    const chosen = idx >= 0 ? subs[idx] : subs[subs.length - 1];
-                    const text = chosen.text?.replace(/\s+/g, ' ').trim();
-                    if (!text) continue;
-                    const key = Math.floor(parseSeconds(chosen.start));
-                    if (usedTimes.has(key)) continue;
-                    usedTimes.add(key);
-                    chapters.push(`${formatTime(key)} - ${text}`);
-                    if (chapters.length >= targetCount) break;
-                  }
-
-                  return chapters.length > 0 ? chapters : undefined;
-                };
-
-                const timestampsFromDescription = extractChaptersFromDescription(details?.description);
-                let timestamps: string[] | undefined = timestampsFromDescription;
-                if (!timestamps) {
-                  const subtitleSource: SubtitleFragment[] | undefined = details?.subtitles as
-                    | SubtitleFragment[]
-                    | undefined;
-                  if (subtitleSource && subtitleSource.length > 0) {
-                    timestamps = generateChaptersFromSubtitles(subtitleSource);
-                  } else {
-                    const subs = await getSubtitles({ videoID: videoId, lang: 'en' }).catch(() => null);
-                    timestamps = generateChaptersFromSubtitles(subs ?? undefined);
-                  }
-                }
+                    : undefined;
 
                 const processedVideo: VideoResult = {
                   ...baseResult,
                   details: {
-                    title: details?.title,
-                    thumbnail_url: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+                    title: metadata?.title ?? video.title,
+                    author_name: metadataAuthor?.displayName ?? video.channel?.name,
+                    author_url:
+                      metadataAuthor?.username
+                        ? `https://www.youtube.com/@${metadataAuthor.username}`
+                        : video.channel?.id
+                          ? `https://www.youtube.com/channel/${video.channel.id}`
+                          : video.channel?.url,
+                    thumbnail_url:
+                      metadataMedia?.thumbnailUrl ??
+                      video.thumbnail ??
+                      `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
                     provider_name: 'YouTube',
                     provider_url: 'https://www.youtube.com',
+                    author_avatar_url: metadataAuthor?.avatarUrl ?? video.channel?.thumbnail,
                   },
-                  captions: transcriptText,
-                  timestamps,
+                  captions: transcripts.transcriptText,
+                  timestamps: transcripts.timestamps,
+                  summary: metadata?.description ?? video.description,
+                  publishedDate: metadata?.createdAt ?? video.uploadDate,
+                  durationSeconds: metadataMedia?.duration ?? video.duration,
+                  stats,
+                  tags: metadata?.tags ?? video.tags,
                 };
 
-                console.log(`✅ Successfully processed video ${videoId}:`, {
-                  hasDetails: !!processedVideo.details,
-                  hasCaptions: !!processedVideo.captions,
-                  hasTimestamps: !!processedVideo.timestamps,
-                  timestampCount: Array.isArray(processedVideo.timestamps) ? processedVideo.timestamps.length : 0,
-                  captionsLength: processedVideo.captions ? processedVideo.captions.length : 0,
-                });
+                if (processedVideo.stats?.views != null) {
+                  processedVideo.views = processedVideo.stats.views;
+                }
+                if (processedVideo.stats?.likes != null) {
+                  processedVideo.likes = processedVideo.stats.likes;
+                }
+
                 return processedVideo;
               } catch (error) {
-                console.warn(`⚠️  Error processing video ${videoId}:`, error);
+                console.warn(`⚠️ Error processing video ${videoId}:`, error);
                 return baseResult;
               }
             }),
           );
 
-          // Process batch results - even failed promises return a result
           const validBatchResults = batchResults
             .filter((result) => result.status === 'fulfilled' && result.value !== null)
             .map((result) => (result as PromiseFulfilledResult<VideoResult>).value);
 
-          const failedBatchResults = batchResults.filter((result) => result.status === 'rejected');
-
-          console.log(`📊 [BATCH ${batchIndex + 1}] Results breakdown:`);
-          console.log(`  ✅ Successful: ${validBatchResults.length}/${batch.length}`);
-          console.log(`  ❌ Failed: ${failedBatchResults.length}/${batch.length}`);
-
-          if (failedBatchResults.length > 0) {
-            console.log(
-              `  🚨 Failed reasons:`,
-              failedBatchResults.map((r) => (r as PromiseRejectedResult).reason?.message || 'Unknown'),
-            );
-          }
-
           processedResults.push(...validBatchResults);
-          console.log(`📈 [BATCH ${batchIndex + 1}] Total processed so far: ${processedResults.length} videos`);
-          console.log(
-            `🆔 [BATCH ${batchIndex + 1}] Added video IDs:`,
-            validBatchResults.map((v) => v.videoId),
-          );
-
-          // Small delay between batches to be respectful to the API
-          if (batchIndex < batches.length - 1) {
-            console.log(`⏳ [BATCH ${batchIndex + 1}] Waiting 100ms before next batch...`);
-            await new Promise((resolve) => setTimeout(resolve, 100));
-          }
         } catch (batchError) {
-          console.error(`💥 [BATCH ${batchIndex + 1}] CRITICAL BATCH FAILURE:`, batchError);
-          if (batchError instanceof Error) {
-            console.error(`💥 [BATCH ${batchIndex + 1}] Stack trace:`, batchError.stack);
-          }
-          console.log(`🔄 [BATCH ${batchIndex + 1}] Continuing to next batch despite failure...`);
-          // Continue with next batch even if this one fails
-          continue;
+          console.error(`💥 Batch ${batchIndex + 1} failed:`, batchError);
         }
-
-        console.log(`✅ [BATCH ${batchIndex + 1}] Batch completed successfully`);
       }
 
-      console.log(`🏁 All batches processed! Final summary:`);
-      console.log(`📊 Total videos processed: ${processedResults.length}`);
-      console.log(
-        `🆔 All processed video IDs:`,
-        processedResults.map((v) => v.videoId),
-      );
-
-      console.log(
-        `🎉 FINAL RESULT: Successfully processed ${processedResults.length} videos out of ${uniqueResults.size} unique videos`,
-      );
-
-      // Debug: Check what videos have content for UI filtering
-      const videosWithContent = processedResults.filter(
-        (video) => (video.timestamps && video.timestamps.length > 0) || video.captions || video.summary,
-      );
-      console.log(`🎯 Videos with content for UI: ${videosWithContent.length}/${processedResults.length}`);
-
-      processedResults.forEach((video, index) => {
-        console.log(`Video ${index + 1} (${video.videoId}):`, {
-          hasTimestamps: !!(video.timestamps && video.timestamps.length > 0),
-          hasCaptions: !!video.captions,
-          hasSummary: !!video.summary,
-          willShowInUI: !!(video.timestamps && video.timestamps.length > 0) || !!video.captions || !!video.summary,
-        });
-      });
-
-      console.log('Processed Source 2', processedResults[2]);
+      console.log(`🏁 Supadata processing completed with ${processedResults.length} enriched videos`);
 
       return {
         results: processedResults,

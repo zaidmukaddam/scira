@@ -1,18 +1,29 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RefreshCw, Home, TriangleAlert, ChevronDown, ChevronUp, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Inter, Be_Vietnam_Pro, Baumans } from 'next/font/google';
+import { Be_Vietnam_Pro, Baumans } from 'next/font/google';
+import localFont from 'next/font/local';
 import { AnimatePresence, motion } from 'framer-motion';
 
-const inter = Inter({
-  subsets: ['latin'],
+const sfPro = localFont({
+  src: [
+    {
+      path: '../public/fonts/SF-Pro.ttf',
+      weight: '100 900',
+      style: 'normal',
+    },
+    {
+      path: '../public/fonts/SF-Pro-Italic.ttf',
+      weight: '100 900',
+      style: 'italic',
+    },
+  ],
   variable: '--font-sans',
-  weight: 'variable',
-  display: 'swap',
   preload: true,
+  display: 'swap',
 });
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -69,10 +80,10 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${beVietnamPro.variable} ${baumans.variable} font-sans antialiased bg-background text-foreground min-h-screen`}
+        className={`${sfPro.variable} ${beVietnamPro.variable} ${baumans.variable} font-sans antialiased bg-background text-foreground`}
         suppressHydrationWarning
       >
-        <div className="flex flex-col min-h-screen items-center justify-center p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-background">
           <motion.div
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}

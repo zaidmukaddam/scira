@@ -36,7 +36,7 @@ const AudioLinesIcon = forwardRef<AudioLinesIconHandle, AudioLinesIconProps>(
           onMouseEnter?.(e);
         }
       },
-      [controls, onMouseEnter]
+      [controls, onMouseEnter],
     );
 
     const handleMouseLeave = useCallback(
@@ -47,16 +47,11 @@ const AudioLinesIcon = forwardRef<AudioLinesIconHandle, AudioLinesIconProps>(
           onMouseLeave?.(e);
         }
       },
-      [controls, onMouseLeave]
+      [controls, onMouseLeave],
     );
 
     return (
-      <div
-        className={cn(className)}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        {...props}
-      >
+      <div className={cn(className)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} {...props}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width={size}
@@ -129,7 +124,7 @@ const AudioLinesIcon = forwardRef<AudioLinesIconHandle, AudioLinesIconProps>(
         </svg>
       </div>
     );
-  }
+  },
 );
 
 AudioLinesIcon.displayName = 'AudioLinesIcon';

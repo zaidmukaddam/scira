@@ -34,6 +34,14 @@ interface VideoDetails {
   type?: string;
   provider_name?: string;
   provider_url?: string;
+  author_avatar_url?: string;
+}
+
+interface VideoStats {
+  views?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
 }
 
 interface VideoResult {
@@ -42,10 +50,13 @@ interface VideoResult {
   details?: VideoDetails;
   captions?: string;
   timestamps?: string[];
-  views?: string;
-  likes?: string;
+  views?: number | string;
+  likes?: number | string;
   summary?: string;
   publishedDate?: string;
+  durationSeconds?: number;
+  stats?: VideoStats;
+  tags?: string[];
 }
 
 interface YouTubeSearchResponse {
@@ -124,27 +135,57 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
     return seconds;
   };
 
-  // Format view count
-  const formatViewCount = (views: string): string => {
-    const num = parseInt(views.replace(/[^0-9]/g, ''), 10);
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M views`;
-    } else if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K views`;
+  const parseCountValue = (value?: string | number): number | undefined => {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
     }
-    return `${num} views`;
+    if (typeof value === 'string') {
+      const sanitized = value.replace(/[^0-9]/g, '');
+      if (!sanitized) return undefined;
+      const parsed = Number(sanitized);
+      return Number.isFinite(parsed) ? parsed : undefined;
+    }
+    return undefined;
+  };
+
+  const formatDuration = (durationSeconds?: number): string | null => {
+    if (typeof durationSeconds !== 'number' || !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+      return null;
+    }
+    const hours = Math.floor(durationSeconds / 3600);
+    const minutes = Math.floor((durationSeconds % 3600) / 60);
+    const seconds = Math.floor(durationSeconds % 60);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${minutes}:${pad(seconds)}`;
+  };
+
+  // Format view count
+  const formatViewCount = (views?: string | number): string | null => {
+    const num = parseCountValue(views);
+    if (num == null) return null;
+    if (num >= 1_000_000) {
+      return `${(num / 1_000_000).toFixed(1)}M views`;
+    } else if (num >= 1_000) {
+      return `${(num / 1_000).toFixed(1)}K views`;
+    }
+    return `${num.toLocaleString()} views`;
   };
 
   // Format like count
-  const formatLikeCount = (likes: string): string => {
-    const num = parseInt(likes.replace(/[^0-9]/g, ''), 10);
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    } else if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K`;
+  const formatLikeCount = (likes?: string | number): string | null => {
+    const num = parseCountValue(likes);
+    if (num == null) return null;
+    if (num >= 1_000_000) {
+      return `${(num / 1_000_000).toFixed(1)}M likes`;
+    } else if (num >= 1_000) {
+      return `${(num / 1_000).toFixed(1)}K likes`;
     }
-    return likes;
+    return `${num.toLocaleString()} likes`;
   };
+
+  const durationLabel = formatDuration(video.durationSeconds);
+  const viewCountLabel = formatViewCount(video.stats?.views ?? video.views);
+  const likeCountLabel = formatLikeCount(video.stats?.likes ?? video.likes);
 
   return (
     <div
@@ -173,7 +214,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
             <YoutubeIcon className="h-8 w-8 text-red-500" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+        <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
           <div className="absolute bottom-2 left-2 right-2 text-white text-xs font-medium line-clamp-2">
             {video.details?.title || 'YouTube Video'}
           </div>
@@ -181,6 +222,11 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
             <PlayIcon className="h-6 w-6 text-red-600" />
           </div>
         </div>
+        {durationLabel && (
+          <div className="absolute bottom-2 right-2 z-10 rounded bg-black/80 text-white text-[10px] font-semibold px-1.5 py-0.5">
+            {durationLabel}
+          </div>
+        )}
       </Link>
 
       {/* Video Info */}
@@ -202,8 +248,13 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
               className="flex items-center gap-2 group mt-2 w-fit"
               aria-label={`Channel: ${video.details.author_name}`}
             >
-              <div className="h-5 w-5 rounded-full bg-red-50 dark:bg-red-950 flex items-center justify-center shrink-0">
-                <User2 className="h-3 w-3 text-red-500" />
+              <div className="h-5 w-5 rounded-full bg-red-50 dark:bg-red-950 flex items-center justify-center shrink-0 overflow-hidden border border-red-100/70 dark:border-red-900/40">
+                {video.details.author_avatar_url ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={video.details.author_avatar_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <User2 className="h-3 w-3 text-red-500" />
+                )}
               </div>
               <span className="text-xs text-neutral-600 dark:text-neutral-400 group-hover:text-red-500 transition-colors truncate">
                 {video.details.author_name}
@@ -226,33 +277,23 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
           )}
 
           {/* Stats */}
-          {(video.views || video.likes) && (
+          {(viewCountLabel || likeCountLabel) && (
             <div className="flex items-center gap-3 mt-2">
-              {video.views && (
+              {viewCountLabel && (
                 <div className="flex items-center gap-1.5">
                   <Eye className="h-3 w-3 text-neutral-400" />
-                  <span className="text-xs text-neutral-500 dark:text-neutral-400">{formatViewCount(video.views)}</span>
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">{viewCountLabel}</span>
                 </div>
               )}
-              {video.likes && (
+              {likeCountLabel && (
                 <div className="flex items-center gap-1.5">
                   <ThumbsUp className="h-3 w-3 text-neutral-400" />
-                  <span className="text-xs text-neutral-500 dark:text-neutral-400">{formatLikeCount(video.likes)}</span>
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">{likeCountLabel}</span>
                 </div>
               )}
             </div>
           )}
 
-          {/* Summary */}
-          {video.summary && (
-            <div className="text-xs bg-neutral-50 dark:bg-neutral-800 p-2 rounded border dark:border-neutral-700 mt-3">
-              <div className="flex items-baseline gap-2 mb-2">
-                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-0.5"></div>
-                <span className="font-medium text-neutral-700 dark:text-neutral-300">Summary</span>
-              </div>
-              <p className="text-neutral-600 dark:text-neutral-400 leading-relaxed">{video.summary}</p>
-            </div>
-          )}
         </div>
 
         {/* Action Buttons */}
@@ -321,46 +362,46 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                                 <div className="flex items-center justify-center min-w-[60px] h-8 bg-neutral-100 dark:bg-neutral-800 rounded font-mono text-sm font-medium text-neutral-700 dark:text-neutral-300 group-hover:bg-red-50 dark:group-hover:bg-red-950/30 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
                                   {chapterSearch.trim() && time.toLowerCase().includes(chapterSearch.toLowerCase())
                                     ? (() => {
-                                        const searchTerm = chapterSearch.toLowerCase();
-                                        const lowerTime = time.toLowerCase();
-                                        const index = lowerTime.indexOf(searchTerm);
+                                      const searchTerm = chapterSearch.toLowerCase();
+                                      const lowerTime = time.toLowerCase();
+                                      const index = lowerTime.indexOf(searchTerm);
 
-                                        if (index !== -1) {
-                                          return (
-                                            <>
-                                              {time.substring(0, index)}
-                                              <mark className="bg-yellow-200 dark:bg-yellow-900/50 px-1 py-0.5 rounded">
-                                                {time.substring(index, index + searchTerm.length)}
-                                              </mark>
-                                              {time.substring(index + searchTerm.length)}
-                                            </>
-                                          );
-                                        }
-                                        return time;
-                                      })()
+                                      if (index !== -1) {
+                                        return (
+                                          <>
+                                            {time.substring(0, index)}
+                                            <mark className="bg-yellow-200 dark:bg-yellow-900/50 px-1 py-0.5 rounded">
+                                              {time.substring(index, index + searchTerm.length)}
+                                            </mark>
+                                            {time.substring(index + searchTerm.length)}
+                                          </>
+                                        );
+                                      }
+                                      return time;
+                                    })()
                                     : time}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed group-hover:text-neutral-900 dark:group-hover:text-neutral-100">
                                     {chapterSearch.trim()
                                       ? (() => {
-                                          const searchTerm = chapterSearch.toLowerCase();
-                                          const lowerDescription = description.toLowerCase();
-                                          const index = lowerDescription.indexOf(searchTerm);
+                                        const searchTerm = chapterSearch.toLowerCase();
+                                        const lowerDescription = description.toLowerCase();
+                                        const index = lowerDescription.indexOf(searchTerm);
 
-                                          if (index !== -1) {
-                                            return (
-                                              <>
-                                                {description.substring(0, index)}
-                                                <mark className="bg-yellow-200 dark:bg-yellow-900/50 px-1 py-0.5 rounded">
-                                                  {description.substring(index, index + searchTerm.length)}
-                                                </mark>
-                                                {description.substring(index + searchTerm.length)}
-                                              </>
-                                            );
-                                          }
-                                          return description;
-                                        })()
+                                        if (index !== -1) {
+                                          return (
+                                            <>
+                                              {description.substring(0, index)}
+                                              <mark className="bg-yellow-200 dark:bg-yellow-900/50 px-1 py-0.5 rounded">
+                                                {description.substring(index, index + searchTerm.length)}
+                                              </mark>
+                                              {description.substring(index + searchTerm.length)}
+                                            </>
+                                          );
+                                        }
+                                        return description;
+                                      })()
                                       : description}
                                   </p>
                                 </div>
@@ -408,7 +449,7 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
                           value={transcriptSearch}
                           onChange={(e) => setTranscriptSearch(e.target.value)}
                           placeholder="Search transcript..."
-                          className="pl-9 border-neutral-200 dark:border-neutral-700 focus:border-red-300 dark:focus:border-red-600 focus:!outline-0 focus:!ring-0"
+                          className="pl-9 border-neutral-200 dark:border-neutral-700 focus:border-red-300 dark:focus:border-red-600 focus:outline-0! focus:ring-0!"
                         />
                       </div>
                       {transcriptSearch && (
@@ -477,6 +518,8 @@ const MemoizedYouTubeCard = React.memo(YouTubeCard, (prevProps, nextProps) => {
     prevProps.index === nextProps.index &&
     prevProps.video.url === nextProps.video.url &&
     JSON.stringify(prevProps.video.details) === JSON.stringify(nextProps.video.details) &&
+    JSON.stringify(prevProps.video.stats) === JSON.stringify(nextProps.video.stats) &&
+    prevProps.video.durationSeconds === nextProps.video.durationSeconds &&
     prevProps.video.views === nextProps.video.views &&
     prevProps.video.likes === nextProps.video.likes
   );
@@ -550,6 +593,10 @@ export const YouTubeSearchResults: React.FC<YouTubeSearchResultsProps> = ({ resu
       captionsLength:
         typeof video.captions === 'string' ? video.captions.length : parseCaptions(video.captions)?.length || 0,
       hasSummary,
+      durationSeconds: video.durationSeconds,
+      stats: video.stats,
+      viewStat: video.stats?.views ?? video.views,
+      likeStat: video.stats?.likes ?? video.likes,
       captionsType: typeof video.captions,
       timestampsType: typeof video.timestamps,
       rawCaptions: video.captions
@@ -597,7 +644,7 @@ export const YouTubeSearchResults: React.FC<YouTubeSearchResultsProps> = ({ resu
               </div>
             </div>
           </AccordionTrigger>
-          <AccordionContent>
+          <AccordionContent className='border-b rounded-2xl'>
             <div className="relative">
               <div className="w-full overflow-x-scroll">
                 <div className="flex pl-4">
@@ -608,7 +655,7 @@ export const YouTubeSearchResults: React.FC<YouTubeSearchResultsProps> = ({ resu
                   ))}
                 </div>
                 {filteredVideos.length > 3 && (
-                  <div className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-white dark:from-neutral-900 to-transparent pointer-events-none" />
+                  <div className="absolute right-0 top-0 bottom-0 w-12 bg-linear-to-l from-white dark:from-neutral-900 to-transparent pointer-events-none" />
                 )}
               </div>
             </div>
@@ -620,4 +667,4 @@ export const YouTubeSearchResults: React.FC<YouTubeSearchResultsProps> = ({ resu
 };
 
 // Export types for external use
-export type { VideoDetails, VideoResult, YouTubeSearchResponse, YouTubeSearchResultsProps };
+export type { VideoDetails, VideoResult, VideoStats, YouTubeSearchResponse, YouTubeSearchResultsProps };

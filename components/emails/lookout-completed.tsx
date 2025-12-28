@@ -12,12 +12,12 @@ const SearchCompletedEmail = (props: SearchCompletedEmailProps) => {
     <Html lang="en" dir="ltr">
       <Tailwind>
         <Head />
-        <Body className="bg-white font-sans py-[40px]">
-          <Container className="max-w-[560px] mx-auto px-[24px] py-[48px] bg-[#FFFFFF] border border-solid border-neutral-300 rounded-lg my-[24px]">
+        <Body className="bg-white font-sans mt-2">
+          <Container className="max-w-[560px] mx-auto px-[24px] py-[48px] bg-[#FFFFFF] border border-solid border-neutral-300 rounded-lg">
             <Section className="text-center mb-6">
               <Img src="https://scira.ai/icon.png" alt="Scira AI" className="w-[48px] h-[48px] mx-auto mb-[24px]" />
               <Text className="text-[24px] font-semibold text-[#020304] mb-[16px] m-0">Daily Lookout Complete</Text>
-              <Text className="text-[14px] font-medium text-[#374151] bg-[#F3F4F6] px-[16px] py-[8px] rounded-lg inline-block m-0 !mt-2">
+              <Text className="text-[14px] font-medium text-[#374151] bg-[#F3F4F6] px-[16px] py-[8px] rounded-lg inline-block m-0 mt-2!">
                 {props.chatTitle}
               </Text>
             </Section>

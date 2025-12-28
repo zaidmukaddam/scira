@@ -51,7 +51,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   }, [api]);
 
   return (
-    <div className="flex items-center justify-between h-screen bg-background">
+    <div className="flex items-center justify-between h-svh bg-background w-full md:w-auto">
       <div className="hidden lg:flex lg:w-1/2 h-full bg-muted/30 flex-col">
         <div className="flex-1 flex flex-col justify-between p-12">
           <div className="flex items-center gap-2">
@@ -110,8 +110,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                     <button
                       key={index}
                       onClick={() => api?.scrollTo(index)}
-                      className={`w-1.5 h-1.5 rounded-full transition-colors ${index === current ? 'bg-foreground' : 'bg-muted-foreground/30'
-                        }`}
+                      className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                        index === current ? 'bg-foreground' : 'bg-muted-foreground/30'
+                      }`}
                       aria-label={`Go to testimonial ${index + 1}`}
                     />
                   ))}
@@ -151,7 +152,9 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </div>
         </div>
       </div>
-      <div className="w-full lg:w-1/2 h-full flex flex-col items-center justify-center px-4 md:px-8">{children}</div>
+      <div className="flex-1 lg:w-1/2 flex items-center justify-center px-4 md:px-8 bg-background">
+        {children}
+      </div>
     </div>
   );
 }

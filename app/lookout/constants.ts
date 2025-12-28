@@ -199,8 +199,8 @@ export function getRandomExamples(count: number = 3) {
 export const exampleLookouts = getRandomExamples(3);
 
 export const LOOKOUT_LIMITS = {
-  TOTAL_LOOKOUTS: 10,
-  DAILY_LOOKOUTS: 5,
+  TOTAL_LOOKOUTS: 30,
+  DAILY_LOOKOUTS: 20,
 } as const;
 
 export const DEFAULT_FORM_VALUES = {

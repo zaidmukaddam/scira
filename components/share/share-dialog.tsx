@@ -10,7 +10,7 @@ import {
   XLogoIcon,
   RedditLogoIcon,
 } from '@phosphor-icons/react';
-import { HugeiconsIcon } from '@hugeicons/react';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import { Share03Icon } from '@hugeicons/core-free-icons';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,8 @@ export function ShareDialog({
 }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
   const [isChangingVisibility, setIsChangingVisibility] = useState(false);
+  const [choice, setChoice] = useState<'public' | 'private'>(selectedVisibilityType);
+  const [isShared, setIsShared] = useState<boolean>(selectedVisibilityType === 'public');
 
   const shareUrl = chatId ? `https://scira.ai/search/${chatId}` : '';
 
@@ -47,6 +49,11 @@ export function ShareDialog({
       setCopied(false);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    setChoice(selectedVisibilityType);
+    setIsShared(selectedVisibilityType === 'public');
+  }, [selectedVisibilityType]);
 
   const handleCopyLink = async () => {
     try {
@@ -64,9 +71,9 @@ export function ShareDialog({
     setIsChangingVisibility(true);
 
     try {
-      if (selectedVisibilityType === 'private') {
-        await onVisibilityChange('public');
-      }
+      await onVisibilityChange('public');
+      setChoice('public');
+      setIsShared(true);
       await handleCopyLink();
     } catch (error) {
       console.error('Error sharing chat:', error);
@@ -81,6 +88,8 @@ export function ShareDialog({
 
     try {
       await onVisibilityChange('private');
+      setChoice('private');
+      setIsShared(false);
       toast.success('Chat is now private');
       onOpenChange(false);
     } catch (error) {
@@ -124,180 +133,149 @@ export function ShareDialog({
     return null;
   }
 
-  const isPublic = selectedVisibilityType === 'public';
+  const isPublic = isShared;
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[460px] gap-0 p-0 border-0 shadow-lg">
+      <DialogContent className="w-100 sm:max-w-130 gap-0 p-0 border-0 shadow-lg">
         <div className="px-6 pt-6 pb-5">
           <DialogHeader className="space-y-1 pb-0">
-            <DialogTitle className="text-base font-semibold tracking-tight">Share</DialogTitle>
-            <div className="flex items-center gap-2 text-[13px] text-muted-foreground pt-0.5">
-              {isPublic ? (
-                <>
-                  <div className="flex items-center justify-center rounded-full bg-primary/10 size-[18px]">
-                    <GlobeIcon size={11} className="text-primary" weight="fill" />
-                  </div>
-                  <span>Public link - Anyone can view</span>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center justify-center rounded-full bg-muted size-[18px]">
-                    <LockIcon size={11} weight="fill" />
-                  </div>
-                  <span>Private - Only you can view</span>
-                </>
-              )}
-            </div>
+            <DialogTitle className="text-base font-semibold tracking-tight">
+              {isPublic ? 'Chat shared' : 'Share chat'}
+            </DialogTitle>
+            <p className="text-[13px] text-muted-foreground pt-0.5">
+              {isPublic ? 'Future messages aren’t included' : 'Only messages up until now will be shared'}
+            </p>
           </DialogHeader>
         </div>
 
-        <div className="px-6 pb-6">
+        <div className="px-6 pb-6 overflow-x-hidden">
           {isPublic ? (
             <div className="space-y-4">
-              {/* Link Copy - Main Focus */}
-              <div className="group relative overflow-hidden rounded-lg border bg-muted/40 transition-colors hover:bg-muted/60">
-                <div className="flex items-center gap-2 px-3.5 py-2.5">
-                  <div className="flex-1 min-w-0 relative">
-                    <code 
-                      className="text-[13px] text-foreground/70 block font-medium pr-12"
-                      style={{
-                        maskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
-                        WebkitMaskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
-                      }}
-                    >
-                      {shareUrl}
-                    </code>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleCopyLink}
-                    className={cn(
-                      "h-8 px-3 shrink-0 font-medium text-xs transition-all absolute right-2",
-                      copied 
-                        ? "text-green-600 dark:text-green-500" 
-                        : "hover:bg-background/80"
-                    )}
-                  >
-                    {copied ? (
-                      <>
-                        <CheckIcon size={14} className="mr-1.5" weight="bold" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <CopyIcon size={14} className="mr-1.5" />
-                        Copy
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Social Share - Streamlined */}
-              <div className="flex items-center gap-2">
-                {typeof navigator !== 'undefined' && 'share' in navigator && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleNativeShare}
-                    className="flex-1 h-9 font-medium"
-                  >
-                    <HugeiconsIcon icon={Share03Icon} size={15} strokeWidth={2} className="mr-2" />
-                    Share
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleShareLinkedIn}
-                  title="Share on LinkedIn"
-                  className="h-9 w-9 shrink-0"
-                >
-                  <LinkedinLogoIcon size={17} weight="fill" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleShareTwitter}
-                  title="Share on X"
-                  className="h-9 w-9 shrink-0"
-                >
-                  <XLogoIcon size={17} weight="fill" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleShareReddit}
-                  title="Share on Reddit"
-                  className="h-9 w-9 shrink-0"
-                >
-                  <RedditLogoIcon size={17} weight="fill" />
-                </Button>
-              </div>
-
-              {/* Footer Actions */}
-              <div className="flex items-center justify-between pt-2 border-t">
-                <Button
-                  variant="ghost"
-                  size="sm"
+              {/* Access options (interactive in shared state) */}
+              <div className="rounded-2xl border bg-card overflow-hidden">
+                <button
+                  type="button"
                   onClick={handleMakePrivate}
                   disabled={isChangingVisibility}
-                  className="h-8 text-xs text-muted-foreground hover:text-foreground -ml-2"
+                  className={cn('w-full flex items-start gap-3 px-5 py-4 text-left hover:bg-muted/50')}
                 >
-                  <LockIcon size={14} className="mr-1.5" />
-                  Make Private
-                </Button>
+                  <div className="mt-0.5">
+                    <LockIcon size={16} weight="fill" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">Private</p>
+                    </div>
+                    <p className="text-xs text-muted-foreground">Only you have access</p>
+                  </div>
+                </button>
+                <Separator />
+                <button
+                  type="button"
+                  aria-disabled
+                  className={cn('w-full flex items-start gap-3 px-5 py-4 text-left cursor-default')}
+                >
+                  <div className="mt-0.5">
+                    <GlobeIcon size={16} weight="fill" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">Public access</p>
+                      <CheckIcon size={16} className="text-primary" />
+                    </div>
+                    <p className="text-xs text-muted-foreground">Anyone with the link can view</p>
+                  </div>
+                </button>
+              </div>
+
+              {/* Link with Copy button - overflow masked under button */}
+              <div className="group relative overflow-hidden rounded-2xl border bg-muted/40 ">
+                <div className="px-4 py-3 overflow-x-hidden">
+                  <code
+                    className="text-[13px] text-foreground/70 font-medium truncate! text-wrap block"
+                    style={{
+                      maskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
+                      WebkitMaskImage: 'linear-gradient(to right, black 70%, transparent 100%)',
+                    }}
+                  >
+                    {shareUrl}
+                  </code>
+                </div>
                 <Button
-                  variant="ghost"
                   size="sm"
-                  onClick={() => onOpenChange(false)}
-                  className="h-8 text-xs -mr-2"
+                  variant="default"
+                  onClick={handleCopyLink}
+                  className={cn(
+                    'h-9 px-3 font-medium text-xs absolute right-1 top-1/2 -translate-y-1/2',
+                    copied && 'bg-primary hover:bg-primary',
+                  )}
                 >
-                  Done
+                  {copied ? 'Copied' : 'Copy link'}
                 </Button>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Private State - Premium Look */}
-              <div className="rounded-xl bg-gradient-to-br from-muted/40 to-muted/20 border border-dashed p-6 text-center">
-                <div className="flex items-center justify-center mb-3">
-                  <div className="flex items-center justify-center rounded-full bg-background size-10 shadow-sm ring-1 ring-black/5 dark:ring-white/10">
-                    <GlobeIcon size={18} className="text-muted-foreground" />
+              {/* Access options */}
+              <div className="rounded-2xl border bg-card overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setChoice('private')}
+                  className={cn('w-full flex items-start gap-3 px-5 py-4 text-left hover:bg-muted/50')}
+                >
+                  <div className="mt-0.5">
+                    <LockIcon size={16} weight="fill" />
                   </div>
-                </div>
-                <p className="text-sm font-medium text-foreground mb-1.5">
-                  Share this conversation
-                </p>
-                <p className="text-xs text-muted-foreground leading-relaxed max-w-[280px] mx-auto">
-                  Create a public link that anyone can access
-                </p>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">Private</p>
+                      {choice === 'private' && <CheckIcon size={16} className="text-primary" />}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Only you have access</p>
+                  </div>
+                </button>
+                <Separator />
+                <button
+                  type="button"
+                  onClick={handleShareAndCopy}
+                  className={cn('w-full flex items-start gap-3 px-5 py-4 text-left hover:bg-muted/50')}
+                >
+                  <div className="mt-0.5">
+                    <GlobeIcon size={16} weight="fill" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-medium">Public access</p>
+                      {choice === 'public' && <CheckIcon size={16} className="text-primary" />}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Anyone with the link can view</p>
+                  </div>
+                </button>
               </div>
 
-              {/* Actions */}
-              <div className="flex gap-2.5 pt-1">
-                <Button 
-                  variant="outline" 
-                  onClick={() => onOpenChange(false)}
-                  className="flex-1 h-10"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleShareAndCopy} 
+              <p className="text-[12px] text-muted-foreground">
+                Don&apos;t share personal information or third-party content without permission, and see our
+                <span className="px-0.5" />
+                <a className="underline" href="/privacy-policy" target="_blank" rel="noreferrer">
+                  Usage Policy
+                </a>
+                .
+              </p>
+
+              <div className="flex justify-end pt-1">
+                <Button
+                  onClick={async () => {
+                    // Ensure we switch to public before creating link
+                    if (choice === 'private') {
+                      await onVisibilityChange('public');
+                    }
+                    await handleShareAndCopy();
+                  }}
                   disabled={isChangingVisibility}
-                  className="flex-1 h-10 font-medium"
+                  className="h-10 px-4 font-medium"
                 >
-                  {isChangingVisibility ? (
-                    <>Creating...</>
-                  ) : (
-                    <>
-                      <GlobeIcon size={16} className="mr-2" weight="fill" />
-                      Create Link
-                    </>
-                  )}
+                  {isChangingVisibility ? 'Creating…' : 'Create share link'}
                 </Button>
               </div>
             </div>

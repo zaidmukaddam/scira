@@ -1,5 +1,6 @@
 import React from 'react';
 import type { Metadata } from 'next';
+import { SidebarLayout } from '@/components/sidebar-layout';
 
 export const metadata: Metadata = {
   title: 'Scira Lookout - Automated Search Monitoring',
@@ -26,12 +27,14 @@ interface LookoutLayoutProps {
 
 export default function LookoutLayout({ children }: LookoutLayoutProps) {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="flex flex-col min-h-screen">
-        <main className="flex-1" role="main" aria-label="Lookout management">
-          {children}
-        </main>
+    <SidebarLayout>
+      <div className="min-h-screen bg-background">
+        <div className="flex flex-col min-h-screen">
+          <main className="flex-1" role="main" aria-label="Lookout management">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </SidebarLayout>
   );
 }

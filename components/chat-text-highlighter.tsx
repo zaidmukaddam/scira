@@ -16,11 +16,7 @@ interface PopupPosition {
   text: string;
 }
 
-export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
-  children,
-  onHighlight,
-  className,
-}) => {
+export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({ children, onHighlight, className }) => {
   const [popup, setPopup] = useState<PopupPosition | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const popupRef = useRef<HTMLDivElement>(null);
@@ -120,22 +116,22 @@ export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
   }, []);
 
   return (
-    <div 
+    <div
       ref={containerRef}
-      className={cn('relative', className)} 
+      className={cn('relative', className)}
       onPointerUp={handlePointerUp}
       onPointerDown={handlePointerDown}
     >
       {children}
-      
+
       {popup && (
-        <div 
+        <div
           ref={popupRef}
           className="selection-popup absolute z-50 bg-background border border-border rounded-md shadow-lg p-1.5 pointer-events-auto"
           style={{
             left: popup.x,
             top: popup.y,
-            transform: 'translateX(-50%) translateY(-100%)'
+            transform: 'translateX(-50%) translateY(-100%)',
           }}
           onPointerDown={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}
@@ -150,7 +146,7 @@ export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
             >
               Copy
             </button>
-            
+
             <button
               onClick={() => {
                 handleQuote(popup.text);
@@ -160,7 +156,7 @@ export const ChatTextHighlighter: React.FC<ChatTextHighlighterProps> = ({
             >
               Quote
             </button>
-            
+
             <button
               onClick={closePopup}
               className="px-1.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"

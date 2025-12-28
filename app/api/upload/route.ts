@@ -1,4 +1,4 @@
-import { put } from '@vercel/blob';
+import { put, del } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -69,5 +69,45 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error uploading file:', error);
     return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  // Check for authentication but don't require it
+  let isAuthenticated = false;
+  try {
+    const session = await auth.api.getSession({
+      headers: request.headers,
+    });
+    isAuthenticated = !!session;
+  } catch (error) {
+    console.warn('Error checking authentication:', error);
+    // Continue as unauthenticated
+  }
+
+  try {
+    const body = await request.json();
+    const { url } = body;
+
+    if (!url || typeof url !== 'string') {
+      return NextResponse.json({ error: 'No URL provided' }, { status: 400 });
+    }
+
+    // Validate that the URL is from Vercel Blob
+    if (!url.includes('blob.vercel-storage.com')) {
+      return NextResponse.json({ error: 'Invalid blob URL' }, { status: 400 });
+    }
+
+    // Delete the file from Vercel Blob
+    await del(url);
+
+    return NextResponse.json({
+      success: true,
+      message: 'File deleted successfully',
+      authenticated: isAuthenticated,
+    });
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    return NextResponse.json({ error: 'Failed to delete file' }, { status: 500 });
   }
 }

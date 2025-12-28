@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import { Clock01Icon, PauseIcon, PlayIcon, Archive01Icon } from '@hugeicons/core-free-icons';
 import { Badge } from '@/components/ui/badge';
 import { BorderTrail } from '@/components/core/border-trail';

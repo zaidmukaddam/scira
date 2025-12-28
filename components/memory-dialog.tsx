@@ -65,7 +65,7 @@ export function MemoryDialog() {
     }
   };
 
-const handleClearSearch = () => {
+  const handleClearSearch = () => {
     setSearchQuery('');
     queryClient.invalidateQueries({ queryKey: ['memories', 'search'] });
   };

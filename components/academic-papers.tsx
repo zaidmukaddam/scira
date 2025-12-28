@@ -1,9 +1,12 @@
 import { Book, Calendar, Download, FileText, User2, ArrowUpRight, ChevronDown } from 'lucide-react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { Spinner } from '@/components/ui/spinner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import React, { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { CustomUIDataTypes, DataQueryCompletionPart } from '@/lib/types';
+import type { DataUIPart } from 'ai';
 
 interface AcademicResult {
   title: string;
@@ -36,6 +39,7 @@ interface AcademicPapersProps {
   results?: AcademicResult[];
   response?: AcademicSearchResponse | null;
   args?: AcademicSearchArgs;
+  annotations?: DataQueryCompletionPart[];
 }
 
 // Academic Paper Source Card Component - Compact List View
@@ -72,9 +76,7 @@ const AcademicSourceCard: React.FC<{
         <div className="flex-1 min-w-0 space-y-1">
           {/* Title */}
           <div className="flex items-baseline gap-1.5">
-            <h3 className="font-medium text-[13px] text-foreground line-clamp-1 flex-1">
-              {paper.title}
-            </h3>
+            <h3 className="font-medium text-[13px] text-foreground line-clamp-1 flex-1">{paper.title}</h3>
             <ArrowUpRight className="w-3 h-3 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
 
@@ -102,9 +104,11 @@ const AcademicSourceCard: React.FC<{
           </div>
 
           {/* Summary */}
-          <p className="text-[12px] text-muted-foreground line-clamp-2 leading-relaxed">
-            {paper.summary.length > 150 ? paper.summary.substring(0, 150) + '...' : paper.summary}
-          </p>
+          {paper.summary && (
+            <p className="text-[12px] text-muted-foreground line-clamp-2 leading-relaxed">
+              {paper.summary.length > 150 ? paper.summary.substring(0, 150) + '...' : paper.summary}
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -146,16 +150,12 @@ const AcademicPapersSheet: React.FC<{
               <div key={searchIndex} className="border-b border-neutral-200 dark:border-neutral-800 last:border-0">
                 <div className="px-6 py-3 bg-neutral-50 dark:bg-neutral-900/50 border-b border-neutral-200/60 dark:border-neutral-800/60">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                      {search.query}
-                    </span>
-                    <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                      {search.results.length}
-                    </span>
+                    <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">{search.query}</span>
+                    <span className="text-xs text-neutral-500 dark:text-neutral-400">{search.results.length}</span>
                   </div>
                 </div>
 
-                <div className="p-6 space-y-3">
+                <div className="space-y-3">
                   {search.results.map((paper, resultIndex) => (
                     <a key={resultIndex} href={paper.url} target="_blank" className="block">
                       <AcademicSourceCard paper={paper} />
@@ -171,21 +171,145 @@ const AcademicPapersSheet: React.FC<{
   );
 };
 
-const AcademicPapersCard = ({ results, response, args }: AcademicPapersProps) => {
+// Loading state component - Similar to reddit-search.tsx and x-search.tsx
+const AcademicSearchLoadingState: React.FC<{ queries: string[]; annotations: DataUIPart<CustomUIDataTypes>[] }> = ({
+  queries,
+  annotations,
+}) => {
+  const [isExpanded, setIsExpanded] = useState(true);
+  const loadingQueryTagsRef = React.useRef<HTMLDivElement>(null);
+  const totalResults = annotations.reduce((sum, a) => sum + (a.data.resultsCount || 0), 0);
+
+  const handleWheelScroll = (e: React.WheelEvent<HTMLDivElement>) => {
+    const container = e.currentTarget;
+    if (e.deltaY === 0) return;
+    const canScrollHorizontally = container.scrollWidth > container.clientWidth;
+    if (!canScrollHorizontally) return;
+    e.stopPropagation();
+    const isAtLeftEdge = container.scrollLeft <= 1;
+    const isAtRightEdge = container.scrollLeft >= container.scrollWidth - container.clientWidth - 1;
+    if (!isAtLeftEdge && !isAtRightEdge) {
+      e.preventDefault();
+      container.scrollLeft += e.deltaY;
+    } else if (isAtLeftEdge && e.deltaY > 0) {
+      e.preventDefault();
+      container.scrollLeft += e.deltaY;
+    } else if (isAtRightEdge && e.deltaY < 0) {
+      e.preventDefault();
+      container.scrollLeft += e.deltaY;
+    }
+  };
+
+  return (
+    <div className="w-full my-3">
+      <div className="border border-border rounded-lg overflow-hidden bg-card">
+        {/* Header */}
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-accent/50 transition-colors"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-md bg-muted">
+              <Book className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+            <span className="text-sm font-medium text-foreground">Academic Papers</span>
+            <span className="text-[11px] text-muted-foreground">{totalResults || 0} papers</span>
+          </div>
+          <ChevronDown
+            className={cn(
+              'h-3.5 w-3.5 text-muted-foreground transition-transform duration-200',
+              isExpanded && 'rotate-180',
+            )}
+          />
+        </button>
+
+        {/* Loading Content */}
+        {isExpanded && (
+          <div className="px-3 pb-3 space-y-2.5 border-t border-border">
+            {/* Query badges */}
+            <div
+              ref={loadingQueryTagsRef}
+              className="flex gap-1.5 overflow-x-auto no-scrollbar pt-2.5"
+              onWheel={handleWheelScroll}
+            >
+              {queries.length ? (
+                queries.map((query, i) => {
+                  const isCompleted = annotations.some((a) => a.data.query === query && a.data.status === 'completed');
+                  const annotation = annotations.find((a) => a.data.query === query);
+                  const resultsCount = annotation?.data.resultsCount || 0;
+                  return (
+                    <span
+                      key={i}
+                      className={cn(
+                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] shrink-0 border',
+                        isCompleted
+                          ? 'bg-muted border-border text-foreground'
+                          : 'bg-card border-border/60 text-muted-foreground',
+                      )}
+                    >
+                      {isCompleted ? (
+                        <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M20 6L9 17l-5-5" />
+                        </svg>
+                      ) : (
+                        <Spinner className="w-2.5 h-2.5" />
+                      )}
+                      <span className="font-medium">{query}</span>
+                      {resultsCount > 0 && <span className="text-[10px] opacity-70">({resultsCount})</span>}
+                    </span>
+                  );
+                })
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] shrink-0 border border-border bg-card text-muted-foreground">
+                  <Spinner className="w-2.5 h-2.5" />
+                  <span className="font-medium">Searching academic papers...</span>
+                </span>
+              )}
+            </div>
+
+            {/* Skeleton items */}
+            <div className="space-y-px">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="py-2.5 px-3 border-b border-border last:border-0">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-4 h-4 mt-0.5 rounded-full bg-muted animate-pulse flex items-center justify-center">
+                      <Book className="h-2.5 w-2.5 text-muted-foreground/30" />
+                    </div>
+                    <div className="flex-1 space-y-1.5">
+                      <div className="h-3 bg-muted rounded animate-pulse w-3/4" />
+                      <div className="h-2.5 bg-muted rounded animate-pulse w-1/2" />
+                      <div className="h-2.5 bg-muted rounded animate-pulse w-full" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const AcademicPapersCard = ({ results, response, args, annotations = [] }: AcademicPapersProps) => {
   const [sourcesSheetOpen, setSourcesSheetOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
 
   // Normalize args to ensure required arrays for UI rendering
   const normalizedArgs = React.useMemo<NormalizedAcademicSearchArgs>(
     () => ({
-      queries: args ? (Array.isArray(args.queries) ? args.queries : [args.queries ?? '']).filter(
-        (q): q is string => typeof q === 'string' && q.length > 0
-      ) : [],
-      maxResults: args ? (Array.isArray(args.maxResults) ? args.maxResults : [args.maxResults ?? 20]).filter(
-        (n): n is number => typeof n === 'number'
-      ) : [],
+      queries: args
+        ? (Array.isArray(args.queries) ? args.queries : [args.queries ?? '']).filter(
+            (q): q is string => typeof q === 'string' && q.length > 0,
+          )
+        : [],
+      maxResults: args
+        ? (Array.isArray(args.maxResults) ? args.maxResults : [args.maxResults ?? 20]).filter(
+            (n): n is number => typeof n === 'number',
+          )
+        : [],
     }),
-    [args]
+    [args],
   );
 
   // Support both old format (results) and new format (response)
@@ -201,6 +325,11 @@ const AcademicPapersCard = ({ results, response, args }: AcademicPapersProps) =>
 
   const allResults = searches.flatMap((search) => search.results);
   const totalResults = allResults.length;
+
+  // Show loading state if no results but we have queries and annotations
+  if (!response && !results && normalizedArgs.queries.length > 0) {
+    return <AcademicSearchLoadingState queries={normalizedArgs.queries} annotations={annotations} />;
+  }
 
   return (
     <div className="w-full my-3">
@@ -235,7 +364,7 @@ const AcademicPapersCard = ({ results, response, args }: AcademicPapersProps) =>
             <ChevronDown
               className={cn(
                 'h-3.5 w-3.5 text-muted-foreground transition-transform duration-200',
-                isExpanded && 'rotate-180'
+                isExpanded && 'rotate-180',
               )}
             />
           </div>
@@ -248,7 +377,7 @@ const AcademicPapersCard = ({ results, response, args }: AcademicPapersProps) =>
             {searches.length > 1 && normalizedArgs.queries.length > 0 && (
               <div className="px-3 pt-2.5 pb-2 flex gap-1.5 overflow-x-auto no-scrollbar border-b border-border">
                 {searches.map((search, i) => (
-                  <span 
+                  <span
                     key={i}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] shrink-0 border bg-muted border-border text-foreground font-medium"
                   >

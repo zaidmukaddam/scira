@@ -42,14 +42,17 @@ export function useShareDialog({
   }, []);
 
   // Only return props if we have a valid chatId and user is owner
-  const shareDialogProps = chatId && isOwner ? {
-    isOpen,
-    onClose: closeDialog,
-    chatId,
-    currentVisibility,
-    onVisibilityChange,
-    isOwner,
-  } : null;
+  const shareDialogProps =
+    chatId && isOwner
+      ? {
+          isOpen,
+          onClose: closeDialog,
+          chatId,
+          currentVisibility,
+          onVisibilityChange,
+          isOwner,
+        }
+      : null;
 
   return {
     isOpen,

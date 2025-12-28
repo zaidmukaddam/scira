@@ -106,7 +106,7 @@ class ParallelSearchStrategy implements SearchStrategy {
   constructor(
     private parallel: Parallel,
     private firecrawl: FirecrawlApp,
-  ) { }
+  ) {}
 
   async search(
     queries: string[],
@@ -146,18 +146,28 @@ class ParallelSearchStrategy implements SearchStrategy {
           const [singleResponse, firecrawlImages] = await Promise.all([
             this.parallel.beta.search({
               objective: query,
-              search_queries: [query],
-              processor: currentQuality === 'best' ? 'pro' : 'base',
+              mode: currentQuality === 'best' ? 'agentic' : 'one-shot',
               max_results: Math.max(currentMaxResults, 10),
-              max_chars_per_result: 1000,
+              excerpts: {
+                max_chars_per_result: 5000,
+              },
+              fetch_policy: {
+                max_age_seconds: 3600,
+                timeout_seconds: 120,
+              },
             }),
-            this.firecrawl.search(query, {
-              sources: ['images'],
-              limit: 3,
-            }).catch((error) => {
-              console.error(`Firecrawl error for query "${query}":`, error);
-              return { images: [] } as Partial<Document> as any;
-            }),
+            this.firecrawl
+              .search(query, {
+                sources: ['images'],
+                limit: 3,
+                scrapeOptions: {
+                  storeInCache: true,
+                },
+              })
+              .catch((error) => {
+                console.error(`Firecrawl error for query "${query}":`, error);
+                return { images: [] } as Partial<Document> as any;
+              }),
           ]);
 
           const results = (singleResponse?.results || []).map((result: any) => ({
@@ -244,7 +254,7 @@ class ParallelSearchStrategy implements SearchStrategy {
 
 // Tavily search strategy
 class TavilySearchStrategy implements SearchStrategy {
-  constructor(private tvly: TavilyClient) { }
+  constructor(private tvly: TavilyClient) {}
 
   async search(
     queries: string[],
@@ -299,9 +309,9 @@ class TavilySearchStrategy implements SearchStrategy {
               const imageValidation = await isValidImageUrl(sanitizedUrl);
               return imageValidation.valid
                 ? {
-                  url: imageValidation.redirectedUrl || sanitizedUrl,
-                  description: description || '',
-                }
+                    url: imageValidation.redirectedUrl || sanitizedUrl,
+                    description: description || '',
+                  }
                 : null;
             },
           ),
@@ -362,7 +372,7 @@ class TavilySearchStrategy implements SearchStrategy {
 
 // Firecrawl search strategy
 class FirecrawlSearchStrategy implements SearchStrategy {
-  constructor(private firecrawl: FirecrawlApp) { }
+  constructor(private firecrawl: FirecrawlApp) {}
 
   async search(
     queries: string[],
@@ -494,7 +504,7 @@ class FirecrawlSearchStrategy implements SearchStrategy {
 
 // Exa search strategy
 class ExaSearchStrategy implements SearchStrategy {
-  constructor(private exa: Exa) { }
+  constructor(private exa: Exa) {}
 
   async search(
     queries: string[],
@@ -525,18 +535,11 @@ class ExaSearchStrategy implements SearchStrategy {
           },
         });
 
-        const searchOptions: any = {
-          text: true,
-          type: currentQuality === 'best' ? 'hybrid' : 'auto',
+        const data = await this.exa.search(query, {
+          type: currentQuality === 'best' ? 'deep' : 'auto',
           numResults: currentMaxResults < 10 ? 10 : currentMaxResults,
-          livecrawl: 'preferred',
-          useAutoprompt: true,
-          category: currentTopic === 'news' ? 'news' : '',
-        };
-
-        // Domain include/exclude behavior removed
-
-        const data = await this.exa.searchAndContents(query, searchOptions);
+          category: currentTopic === 'news' ? 'news' : undefined,
+        });
 
         // Collect all images first
         const collectedImages: { url: string; description: string }[] = [];
@@ -628,14 +631,17 @@ const createSearchStrategy = (
 
 export function webSearchTool(
   dataStream?: UIMessageStreamWriter<ChatMessage> | undefined,
-  searchProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl' = 'parallel',
+  searchProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl' = 'exa',
 ) {
   return tool({
-    description: `This is the default tool of the app to be used to search the web for information with multiple queries, max results, search depth, topics, and quality.
+    description: `This is the default tool of the app to be used to search the web for information with multiple queries(5-10), max results(15-20), topics, and quality.
     Very important Rules:
-    ...${searchProvider === "parallel" ? "The First Query should be the objective and the rest of the queries should be related to the objective" : ""}...
+    ...${searchProvider === 'parallel' ? 'The First Query should be the objective and the rest of the queries should be related to the objective' : ''}...
     - The queries should always be in the same language as the user's message.
-    - And count of the queries should be 3-5.
+    - And count of the queries should be 5-10 always!
+    - Assert to max number of results for each query to be 15-20.
+    - Your knowledge base is zero, so you must gather as much information as possible from the tools you have.
+    - **Prohibition**: NEVER use the retrieve tool after running web_search tool
     - Do not use the best quality unless absolutly required since it is time expensive.
     - ⚠️ CRITICAL: ALWAYS include date/time context in search queries:
       - For current events: "latest", "${new Date().getFullYear()}", "today", "current", "recent"
@@ -645,30 +651,36 @@ export function webSearchTool(
       - Examples: "latest AI news ${new Date().getFullYear()}", "current stock prices today", "recent developments in ${new Date().getFullYear()}"
     `,
     inputSchema: z.object({
-      queries: z.array(
-        z.string().describe('Array of 3-5 search queries to look up on the web. Default is 5. Minimum is 3.'),
-      ).min(3),
-      maxResults: z.array(
-        z
-          .number()
-          .describe(
-            'Array of maximum number of results to return per query. Default is 10. Minimum is 8. Maximum is 15.',
-          ),
-      ).optional(),
-      topics: z.array(
-        z
-          .enum(['general', 'news'])
-          .describe(
-            'Array of topic types to search for. Default is general. Other options are news and finance. No other options are available.',
-          ),
-      ).optional(),
-      quality: z.array(
-        z
-          .enum(['default', 'best'])
-          .describe(
-            'Array of quality levels for the search. Default is default. Other option is best. DO NOT use best unless necessary.',
-          ),
-      ).optional(),
+      queries: z
+        .array(z.string().describe('Array of 3-5 search queries to look up on the web. Default is 5. Minimum is 3.'))
+        .min(3),
+      maxResults: z
+        .array(
+          z
+            .number()
+            .describe(
+              'Array of maximum number of results to return per query. Default is 10. Minimum is 10. Maximum is 15.',
+            ),
+        )
+        .optional(),
+      topics: z
+        .array(
+          z
+            .enum(['general', 'news'])
+            .describe(
+              'Array of topic types to search for. Default is general. Other options are news and finance. No other options are available.',
+            ),
+        )
+        .optional(),
+      quality: z
+        .array(
+          z
+            .enum(['default', 'best'])
+            .describe(
+              'Array of quality levels for the search. Default is default. Other option is best. DO NOT use best unless necessary.',
+            ),
+        )
+        .optional(),
     }),
     execute: async ({
       queries,

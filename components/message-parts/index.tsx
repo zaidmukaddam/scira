@@ -1,6 +1,6 @@
 import React, { memo, useState, useRef, useEffect } from 'react';
 import isEqual from 'fast-deep-equal';
-import { ReasoningUIPart, DataUIPart, isToolUIPart } from 'ai';
+import { ReasoningUIPart, DataUIPart, isToolUIPart, isStaticToolUIPart } from 'ai';
 import { ReasoningPartView } from '@/components/reasoning-part';
 import { MarkdownRenderer } from '@/components/markdown';
 import { ChatTextHighlighter } from '@/components/chat-text-highlighter';
@@ -8,23 +8,26 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { deleteTrailingMessages, generateSpeech } from '@/app/actions';
+import { deleteTrailingMessages, generateSpeech, branchOutChat } from '@/app/actions';
 import { toast } from 'sonner';
 import { Wave } from '@foobar404/wave';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { ShareButton } from '@/components/share';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { RepeatIcon, Copy01Icon, CpuIcon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
+import { RepeatIcon, Copy01Icon, CpuIcon, SplitIcon } from '@hugeicons/core-free-icons';
 import { ChatMessage, CustomUIDataTypes, DataQueryCompletionPart, DataExtremeSearchPart } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
-import { SciraLogoHeader } from '@/components/scira-logo-header';
 import Image from 'next/image';
-import ReactMarkdown from 'react-markdown';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
 
 // Tool-specific components (eagerly loaded for better UX)
-import { motion } from 'framer-motion';
 import { SearchLoadingState } from '@/components/tool-invocation-list-view';
 import {
   MapPin,
@@ -36,18 +39,19 @@ import {
   TrendingUpIcon,
   Plane,
   User2,
-  Server,
   XCircle,
   Loader2,
   Clock,
   Globe,
   YoutubeIcon,
-  ArrowUpRight,
   TextIcon,
   Pause,
   Play as PlayIcon,
   Info,
   Code,
+  FileText,
+  FileCode,
+  Download,
 } from 'lucide-react';
 import {
   RedditLogoIcon,
@@ -58,9 +62,12 @@ import {
   ArrowRightIcon,
   SigmaIcon,
 } from '@phosphor-icons/react';
+import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { getModelConfig } from '@/ai/providers';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 import { Spinner } from '../ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Eagerly load tool components for better UX (except browser-only components)
 import dynamic from 'next/dynamic';
@@ -78,14 +85,22 @@ import { CurrencyConverter } from '@/components/currency_conv';
 import { YouTubeSearchResults } from '@/components/youtube-search-results';
 import { ConnectorsSearchResults } from '@/components/connectors-search-results';
 import { CodeInterpreterView, NearbySearchSkeleton } from '@/components/tool-invocation-list-view';
+import { RetrieveResults } from '@/components/retrieve-results';
+import { useDataStream } from '../data-stream-provider';
 
 // Components that require browser APIs (Leaflet, charts) - load dynamically with ssr: false
 const InteractiveChart = dynamic(() => import('@/components/interactive-charts'), { ssr: false });
-const MapComponent = dynamic(() => import('@/components/map-components').then(m => ({ default: m.MapComponent })), { ssr: false });
+const MapComponent = dynamic(() => import('@/components/map-components').then((m) => ({ default: m.MapComponent })), {
+  ssr: false,
+});
 const NearbySearchMapView = dynamic(() => import('@/components/nearby-search-map-view'), { ssr: false });
 const InteractiveStockChart = dynamic(() => import('@/components/interactive-stock-chart'), { ssr: false });
-const CryptoChart = dynamic(() => import('@/components/crypto-charts').then(m => ({ default: m.CryptoChart })), { ssr: false });
-const CryptoTickers = dynamic(() => import('@/components/crypto-charts').then(m => ({ default: m.CryptoTickers })), { ssr: false });
+const CryptoChart = dynamic(() => import('@/components/crypto-charts').then((m) => ({ default: m.CryptoChart })), {
+  ssr: false,
+});
+const CryptoTickers = dynamic(() => import('@/components/crypto-charts').then((m) => ({ default: m.CryptoTickers })), {
+  ssr: false,
+});
 
 // Simple loader component for stock chart - no useEffect needed
 const StockChartLoader = ({ title }: { title?: string; input?: any }) => {
@@ -111,7 +126,7 @@ const ToolErrorDisplay = ({ errorText, toolName }: { errorText: string; toolName
   <div className="w-full my-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
     <div className="p-4">
       <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
+        <div className="shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
           <XCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
         </div>
         <div className="flex-1">
@@ -173,7 +188,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
     onHighlight,
     annotations,
   }) => {
+    useDataStream();
     const [isRegenerating, setIsRegenerating] = useState(false);
+    const [isBranchingOut, setIsBranchingOut] = useState(false);
+    const router = useRouter();
+    const queryClient = useQueryClient();
 
     // Handle text parts
     if (part.type === 'text') {
@@ -181,11 +200,16 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       const hasReasoningParts = parts.some((p) => p.type === 'reasoning');
 
       // For empty text parts in a streaming message, show loading animation only if no tool invocations and no reasoning parts are present
-      if ((!part.text || part.text.trim() === '') && (status === 'streaming' || status === 'submitted') && !hasActiveToolInvocations && !hasReasoningParts) {
+      if (
+        (!part.text || part.text.trim() === '') &&
+        (status === 'streaming' || status === 'submitted') &&
+        !hasActiveToolInvocations &&
+        !hasReasoningParts
+      ) {
         return (
           <div
             key={`${messageIndex}-${partIndex}-loading`}
-            className="flex flex-col min-h-[calc(100vh-18rem)] !m-0 !p-0 !mt-4"
+            className="flex flex-col min-h-[calc(100vh-18rem)] m-0! p-0! mt-4!"
           >
             <div className="flex space-x-2 ml-8 mt-2">
               <div
@@ -230,21 +254,46 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
         return null;
       }
 
+      // Detect text sandwiched between reasoning and tool-invocation
+      if (prevPart?.type === 'reasoning' && nextPart?.type.includes('tool-')) {
+        return null;
+      }
+
+      // Skip text parts that are ONLY <|im_end|> after a tool call
+      const hasToolInvocationBefore = parts.slice(0, partIndex).some((p) => p.type.includes('tool-'));
+      if (hasToolInvocationBefore && part.text.trim() === '<|im_end|>') {
+        return null;
+      }
+
+      // Determine if this is the last assistant message
+      const isLastAssistantMessage = messageIndex === messages.length - 1 && message.role === 'assistant';
+
+      // Show action buttons when:
+      // 1. Status is ready (no streaming happening), OR
+      // 2. This is NOT the last assistant message (previous messages keep their buttons)
+      const shouldShowActionButtons = status === 'ready' || !isLastAssistantMessage;
+
+      // Clean the text by removing box markers and special tokens
+      const cleanText = part.text
+        .replace(/<\|begin_of_box\|>/g, '')
+        .replace(/<\|end_of_box\|>/g, '')
+        .replace(/<\|im_end\|>/g, '');
+
       return (
         <div key={`${messageIndex}-${partIndex}-text`} className="mt-2">
           <div>
             <ChatTextHighlighter onHighlight={onHighlight} removeHighlightOnClick={true}>
-              <MarkdownRenderer content={part.text} />
+              <MarkdownRenderer content={cleanText} />
             </ChatTextHighlighter>
           </div>
 
-          {/* Add compact buttons below the text with tooltips */}
-          {status === 'ready' && (
-            <div className="flex flex-row items-center justify-between gap-2 mt-2.5 mb-5 !-ml-1 flex-wrap">
-              {/* Left side - Action buttons container */}
-              <div className="flex flex-wrap items-center gap-1">
-                {/* Only show reload for owners OR unauthenticated users on private chats */}
-                {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && (
+          {/* Action buttons below the text */}
+          {shouldShowActionButtons && (
+            <div className="flex items-center justify-between mt-3 mb-4">
+              {/* Left side - Action buttons */}
+              <div className="flex items-center -ml-1.5">
+                {/* Rewrite button - only for owners or unauthenticated users on private chats, and only on last assistant message */}
+                {((user && isOwner) || (!user && selectedVisibilityType === 'private')) && isLastAssistantMessage && (
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -260,16 +309,13 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               const lastUserMessage = messages.findLast((m) => m.role === 'user');
                               if (!lastUserMessage) return;
 
-                              // Step 1: Delete trailing messages if user is authenticated
                               if (user && lastUserMessage.id) {
                                 await deleteTrailingMessages({
                                   id: lastUserMessage.id,
                                 });
                               }
 
-                              // Step 2: Update local state to remove assistant messages
                               const newMessages = [];
-                              // Find the index of the last user message
                               for (let i = 0; i < messages.length; i++) {
                                 newMessages.push(messages[i]);
                                 if (messages[i].id === lastUserMessage.id) {
@@ -277,11 +323,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                                 }
                               }
 
-                              // Step 3: Update UI state
                               setMessages(newMessages);
                               setSuggestedQuestions([]);
-
-                              // Step 4: Reload
                               await regenerate();
                             } catch (error) {
                               console.error('Error in reload:', error);
@@ -289,16 +332,17 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               setIsRegenerating(false);
                             }
                           }}
-                          className="size-8 p-0 rounded-full"
+                          className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                         >
-                          <HugeiconsIcon icon={RepeatIcon} size={32} color="currentColor" strokeWidth={2} />
+                          <HugeiconsIcon icon={RepeatIcon} size={16} color="currentColor" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>Rewrite</TooltipContent>
+                      <TooltipContent side="bottom" sideOffset={4}>Try Again</TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 )}
-                {/* Share button using unified component */}
+
+                {/* Share button */}
                 {onVisibilityChange && (
                   <ShareButton
                     chatId={chatId || null}
@@ -310,9 +354,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     user={user}
                     variant="icon"
                     size="sm"
-                    className="rounded-full"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                   />
                 )}
+
+                {/* Copy button */}
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -320,106 +366,318 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                         variant="ghost"
                         size="icon"
                         onClick={() => {
-                          navigator.clipboard.writeText(part.text);
+                          navigator.clipboard.writeText(cleanText);
                           toast.success('Copied to clipboard');
                         }}
-                        className="size-8 p-0 rounded-full"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                       >
-                        <HugeiconsIcon icon={Copy01Icon} size={32} color="currentColor" strokeWidth={2} />
+                        <HugeiconsIcon icon={Copy01Icon} size={16} color="currentColor" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Copy</TooltipContent>
+                    <TooltipContent side="bottom" sideOffset={4}>Copy</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
+
+                {/* Branch Out button - only for owners or unauthenticated users on private chats, and only on assistant messages */}
+                {((user && isOwner) || (!user && selectedVisibilityType === 'private')) &&
+                  message.role === 'assistant' && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={isBranchingOut}
+                            onClick={async () => {
+                              if (isBranchingOut) return;
+
+                              try {
+                                setIsBranchingOut(true);
+
+                                // Find the corresponding user message (the one before this assistant message)
+                                const currentMessageIndex = messages.findIndex((m) => m.id === message.id);
+                                if (currentMessageIndex === -1) {
+                                  toast.error('Could not find message');
+                                  return;
+                                }
+
+                                // Find the last user message before this assistant message
+                                let userMessage: ChatMessage | undefined;
+                                for (let i = currentMessageIndex - 1; i >= 0; i--) {
+                                  if (messages[i].role === 'user') {
+                                    userMessage = messages[i];
+                                    break;
+                                  }
+                                }
+
+                                if (!userMessage) {
+                                  toast.error('Could not find corresponding user message');
+                                  return;
+                                }
+
+                                // Branch out the chat
+                                const result = await branchOutChat({
+                                  userMessage: userMessage as any,
+                                  assistantMessage: message as any,
+                                });
+
+                                if (result.success && result.chatId) {
+                                  // Invalidate recent chats cache to show the new chat in sidebar
+                                  if (user?.id) {
+                                    queryClient.refetchQueries({ queryKey: ['recent-chats', user.id] });
+                                  }
+                                  toast.success('Chat branched out successfully');
+                                  await new Promise((resolve) => setTimeout(resolve, 100));
+                                  // Navigate to the new chat
+                                  router.push(`/search/${result.chatId}`);
+                                } else {
+                                  toast.error(result.error || 'Failed to branch out chat');
+                                }
+                              } catch (error) {
+                                console.error('Error branching out chat:', error);
+                                toast.error('Failed to branch out chat');
+                              } finally {
+                                setIsBranchingOut(false);
+                              }
+                            }}
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                          >
+                            {isBranchingOut ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <HugeiconsIcon icon={SplitIcon} size={16} color="currentColor" className="rotate-90" />
+                            )}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" sideOffset={4}>Branch Out</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+
+                {/* Export dropdown */}
+                {message.role === 'assistant' && (
+                  <DropdownMenu>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom" sideOffset={4}>Export</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                    <DropdownMenuContent className="min-w-[140px]" align="start" sideOffset={4}>
+                      <DropdownMenuItem
+                        className="cursor-pointer gap-2"
+                        onClick={async () => {
+                          try {
+                            const textParts = (message.parts || [])
+                              .filter((p) => p.type === 'text' && (p as any).text)
+                              .map((p: any) => String(p.text).trim())
+                              .filter((s: string) => s.length > 0);
+                            const content = textParts.join('\n\n');
+                            if (!content) {
+                              toast.error('Nothing to export from assistant message');
+                              return;
+                            }
+
+                            const payload = {
+                              title: 'Scira AI',
+                              content,
+                              meta: {
+                                modelLabel: modelLabel || null,
+                                createdAt: (message as any)?.createdAt || Date.now(),
+                              },
+                            };
+
+                            const res = await fetch('/api/export/pdf', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify(payload),
+                            });
+                            if (!res.ok) {
+                              const errText = await res.text();
+                              throw new Error(errText || 'Failed to generate PDF');
+                            }
+                            const blob = await res.blob();
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `scira-export-${message.id || Date.now()}.pdf`;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            URL.revokeObjectURL(url);
+                            toast.success('PDF downloaded');
+                          } catch (e) {
+                            console.error('Export PDF error:', e);
+                            toast.error('Failed to export PDF');
+                          }
+                        }}
+                      >
+                        <FileText className="h-4 w-4" />
+                        <span>PDF</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="cursor-pointer gap-2"
+                        onClick={() => {
+                          try {
+                            const textParts = (message.parts || [])
+                              .filter((p) => p.type === 'text' && (p as any).text)
+                              .map((p: any) => String(p.text).trim())
+                              .filter((s: string) => s.length > 0);
+                            const content = textParts.join('\n\n');
+                            if (!content) {
+                              toast.error('Nothing to export from assistant message');
+                              return;
+                            }
+
+                            const links: { text: string; url: string }[] = [];
+                            const seen = new Set<string>();
+
+                            const inlineLinkRegex = /\[([^\]]+)]\((https?:\/\/[^\s)]+)\)/g;
+                            let m: RegExpExecArray | null;
+                            while ((m = inlineLinkRegex.exec(content)) !== null) {
+                              const text = m[1];
+                              const url = m[2].replace(/[.,;:]+$/, '');
+                              if (!seen.has(url)) {
+                                seen.add(url);
+                                links.push({ text, url });
+                              }
+                            }
+
+                            const bareUrlRegex = /(?:^|\s)(https?:\/\/[^\s)]+)(?=$|\s)/g;
+                            while ((m = bareUrlRegex.exec(content)) !== null) {
+                              const url = m[1].replace(/[.,;:]+$/, '');
+                              if (!seen.has(url)) {
+                                seen.add(url);
+                                links.push({ text: url, url });
+                              }
+                            }
+
+                            const references =
+                              links.length > 0
+                                ? '\n\n## References\n\n' + links.map((l) => `- [${l.text}](${l.url})`).join('\n')
+                                : '';
+
+                            const finalMd = content + references;
+
+                            const blob = new Blob([finalMd], { type: 'text/markdown;charset=utf-8;' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `scira-export-${message.id || Date.now()}.md`;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            URL.revokeObjectURL(url);
+                            toast.success('Markdown downloaded');
+                          } catch (e) {
+                            console.error('Export Markdown error:', e);
+                            toast.error('Failed to export Markdown');
+                          }
+                        }}
+                      >
+                        <FileCode className="h-4 w-4" />
+                        <span>Markdown</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
 
-              {/* Right side - Message metadata stats popover */}
+              {/* Right side - Message metadata */}
               {meta && (
-                <div className="flex items-center">
-                  <HoverCard openDelay={100} closeDelay={100}>
-                    <HoverCardTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-8 p-0 rounded-full touch-manipulation"
-                        onTouchStart={() => { }} // Enable touch events
-                      >
-                        <Info className="h-4 w-4" />
-                      </Button>
-                    </HoverCardTrigger>
-                    <HoverCardContent
-                      className="w-72 max-w-[calc(100vw-2rem)]"
-                      side="top"
-                      align="end"
-                      sideOffset={8}
-                      alignOffset={-8}
-                      avoidCollisions={true}
-                      collisionPadding={16}
+                <HoverCard openDelay={0} closeDelay={100}>
+                  <HoverCardTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors touch-manipulation lg:pointer-events-auto"
+                      onTouchStart={() => { }}
                     >
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Info className="h-4 w-4" />
-                          <h4 className="font-semibold text-sm">Response Info</h4>
+                      <Info className="h-4 w-4" />
+                    </Button>
+                  </HoverCardTrigger>
+                  <HoverCardContent
+                    className="w-72 max-w-[calc(100vw-2rem)]"
+                    side="top"
+                    align="end"
+                    sideOffset={8}
+                    alignOffset={-8}
+                    avoidCollisions={true}
+                    collisionPadding={16}
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <Info className="h-4 w-4" />
+                        <h4 className="font-semibold text-sm">Response Info</h4>
+                      </div>
+
+                      {modelLabel && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Model</span>
+                          <div className="flex items-center gap-1 text-xs bg-primary text-primary-foreground rounded-lg px-2 py-1">
+                            <HugeiconsIcon icon={CpuIcon} size={12} />
+                            {modelLabel}
+                          </div>
                         </div>
+                      )}
 
-                        {modelLabel && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Model</span>
-                            <div className="flex items-center gap-1 text-xs bg-primary text-primary-foreground rounded-lg px-2 py-1">
-                              <HugeiconsIcon icon={CpuIcon} size={12} />
-                              {modelLabel}
-                            </div>
+                      {typeof meta.completionTime === 'number' && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Generation Time</span>
+                          <div className="flex items-center gap-1 text-xs">
+                            <Clock className="h-3 w-3" />
+                            {meta.completionTime.toFixed(1)}s
                           </div>
-                        )}
+                        </div>
+                      )}
 
-                        {typeof meta.completionTime === 'number' && (
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Generation Time</span>
-                            <div className="flex items-center gap-1 text-xs">
-                              <Clock className="h-3 w-3" />
-                              {meta.completionTime.toFixed(1)}s
-                            </div>
-                          </div>
-                        )}
-
-                        {(inputCount != null || outputCount != null) && (
-                          <div className="space-y-2">
-                            <span className="text-sm text-muted-foreground">Token Usage</span>
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                              {inputCount != null && (
-                                <div className="flex items-center justify-between bg-muted rounded-lg px-2 py-1">
-                                  <span className="flex items-center gap-1">
-                                    <ArrowLeftIcon weight="regular" className="h-3 w-3" />
-                                    Input
-                                  </span>
-                                  <span className="font-medium">{inputCount.toLocaleString()}</span>
-                                </div>
-                              )}
-                              {outputCount != null && (
-                                <div className="flex items-center justify-between bg-muted rounded-lg px-2 py-1">
-                                  <span className="flex items-center gap-1">
-                                    <ArrowRightIcon weight="regular" className="h-3 w-3" />
-                                    Output
-                                  </span>
-                                  <span className="font-medium">{outputCount.toLocaleString()}</span>
-                                </div>
-                              )}
-                            </div>
-                            {tokenTotal != null && (
-                              <div className="flex items-center justify-between bg-accent rounded-lg px-2 py-1 text-xs">
-                                <span className="flex items-center gap-1 font-medium">
-                                  <SigmaIcon className="h-3 w-3" weight="regular" />
-                                  Total
+                      {(inputCount != null || outputCount != null) && (
+                        <div className="space-y-2">
+                          <span className="text-sm text-muted-foreground">Token Usage</span>
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            {inputCount != null && (
+                              <div className="flex items-center justify-between bg-muted rounded-lg px-2 py-1">
+                                <span className="flex items-center gap-1">
+                                  <ArrowLeftIcon weight="regular" className="h-3 w-3" />
+                                  Input
                                 </span>
-                                <span className="font-semibold">{tokenTotal.toLocaleString()}</span>
+                                <span className="font-medium">{inputCount.toLocaleString()}</span>
+                              </div>
+                            )}
+                            {outputCount != null && (
+                              <div className="flex items-center justify-between bg-muted rounded-lg px-2 py-1">
+                                <span className="flex items-center gap-1">
+                                  <ArrowRightIcon weight="regular" className="h-3 w-3" />
+                                  Output
+                                </span>
+                                <span className="font-medium">{outputCount.toLocaleString()}</span>
                               </div>
                             )}
                           </div>
-                        )}
-                      </div>
-                    </HoverCardContent>
-                  </HoverCard>
-                </div>
+                          {tokenTotal != null && (
+                            <div className="flex items-center justify-between bg-accent rounded-lg px-2 py-1 text-xs">
+                              <span className="flex items-center gap-1 font-medium">
+                                <SigmaIcon className="h-3 w-3" weight="regular" />
+                                Total
+                              </span>
+                              <span className="font-semibold">{tokenTotal.toLocaleString()}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </HoverCardContent>
+                </HoverCard>
               )}
             </div>
           )}
@@ -483,16 +741,14 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       const firstStepStartIndex = parts.findIndex((p) => p.type === 'step-start');
       if (partIndex === firstStepStartIndex) {
         return (
-          <div key={`${messageIndex}-${partIndex}-step-start-logo`} className="!m-0 !p-0">
-            <SciraLogoHeader />
-          </div>
+          <div key={`${messageIndex}-${partIndex}-step-start-logo`} className="p-0 py-1.5" />
         );
       }
       return <div key={`${messageIndex}-${partIndex}-step-start`}></div>;
     }
 
     // Handle tool parts with new granular states system
-    if (isToolUIPart(part)) {
+    if (isStaticToolUIPart(part)) {
       // Check if this part has the new state system
       if ('state' in part && part.state) {
         switch (part.type) {
@@ -523,7 +779,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     >
                       <div className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                          <div className="shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
                             <MapPin className="h-4 w-4 text-red-600 dark:text-red-400" />
                           </div>
                           <div className="flex-1">
@@ -547,7 +803,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     >
                       <div className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
+                          <div className="shrink-0 w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
                             <MapPin className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                           </div>
                           <div className="flex-1">
@@ -608,7 +864,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                       {places.map((place: any, index: number) => (
                         <div key={place.place_id || index} className="py-3">
                           <div className="flex items-start gap-3">
-                            <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-[hsl(var(--primary))]/10 flex items-center justify-center">
+                            <div className="shrink-0 w-9 h-9 rounded-lg bg-[hsl(var(--primary))]/10 flex items-center justify-center">
                               <MapPin className="h-4 w-4 text-[hsl(var(--primary))]" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -671,9 +927,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   />
                 );
               case 'output-available':
-                return (
-                  <TMDBResult result={part.output} key={`${messageIndex}-${partIndex}-tool`} />
-                );
+                return <TMDBResult result={part.output} key={`${messageIndex}-${partIndex}-tool`} />;
             }
             break;
 
@@ -823,9 +1077,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   </Card>
                 );
               case 'output-available':
-                return (
-                  <WeatherChart result={part.output} key={`${messageIndex}-${partIndex}-tool`} />
-                );
+                return <WeatherChart result={part.output} key={`${messageIndex}-${partIndex}-tool`} />;
             }
             break;
 
@@ -1071,9 +1323,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   />
                 );
               case 'output-available':
-                return (
-                  <TrendingResults result={part.output} type="movie" key={`${messageIndex}-${partIndex}-tool`} />
-                );
+                return <TrendingResults result={part.output} type="movie" key={`${messageIndex}-${partIndex}-tool`} />;
             }
             break;
 
@@ -1095,43 +1345,23 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                   />
                 );
               case 'output-available':
-                return (
-                  <TrendingResults result={part.output} type="tv" key={`${messageIndex}-${partIndex}-tool`} />
-                );
+                return <TrendingResults result={part.output} type="tv" key={`${messageIndex}-${partIndex}-tool`} />;
             }
             break;
 
           case 'tool-academic_search':
             switch (part.state) {
               case 'input-streaming':
-                return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
-                    Preparing academic search...
-                  </div>
-                );
               case 'input-available':
-                return (
-                  <SearchLoadingState
-                    key={`${messageIndex}-${partIndex}-tool`}
-                    icon={Book}
-                    text="Searching academic papers..."
-                    color="gray"
-                  />
-                );
               case 'output-available':
+                const academicSearchInput = (part as any).input;
+                const academicSearchOutput = (part as any).output;
                 return (
                   <AcademicPapersCard
                     key={`${messageIndex}-${partIndex}-tool`}
-                    response={part.output ? {
-                      searches: part.output.searches?.map((search: any) => ({
-                        query: search.query,
-                        results: search.results?.map((result: any) => ({
-                          ...result,
-                          title: result.title || ('name' in result ? String(result.name) : null) || 'Untitled',
-                        })) || [],
-                      })) || [],
-                    } : null}
-                    args={part.input ? part.input : {}}
+                    response={academicSearchOutput || null}
+                    args={academicSearchInput ? academicSearchInput : {}}
+                    annotations={annotations as DataQueryCompletionPart[]}
                   />
                 );
             }
@@ -1141,68 +1371,152 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             switch (part.state) {
               case 'input-streaming':
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
-                    Preparing flight tracking...
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="w-full max-w-2xl mx-auto">
+                    <div className="border rounded-md bg-card overflow-hidden shadow-2xs">
+                      {/* Compact Header Skeleton */}
+                      <div className="px-4 py-2 border-b bg-muted/40">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-3 w-32" />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-16" />
+                            <Skeleton className="h-5 w-20 rounded-full" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Compact Body Skeleton */}
+                      <div className="px-4 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                          {/* Left */}
+                          <div className="min-w-0 flex-1 space-y-1.5">
+                            <Skeleton className="h-7 w-20" />
+                            <Skeleton className="h-6 w-16" />
+                            <Skeleton className="h-3 w-32" />
+                            <Skeleton className="h-2.5 w-20" />
+                          </div>
+
+                          {/* Middle */}
+                          <div className="flex flex-col items-center justify-center w-28 shrink-0">
+                            <div className="flex items-center gap-2 w-full">
+                              <div className="flex-1 h-px bg-border"></div>
+                              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10">
+                                <Plane className="h-3.5 w-3.5 text-primary animate-pulse" />
+                              </div>
+                              <div className="flex-1 h-px bg-border"></div>
+                            </div>
+                            <Skeleton className="h-3 w-12 mt-1" />
+                          </div>
+
+                          {/* Right */}
+                          <div className="text-right min-w-0 flex-1 space-y-1.5">
+                            <Skeleton className="h-7 w-20 ml-auto" />
+                            <Skeleton className="h-6 w-16 ml-auto" />
+                            <Skeleton className="h-3 w-32 ml-auto" />
+                            <Skeleton className="h-2.5 w-20 ml-auto" />
+                          </div>
+                        </div>
+
+                        {/* Inline meta skeleton */}
+                        <div className="mt-3 pt-2 border-t flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Skeleton className="h-3 w-20" />
+                            <Skeleton className="h-3 w-16" />
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Skeleton className="h-3 w-20" />
+                            <Skeleton className="h-3 w-16" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 );
               case 'input-available':
                 return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-2">
-                      <Plane className="h-5 w-5 text-neutral-700 dark:text-neutral-300 animate-pulse" />
-                      <span className="text-neutral-700 dark:text-neutral-300 text-lg">
-                        Tracking flight {part.input.carrierCode}
-                        {part.input.flightNumber}...
-                      </span>
-                    </div>
-                    <div className="flex space-x-1">
-                      {[0, 1, 2].map((index) => (
-                        <motion.div
-                          key={index}
-                          className="w-2 h-2 bg-neutral-400 dark:bg-neutral-600 rounded-full"
-                          initial={{ opacity: 0.3 }}
-                          animate={{ opacity: 1 }}
-                          transition={{
-                            repeat: Infinity,
-                            duration: 0.8,
-                            delay: index * 0.2,
-                            repeatType: 'reverse',
-                          }}
-                        />
-                      ))}
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="w-full max-w-2xl mx-auto">
+                    <div className="border rounded-md bg-card overflow-hidden shadow-2xs">
+                      {/* Compact Header Skeleton */}
+                      <div className="px-4 py-2 border-b bg-muted/40">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-3 w-32" />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Skeleton className="h-4 w-16" />
+                            <Skeleton className="h-5 w-20 rounded-full" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Compact Body Skeleton */}
+                      <div className="px-4 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                          {/* Left */}
+                          <div className="min-w-0 flex-1 space-y-1.5">
+                            <Skeleton className="h-7 w-20" />
+                            <Skeleton className="h-6 w-16" />
+                            <Skeleton className="h-3 w-32" />
+                            <Skeleton className="h-2.5 w-20" />
+                          </div>
+
+                          {/* Middle */}
+                          <div className="flex flex-col items-center justify-center w-28 shrink-0">
+                            <div className="flex items-center gap-2 w-full">
+                              <div className="flex-1 h-px bg-border"></div>
+                              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/10">
+                                <Plane className="h-3.5 w-3.5 text-primary animate-pulse" />
+                              </div>
+                              <div className="flex-1 h-px bg-border"></div>
+                            </div>
+                            <Skeleton className="h-3 w-12 mt-1" />
+                          </div>
+
+                          {/* Right */}
+                          <div className="text-right min-w-0 flex-1 space-y-1.5">
+                            <Skeleton className="h-7 w-20 ml-auto" />
+                            <Skeleton className="h-6 w-16 ml-auto" />
+                            <Skeleton className="h-3 w-32 ml-auto" />
+                            <Skeleton className="h-2.5 w-20 ml-auto" />
+                          </div>
+                        </div>
+
+                        {/* Inline meta skeleton */}
+                        <div className="mt-3 pt-2 border-t flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <Skeleton className="h-3 w-20" />
+                            <Skeleton className="h-3 w-16" />
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <Skeleton className="h-3 w-20" />
+                            <Skeleton className="h-3 w-16" />
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
               case 'output-available':
-                return (
-                  <FlightTracker data={part.output} key={`${messageIndex}-${partIndex}-tool`} />
-                );
+                return <FlightTracker data={part.output} key={`${messageIndex}-${partIndex}-tool`} />;
             }
             break;
 
           case 'tool-reddit_search':
             switch (part.state) {
               case 'input-streaming':
-                return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
-                    Preparing Reddit search...
-                  </div>
-                );
               case 'input-available':
-                return (
-                  <SearchLoadingState
-                    key={`${messageIndex}-${partIndex}-tool`}
-                    icon={RedditLogoIcon}
-                    text="Searching Reddit..."
-                    color="orange"
-                  />
-                );
               case 'output-available':
+                const redditSearchInput = (part as any).input;
+                const redditSearchOutput = (part as any).output;
                 return (
                   <RedditSearch
                     key={`${messageIndex}-${partIndex}-tool`}
-                    result={part.output || null}
-                    args={part.input ? part.input : {}}
+                    result={redditSearchOutput || null}
+                    args={redditSearchInput ? redditSearchInput : {}}
+                    annotations={annotations as DataQueryCompletionPart[]}
                   />
                 );
             }
@@ -1211,41 +1525,47 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
           case 'tool-x_search':
             switch (part.state) {
               case 'input-streaming':
-                return (
-                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
-                    Preparing X search...
-                  </div>
-                );
               case 'input-available':
-                return (
-                  <SearchLoadingState
-                    key={`${messageIndex}-${partIndex}-tool`}
-                    icon={XLogoIcon}
-                    text="Searching X (Twitter)..."
-                    color="gray"
-                  />
-                );
               case 'output-available':
+                const xSearchInput = (part as any).input;
+                const xSearchOutput = (part as any).output;
+                const normalizedInput = xSearchInput
+                  ? {
+                    ...xSearchInput,
+                    includeXHandles: xSearchInput.includeXHandles
+                      ? xSearchInput.includeXHandles.filter((h: any): h is string => h !== undefined)
+                      : undefined,
+                    excludeXHandles: xSearchInput.excludeXHandles
+                      ? xSearchInput.excludeXHandles.filter((h: any): h is string => h !== undefined)
+                      : undefined,
+                  }
+                  : {};
                 return (
                   <XSearch
                     key={`${messageIndex}-${partIndex}-tool`}
-                    result={{
-                      ...part.output,
-                      searches: part.output.searches?.map((search: any) => ({
-                        ...search,
-                        query: search.query || '',
-                        sources: search.sources?.filter((s: any): s is NonNullable<typeof s> => s !== null) || [],
-                        citations:
-                          search.citations?.map((citation: any) => ({
-                            ...citation,
-                            title: citation.title || ('url' in citation ? citation.url : citation.id) || 'Citation',
-                            url: 'url' in citation ? citation.url : citation.id,
-                          })) || [],
-                      })) || [],
-                      dateRange: part.output.dateRange || '',
-                      handles: part.output.handles || [],
-                    }}
-                    args={part.input ? part.input : {}}
+                    result={
+                      xSearchOutput
+                        ? {
+                          ...xSearchOutput,
+                          searches:
+                            xSearchOutput.searches?.map((search: any) => ({
+                              ...search,
+                              query: search.query || '',
+                              sources: search.sources?.filter((s: any): s is NonNullable<typeof s> => s !== null) || [],
+                              citations:
+                                search.citations?.map((citation: any) => ({
+                                  ...citation,
+                                  title: citation.title || ('url' in citation ? citation.url : citation.id) || 'Citation',
+                                  url: 'url' in citation ? citation.url : citation.id,
+                                })) || [],
+                            })) || [],
+                          dateRange: xSearchOutput.dateRange || '',
+                          handles: xSearchOutput.handles || [],
+                        }
+                        : null
+                    }
+                    args={normalizedInput}
+                    annotations={annotations as DataQueryCompletionPart[]}
                   />
                 );
             }
@@ -1268,10 +1588,51 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     color="red"
                   />
                 );
-              case 'output-available':
+              case 'output-available': {
+                const parseLegacyCount = (value: unknown): number | undefined => {
+                  if (typeof value === 'number' && Number.isFinite(value)) {
+                    return value;
+                  }
+                  if (typeof value === 'string') {
+                    const digits = value.replace(/[^0-9]/g, '');
+                    if (!digits) return undefined;
+                    const parsed = Number(digits);
+                    return Number.isFinite(parsed) ? parsed : undefined;
+                  }
+                  return undefined;
+                };
+
+                const normalizedResults = Array.isArray(part.output?.results)
+                  ? part.output.results.map((video: any) => {
+                    if (!video) return video;
+                    if (video.stats) return video;
+                    const views = parseLegacyCount(video.views);
+                    const likes = parseLegacyCount(video.likes);
+
+                    if (views == null && likes == null) {
+                      return video;
+                    }
+
+                    return {
+                      ...video,
+                      stats: {
+                        ...(views != null ? { views } : {}),
+                        ...(likes != null ? { likes } : {}),
+                      },
+                    };
+                  })
+                  : [];
+
                 return (
-                  <YouTubeSearchResults results={part.output} key={`${messageIndex}-${partIndex}-tool`} />
+                  <YouTubeSearchResults
+                    results={{
+                      ...(part.output ?? { results: [] }),
+                      results: normalizedResults,
+                    }}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  />
                 );
+              }
             }
             break;
 
@@ -1288,7 +1649,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     <div className="w-full my-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
                       <div className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                          <div className="shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
                             <MemoryIcon className="h-4 w-4 text-red-600 dark:text-red-400" />
                           </div>
                           <div className="flex-1">
@@ -1307,7 +1668,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     <div className="w-full my-4 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950">
                       <div className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
+                          <div className="shrink-0 w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
                             <MemoryIcon className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                           </div>
                           <div className="flex-1">
@@ -1377,7 +1738,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     <div className="w-full my-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950">
                       <div className="p-4">
                         <div className="flex items-start gap-3">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
+                          <div className="shrink-0 w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900 flex items-center justify-center">
                             <MemoryIcon className="h-4 w-4 text-red-600 dark:text-red-400" />
                           </div>
                           <div className="flex-1">
@@ -1607,7 +1968,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     className="border border-neutral-200 rounded-xl my-4 overflow-hidden dark:border-neutral-800 bg-white dark:bg-neutral-900"
                   >
                     <div className="h-36 bg-neutral-50 dark:bg-neutral-800/50 animate-pulse relative overflow-hidden">
-                      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/10 dark:to-black/10" />
+                      <div className="absolute inset-0 bg-linear-to-b from-transparent to-white/10 dark:to-black/10" />
                     </div>
                     <div className="p-4">
                       <div className="flex gap-3">
@@ -1643,20 +2004,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 // Handle error responses
-                if (
-                  (part.output && 'error' in part.output && part.output.error) ||
-                  (part.output.results &&
-                    part.output.results[0] &&
-                    'error' in part.output.results[0] &&
-                    part.output.results[0].error)
-                ) {
-                  const errorMessage = String(
-                    (part.output && 'error' in part.output && part.output.error) ||
-                    (part.output.results &&
-                      part.output.results[0] &&
-                      'error' in part.output.results[0] &&
-                      part.output.results[0].error),
-                  );
+                if (part.output && 'error' in part.output && part.output.error && !part.output.results?.length) {
                   return (
                     <div
                       key={`${messageIndex}-${partIndex}-tool`}
@@ -1670,197 +2018,15 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                           <div className="text-red-700 dark:text-red-300 text-sm font-medium">
                             Error retrieving content
                           </div>
-                          <div className="text-red-600/80 dark:text-red-400/80 text-xs mt-1">{errorMessage}</div>
+                          <div className="text-red-600/80 dark:text-red-400/80 text-xs mt-1">{String(part.output.error)}</div>
                         </div>
                       </div>
                     </div>
                   );
                 }
 
-                // Handle no content
-                if (!part.output.results || part.output.results.length === 0) {
-                  return (
-                    <div
-                      key={`${messageIndex}-${partIndex}-tool`}
-                      className="border border-amber-200 dark:border-amber-500 rounded-xl my-4 p-4 bg-amber-50 dark:bg-amber-950/50"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
-                          <Globe className="h-4 w-4 text-amber-600 dark:text-amber-300" />
-                        </div>
-                        <div className="text-amber-700 dark:text-amber-300 text-sm font-medium">
-                          No content available
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-
-                // Beautiful, sophisticated rendering for Exa AI retrieval
-                const result = part.output;
-                return (
-                  <div
-                    key={`${messageIndex}-${partIndex}-tool`}
-                    className="border border-neutral-200 rounded-xl my-4 overflow-hidden dark:border-neutral-800 bg-white dark:bg-neutral-900 shadow-sm"
-                  >
-                    {result.results[0].image && (
-                      <div className="h-36 overflow-hidden relative">
-                        <Image
-                          src={result.results[0].image}
-                          alt={result.results[0].title || 'Featured image'}
-                          className="w-full h-full object-cover"
-                          width={128}
-                          height={128}
-                          unoptimized
-                          onError={(e) => {
-                            e.currentTarget.style.display = 'none';
-                          }}
-                        />
-                      </div>
-                    )}
-
-                    <div className="p-4">
-                      <div className="flex gap-3">
-                        <div className="relative w-12 h-12 shrink-0">
-                          {result.results[0].favicon ? (
-                            <Image
-                              className="w-full h-full object-contain rounded-lg"
-                              src={result.results[0].favicon}
-                              alt=""
-                              width={64}
-                              height={64}
-                              unoptimized
-                              onError={(e) => {
-                                e.currentTarget.src = `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(
-                                  result.results[0].url,
-                                )}`;
-                              }}
-                            />
-                          ) : (
-                            <Image
-                              className="w-full h-full object-contain rounded-lg"
-                              src={`https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(
-                                result.results[0].url,
-                              )}`}
-                              alt=""
-                              width={64}
-                              height={64}
-                              unoptimized
-                              onError={(e) => {
-                                e.currentTarget.src =
-                                  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='none' d='M0 0h24v24H0z'/%3E%3Cpath d='M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-2.29-2.333A17.9 17.9 0 0 1 8.027 13H4.062a8.008 8.008 0 0 0 5.648 6.667zM10.03 13c.151 2.439.848 4.73 1.97 6.752A15.905 15.905 0 0 0 13.97 13h-3.94zm9.908 0h-3.965a17.9 17.9 0 0 1-1.683 6.667A8.008 8.008 0 0 0 19.938 13zM4.062 11h3.965A17.9 17.9 0 0 1 9.71 4.333 8.008 8.008 0 0 0 4.062 11zm5.969 0h3.938A15.905 15.905 0 0 0 12 4.248 15.905 15.905 0 0 0 10.03 11zm4.259-6.667A17.9 17.9 0 0 1 15.938 11h3.965a8.008 8.008 0 0 0-5.648-6.667z' fill='rgba(128,128,128,0.5)'/%3E%3C/svg%3E";
-                              }}
-                            />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="group">
-                            <h2 className="font-medium text-base text-neutral-900 dark:text-neutral-100 tracking-tight truncate">
-                              {result.results[0].title || 'Retrieved Content'}
-                            </h2>
-                            <div className="hidden group-hover:block absolute bg-white dark:bg-neutral-900 shadow-lg rounded-lg p-2 -mt-1 max-w-lg z-10 border border-neutral-200 dark:border-neutral-800">
-                              <p className="text-sm text-neutral-900 dark:text-neutral-100">
-                                {result.results[0].title || 'Retrieved Content'}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap items-center gap-2 mt-2">
-                            {result.results[0].author && (
-                              <Badge
-                                variant="secondary"
-                                className="rounded-md bg-violet-50 hover:bg-violet-100 dark:bg-violet-900/20 dark:hover:bg-violet-900/30 text-violet-600 dark:text-violet-400 border-0 transition-colors"
-                              >
-                                <User2 className="h-3 w-3 mr-1" />
-                                {result.results[0].author}
-                              </Badge>
-                            )}
-                            {result.results[0].publishedDate && (
-                              <Badge
-                                variant="secondary"
-                                className="rounded-md bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-0 transition-colors"
-                              >
-                                <Clock className="h-3 w-3 mr-1" />
-                                {new Date(result.results[0].publishedDate).toLocaleDateString()}
-                              </Badge>
-                            )}
-                            {result.response_time && (
-                              <Badge
-                                variant="secondary"
-                                className="rounded-md bg-sky-50 hover:bg-sky-100 dark:bg-sky-900/20 dark:hover:bg-sky-900/30 text-sky-600 dark:text-sky-400 border-0 transition-colors"
-                              >
-                                <Server className="h-3 w-3 mr-1" />
-                                {result.response_time.toFixed(1)}s
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-3 line-clamp-2">
-                        {result.results[0].description || 'No description available'}
-                      </p>
-
-                      <div className="mt-3 flex justify-between items-center gap-3">
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant="secondary"
-                            className="rounded-md bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-0 transition-colors cursor-pointer"
-                          >
-                            <a
-                              href={result.results[0].url}
-                              target="_blank"
-                              className="inline-flex items-center gap-1.5"
-                            >
-                              <ArrowUpRight className="h-3 w-3" />
-                              View source
-                            </a>
-                          </Badge>
-
-                          {result.results.length > 1 && (
-                            <Badge
-                              variant="secondary"
-                              className="rounded-md bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 text-amber-600 dark:text-amber-400 border-0 transition-colors"
-                            >
-                              <TextIcon className="h-3 w-3 mr-1" />
-                              {result.results.length} pages
-                            </Badge>
-                          )}
-                        </div>
-
-                        <Badge
-                          variant="secondary"
-                          className="rounded-md bg-neutral-50 hover:bg-neutral-100 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 border-0 transition-colors"
-                        >
-                          <Globe className="h-3 w-3 mr-1" />
-                          {new URL(result.results[0].url).hostname.replace('www.', '')}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className="border-t border-neutral-200 dark:border-neutral-800">
-                      <Accordion type="single" collapsible>
-                        {result.results.map((resultItem: any, index: number) => (
-                          <AccordionItem value={`content${index}`} key={index} className="border-0">
-                            <AccordionTrigger className="group px-4 py-3 text-xs font-medium text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors no-underline! rounded-t-none! data-[state=open]:rounded-b-none! data-[state=open]:bg-neutral-50 dark:data-[state=open]:bg-neutral-800/50 [&>svg]:h-4 [&>svg]:w-4 [&>svg]:text-neutral-500 [&>svg]:transition-transform [&>svg]:duration-200">
-                              <div className="flex items-center gap-2">
-                                <TextIcon className="h-3.5 w-3.5 text-neutral-400" />
-                                <span>{index === 0 ? 'View full content' : `Additional content ${index + 1}`}</span>
-                              </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="pb-0">
-                              <div className="max-h-[50vh] overflow-y-auto p-4 bg-neutral-50 dark:bg-neutral-800/50 border-t border-neutral-200 dark:border-neutral-700">
-                                <div className="prose prose-neutral dark:prose-invert prose-sm max-w-none">
-                                  <ReactMarkdown>{resultItem.content || 'No content available'}</ReactMarkdown>
-                                </div>
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
-                      </Accordion>
-                    </div>
-                  </div>
-                );
+                // Use the new RetrieveResults component for both single and multi-URL
+                return <RetrieveResults key={`${messageIndex}-${partIndex}-tool`} result={part.output} />;
             }
             break;
 
@@ -1883,7 +2049,12 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <CryptoChart result={part.output} coinId={part.input.coinId} chartType="candlestick" key={`${messageIndex}-${partIndex}-tool`} />
+                  <CryptoChart
+                    result={part.output}
+                    coinId={part.input.coinId}
+                    chartType="candlestick"
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  />
                 );
             }
             break;
@@ -1907,7 +2078,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <CryptoCoinsData result={part.output} coinId={part.input.coinId} key={`${messageIndex}-${partIndex}-tool`} />
+                  <CryptoCoinsData
+                    result={part.output}
+                    coinId={part.input.coinId}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  />
                 );
             }
             break;
@@ -1931,7 +2106,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return (
-                  <CryptoCoinsData result={part.output} contractAddress={part.input.contractAddress} key={`${messageIndex}-${partIndex}-tool`} />
+                  <CryptoCoinsData
+                    result={part.output}
+                    contractAddress={part.input.contractAddress}
+                    key={`${messageIndex}-${partIndex}-tool`}
+                  />
                 );
             }
             break;
@@ -2135,14 +2314,14 @@ const CodeContextTool: React.FC<{ args: any; result: any }> = ({ args, result })
                 >
                   <AccordionItem value="context" className="border-0">
                     <div className="space-y-2">
-                      <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed break-words">
+                      <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed wrap-break-word">
                         {!isExpanded && previewText}
                       </div>
                       <AccordionTrigger className="py-2 hover:no-underline text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors">
                         {isExpanded ? 'Show less' : 'Show full context'}
                       </AccordionTrigger>
                       <AccordionContent className="pb-0">
-                        <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed break-words whitespace-pre-wrap pt-2 border-t border-neutral-200/60 dark:border-neutral-700/60">
+                        <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed wrap-break-word whitespace-pre-wrap pt-2 border-t border-neutral-200/60 dark:border-neutral-700/60">
                           {responseText}
                         </div>
                       </AccordionContent>
@@ -2150,7 +2329,7 @@ const CodeContextTool: React.FC<{ args: any; result: any }> = ({ args, result })
                   </AccordionItem>
                 </Accordion>
               ) : (
-                <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed break-words whitespace-pre-wrap">
+                <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed wrap-break-word whitespace-pre-wrap">
                   {responseText}
                 </div>
               )}
@@ -2269,7 +2448,7 @@ const TranslationTool: React.FC<{ args: any; result: any }> = ({ args, result })
                 <div className="text-xs text-neutral-500 dark:text-neutral-400 mb-1 opacity-70">
                   {result.detectedLanguage}
                 </div>
-                <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed break-words">
+                <div className="text-sm text-neutral-700 dark:text-neutral-300 leading-relaxed wrap-break-word">
                   {args ? args.text : ''}
                 </div>
               </div>
@@ -2278,7 +2457,7 @@ const TranslationTool: React.FC<{ args: any; result: any }> = ({ args, result })
                 <div className="text-xs text-neutral-600 dark:text-neutral-400 mb-1 opacity-70">
                   {args ? args.to : ''}
                 </div>
-                <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100 leading-relaxed break-words">
+                <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100 leading-relaxed wrap-break-word">
                   {result.translatedText}
                 </div>
               </div>

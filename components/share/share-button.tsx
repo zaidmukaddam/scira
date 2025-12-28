@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { GlobeHemisphereWestIcon, CopyIcon } from '@phosphor-icons/react';
-import { HugeiconsIcon } from '@hugeicons/react';
+import { GlobeHemisphereWestIcon, CopyIcon, ShareFatIcon } from '@phosphor-icons/react';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import { Share03Icon } from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
@@ -56,12 +56,7 @@ export function ShareButton({
         } else {
           return (
             <>
-              <HugeiconsIcon
-                icon={Share03Icon}
-                size={14}
-                color="currentColor"
-                strokeWidth={2}
-              />
+              <HugeiconsIcon icon={Share03Icon} size={14} color="currentColor" strokeWidth={2} />
               <span className="text-sm font-medium">Share</span>
             </>
           );
@@ -69,8 +64,8 @@ export function ShareButton({
       case 'button':
         return (
           <>
-            <HugeiconsIcon icon={Share03Icon} size={16} color="currentColor" strokeWidth={2} className="mr-2" />
             Share
+            <ShareFatIcon weight="fill" size={16} color="currentColor" strokeWidth={2} />
           </>
         );
       case 'icon':
@@ -99,11 +94,8 @@ export function ShareButton({
           ...baseProps,
           variant: selectedVisibilityType === 'public' ? ('secondary' as const) : ('ghost' as const),
           size: 'sm' as const,
-          className: `${className} !h-8 px-3 gap-2 font-medium transition-all ${
-            selectedVisibilityType === 'public' 
-              ? 'bg-primary/5 hover:bg-primary/10 border-primary/20' 
-              : ''
-          }`,
+          className: `${className} !h-8 px-3 gap-2 font-medium transition-all ${selectedVisibilityType === 'public' ? 'bg-primary/5 hover:bg-primary/10 border-primary/20' : ''
+            }`,
         };
       case 'button':
         return {
@@ -118,7 +110,7 @@ export function ShareButton({
           ...baseProps,
           variant: 'ghost' as const,
           size: 'icon' as const,
-          className: `${className} ${size === 'sm' ? 'size-8' : size === 'lg' ? 'size-10' : 'size-9'}`,
+          className: className || (size === 'sm' ? 'size-8' : size === 'lg' ? 'size-10' : 'size-9'),
         };
     }
   };

@@ -6,7 +6,7 @@ import { Supermemory } from 'supermemory';
 
 // Initialize the memory client with API key
 const supermemoryClient = new Supermemory({
-  apiKey: serverEnv.SUPERMEMORY_API_KEY
+  apiKey: serverEnv.SUPERMEMORY_API_KEY,
 });
 
 // Define the types based on actual API responses
@@ -59,7 +59,6 @@ export async function searchMemories(query: string, page = 1, pageSize = 20): Pr
       containerTag: user.id,
       limit: pageSize,
     });
-
 
     return { memories: [], total: result.total || 0 };
   } catch (error) {

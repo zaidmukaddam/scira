@@ -6,7 +6,7 @@ const protectedRoutes = ['/lookout', '/xql', '/settings'];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  console.log('Pathname: ', pathname);
+
   if (pathname === '/api/search') return NextResponse.next();
   if (pathname.startsWith('/new') || pathname.startsWith('/api/search')) {
     return NextResponse.next();

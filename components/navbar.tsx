@@ -68,7 +68,7 @@ const Navbar = memo(
       <>
         <div
           className={cn(
-            'fixed left-0 right-0 z-30 top-0 flex justify-between items-center p-3 transition-colors duration-200',
+            'fixed left-0 right-0 z-30 top-0 flex justify-between items-center p-3 transition-colors duration-200 gap-2 flex-wrap',
             isDialogOpen
               ? 'bg-transparent pointer-events-none'
               : status === 'streaming' || status === 'ready'
@@ -76,7 +76,7 @@ const Navbar = memo(
                 : 'bg-background',
           )}
         >
-          <div className={cn('flex items-center gap-3', isDialogOpen ? 'pointer-events-auto' : '')}>
+          <div className={cn('flex items-center gap-3 min-w-0', isDialogOpen ? 'pointer-events-auto' : '')}>
             <Link href="/new">
               <Button
                 type="button"
@@ -123,7 +123,12 @@ const Navbar = memo(
               </div>
             </div>
           )}
-          <div className={cn('flex items-center gap-1', isDialogOpen ? 'pointer-events-auto' : '')}>
+          <div
+            className={cn(
+              'flex items-center gap-1 min-w-0 overflow-x-auto no-scrollbar',
+              isDialogOpen ? 'pointer-events-auto' : '',
+            )}
+          >
             {/* Share functionality using unified component */}
             {chatId && (
               <>
@@ -138,7 +143,7 @@ const Navbar = memo(
                     isOwner={isOwner}
                     user={user}
                     variant="navbar"
-                    className="mr-1"
+                    className="mr-1 shrink-0"
                     disabled={false}
                   />
                 ) : (
@@ -149,7 +154,7 @@ const Navbar = memo(
                         <Button
                           variant="secondary"
                           size="sm"
-                          className="pointer-events-auto bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 opacity-80 cursor-not-allowed"
+                          className="pointer-events-auto bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 opacity-80 cursor-not-allowed shrink-0"
                           disabled
                         >
                           <GlobeHemisphereWestIcon size={16} className="text-blue-600 dark:text-blue-400" />
@@ -171,7 +176,7 @@ const Navbar = memo(
                 {showProLoading ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border border-border">
+                      <div className="rounded-md pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 border border-border shrink-0">
                         <div className="size-4 rounded-full bg-muted animate-pulse" />
                         <div className="w-8 h-3 bg-muted rounded animate-pulse hidden sm:block" />
                       </div>
@@ -183,7 +188,7 @@ const Navbar = memo(
                 ) : hasActiveSubscription ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="pointer-events-auto mr-1">
+                      <div className="pointer-events-auto mr-1 shrink-0">
                         <span className="font-baumans! px-2.5 pt-0.5 pb-1.75 sm:pt-1 leading-4 inline-flex items-center gap-1 rounded-lg shadow-sm border-transparent ring-1 ring-ring/35 ring-offset-1 ring-offset-background bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground  dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
                           <span>pro</span>
                         </span>
@@ -198,21 +203,29 @@ const Navbar = memo(
             )}
 
             {/* Chat History Button */}
-            {user && <ChatHistoryButton onClickAction={onHistoryClick} />}
+            {user && (
+              <div className="hidden sm:block shrink-0">
+                <ChatHistoryButton onClickAction={onHistoryClick} />
+              </div>
+            )}
             {/* Navigation Menu - settings icon for general navigation */}
-            <NavigationMenu />
+            <div className="shrink-0">
+              <NavigationMenu />
+            </div>
             {/* User Profile - focused on authentication and account management */}
-            <UserProfile
-              user={user}
-              subscriptionData={subscriptionData}
-              isProUser={isProUser}
-              isProStatusLoading={isProStatusLoading}
-              isCustomInstructionsEnabled={isCustomInstructionsEnabled}
-              setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
-              settingsOpen={settingsOpen}
-              setSettingsOpen={setSettingsOpen}
-              settingsInitialTab={settingsInitialTab}
-            />
+            <div className="shrink-0">
+              <UserProfile
+                user={user}
+                subscriptionData={subscriptionData}
+                isProUser={isProUser}
+                isProStatusLoading={isProStatusLoading}
+                isCustomInstructionsEnabled={isCustomInstructionsEnabled}
+                setIsCustomInstructionsEnabled={setIsCustomInstructionsEnabled}
+                settingsOpen={settingsOpen}
+                setSettingsOpen={setSettingsOpen}
+                settingsInitialTab={settingsInitialTab}
+              />
+            </div>
           </div>
         </div>
       </>

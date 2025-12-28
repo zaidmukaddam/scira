@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { format } from 'date-fns';
-import { HugeiconsIcon } from '@hugeicons/react';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import { Calendar01Icon, AlarmClockIcon } from '@hugeicons/core-free-icons';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';

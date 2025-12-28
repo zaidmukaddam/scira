@@ -1,16 +1,9 @@
 import 'server-only';
 
-import { asc, eq, inArray } from 'drizzle-orm';
-import {
-  user,
-  chat,
-  type User,
-  message,
-  type Message,
-  type Chat,
-} from './schema';
+import { eq } from 'drizzle-orm';
+import { chat, type User, message, type Message, type Chat } from './schema';
 import { ChatSDKError } from '../errors';
-import { db } from './index';
+import { db, getReadReplica } from './index';
 
 // Combined query to get chat and initial messages in one database call
 export async function getChatWithInitialMessages({
@@ -27,18 +20,15 @@ export async function getChatWithInitialMessages({
   hasMoreMessages: boolean;
 }> {
   try {
-    console.log('🔍 [DB-OPTIMIZED] getChatWithInitialMessages: Starting combined query...');
+    console.log('🔍 [DB-OPTIMIZED] getChatWithInitialMessages: Starting combined query (db.query.chat)...');
     const startTime = Date.now();
 
-    // Get chat data
-    const [selectedChat] = await db
-      .select()
-      .from(chat)
-      .where(eq(chat.id, id))
-      .limit(1)
-      .$withCache();
 
-    if (!selectedChat) {
+    const record = await db.query.chat.findFirst({
+      where: eq(chat.id, id),
+    });
+
+    if (!record) {
       return {
         chat: null,
         messages: [],
@@ -46,24 +36,20 @@ export async function getChatWithInitialMessages({
       };
     }
 
-    // Get initial messages with limit + 1 to check if there are more
-    const messages = await db
-      .select()
-      .from(message)
-      .where(eq(message.chatId, id))
-      .orderBy(asc(message.createdAt))
-      .limit(messageLimit + 1)
-      .offset(messageOffset)
-      .$withCache();
-
+    const messages = await db.query.message.findMany({
+      where: eq(message.chatId, id),
+      orderBy: (fields, { asc: orderAsc }) => [orderAsc(fields.createdAt), orderAsc(fields.id)],
+      limit: messageLimit + 1,
+      offset: messageOffset,
+    });
     const hasMoreMessages = messages.length > messageLimit;
     const limitedMessages = hasMoreMessages ? messages.slice(0, messageLimit) : messages;
 
     const queryTime = (Date.now() - startTime) / 1000;
-    console.log(`⏱️  [DB-OPTIMIZED] getChatWithInitialMessages: Combined query took ${queryTime.toFixed(2)}s`);
+    console.log(`⏱️  [DB-OPTIMIZED] getChatWithInitialMessages: db.query.chat took ${queryTime.toFixed(2)}s`);
 
     return {
-      chat: selectedChat,
+      chat: record,
       messages: limitedMessages,
       hasMoreMessages,
     };
@@ -89,22 +75,18 @@ export async function getChatWithUserAndInitialMessages({
   hasMoreMessages: boolean;
 }> {
   try {
-    console.log('🔍 [DB-OPTIMIZED] getChatWithUserAndInitialMessages: Starting optimized query...');
+    console.log('🔍 [DB-OPTIMIZED] getChatWithUserAndInitialMessages: Starting optimized query (db.query.chat)...');
     const startTime = Date.now();
 
-    // Get chat with user data in one query
-    const [chatWithUser] = await db
-      .select({
-        chat: chat,
-        user: user,
-      })
-      .from(chat)
-      .leftJoin(user, eq(chat.userId, user.id))
-      .where(eq(chat.id, id))
-      .limit(1)
-      .$withCache();
 
-    if (!chatWithUser?.chat) {
+    const record = await db.query.chat.findFirst({
+      where: eq(chat.id, id),
+      with: {
+        user: true,
+      },
+    });
+
+    if (!record) {
       return {
         chat: null,
         user: null,
@@ -113,25 +95,25 @@ export async function getChatWithUserAndInitialMessages({
       };
     }
 
-    // Get initial messages
-    const messages = await db
-      .select()
-      .from(message)
-      .where(eq(message.chatId, id))
-      .orderBy(asc(message.createdAt))
-      .limit(messageLimit + 1)
-      .offset(messageOffset)
-      .$withCache();
-
+    const messages = await db.query.message.findMany({
+      where: eq(message.chatId, id),
+      orderBy: (fields, { asc: orderAsc }) => [orderAsc(fields.createdAt), orderAsc(fields.id)],
+      limit: messageLimit + 1,
+      offset: messageOffset,
+    });
     const hasMoreMessages = messages.length > messageLimit;
     const limitedMessages = hasMoreMessages ? messages.slice(0, messageLimit) : messages;
 
     const queryTime = (Date.now() - startTime) / 1000;
-    console.log(`⏱️  [DB-OPTIMIZED] getChatWithUserAndInitialMessages: Optimized query took ${queryTime.toFixed(2)}s`);
+    console.log(
+      `⏱️  [DB-OPTIMIZED] getChatWithUserAndInitialMessages: db.query.chat (with user + messages) took ${queryTime.toFixed(
+        2,
+      )}s`,
+    );
 
     return {
-      chat: chatWithUser.chat,
-      user: chatWithUser.user,
+      chat: record,
+      user: record.user ?? null,
       messages: limitedMessages,
       hasMoreMessages,
     };
@@ -160,36 +142,20 @@ export async function getChatsWithInitialMessages({
       return {};
     }
 
-    console.log('🔍 [DB-OPTIMIZED] getChatsWithInitialMessages: Starting batch query...');
+    console.log('🔍 [DB-OPTIMIZED] getChatsWithInitialMessages: Starting batch query (db.query.chat)...');
     const startTime = Date.now();
 
-    // Get all chats in one query
-    const chats = await db
-      .select()
-      .from(chat)
-      .where(inArray(chat.id, chatIds))
-      .$withCache();
 
-    const chatMap = new Map(chats.map(c => [c.id, c]));
-
-    // Get all messages for these chats in one query
-    const allMessages = await db
-      .select()
-      .from(message)
-      .where(inArray(message.chatId, chatIds))
-      .orderBy(asc(message.createdAt))
-      .$withCache();
-
-    // Group messages by chat ID and apply limits
-    const messagesByChat = new Map<string, Message[]>();
-    allMessages.forEach(msg => {
-      if (!messagesByChat.has(msg.chatId)) {
-        messagesByChat.set(msg.chatId, []);
-      }
-      messagesByChat.get(msg.chatId)!.push(msg);
+    const chatsWithMessages = await db.query.chat.findMany({
+      where: (fields, { inArray }) => inArray(fields.id, chatIds),
+      with: {
+        messages: {
+          orderBy: (fields, { asc: orderAsc }) => [orderAsc(fields.createdAt), orderAsc(fields.id)],
+          limit: messageLimit + 1,
+        },
+      },
     });
 
-    // Build result object
     const result: {
       [chatId: string]: {
         chat: Chat | null;
@@ -198,21 +164,33 @@ export async function getChatsWithInitialMessages({
       };
     } = {};
 
-    chatIds.forEach(chatId => {
-      const chat = chatMap.get(chatId) || null;
-      const messages = messagesByChat.get(chatId) || [];
+    chatsWithMessages.forEach((record) => {
+      const messages = ((record as unknown as { messages?: Message[] }).messages as Message[]) || [];
       const hasMoreMessages = messages.length > messageLimit;
       const limitedMessages = hasMoreMessages ? messages.slice(0, messageLimit) : messages;
 
-      result[chatId] = {
-        chat,
+      result[record.id] = {
+        chat: record as unknown as Chat,
         messages: limitedMessages,
         hasMoreMessages,
       };
     });
 
+    // Ensure all requested chatIds are present in the result
+    chatIds.forEach((id) => {
+      if (!result[id]) {
+        result[id] = {
+          chat: null,
+          messages: [],
+          hasMoreMessages: false,
+        };
+      }
+    });
+
     const queryTime = (Date.now() - startTime) / 1000;
-    console.log(`⏱️  [DB-OPTIMIZED] getChatsWithInitialMessages: Batch query took ${queryTime.toFixed(2)}s`);
+    console.log(
+      `⏱️  [DB-OPTIMIZED] getChatsWithInitialMessages: db.query.chat batch query took ${queryTime.toFixed(2)}s`,
+    );
 
     return result;
   } catch (error) {
@@ -222,28 +200,29 @@ export async function getChatsWithInitialMessages({
 }
 
 // Optimized query to check chat visibility and ownership
-export async function getChatVisibilityAndOwnership({
-  id,
-  userId,
-}: {
-  id: string;
-  userId?: string;
-}): Promise<{
+export async function getChatVisibilityAndOwnership({ id, userId }: { id: string; userId?: string }): Promise<{
   chat: Chat | null;
   isOwner: boolean;
   canAccess: boolean;
 }> {
   try {
-    console.log('🔍 [DB-OPTIMIZED] getChatVisibilityAndOwnership: Starting visibility check...');
+    console.log('🔍 [DB-OPTIMIZED] getChatVisibilityAndOwnership: Starting visibility check (db.query.chat)...');
     const startTime = Date.now();
 
-    const [selectedChat] = await db
-      .select()
-      .from(chat)
-      .where(eq(chat.id, id))
-      .$withCache();
 
-    if (!selectedChat) {
+    const record = await db.query.chat.findFirst({
+      where: eq(chat.id, id),
+      columns: {
+        id: true,
+        userId: true,
+        visibility: true,
+        createdAt: true,
+        updatedAt: true,
+        title: true,
+      },
+    });
+
+    if (!record) {
       return {
         chat: null,
         isOwner: false,
@@ -251,14 +230,16 @@ export async function getChatVisibilityAndOwnership({
       };
     }
 
-    const isOwner = userId ? selectedChat.userId === userId : false;
-    const canAccess = selectedChat.visibility === 'public' || isOwner;
+    const isOwner = userId ? record.userId === userId : false;
+    const canAccess = record.visibility === 'public' || isOwner;
 
     const queryTime = (Date.now() - startTime) / 1000;
-    console.log(`⏱️  [DB-OPTIMIZED] getChatVisibilityAndOwnership: Visibility check took ${queryTime.toFixed(2)}s`);
+    console.log(
+      `⏱️  [DB-OPTIMIZED] getChatVisibilityAndOwnership: db.query.chat visibility check took ${queryTime.toFixed(2)}s`,
+    );
 
     return {
-      chat: selectedChat,
+      chat: record as unknown as Chat,
       isOwner,
       canAccess,
     };
@@ -282,14 +263,12 @@ export async function getAdditionalMessages({
   hasMore: boolean;
 }> {
   try {
-    const messages = await db
-      .select()
-      .from(message)
-      .where(eq(message.chatId, chatId))
-      .orderBy(asc(message.createdAt))
-      .limit(limit + 1)
-      .offset(offset)
-      .$withCache();
+    const messages = await db.query.message.findMany({
+      where: eq(message.chatId, chatId),
+      orderBy: (fields, { asc: orderAsc }) => [orderAsc(fields.createdAt), orderAsc(fields.id)],
+      limit: limit + 1,
+      offset,
+    });
 
     const hasMore = messages.length > limit;
     const limitedMessages = hasMore ? messages.slice(0, limit) : messages;

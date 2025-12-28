@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import { BinocularsIcon, Archive01Icon } from '@hugeicons/core-free-icons';
 import { Card, CardContent } from '@/components/ui/card';
 

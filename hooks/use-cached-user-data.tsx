@@ -60,15 +60,15 @@ export function useCachedUserData() {
     polarSubscription: user?.polarSubscription,
     hasPolarSubscription: Boolean(user?.polarSubscription),
 
-    // DodoPayments details
-    dodoPayments: user?.dodoPayments,
-    hasDodoPayments: Boolean(user?.dodoPayments?.hasPayments),
-    dodoExpiresAt: user?.dodoPayments?.expiresAt,
-    isDodoExpiring: Boolean(user?.dodoPayments?.isExpiringSoon),
-    isDodoExpired: Boolean(user?.dodoPayments?.isExpired),
+    // Dodo Subscription details
+    dodoSubscription: user?.dodoSubscription,
+    hasDodoSubscription: Boolean(user?.dodoSubscription?.hasSubscriptions),
+    dodoExpiresAt: user?.dodoSubscription?.expiresAt,
+    isDodoExpiring: Boolean(user?.dodoSubscription?.isExpiringSoon),
+    isDodoExpired: Boolean(user?.dodoSubscription?.isExpired),
 
-    // Payment history
-    paymentHistory: user?.paymentHistory || [],
+    // Subscription history
+    subscriptionHistory: user?.subscriptionHistory || [],
 
     // Rate limiting helpers
     shouldCheckLimits: Boolean(!isLoading && user && !user.isProUser),
@@ -88,21 +88,21 @@ export function useCachedUserData() {
         }
       : { hasSubscription: false },
 
-    // Map dodoPayments to legacy dodoProStatus structure for settings dialog
-    dodoProStatus: user?.dodoPayments
+    // Map dodoSubscription to legacy dodoProStatus structure for settings dialog
+    dodoProStatus: user?.dodoSubscription
       ? {
           isProUser: proSource === 'dodo' && isProUser,
-          hasPayments: user.dodoPayments.hasPayments,
-          expiresAt: user.dodoPayments.expiresAt,
-          mostRecentPayment: user.dodoPayments.mostRecentPayment,
-          daysUntilExpiration: user.dodoPayments.daysUntilExpiration,
-          isExpired: user.dodoPayments.isExpired,
-          isExpiringSoon: user.dodoPayments.isExpiringSoon,
+          hasSubscriptions: user.dodoSubscription.hasSubscriptions,
+          expiresAt: user.dodoSubscription.expiresAt,
+          mostRecentSubscription: user.dodoSubscription.mostRecentSubscription,
+          daysUntilExpiration: user.dodoSubscription.daysUntilExpiration,
+          isExpired: user.dodoSubscription.isExpired,
+          isExpiringSoon: user.dodoSubscription.isExpiringSoon,
           source: proSource,
         }
       : null,
 
-    expiresAt: user?.dodoPayments?.expiresAt,
+    expiresAt: user?.dodoSubscription?.expiresAt,
 
     // Additional utilities
     isCached: Boolean(cachedUser),

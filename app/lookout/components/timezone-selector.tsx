@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { HugeiconsIcon } from '@hugeicons/react';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import { CircleArrowUpDownIcon, Tick01Icon } from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -54,7 +54,7 @@ export function TimezoneSelector({ value, onChange }: TimezoneSelectorProps) {
           <CommandInput placeholder="Search timezone..." className="h-9" />
           <CommandEmpty>No timezone found.</CommandEmpty>
           <CommandList
-            className="max-h-[200px] !overflow-y-scroll"
+            className="max-h-[200px] overflow-y-scroll!"
             style={{ overflowY: 'scroll', pointerEvents: 'auto' }}
             tabIndex={0}
             onWheel={(e) => {

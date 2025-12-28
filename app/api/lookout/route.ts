@@ -20,7 +20,7 @@ import { v7 as uuidv7 } from 'uuid';
 import { CronExpressionParser } from 'cron-parser';
 import { sendLookoutCompletionEmail } from '@/lib/email';
 import { db } from '@/lib/db';
-import { subscription, payment } from '@/lib/db/schema';
+import { subscription, dodosubscription } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 // Import extreme search tool
@@ -44,19 +44,18 @@ async function checkUserIsProById(userId: string): Promise<boolean> {
       return true;
     }
 
-    // Check for Dodo payments (Indian users)
-    const dodoPayments = await db.select().from(payment).where(eq(payment.userId, userId));
+    // Check for Dodo subscriptions
+    const dodoSubscriptions = await db.select().from(dodosubscription).where(eq(dodosubscription.userId, userId));
 
-    const successfulDodoPayments = dodoPayments
-      .filter((p) => p.status === 'succeeded')
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Check if any Dodo subscription is active
+    const activeDodoSubscription = dodoSubscriptions.find((sub) => {
+      const now = new Date();
+      const isActive = sub.status === 'active' && (!sub.currentPeriodEnd || new Date(sub.currentPeriodEnd) > now);
+      return isActive;
+    });
 
-    if (successfulDodoPayments.length > 0) {
-      const mostRecentPayment = successfulDodoPayments[0];
-      const paymentDate = new Date(mostRecentPayment.createdAt);
-      const subscriptionEndDate = new Date(paymentDate);
-      subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + 1); // 1 month duration
-      return subscriptionEndDate > new Date();
+    if (activeDodoSubscription) {
+      return true;
     }
 
     return false;
@@ -194,7 +193,7 @@ export async function POST(req: Request) {
         // Start streaming
         const result = streamText({
           model: scira.languageModel('scira-grok-4-fast-think'),
-          messages: convertToModelMessages([userMessage]),
+          messages: await convertToModelMessages([userMessage]),
           stopWhen: stepCountIs(2),
           maxRetries: 10,
           activeTools: ['extreme_search'],

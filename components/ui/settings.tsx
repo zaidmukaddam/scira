@@ -44,7 +44,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
           onMouseEnter?.(e);
         }
       },
-      [controls, onMouseEnter]
+      [controls, onMouseEnter],
     );
 
     const handleMouseLeave = useCallback(
@@ -55,16 +55,11 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
           onMouseLeave?.(e);
         }
       },
-      [controls, onMouseLeave]
+      [controls, onMouseLeave],
     );
 
     return (
-      <div
-        className={cn(className)}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-        {...props}
-      >
+      <div className={cn(className)} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} {...props}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
           width={size}
@@ -237,7 +232,7 @@ const SettingsIcon = forwardRef<SettingsIconHandle, SettingsIconProps>(
         </svg>
       </div>
     );
-  }
+  },
 );
 
 SettingsIcon.displayName = 'SettingsIcon';

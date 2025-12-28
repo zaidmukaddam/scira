@@ -17,9 +17,17 @@ const nextConfig: NextConfig = {
         }
         : false,
   },
+  // Add Turbopack alias to resolve MathJax default font to NewCM font
+  turbopack: {
+    resolveAlias: {
+      '#default-font/*': '@mathjax/mathjax-newcm-font/mjs/*',
+    },
+    resolveExtensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.json'],
+  },
+  reactCompiler: true,
   experimental: {
     turbopackFileSystemCacheForDev: true,
-    useCache: true,
+    turbopackFileSystemCacheForBuild: true,
     optimizePackageImports: [
       '@phosphor-icons/react',
       'lucide-react',
@@ -35,10 +43,37 @@ const nextConfig: NextConfig = {
       static: 30,
     },
   },
+  // Ensure MathJax packages are treated as externals for server bundling
   serverExternalPackages: ['@aws-sdk/client-s3', 'prettier'],
-  transpilePackages: ['geist', '@daytonaio/sdk', 'shiki', 'resumable-stream', '@t3-oss/env-nextjs', '@t3-oss/env-core'],
-  output: 'standalone',
-  devIndicators: false,
+  transpilePackages: [
+    'geist',
+    '@daytonaio/sdk',
+    'shiki',
+    'resumable-stream',
+    '@t3-oss/env-nextjs',
+    '@t3-oss/env-core',
+    '@mathjax/src',
+    '@mathjax/mathjax-newcm-font',
+  ],
+  devIndicators: process.env.NODE_ENV === 'production' ? false : { position: 'bottom-right' },
+  // Webpack fallback alias for environments not using Turbopack
+  webpack: (config, { isServer }) => {
+    config.resolve = config.resolve || {};
+    config.resolve.alias = config.resolve.alias || {};
+    config.resolve.alias['#default-font'] = '@mathjax/mathjax-newcm-font/mjs';
+    config.resolve.alias['#default-font/*'] = '@mathjax/mathjax-newcm-font/mjs/*';
+
+    // Ensure proper module resolution for MathJax ESM modules
+    if (isServer) {
+      config.resolve.extensionAlias = {
+        '.js': ['.js', '.ts', '.tsx', '.jsx'],
+        '.mjs': ['.mjs', '.mts'],
+        '.cjs': ['.cjs', '.cts'],
+      };
+    }
+
+    return config;
+  },
   async headers() {
     return [
       {
@@ -80,6 +115,11 @@ const nextConfig: NextConfig = {
       {
         source: '/blog',
         destination: 'https://blog.scira.ai',
+        permanent: true,
+      },
+      {
+        source: '/askscirabot',
+        destination: 'https://t.me/askscirabot',
         permanent: true,
       },
     ];

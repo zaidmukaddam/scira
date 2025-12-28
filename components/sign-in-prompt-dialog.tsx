@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
-import { signIn } from '@/lib/auth-client';
+import { authClient, signIn } from '@/lib/auth-client';
 import { Loader2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
 
 interface SignInPromptDialogProps {
   open: boolean;
@@ -25,13 +26,14 @@ const SignInButton = ({ provider, loading, setLoading }: SignInButtonProps) => {
   const isGoogle = provider === 'google';
   const isTwitter = provider === 'twitter';
   const isMicrosoft = provider === 'microsoft';
+  const lastMethod = authClient.getLastUsedLoginMethod();
 
   const providerName = isGithub ? 'GitHub' : isGoogle ? 'Google' : isTwitter ? 'X' : 'Microsoft';
 
   return (
     <Button
       variant="outline"
-      className="relative w-full h-11 px-4 font-normal text-sm !border-0"
+      className="relative w-full h-11 px-4 font-normal text-sm border-0!"
       disabled={loading}
       onClick={async () => {
         await signIn.social(
@@ -99,9 +101,12 @@ const SignInButton = ({ provider, loading, setLoading }: SignInButtonProps) => {
                 </svg>
               )}
             </div>
-            <span className="text-sm font-medium">
-              Continue with {providerName}
-            </span>
+            <span className="text-sm font-medium">Continue with {providerName}</span>
+            {lastMethod === provider && (
+              <Badge variant="default" className="absolute -top-2 -right-2 pointer-events-none z-10">
+                Last used
+              </Badge>
+            )}
           </>
         )}
       </div>

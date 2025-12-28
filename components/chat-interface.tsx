@@ -3,25 +3,54 @@
 
 // React and React-related imports
 import React, { memo, useCallback, useEffect, useMemo, useRef, useReducer, useState } from 'react';
+import Link from 'next/link';
 
 // Third-party library imports
 import { useChat } from '@ai-sdk/react';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { Crown02Icon } from '@hugeicons/core-free-icons';
-import { useRouter } from 'next/navigation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { HugeiconsIcon } from '@/components/ui/hugeicons';
+import { Crown02Icon, UserCircleIcon } from '@hugeicons/core-free-icons';
+import { PlusIcon } from '@phosphor-icons/react';
+import { useRouter, usePathname } from 'next/navigation';
 import { parseAsString, useQueryState } from 'nuqs';
 import { toast } from 'sonner';
 import { v7 as uuidv7 } from 'uuid';
 
 // Internal app imports
-import { suggestQuestions, updateChatVisibility } from '@/app/actions';
+import { suggestQuestions, updateChatVisibility, getChatMeta } from '@/app/actions';
 
 // Component imports
 import { ChatDialogs } from '@/components/chat-dialogs';
 import Messages from '@/components/messages';
-import { Navbar } from '@/components/navbar';
+import { AppSidebar } from '@/components/app-sidebar';
+import { SidebarInset, useSidebar, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import FormComponent from '@/components/ui/form-component';
+import { ShareDialog } from '@/components/share/share-dialog';
+import { ExampleCategories } from '@/components/example-categories';
+import { Pencil, Trash2, Share as ShareIcon, ChevronDown } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import { deleteChat, updateChatTitle } from '@/app/actions';
+import { ButtonGroup } from '@/components/ui/button-group';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 
 // Hook imports
 import { useAutoResume } from '@/hooks/use-auto-resume';
@@ -33,7 +62,7 @@ import { useOptimizedScroll } from '@/hooks/use-optimized-scroll';
 // Utility and type imports
 import { SEARCH_LIMITS } from '@/lib/constants';
 import { ChatSDKError } from '@/lib/errors';
-import { cn, SearchGroupId, invalidateChatsCache } from '@/lib/utils';
+import { cn, SearchGroupId } from '@/lib/utils';
 import { requiresProSubscription } from '@/ai/providers';
 import { ConnectorProvider } from '@/lib/connectors';
 
@@ -48,6 +77,7 @@ interface ChatInterfaceProps {
   initialMessages?: any[];
   initialVisibility?: 'public' | 'private';
   isOwner?: boolean;
+  chatTitle?: string;
 }
 
 const ChatInterface = memo(
@@ -56,14 +86,73 @@ const ChatInterface = memo(
     initialMessages,
     initialVisibility = 'private',
     isOwner = true,
+    chatTitle,
   }: ChatInterfaceProps): React.JSX.Element => {
     const router = useRouter();
+    const pathname = usePathname();
+    const queryClient = useQueryClient();
+    const { state } = useSidebar();
     const [query] = useQueryState('query', parseAsString.withDefault(''));
     const [q] = useQueryState('q', parseAsString.withDefault(''));
-    const [input, setInput] = useState<string>('');
+    const [groupParam] = useQueryState('group', parseAsString.withDefault(''));
+    const [input, setInput] = useLocalStorage<string>('scira-draft-input', '');
+    const [localChatTitle, setLocalChatTitle] = useState<string>(chatTitle || (initialChatId ? 'Chat' : 'New Chat'));
+    const [isEditingTitle, setIsEditingTitle] = useState(false); // legacy inline edit (to be removed)
+    const [titleInput, setTitleInput] = useState(localChatTitle);
+    const [isSavingTitle, setIsSavingTitle] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isShareOpen, setIsShareOpen] = useState(false);
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+    const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [headerMenuOpen, setHeaderMenuOpen] = useState(false);
+    const headerGroupRef = useRef<HTMLDivElement>(null);
+    const chevronBtnRef = useRef<HTMLButtonElement>(null);
+    const [groupWidth, setGroupWidth] = useState<number>(0);
+    const [alignOffset, setAlignOffset] = useState<number>(0);
+
+    const measureHeaderMenuAlignment = React.useCallback(() => {
+      const groupEl = headerGroupRef.current;
+      if (!groupEl) return;
+      const gW = groupEl.offsetWidth;
+      setGroupWidth(gW);
+      const cW = chevronBtnRef.current ? chevronBtnRef.current.offsetWidth : 0;
+      // Align content to be centered within the full button group (not just the chevron)
+      // With align="center", a negative offset of half the width difference moves the menu's center
+      // from the chevron button to the center of the whole group.
+      setAlignOffset(-((gW - cW) / 2));
+    }, []);
+
+    useEffect(() => {
+      const groupEl = headerGroupRef.current;
+      if (!groupEl) return;
+      const ro = new ResizeObserver(measureHeaderMenuAlignment);
+      ro.observe(groupEl);
+      measureHeaderMenuAlignment();
+      window.addEventListener('resize', measureHeaderMenuAlignment);
+      return () => {
+        ro.disconnect();
+        window.removeEventListener('resize', measureHeaderMenuAlignment);
+      };
+    }, [measureHeaderMenuAlignment]);
+
+    // Re-measure when path/title changes or when menu opens
+    useEffect(() => {
+      if (!headerMenuOpen) return;
+      // microtask to allow layout to settle when replaceState changes DOM
+      queueMicrotask(() => measureHeaderMenuAlignment());
+    }, [pathname, localChatTitle, headerMenuOpen, measureHeaderMenuAlignment]);
 
     const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', 'scira-default');
-    const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>('scira-selected-group', 'web');
+    const initialGroupDefault = (
+      groupParam ? (groupParam as unknown as SearchGroupId) : ('web' as SearchGroupId)
+    ) as SearchGroupId;
+    const [selectedGroup, setSelectedGroup] = useLocalStorage<SearchGroupId>(
+      'scira-selected-group',
+      initialGroupDefault,
+    );
+    const effectiveSelectedGroup = (
+      groupParam ? (groupParam as unknown as SearchGroupId) : selectedGroup
+    ) as SearchGroupId;
     const [selectedConnectors, setSelectedConnectors] = useState<ConnectorProvider[]>([]);
     const [isCustomInstructionsEnabled, setIsCustomInstructionsEnabled] = useLocalStorage(
       'scira-custom-instructions-enabled',
@@ -98,8 +187,10 @@ const ChatInterface = memo(
 
     const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
       'scira-search-provider',
-      'parallel',
+      'firecrawl',
     );
+
+    const [extremeSearchProvider, __] = useLocalStorage<'exa' | 'parallel'>('scira-extreme-search-provider', 'exa');
 
     // Use reducer for complex state management
     const [chatState, dispatch] = useReducer(
@@ -130,6 +221,79 @@ const ChatInterface = memo(
       [query, q],
     );
 
+    useEffect(() => {
+      // keep local title in sync if prop changes (e.g., server updated)
+      if (chatTitle && chatTitle !== localChatTitle) {
+        setLocalChatTitle(chatTitle);
+        if (!isEditingTitle) setTitleInput(chatTitle);
+      }
+    }, [chatTitle]);
+
+    const handleStartEditTitle = useCallback(() => {
+      const currentChatId = initialChatId || (pathname?.startsWith('/search/') ? pathname.split('/')[2] : null);
+      if (!currentChatId) return;
+      setTitleInput(localChatTitle || '');
+      setIsEditDialogOpen(true);
+    }, [initialChatId, localChatTitle, pathname]);
+
+    const handleCancelEditTitle = useCallback(() => {
+      setIsEditDialogOpen(false);
+      setIsEditingTitle(false);
+      setTitleInput(localChatTitle || '');
+    }, [localChatTitle]);
+
+    const handleSaveTitle = useCallback(async () => {
+      const currentChatId = initialChatId || (pathname?.startsWith('/search/') ? pathname.split('/')[2] : null);
+      if (!currentChatId) return;
+      const next = titleInput.trim();
+      if (!next) {
+        toast.error('Title cannot be empty');
+        return;
+      }
+      if (next.length > 100) {
+        toast.error('Title is too long (max 100 characters)');
+        return;
+      }
+      try {
+        setIsSavingTitle(true);
+        const updated = await updateChatTitle(currentChatId, next);
+        if (updated) {
+          setLocalChatTitle(next);
+          toast.success('Title updated');
+          setIsEditingTitle(false);
+          setIsEditDialogOpen(false);
+        } else {
+          toast.error('Failed to update title');
+        }
+      } catch (e) {
+        toast.error('Failed to update title');
+      } finally {
+        setIsSavingTitle(false);
+      }
+    }, [initialChatId, titleInput, pathname]);
+
+    const handleOpenDelete = useCallback(() => {
+      const currentChatId = initialChatId || (pathname?.startsWith('/search/') ? pathname.split('/')[2] : null);
+      if (!currentChatId) return;
+      setIsDeleteOpen(true);
+    }, [initialChatId, pathname]);
+
+    const handleConfirmDelete = useCallback(async () => {
+      const currentChatId = initialChatId || (pathname?.startsWith('/search/') ? pathname.split('/')[2] : null);
+      if (!currentChatId) return;
+      try {
+        setIsDeleting(true);
+        await deleteChat(currentChatId);
+        toast.success('Chat deleted');
+        setIsDeleteOpen(false);
+        router.push('/');
+      } catch (e) {
+        toast.error('Failed to delete chat');
+      } finally {
+        setIsDeleting(false);
+      }
+    }, [initialChatId, pathname, router]);
+
     const lastSubmittedQueryRef = useRef(initialState.query);
     const bottomRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null!);
@@ -151,7 +315,7 @@ const ChatInterface = memo(
     }, [markManualScroll]);
 
     // Use clean React Query hooks for all data fetching
-    const { data: usageData, refetch: refetchUsage } = useUsageData(user || null);
+    const { data: usageData } = useUsageData(user || null);
 
     // Sign-in prompt timer
     const signInTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -161,13 +325,36 @@ const ChatInterface = memo(
 
     // Pro users bypass all limit checks - much cleaner!
     const shouldBypassLimits = shouldBypassLimitsForModel(selectedModel);
-    const hasExceededLimit =
+
+    // Check the appropriate limit based on selected group
+    const isExtremeMode = effectiveSelectedGroup === 'extreme';
+    const currentUsageCount = usageData
+      ? (isExtremeMode ? usageData.extremeSearchCount : usageData.messageCount)
+      : 0;
+    const currentLimit = isExtremeMode
+      ? SEARCH_LIMITS.EXTREME_SEARCH_LIMIT
+      : SEARCH_LIMITS.DAILY_SEARCH_LIMIT;
+
+    // Check if current mode has exceeded its limit
+    const hasExceededCurrentModeLimit =
       shouldCheckUserLimits &&
       !proStatusLoading &&
       !shouldBypassLimits &&
       usageData &&
-      usageData.count >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT;
-    const isLimitBlocked = Boolean(hasExceededLimit);
+      currentUsageCount >= currentLimit;
+
+    // Check if BOTH limits are exhausted
+    const messageCountExhausted = usageData && usageData.messageCount >= SEARCH_LIMITS.DAILY_SEARCH_LIMIT;
+    const extremeSearchCountExhausted = usageData && usageData.extremeSearchCount >= SEARCH_LIMITS.EXTREME_SEARCH_LIMIT;
+
+    // Only block UI when BOTH limits are exhausted (so user can switch modes if one still has quota)
+    const isLimitBlocked = Boolean(
+      shouldCheckUserLimits &&
+      !proStatusLoading &&
+      !shouldBypassLimits &&
+      messageCountExhausted &&
+      extremeSearchCountExhausted
+    );
 
     // Auto-switch away from pro models when user loses pro access
     useEffect(() => {
@@ -180,9 +367,6 @@ const ChatInterface = memo(
       if (currentModelRequiresPro && !isUserPro && selectedModel !== 'scira-default') {
         console.log(`Auto-switching from pro model '${selectedModel}' to 'scira-default' - user lost pro access`);
         setSelectedModel('scira-default');
-
-        // Show a toast notification to inform the user
-        toast.info('Switched to default model - Pro subscription required for premium models');
       }
     }, [selectedModel, isUserPro, proStatusLoading, setSelectedModel]);
 
@@ -239,20 +423,23 @@ const ChatInterface = memo(
 
     // Create refs to store current values to avoid closure issues
     const selectedModelRef = useRef(selectedModel);
-    const selectedGroupRef = useRef(selectedGroup);
+    const selectedGroupRef = useRef(effectiveSelectedGroup);
     const isCustomInstructionsEnabledRef = useRef(isCustomInstructionsEnabled);
     const searchProviderRef = useRef(searchProvider);
+    const extremeSearchProviderRef = useRef(extremeSearchProvider);
     const selectedConnectorsRef = useRef(selectedConnectors);
 
     // Update refs whenever state changes - this ensures we always have current values
     selectedModelRef.current = selectedModel;
-    selectedGroupRef.current = selectedGroup;
+    selectedGroupRef.current = effectiveSelectedGroup;
     isCustomInstructionsEnabledRef.current = isCustomInstructionsEnabled;
     searchProviderRef.current = searchProvider;
+    extremeSearchProviderRef.current = extremeSearchProvider;
     selectedConnectorsRef.current = selectedConnectors;
 
     const { messages, sendMessage, setMessages, regenerate, stop, status, error, resumeStream } = useChat<ChatMessage>({
       id: chatId,
+      // resume: true,
       transport: new DefaultChatTransport({
         api: '/api/search',
         prepareSendMessagesRequest({ messages, body }) {
@@ -266,6 +453,7 @@ const ChatInterface = memo(
               timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
               isCustomInstructionsEnabled: isCustomInstructionsEnabledRef.current,
               searchProvider: searchProviderRef.current,
+              extremeSearchProvider: extremeSearchProviderRef.current,
               selectedConnectors: selectedConnectorsRef.current,
               ...(initialChatId ? { chat_id: initialChatId } : {}),
               ...body,
@@ -276,13 +464,28 @@ const ChatInterface = memo(
       experimental_throttle: 100,
       onData: (dataPart) => {
         console.log('onData<Client>', dataPart);
+        // Handle chat title updates from server for new chats
+        if (dataPart.type === 'data-chat_title') {
+          const titleData = dataPart.data;
+          if (titleData?.title) {
+            setLocalChatTitle(titleData.title);
+            setTitleInput(titleData.title);
+          }
+          // Force refetch sidebar query immediately when new chat is created
+          if (user) {
+            queryClient.refetchQueries({ queryKey: ['recent-chats', user.id] });
+          }
+        }
         setDataStream((ds) => (ds ? [...ds, dataPart] : []));
       },
       onFinish: async ({ message }) => {
         console.log('onFinish<Client>', message.parts);
         // Refresh usage data after message completion for authenticated users
         if (user) {
-          refetchUsage();
+          // Invalidate usage data to force fresh fetch and update tooltips
+          queryClient.invalidateQueries({ queryKey: ['user-usage', user.id] });
+          // Refetch chats cache to refresh sidebar (use refetch to bypass staleTime)
+          queryClient.refetchQueries({ queryKey: ['recent-chats', user.id] });
         }
 
         // Check if this is the first message completion and user is not Pro
@@ -323,21 +526,42 @@ const ChatInterface = memo(
         // Don't show toast for ChatSDK errors as they will be handled by the enhanced error display
         if (error instanceof ChatSDKError) {
           console.log('ChatSDK Error:', error.type, error.surface, error.message);
-          // Only show toast for certain error types that need immediate attention
-          if (error.type === 'offline' || error.surface === 'stream') {
-            toast.error('Connection Error', {
-              description: error.message,
-            });
-          }
-        } else {
-          console.error('Chat error:', error.cause, error.message);
-          toast.error('An error occurred.', {
-            description: `Oops! An error occurred while processing your request. ${error.cause || error.message}`,
-          });
+          return;
         }
+
+        console.error('Chat error:', error.cause, error.message);
       },
       messages: initialMessages || [],
     });
+
+    // Compute active chat id used in header and data fetching (after messages/chatId exist)
+    const effectiveChatId = useMemo(() => {
+      const routeChatId = pathname?.startsWith('/search/') ? pathname.split('/')[2] : null;
+      return initialChatId || routeChatId || (messages.length > 0 ? chatId : null);
+    }, [initialChatId, pathname, messages.length, chatId]);
+
+    const shouldShowHeader = Boolean(user && effectiveChatId);
+    const canEditHeader = Boolean(isOwner && shouldShowHeader);
+    const headerOffsetClass =
+      state === 'expanded'
+        ? 'md:left-[calc(var(--sidebar-width))]'
+        : 'md:left-[calc(var(--sidebar-width-icon))]';
+
+    const { data: chatMeta } = useQuery({
+      queryKey: ['chat-meta', effectiveChatId, messages.length],
+      enabled: Boolean(effectiveChatId),
+      queryFn: async () => await getChatMeta(effectiveChatId as string),
+      staleTime: 1000 * 60,
+      refetchOnWindowFocus: true,
+    });
+
+    // Keep local title in sync with server via React Query
+    useEffect(() => {
+      if (chatMeta?.title && chatMeta.title !== localChatTitle && !isEditingTitle) {
+        setLocalChatTitle(chatMeta.title);
+        setTitleInput(chatMeta.title);
+      }
+    }, [chatMeta?.title, isEditingTitle]);
 
     // Handle text highlighting and quoting
     const handleHighlight = useCallback(
@@ -379,14 +603,7 @@ const ChatInterface = memo(
       }
     }, [status]);
 
-
-    useEffect(() => {
-      if (user && status === 'streaming' && messages.length > 0) {
-        console.log('[chatId]:', chatId);
-        // Invalidate chats cache to refresh the list
-        invalidateChatsCache();
-      }
-    }, [user, status, router, chatId, initialChatId, messages.length]);
+    // Removed header/recents invalidation effects; chat meta now refetches based on messages.length via query key
 
     useEffect(() => {
       if (!initializedRef.current && initialState.query && !messages.length && !initialChatId) {
@@ -523,6 +740,32 @@ const ChatInterface = memo(
       dispatch({ type: 'RESET_SUGGESTED_QUESTIONS' });
     }, []);
 
+    // Handle example selection from ExampleCategories
+    const handleExampleSelect = useCallback(
+      (text: string, group?: string) => {
+        if (group) {
+          setSelectedGroup(group as SearchGroupId);
+        }
+        
+        // Set the input value directly on the DOM element first
+        if (inputRef.current) {
+          inputRef.current.value = text;
+          // Trigger the onChange event manually so React state stays in sync
+          const event = new Event('input', { bubbles: true });
+          inputRef.current.dispatchEvent(event);
+          
+          // Now set the cursor position
+          inputRef.current.focus();
+          const length = text.length;
+          inputRef.current.setSelectionRange(length, length);
+        }
+        
+        // Also update React state
+        setInput(text);
+      },
+      [setInput, setSelectedGroup],
+    );
+
     // Handle visibility change
     const handleVisibilityChange = useCallback(
       async (visibility: VisibilityType) => {
@@ -557,9 +800,11 @@ const ChatInterface = memo(
             toast.success(`Chat is now ${visibility}`);
             console.log('🍞 Success toast shown:', `Chat is now ${visibility}`);
 
-            // Invalidate cache to refresh the list with updated visibility
-            invalidateChatsCache();
-            console.log('🗑️ Cache invalidated');
+            // Refetch cache to refresh the list with updated visibility (bypass staleTime)
+            if (user) {
+              queryClient.refetchQueries({ queryKey: ['recent-chats', user.id] });
+            }
+            console.log('🗑️ Cache refetched');
           } else {
             console.error('❌ Update failed - unsuccessful result:', {
               result,
@@ -583,13 +828,11 @@ const ChatInterface = memo(
     );
 
     return (
-      <div className="flex flex-col font-sans! items-center h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden !scrollbar-thin !scrollbar-thumb-muted-foreground dark:!scrollbar-thumb-muted-foreground !scrollbar-track-transparent hover:!scrollbar-thumb-foreground dark:!hover:scrollbar-thumb-foreground">
-        <Navbar
-          isDialogOpen={chatState.anyDialogOpen}
+      <>
+        <AppSidebar
           chatId={initialChatId || (messages.length > 0 ? chatId : null)}
           selectedVisibilityType={chatState.selectedVisibilityType}
           onVisibilityChange={handleVisibilityChange}
-          status={status}
           user={user || null}
           onHistoryClick={() => dispatch({ type: 'SET_COMMAND_DIALOG_OPEN', payload: true })}
           isOwner={isOwner}
@@ -602,245 +845,535 @@ const ChatInterface = memo(
           setSettingsOpen={setSettingsOpen}
           settingsInitialTab={settingsInitialTab}
         />
-
-        {/* Chat Dialogs Component */}
-        <ChatDialogs
-          commandDialogOpen={chatState.commandDialogOpen}
-          setCommandDialogOpen={(open) => dispatch({ type: 'SET_COMMAND_DIALOG_OPEN', payload: open })}
-          showSignInPrompt={chatState.showSignInPrompt}
-          setShowSignInPrompt={(open) => dispatch({ type: 'SET_SHOW_SIGNIN_PROMPT', payload: open })}
-          hasShownSignInPrompt={chatState.hasShownSignInPrompt}
-          setHasShownSignInPrompt={(value) => {
-            dispatch({ type: 'SET_HAS_SHOWN_SIGNIN_PROMPT', payload: value });
-            setPersitedHasShownSignInPrompt(value);
-          }}
-          showUpgradeDialog={chatState.showUpgradeDialog}
-          setShowUpgradeDialog={(open) => dispatch({ type: 'SET_SHOW_UPGRADE_DIALOG', payload: open })}
-          hasShownUpgradeDialog={chatState.hasShownUpgradeDialog}
-          setHasShownUpgradeDialog={(value) => {
-            dispatch({ type: 'SET_HAS_SHOWN_UPGRADE_DIALOG', payload: value });
-            setPersitedHasShownUpgradeDialog(value);
-          }}
-          showLookoutAnnouncement={chatState.showAnnouncementDialog}
-          setShowLookoutAnnouncement={(open) => dispatch({ type: 'SET_SHOW_ANNOUNCEMENT_DIALOG', payload: open })}
-          hasShownLookoutAnnouncement={chatState.hasShownAnnouncementDialog}
-          setHasShownLookoutAnnouncement={(value) => {
-            dispatch({ type: 'SET_HAS_SHOWN_ANNOUNCEMENT_DIALOG', payload: value });
-            setPersitedHasShownLookoutAnnouncement(value);
-          }}
-          user={user}
-          setAnyDialogOpen={(open) => dispatch({ type: 'SET_ANY_DIALOG_OPEN', payload: open })}
-        />
-
-
-        <div
-          className={`w-full p-2 sm:p-4 relative ${status === 'ready' && messages.length === 0
-              ? 'flex-1 !flex !flex-col !items-center !justify-center' // Center everything when no messages
-              : '!mt-20 sm:!mt-16 flex !flex-col' // Add top margin when showing messages
-            }`}
-        >
-          <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
-            {status === 'ready' && messages.length === 0 && (
-              <div className="text-center m-0 mb-2">
-                <div className="inline-flex items-center gap-3">
-                  <h1 className="text-4xl sm:text-5xl !mb-0 text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
-                    scira
-                  </h1>
-                  {isUserPro && (
-                    <h1 className="text-2xl font-baumans! leading-4 inline-block !px-3 !pt-1 !pb-2.5 rounded-xl shadow-sm !m-0 !mt-2 bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
-                      pro
-                    </h1>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Show initial limit exceeded message */}
-            {status === 'ready' && messages.length === 0 && isLimitBlocked && (
-              <div className="mt-16 mx-auto max-w-sm">
-                <div className="bg-card backdrop-blur-xl border border-border/40 rounded-2xl shadow-2xl overflow-hidden">
-                  {/* Header Section */}
-                  <div className="text-center px-8 pt-8 pb-6">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-muted/30 rounded-full mb-6">
-                      <HugeiconsIcon icon={Crown02Icon} size={28} className="text-muted-foreground" strokeWidth={1.5} />
-                    </div>
-                    <h2 className="text-2xl font-semibold text-foreground mb-3 tracking-tight">Daily limit reached</h2>
-                  </div>
-
-                  {/* Content Section */}
-                  <div className="text-center px-8 pb-8">
-                    <div className="space-y-4 mb-8">
-                      <p className="text-base text-foreground leading-relaxed font-medium">
-                        You&apos;ve used all{' '}
-                        <span className="text-primary font-semibold">{SEARCH_LIMITS.DAILY_SEARCH_LIMIT}</span> searches
-                        for today
-                      </p>
-                      <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">
-                        Upgrade to Pro for unlimited searches, faster responses, and premium features
-                      </p>
-                    </div>
-
-                    {/* Actions Section */}
-                    <div className="space-y-3">
-                      <Button
-                        onClick={() => {
-                          window.location.href = '/pricing';
-                        }}
-                        className="w-full h-11 font-semibold text-base"
-                      >
-                        <HugeiconsIcon icon={Crown02Icon} size={18} className="mr-2.5" strokeWidth={1.5} />
-                        Upgrade to Pro
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        onClick={() => {
-                          refetchUsage();
-                        }}
-                        className="w-full h-10 text-muted-foreground hover:text-foreground font-medium"
-                      >
-                        Try refreshing
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Use the Messages component */}
-            {messages.length > 0 && (
-              <Messages
-                messages={messages as ChatMessage[]}
-                lastUserMessageIndex={lastUserMessageIndex}
-                input={input}
-                setInput={setInput}
-                setMessages={(messages) => {
-                  setMessages(messages as ChatMessage[]);
-                }}
-                sendMessage={sendMessage}
-                regenerate={regenerate}
-                suggestedQuestions={chatState.suggestedQuestions}
-                setSuggestedQuestions={(questions) => dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions })}
-                status={status}
-                error={error ?? null}
-                user={user}
-                selectedVisibilityType={chatState.selectedVisibilityType}
-                chatId={initialChatId || (messages.length > 0 ? chatId : undefined)}
-                onVisibilityChange={handleVisibilityChange}
-                initialMessages={initialMessages}
-                isOwner={isOwner}
-                onHighlight={handleHighlight}
-              />
-            )}
-
-            <div ref={bottomRef} />
-          </div>
-
-          {/* Single Form Component with dynamic positioning */}
-          {((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
-            !isLimitBlocked && (
+        <SidebarInset>
+          {/* Header with Share Button - only for signed-in users and when we have a chat id */}
+          {shouldShowHeader && (
+            <>
               <div
                 className={cn(
-                  'transition-all duration-500',
-                  messages.length === 0 && !chatState.hasSubmitted
-                    ? 'relative w-full max-w-2xl mx-auto'
-                    : 'fixed bottom-0 left-0 right-0 z-20 !pb-6 mt-1 mx-4 sm:mx-2 p-0',
+                  'fixed top-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-md supports-backdrop-filter:bg-background/80',
+                  headerOffsetClass,
                 )}
               >
-                <FormComponent
-                  chatId={chatId}
-                  user={user!}
-                  subscriptionData={subscriptionData}
-                  input={input}
-                  setInput={setInput}
-                  attachments={chatState.attachments}
-                  setAttachments={(attachments) => {
-                    const newAttachments =
-                      typeof attachments === 'function' ? attachments(chatState.attachments) : attachments;
-                    dispatch({ type: 'SET_ATTACHMENTS', payload: newAttachments });
-                  }}
-                  fileInputRef={fileInputRef}
-                  inputRef={inputRef}
-                  stop={stop}
-                  messages={messages as ChatMessage[]}
-                  sendMessage={sendMessage}
-                  selectedModel={selectedModel}
-                  setSelectedModel={handleModelChange}
-                  resetSuggestedQuestions={resetSuggestedQuestions}
-                  lastSubmittedQueryRef={lastSubmittedQueryRef}
-                  selectedGroup={selectedGroup}
-                  setSelectedGroup={setSelectedGroup}
-                  showExperimentalModels={messages.length === 0}
-                  status={status}
-                  setHasSubmitted={(hasSubmitted) => {
-                    const newValue =
-                      typeof hasSubmitted === 'function' ? hasSubmitted(chatState.hasSubmitted) : hasSubmitted;
-                    dispatch({ type: 'SET_HAS_SUBMITTED', payload: newValue });
-                  }}
-                  isLimitBlocked={isLimitBlocked}
-                  onOpenSettings={handleOpenSettings}
-                  selectedConnectors={selectedConnectors}
-                  setSelectedConnectors={setSelectedConnectors}
-                />
-              </div>
-            )}
+                <div className="flex items-center justify-between px-3 py-2 min-h-10">
+                  <div className="relative flex items-center gap-3 min-w-0 flex-1 justify-center md:justify-start">
+                    {/* Mobile sidebar trigger */}
+                    <div className="md:hidden absolute left-0 top-1/2 -translate-y-1/2">
+                      <SidebarTrigger className="h-8 w-8" />
+                    </div>
 
-          {/* Form backdrop overlay - hides content below form when in submitted mode */}
-          {((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
-            !isLimitBlocked &&
-            (messages.length > 0 || chatState.hasSubmitted) && (
-              <div
-                className="fixed left-0 right-0 z-10 bg-gradient-to-t from-background via-background/95 to-background/80 backdrop-blur-sm pointer-events-none"
-                style={{
-                  bottom: 0,
-                  height: '120px', // Adjust height as needed
-                }}
-              />
-            )}
+                    {user ? (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            className={cn(
+                              'inline-flex items-center justify-center gap-0.5 h-8 w-8 rounded-md',
+                              'hover:bg-accent data-[state=open]:bg-accent',
+                              'focus:outline-none! focus:ring-0! focus:ring-offset-0!',
+                              'transition-colors',
+                            )}
+                          >
+                            <Avatar className="size-7 rounded-md p-0! m-0!">
+                              <AvatarImage
+                                src={chatMeta?.user?.image ?? user.image ?? ''}
+                                alt={chatMeta?.user?.name ?? user.name ?? ''}
+                                className="rounded-md p-0! m-0! size-7"
+                              />
+                              <AvatarFallback className="rounded-md text-xs p-0 m-0 size-7">
+                                {(chatMeta?.user?.name || chatMeta?.user?.email || user.name || user.email || '?').charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" sideOffset={6} className="rounded-md w-[260px]">
+                          <div className="px-3 py-2">
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="text-xs text-muted-foreground">Created by</span>
+                                <span className="text-xs font-medium truncate">
+                                  {(chatMeta?.isOwner ?? isOwner)
+                                    ? `${chatMeta?.user?.name || user.name || 'You'} (You)`
+                                    : chatMeta?.user?.name || 'Unknown'}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between gap-3">
+                                <span className="text-xs text-muted-foreground">Last Updated</span>
+                                <span className="text-xs font-medium">
+                                  {new Intl.DateTimeFormat('en-US', {
+                                    month: 'long',
+                                    day: 'numeric',
+                                    year: 'numeric',
+                                  }).format(chatMeta?.updatedAt ? new Date(chatMeta.updatedAt) : new Date())}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    ) : (
+                      <HugeiconsIcon icon={UserCircleIcon} size={24} className="size-7 shrink-0 self-start" />
+                    )}
 
-          {/* Show limit exceeded message */}
-          {isLimitBlocked && messages.length > 0 && (
-            <div className="fixed bottom-8 sm:bottom-4 left-0 right-0 w-full max-w-[95%] sm:max-w-2xl mx-auto z-20">
-              <div className="p-3 bg-muted/30 dark:bg-muted/20 border border-border/60 dark:border-border/60 rounded-lg shadow-sm backdrop-blur-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <HugeiconsIcon
-                      icon={Crown02Icon}
-                      size={14}
-                      color="currentColor"
-                      strokeWidth={1.5}
-                      className="text-muted-foreground dark:text-muted-foreground"
-                    />
-                    <span className="text-sm text-foreground dark:text-foreground">
-                      Daily limit reached ({SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches used)
-                    </span>
+                    <div className="flex items-center gap-2 min-w-0">
+                      {canEditHeader ? (
+                        <DropdownMenu
+                          open={headerMenuOpen}
+                          onOpenChange={(open) => {
+                            setHeaderMenuOpen(open);
+                          }}
+                        >
+                          <div ref={headerGroupRef} className="inline-flex">
+                            <ButtonGroup className="group gap-0.5">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className={cn(
+                                  'h-8 px-2 w-auto max-w-[250px] justify-start rounded-md hover:bg-accent group-hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed',
+                                  headerMenuOpen && 'bg-accent',
+                                )}
+                                onClick={handleStartEditTitle}
+                                disabled={status === 'submitted' || status === 'streaming'}
+                              >
+                                <span className="text-sm font-medium truncate whitespace-nowrap text-left focus:outline-none! focus:ring-0! focus:ring-offset-0!">
+                                  {localChatTitle}
+                                </span>
+                              </Button>
+                              <DropdownMenuTrigger
+                                asChild
+                                className="focus:outline-none! focus:ring-0! focus:ring-offset-0!"
+                              >
+                                <Button
+                                  ref={chevronBtnRef}
+                                  variant="ghost"
+                                  size="icon"
+                                  className={cn(
+                                    'h-8 w-8 rounded-md hover:bg-accent group-hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed',
+                                    headerMenuOpen && 'bg-accent',
+                                  )}
+                                  disabled={status === 'submitted' || status === 'streaming'}
+                                >
+                                  <ChevronDown className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                            </ButtonGroup>
+                          </div>
+                          <DropdownMenuContent
+                            side="bottom"
+                            align="start"
+                            alignOffset={-95}
+                            avoidCollisions={false}
+                            className="rounded-md border border-border bg-popover shadow-lg p-1"
+                          >
+                            <DropdownMenuItem
+                              className="rounded-md"
+                              onClick={handleStartEditTitle}
+                              disabled={status === 'submitted' || status === 'streaming'}
+                            >
+                              <Pencil className="h-4 w-4" /> Edit title
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="rounded-md"
+                              onClick={() => setIsShareOpen(true)}
+                              disabled={status === 'submitted' || status === 'streaming'}
+                            >
+                              <ShareIcon className="h-4 w-4" /> Share
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={handleOpenDelete}
+                              className="text-destructive! hover:text-destructive! rounded-md"
+                              disabled={status === 'submitted' || status === 'streaming'}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive hover:text-destructive/80" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 w-auto max-w-[250px] justify-start rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={handleStartEditTitle}
+                          disabled={status === 'submitted' || status === 'streaming'}
+                        >
+                          <span className="text-sm font-medium truncate whitespace-nowrap text-left">
+                            {localChatTitle}
+                          </span>
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        refetchUsage();
-                      }}
-                      className="h-7 px-2 text-xs"
-                    >
-                      Refresh
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        window.location.href = '/pricing';
-                      }}
-                      className="h-7 px-3 text-xs bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 text-primary-foreground dark:text-primary-foreground"
-                    >
-                      Upgrade
-                    </Button>
-                  </div>
+                  <div className="flex items-center gap-2" />
                 </div>
               </div>
-            </div>
+              <div className="h-6" aria-hidden="true" />
+            </>
           )}
-        </div>
-      </div>
+
+          <div
+            className="flex flex-col font-sans! items-center h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden scrollbar-thin! scrollbar-thumb-muted-foreground! dark:scrollbar-thumb-muted-foreground! scrollbar-track-transparent! hover:scrollbar-thumb-foreground! dark:hover:scrollbar-thumb-foreground!"
+          >
+            {/* Chat Dialogs Component */}
+            <ChatDialogs
+              commandDialogOpen={chatState.commandDialogOpen}
+              setCommandDialogOpen={(open) => dispatch({ type: 'SET_COMMAND_DIALOG_OPEN', payload: open })}
+              showSignInPrompt={chatState.showSignInPrompt}
+              setShowSignInPrompt={(open) => dispatch({ type: 'SET_SHOW_SIGNIN_PROMPT', payload: open })}
+              hasShownSignInPrompt={chatState.hasShownSignInPrompt}
+              setHasShownSignInPrompt={(value) => {
+                dispatch({ type: 'SET_HAS_SHOWN_SIGNIN_PROMPT', payload: value });
+                setPersitedHasShownSignInPrompt(value);
+              }}
+              showUpgradeDialog={chatState.showUpgradeDialog}
+              setShowUpgradeDialog={(open) => dispatch({ type: 'SET_SHOW_UPGRADE_DIALOG', payload: open })}
+              hasShownUpgradeDialog={chatState.hasShownUpgradeDialog}
+              setHasShownUpgradeDialog={(value) => {
+                dispatch({ type: 'SET_HAS_SHOWN_UPGRADE_DIALOG', payload: value });
+                setPersitedHasShownUpgradeDialog(value);
+              }}
+              showLookoutAnnouncement={chatState.showAnnouncementDialog}
+              setShowLookoutAnnouncement={(open) => dispatch({ type: 'SET_SHOW_ANNOUNCEMENT_DIALOG', payload: open })}
+              hasShownLookoutAnnouncement={chatState.hasShownAnnouncementDialog}
+              setHasShownLookoutAnnouncement={(value) => {
+                dispatch({ type: 'SET_HAS_SHOWN_ANNOUNCEMENT_DIALOG', payload: value });
+                setPersitedHasShownLookoutAnnouncement(value);
+              }}
+              user={user}
+              setAnyDialogOpen={(open) => dispatch({ type: 'SET_ANY_DIALOG_OPEN', payload: open })}
+            />
+
+            <div
+              className={`w-full p-2 sm:p-4 relative ${status === 'ready' && messages.length === 0
+                  ? 'flex-1 flex! flex-col! items-center! justify-center!' // Center everything when no messages
+                  : 'flex flex-col! mt-4' // Add top margin when showing messages
+                }`}
+            >
+              <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
+                {status === 'ready' && messages.length === 0 && (
+                  <div className="text-center m-0 mb-2">
+                    {/* Mobile sidebar trigger for main page */}
+                    <div className="md:hidden absolute top-4 left-4 z-10">
+                      <SidebarTrigger />
+                    </div>
+                    {/* Mobile New Chat button for initial state */}
+                    <div className="md:hidden absolute top-4 right-4 z-10">
+                      <Link href="/new">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          className="rounded-lg bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto"
+                        >
+                          <PlusIcon size={16} className="group-hover:rotate-90 transition-all" />
+                          <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">
+                            New
+                          </span>
+                        </Button>
+                      </Link>
+                    </div>
+                    <div className="inline-flex items-center gap-3">
+                      <h1 className="text-4xl sm:text-5xl mb-0! text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
+                        scira
+                      </h1>
+                      {isUserPro && (
+                        <h1 className="text-2xl font-baumans! leading-4 inline-block px-3! pt-1! pb-2.5! rounded-xl shadow-sm m-0! mt-2! bg-linear-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-linear-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
+                          pro
+                        </h1>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Show initial limit exceeded message */}
+                {status === 'ready' && messages.length === 0 && isLimitBlocked && (
+                  <div className="mt-20 mx-auto max-w-md">
+                    <div className="bg-background border border-border rounded-xl shadow-lg overflow-hidden">
+                      {/* Header Section */}
+                      <div className="text-center px-8 pt-10 pb-6">
+                        <div className="inline-flex items-center justify-center w-12 h-12 bg-muted rounded-lg mb-6">
+                          <HugeiconsIcon
+                            icon={Crown02Icon}
+                            size={24}
+                            className="text-muted-foreground"
+                            strokeWidth={1.5}
+                          />
+                        </div>
+                        <h2 className="text-xl font-semibold text-foreground mb-2">
+                          All Search Limits Reached
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                          You've used {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} regular searches and {SEARCH_LIMITS.EXTREME_SEARCH_LIMIT} extreme searches
+                        </p>
+                      </div>
+
+                      {/* Content Section */}
+                      <div className="px-8 pb-8">
+                        <div className="space-y-4 mb-8">
+                          <div className="bg-muted/50 rounded-lg p-4">
+                            <h3 className="text-sm font-medium text-foreground mb-2">Pro Benefits</h3>
+                            <ul className="text-sm text-muted-foreground space-y-1">
+                              <li>• Unlimited daily searches</li>
+                              <li>• Faster response times</li>
+                              <li>• Premium AI models</li>
+                              <li>• Priority support</li>
+                            </ul>
+                          </div>
+                        </div>
+
+                        {/* Actions Section */}
+                        <div className="space-y-3">
+                          <Button
+                            onClick={() => {
+                              window.location.href = '/pricing';
+                            }}
+                            className="w-full h-10 font-medium"
+                          >
+                            <HugeiconsIcon icon={Crown02Icon} size={16} className="mr-2" strokeWidth={1.5} />
+                            Upgrade to Pro
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              if (user) {
+                                queryClient.invalidateQueries({ queryKey: ['user-usage', user.id] });
+                              }
+                            }}
+                            className="w-full h-9 text-sm"
+                          >
+                            Refresh Usage
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Use the Messages component */}
+                {messages.length > 0 && (
+                  <Messages
+                    messages={messages as ChatMessage[]}
+                    lastUserMessageIndex={lastUserMessageIndex}
+                    input={input}
+                    setInput={setInput}
+                    setMessages={(messages) => {
+                      setMessages(messages as ChatMessage[]);
+                    }}
+                    sendMessage={sendMessage}
+                    regenerate={regenerate}
+                    suggestedQuestions={chatState.suggestedQuestions}
+                    setSuggestedQuestions={(questions) =>
+                      dispatch({ type: 'SET_SUGGESTED_QUESTIONS', payload: questions })
+                    }
+                    status={status}
+                    error={error ?? null}
+                    user={user}
+                    selectedVisibilityType={chatState.selectedVisibilityType}
+                    chatId={initialChatId || (messages.length > 0 ? chatId : undefined)}
+                    onVisibilityChange={handleVisibilityChange}
+                    initialMessages={initialMessages}
+                    isOwner={isOwner}
+                    onHighlight={handleHighlight}
+                  />
+                )}
+
+                <div ref={bottomRef} />
+              </div>
+
+              {/* Single Form Component with dynamic positioning */}
+              {((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
+                !isLimitBlocked && (
+                  <div
+                    className={cn(
+                      'transition-all duration-100',
+                      messages.length === 0 && !chatState.hasSubmitted
+                        ? 'relative w-full max-w-2xl mx-auto'
+                        : `fixed bottom-0 z-20 pb-6! sm:pb-2.5! mt-1 p-0 w-full max-w-[95%] sm:max-w-2xl mx-auto ${state === 'expanded'
+                          ? 'left-0 right-0 md:left-[calc(var(--sidebar-width))] md:right-0'
+                          : 'left-0 right-0 md:left-[calc(var(--sidebar-width-icon))] md:right-0'
+                        }`,
+                    )}
+                  >
+                    <FormComponent
+                      chatId={chatId}
+                      user={user!}
+                      subscriptionData={subscriptionData}
+                      input={input}
+                      setInput={setInput}
+                      attachments={chatState.attachments}
+                      setAttachments={(attachments) => {
+                        const newAttachments =
+                          typeof attachments === 'function' ? attachments(chatState.attachments) : attachments;
+                        dispatch({ type: 'SET_ATTACHMENTS', payload: newAttachments });
+                      }}
+                      fileInputRef={fileInputRef}
+                      inputRef={inputRef}
+                      stop={stop}
+                      messages={messages as ChatMessage[]}
+                      sendMessage={sendMessage}
+                      selectedModel={selectedModel}
+                      setSelectedModel={handleModelChange}
+                      resetSuggestedQuestions={resetSuggestedQuestions}
+                      lastSubmittedQueryRef={lastSubmittedQueryRef}
+                      selectedGroup={effectiveSelectedGroup}
+                      setSelectedGroup={setSelectedGroup}
+                      showExperimentalModels={messages.length === 0}
+                      status={status}
+                      setHasSubmitted={(hasSubmitted) => {
+                        const newValue =
+                          typeof hasSubmitted === 'function' ? hasSubmitted(chatState.hasSubmitted) : hasSubmitted;
+                        dispatch({ type: 'SET_HAS_SUBMITTED', payload: newValue });
+                      }}
+                      isLimitBlocked={isLimitBlocked}
+                      onOpenSettings={handleOpenSettings}
+                      selectedConnectors={selectedConnectors}
+                      setSelectedConnectors={setSelectedConnectors}
+                      usageData={usageData ? { messageCount: usageData.messageCount, extremeSearchCount: usageData.extremeSearchCount, error: usageData.error } : undefined}
+                    />
+
+                    {/* Example Categories - show only on initial state */}
+                    {messages.length === 0 && !chatState.hasSubmitted && (
+                      <ExampleCategories
+                        onSelectExample={handleExampleSelect}
+                        className="mt-5"
+                      />
+                    )}
+                  </div>
+                )}
+
+              {/* Form backdrop overlay - hides content below form when in submitted mode */}
+              {((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
+                !isLimitBlocked &&
+                (messages.length > 0 || chatState.hasSubmitted) && (
+                  <div
+                    className={`fixed right-0 bottom-0! h-24 sm:h-20! z-10 bg-linear-to-t from-background via-background/95 to-background/80 backdrop-blur-sm pointer-events-none ${state === 'expanded'
+                        ? 'left-0 md:left-[calc(var(--sidebar-width))]'
+                        : 'left-0 md:left-[calc(var(--sidebar-width-icon))]'
+                      }`}
+                  />
+                )}
+
+              {/* Show limit exceeded message */}
+              {isLimitBlocked && messages.length > 0 && (
+                <div
+                  className={`fixed bottom-8 sm:bottom-4 right-0 w-full max-w-[95%] sm:max-w-2xl mx-auto z-20 ${state === 'expanded'
+                      ? 'left-0 md:left-[calc(var(--sidebar-width))]'
+                      : 'left-0 md:left-[calc(var(--sidebar-width-icon))]'
+                    }`}
+                >
+                  <div className="p-4 bg-background border border-border rounded-lg shadow-lg">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 bg-muted rounded-md">
+                          <HugeiconsIcon
+                            icon={Crown02Icon}
+                            size={16}
+                            strokeWidth={1.5}
+                            className="text-muted-foreground"
+                          />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-foreground">
+                            All search limits reached
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} regular + {SEARCH_LIMITS.EXTREME_SEARCH_LIMIT} extreme searches used
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            if (user) {
+                              queryClient.invalidateQueries({ queryKey: ['user-usage', user.id] });
+                            }
+                          }}
+                          className="h-8 px-3 text-xs"
+                        >
+                          Refresh
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            window.location.href = '/pricing';
+                          }}
+                          className="h-8 px-3 text-xs"
+                        >
+                          Upgrade
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </SidebarInset>
+        {(initialChatId || (pathname?.startsWith('/search/') ? pathname.split('/')[2] : null)) && (
+          <ShareDialog
+            isOpen={isShareOpen}
+            onOpenChange={setIsShareOpen}
+            chatId={initialChatId || (pathname?.startsWith('/search/') ? pathname.split('/')[2] : null)}
+            selectedVisibilityType={chatState.selectedVisibilityType}
+            onVisibilityChange={handleVisibilityChange}
+            isOwner={isOwner}
+            user={user}
+          />
+        )}
+        {(initialChatId || (pathname?.startsWith('/search/') ? pathname.split('/')[2] : null)) && (
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="sm:max-w-[420px]">
+              <DialogHeader>
+                <DialogTitle>Edit title</DialogTitle>
+              </DialogHeader>
+              <div className="pt-2">
+                <Input
+                  value={titleInput}
+                  onChange={(e) => setTitleInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSaveTitle();
+                    if (e.key === 'Escape') handleCancelEditTitle();
+                  }}
+                  placeholder="Enter title..."
+                  maxLength={100}
+                  autoFocus
+                />
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={handleCancelEditTitle}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveTitle} disabled={isSavingTitle}>
+                  {isSavingTitle ? 'Saving…' : 'Save'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+        {initialChatId && (
+          <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this chat?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the conversation and its content.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleConfirmDelete}
+                  disabled={isDeleting}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  {isDeleting ? 'Deleting…' : 'Delete'}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </>
     );
   },
 );

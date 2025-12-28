@@ -24,16 +24,15 @@ import {
   requiresProSubscription,
   shouldBypassRateLimits,
   getModelParameters,
-  hasReasoningSupport,
+  getMaxOutputTokens,
 } from '@/ai/providers';
 import {
   createStreamId,
-  getChatById,
+  getChatByIdForValidation,
   saveChat,
   saveMessages,
   incrementExtremeSearchUsage,
   incrementMessageUsage,
-  updateChatTitleById,
 } from '@/lib/db/queries';
 import { ChatSDKError } from '@/lib/errors';
 import { createResumableStreamContext, type ResumableStreamContext } from 'resumable-stream';
@@ -75,22 +74,199 @@ import { markdownJoinerTransform } from '@/lib/parser';
 import { ChatMessage } from '@/lib/types';
 import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
 import { AnthropicProviderOptions } from '@ai-sdk/anthropic';
-import { getCachedCustomInstructionsByUserId } from '@/lib/user-data-server';
+import { getCachedCustomInstructionsByUserId, getCachedUserPreferencesByUserId } from '@/lib/user-data-server';
 import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
 import { unauthenticatedRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { CohereChatModelOptions } from '@ai-sdk/cohere';
+import { XaiProviderOptions } from '@ai-sdk/xai';
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
 // Shared config promise to avoid duplicate calls
 let configPromise: Promise<any>;
 
+interface CriticalChecksResult {
+  canProceed: boolean;
+  error?: any;
+  isProUser: boolean;
+  messageCount?: number;
+  extremeSearchUsage?: number;
+  subscriptionData?: any;
+  shouldBypassLimits?: boolean;
+}
+
+interface ChatInitializationParams {
+  chatQueryPromise: Promise<any>;
+  lightweightUser: { userId: string; email: string; isProUser: boolean } | null;
+  isProUser: boolean;
+  fullUserPromise: Promise<any>;
+  id: string;
+  streamId: string;
+  selectedVisibilityType: any;
+  messages: any[];
+  model: string;
+}
+
+function initializeChatAndChecks({
+  chatQueryPromise,
+  lightweightUser,
+  isProUser,
+  fullUserPromise,
+  id,
+  streamId,
+  selectedVisibilityType,
+  messages,
+  model,
+}: ChatInitializationParams): {
+  criticalChecksPromise: Promise<CriticalChecksResult>;
+  chatInitializationPromise: Promise<{ isNewChat: boolean; chatTitle?: string }>;
+} {
+  // Unauthenticated users don't need chat validation
+  if (!lightweightUser) {
+    return {
+      criticalChecksPromise: Promise.resolve({
+        canProceed: true,
+        isProUser: false,
+        messageCount: 0,
+        extremeSearchUsage: 0,
+        subscriptionData: null,
+        shouldBypassLimits: false,
+      }),
+      chatInitializationPromise: Promise.resolve({ isNewChat: false }),
+    };
+  }
+
+  // Start title generation early (only needed for new chats)
+  const titleGenerationPromise = generateTitleFromUserMessage({
+    message: messages[messages.length - 1],
+  }).catch(() => 'New Chat');
+
+  // Validate ownership once and get chat data
+  const validatedChatPromise = chatQueryPromise.then((existingChat) => {
+    if (existingChat && existingChat.userId !== lightweightUser.userId) {
+      throw new ChatSDKError('forbidden:chat', 'This chat belongs to another user');
+    }
+    return existingChat;
+  });
+
+  // Build critical checks promise first (must complete before chat creation)
+  let criticalChecksPromise: Promise<CriticalChecksResult>;
+
+  if (isProUser) {
+    // Pro users: only validate ownership, skip usage checks
+    criticalChecksPromise = Promise.all([fullUserPromise, validatedChatPromise]).then(([user]) => {
+      const hasPolarSubscription = !!user?.polarSubscription;
+      const hasDodoSubscription = !!user?.dodoSubscription?.hasSubscriptions;
+
+      return {
+        canProceed: true,
+        isProUser: true,
+        messageCount: 0,
+        extremeSearchUsage: 0,
+        subscriptionData:
+          hasPolarSubscription || hasDodoSubscription
+            ? {
+              hasSubscription: true,
+              subscription: user?.polarSubscription ? { ...user.polarSubscription, organizationId: null } : null,
+              dodoSubscription: user?.dodoSubscription || null,
+            }
+            : { hasSubscription: false },
+        shouldBypassLimits: true,
+      };
+    });
+  } else {
+    // Non-Pro users: validate ownership and check usage limits
+    criticalChecksPromise = Promise.all([fullUserPromise, validatedChatPromise])
+      .then(async ([user]) => {
+        if (!user) {
+          throw new ChatSDKError('unauthorized:auth', 'User authentication failed');
+        }
+
+        const [messageCountResult, extremeSearchUsage] = await Promise.all([
+          getUserMessageCount(user),
+          getExtremeSearchUsageCount(user),
+        ]);
+
+        if (messageCountResult.error) {
+          throw new ChatSDKError('bad_request:api', 'Failed to verify usage limits');
+        }
+
+        if (extremeSearchUsage.error) {
+          throw new ChatSDKError('bad_request:api', 'Failed to verify extreme search usage limits');
+        }
+
+        const shouldBypassLimits = shouldBypassRateLimits(model, user);
+        if (!shouldBypassLimits && messageCountResult.count !== undefined && messageCountResult.count >= 100) {
+          throw new ChatSDKError('rate_limit:chat', 'Daily search limit reached');
+        }
+
+        const hasPolarSubscription = !!user.polarSubscription;
+        const hasDodoSubscription = !!user.dodoSubscription?.hasSubscriptions;
+
+        return {
+          canProceed: true,
+          isProUser: false,
+          messageCount: messageCountResult.count,
+          extremeSearchUsage: extremeSearchUsage.count,
+          subscriptionData:
+            hasPolarSubscription || hasDodoSubscription
+              ? {
+                hasSubscription: true,
+                subscription: user.polarSubscription ? { ...user.polarSubscription, organizationId: null } : null,
+                dodoSubscription: user.dodoSubscription || null,
+              }
+              : { hasSubscription: false },
+          shouldBypassLimits,
+        };
+      })
+      .catch((error) => {
+        if (error instanceof ChatSDKError) throw error;
+        throw new ChatSDKError('bad_request:api', 'Failed to verify user access');
+      });
+  }
+
+  // Initialize chat (create if needed, create stream ID)
+  // For existing chats, create stream ID immediately (doesn't need to wait for anything)
+  // For new chats, wait for critical checks to complete first, then create chat (FK constraint)
+  const chatInitializationPromise = Promise.all([validatedChatPromise, criticalChecksPromise])
+    .then(async ([existingChat, criticalResult]) => {
+      // Verify critical checks passed before creating new chat
+      if (!criticalResult.canProceed) {
+        throw criticalResult.error || new ChatSDKError('bad_request:api', 'Failed to verify user access');
+      }
+
+      if (!existingChat) {
+        // New chat: create it only after pro check passes (needed before saving messages due to FK constraint)
+        const chatTitle = await titleGenerationPromise;
+        await saveChat({
+          id,
+          userId: lightweightUser.userId,
+          title: chatTitle,
+          visibility: selectedVisibilityType,
+        });
+        // Now create stream ID (chat exists, so this is safe)
+        await createStreamId({ streamId, chatId: id });
+        return { isNewChat: true, chatTitle };
+      } else {
+        // Existing chat: create stream ID immediately (needed for resumable streams)
+        await createStreamId({ streamId, chatId: id });
+        return { isNewChat: false };
+      }
+    })
+    .catch((error) => {
+      if (error instanceof ChatSDKError) throw error;
+      console.error('Chat initialization failed:', error);
+      throw new ChatSDKError('bad_request:database', 'Failed to initialize chat');
+    });
+
+  return { criticalChecksPromise, chatInitializationPromise };
+}
+
 export function getStreamContext() {
   if (!globalStreamContext) {
     try {
       globalStreamContext = createResumableStreamContext({
         waitUntil: after,
-        keyPrefix: 'scira-ai',
       });
     } catch (error: any) {
       if (error.message.includes('REDIS_URL')) {
@@ -106,6 +282,16 @@ export function getStreamContext() {
 
 export async function POST(req: Request) {
   const requestStartTime = Date.now();
+  const preStreamTimings: { label: string; durationMs: number }[] = [];
+
+  function recordTiming(label: string, startTime: number) {
+    preStreamTimings.push({
+      label,
+      durationMs: Date.now() - startTime,
+    });
+  }
+
+  let opStart = Date.now();
   const {
     messages,
     model,
@@ -115,26 +301,52 @@ export async function POST(req: Request) {
     selectedVisibilityType,
     isCustomInstructionsEnabled,
     searchProvider,
+    extremeSearchProvider,
     selectedConnectors,
   } = await req.json();
+  recordTiming('parse_request_body', opStart);
+
+  opStart = Date.now();
   const { latitude, longitude } = geolocation(req);
+  recordTiming('geolocation_lookup', opStart);
+
   const streamId = 'stream-' + uuidv7();
 
   console.log('🔍 Search API:', { model: model.trim(), group, latitude, longitude });
 
-  // CRITICAL PATH: Get auth status first (required for all subsequent checks)
-  const lightweightUser = await getLightweightUser();
-
-  // Rate limit check for unauthenticated users
-  if (!lightweightUser) {
+  // Start all independent operations in parallel immediately
+  opStart = Date.now();
+  const lightweightUserPromise = getLightweightUser();
+  // Use lightweight validation query - only fetches id and userId
+  const chatQueryPromise = getChatByIdForValidation({ id }); // Start immediately - doesn't depend on auth
+  const rateLimitPromise = (async () => {
     const identifier = getClientIdentifier(req);
-    const { success, limit, reset } = await unauthenticatedRateLimit.limit(identifier);
+    return unauthenticatedRateLimit.limit(identifier);
+  })();
+  recordTiming('start_parallel_operations', opStart);
+
+  // Wait for lightweight user first (needed for early exit checks)
+  opStart = Date.now();
+  const lightweightUser = await lightweightUserPromise;
+  recordTiming('get_lightweight_user', opStart);
+
+  // Start full user fetch immediately (doesn't block early exits)
+  const isProUser = lightweightUser?.isProUser ?? false;
+  opStart = Date.now();
+  const fullUserPromise = lightweightUser ? getCurrentUser() : Promise.resolve(null);
+  recordTiming('create_full_user_promise', opStart);
+
+  // Rate limit check for unauthenticated users (already started in parallel)
+  if (!lightweightUser) {
+    opStart = Date.now();
+    const { success, limit, reset } = await rateLimitPromise;
+    recordTiming('unauthenticated_rate_limit', opStart);
 
     if (!success) {
       const resetDate = new Date(reset);
       return new ChatSDKError(
         'rate_limit:api',
-        `You've reached the limit of ${limit} searches per day for unauthenticated users. Sign in for more searches or wait until ${resetDate.toLocaleString()}.`
+        `You've reached the limit of ${limit} searches per day for unauthenticated users. Sign in for more searches or wait until ${resetDate.toLocaleString()}.`,
       ).toResponse();
     }
   }
@@ -154,197 +366,165 @@ export async function POST(req: Request) {
     }
   }
 
-  // START ALL CRITICAL PARALLEL OPERATIONS IMMEDIATELY
-  const isProUser = lightweightUser?.isProUser ?? false;
-
-  // 1. Config (needed for streaming) - start immediately
-  configPromise = getGroupConfig(group);
-
-  // 2. Full user data (needed for usage checks and custom instructions)
-  const fullUserPromise = lightweightUser ? getCurrentUser() : Promise.resolve(null);
-
-  // 3. Custom instructions (only if enabled and authenticated)
-  const customInstructionsPromise = lightweightUser && (isCustomInstructionsEnabled ?? true)
-    ? fullUserPromise.then(user => user ? getCachedCustomInstructionsByUserId(user.id) : null)
+  // Start config and custom instructions in parallel
+  // Use lightweightUser.userId directly instead of waiting for fullUserPromise
+  opStart = Date.now();
+  configPromise = getGroupConfig(group, lightweightUser, fullUserPromise);
+  const customInstructionsPromise =
+    lightweightUser && (isCustomInstructionsEnabled ?? true)
+      ? getCachedCustomInstructionsByUserId(lightweightUser.userId)
+      : Promise.resolve(null);
+  const userPreferencesPromise = lightweightUser
+    ? getCachedUserPreferencesByUserId(lightweightUser.userId)
     : Promise.resolve(null);
+  recordTiming('start_parallel_config_and_user_promises', opStart);
 
-  // 4. For authenticated users: start ALL operations in parallel
-  let criticalChecksPromise: Promise<{
-    canProceed: boolean;
-    error?: any;
-    isProUser: boolean;
-    messageCount?: number;
-    extremeSearchUsage?: number;
-    subscriptionData?: any;
-    shouldBypassLimits?: boolean;
-  }>;
-
-  if (lightweightUser) {
-    // Chat validation and creation (must be synchronous for DB consistency)
-    const chatValidationPromise = getChatById({ id }).then(async (existingChat) => {
-      // Validate ownership if chat exists
-      if (existingChat && existingChat.userId !== lightweightUser.userId) {
-        throw new ChatSDKError('forbidden:chat', 'This chat belongs to another user');
-      }
-
-      // Create chat if it doesn't exist (MUST be sync - other operations depend on it)
-      if (!existingChat) {
-        await saveChat({
-          id,
-          userId: lightweightUser.userId,
-          title: 'New Chat',
-          visibility: selectedVisibilityType,
-        });
-
-        // Generate better title in background (non-critical)
-        after(async () => {
-          try {
-            const title = await generateTitleFromUserMessage({
-              message: messages[messages.length - 1],
-            });
-            await updateChatTitleById({ chatId: id, title });
-          } catch (error) {
-            console.error('Background title generation failed:', error);
-          }
-        });
-      }
-
-      // Stream tracking (must be sync for proper stream management)
-      await createStreamId({ streamId, chatId: id });
-
-      return existingChat;
-    });
-
-    // For non-Pro users: run usage checks in parallel
-    if (!isProUser) {
-      criticalChecksPromise = Promise.all([
-        fullUserPromise,
-        chatValidationPromise,
-      ]).then(async ([user]) => {
-        if (!user) {
-          throw new ChatSDKError('unauthorized:auth', 'User authentication failed');
-        }
-
-        const [messageCountResult, extremeSearchUsage] = await Promise.all([
-          getUserMessageCount(user),
-          getExtremeSearchUsageCount(user),
-        ]);
-
-        if (messageCountResult.error) {
-          throw new ChatSDKError('bad_request:api', 'Failed to verify usage limits');
-        }
-
-        const shouldBypassLimits = shouldBypassRateLimits(model, user);
-        if (!shouldBypassLimits && messageCountResult.count !== undefined && messageCountResult.count >= 100) {
-          throw new ChatSDKError('rate_limit:chat', 'Daily search limit reached');
-        }
-
-        return {
-          canProceed: true,
-          isProUser: false,
-          messageCount: messageCountResult.count,
-          extremeSearchUsage: extremeSearchUsage.count,
-          subscriptionData: user.polarSubscription
-            ? { hasSubscription: true, subscription: { ...user.polarSubscription, organizationId: null } }
-            : { hasSubscription: false },
-          shouldBypassLimits,
-        };
-      }).catch(error => {
-        if (error instanceof ChatSDKError) throw error;
-        throw new ChatSDKError('bad_request:api', 'Failed to verify user access');
-      });
-    } else {
-      // Pro users: just validate chat ownership
-      criticalChecksPromise = Promise.all([
-        fullUserPromise,
-        chatValidationPromise,
-      ]).then(([user]) => ({
-        canProceed: true,
-        isProUser: true,
-        messageCount: 0,
-        extremeSearchUsage: 0,
-        subscriptionData: user?.polarSubscription
-          ? { hasSubscription: true, subscription: { ...user.polarSubscription, organizationId: null } }
-          : { hasSubscription: false },
-        shouldBypassLimits: true,
-      }));
-    }
-  } else {
-    // Unauthenticated users: no checks needed
-    criticalChecksPromise = Promise.resolve({
-      canProceed: true,
-      isProUser: false,
-      messageCount: 0,
-      extremeSearchUsage: 0,
-      subscriptionData: null,
-      shouldBypassLimits: false,
-    });
-  }
+  // Initialize chat and perform critical checks (chatQueryPromise already started)
+  opStart = Date.now();
+  const { criticalChecksPromise, chatInitializationPromise } = initializeChatAndChecks({
+    chatQueryPromise,
+    lightweightUser,
+    isProUser,
+    fullUserPromise,
+    id,
+    streamId,
+    selectedVisibilityType,
+    messages,
+    model,
+  });
+  recordTiming('initialize_chat_and_checks', opStart);
 
   let customInstructions: CustomInstructions | null = null;
 
-  // Start streaming immediately while background operations continue
+  // Wait for critical checks, config, and chat initialization in parallel
+  // Chat initialization is critical: for new chats it must complete before streaming (FK constraint)
+  const [
+    criticalResult,
+    { tools: activeTools, instructions },
+    customInstructionsResult,
+    user,
+    chatInitResult,
+    userPreferencesResult,
+  ] = await Promise.all([
+    criticalChecksPromise,
+    configPromise,
+    customInstructionsPromise,
+    fullUserPromise,
+    chatInitializationPromise, // Must complete before streaming (especially for new chats)
+    userPreferencesPromise,
+  ]);
+  recordTiming('await_parallel_setup', opStart);
+
+  if (!criticalResult.canProceed) {
+    throw criticalResult.error;
+  }
+
+  customInstructions = customInstructionsResult;
+
+  // Save user message (chat is guaranteed to exist now) - await synchronously (no background)
+  if (user) {
+    opStart = Date.now();
+    await saveMessages({
+      messages: [
+        {
+          chatId: id,
+          id: messages[messages.length - 1].id,
+          role: 'user',
+          parts: messages[messages.length - 1].parts,
+          attachments: messages[messages.length - 1].experimental_attachments ?? [],
+          createdAt: new Date(),
+          model: model,
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+          completionTime: 0,
+        },
+      ],
+    });
+    recordTiming('save_user_message', opStart);
+  }
+
+  const setupTimeMs = Date.now() - requestStartTime;
+  console.log('⏱ Pre-stream operation timings (ms):', preStreamTimings);
+  console.log(`🚀 Time to streamText: ${(setupTimeMs / 1000).toFixed(2)}s`);
+
+  const streamStartTime = Date.now();
+  const initialMessageIds = new Set(messages.map((message: any) => message.id));
+
+  const shouldPrune = messages.length > 10;
+
+  const prunedMessages = shouldPrune
+    ? await (async () => {
+        console.log(`🔧 Pruning messages: ${messages.length} messages`);
+        const pruned = pruneMessages({
+          reasoning: 'none',
+          messages: await convertToModelMessages(messages),
+          toolCalls: 'before-last-3-messages',
+          emptyMessages: 'remove',
+        });
+        console.log(`✂️ Pruned to ${pruned.length} messages`);
+        return pruned;
+      })()
+    : await convertToModelMessages(messages);
+
   const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer: dataStream }) => {
-      // Wait for critical checks and config in parallel (only what's needed to start streaming)
-      const [criticalResult, { tools: activeTools, instructions }, customInstructionsResult, user] = await Promise.all([
-        criticalChecksPromise,
-        configPromise,
-        customInstructionsPromise,
-        fullUserPromise,
-      ]);
-
-      if (!criticalResult.canProceed) {
-        throw criticalResult.error;
-      }
-
-      customInstructions = customInstructionsResult;
-
-      // Save user message BEFORE streaming (critical for conversation history)
-      if (user) {
-        await saveMessages({
-          messages: [{
-            chatId: id,
-            id: messages[messages.length - 1].id,
-            role: 'user',
-            parts: messages[messages.length - 1].parts,
-            attachments: messages[messages.length - 1].experimental_attachments ?? [],
-            createdAt: new Date(),
-            model: model,
-            inputTokens: 0,
-            outputTokens: 0,
-            totalTokens: 0,
-            completionTime: 0,
-          }],
+      // Stream chat title for new chats so client can update immediately
+      if (chatInitResult.isNewChat && chatInitResult.chatTitle) {
+        dataStream.write({
+          type: 'data-chat_title',
+          data: { title: chatInitResult.chatTitle },
+          transient: true,
         });
       }
 
-      const setupTime = (Date.now() - requestStartTime) / 1000;
-      console.log(`🚀 Time to streamText: ${setupTime.toFixed(2)}s`);
-
-      const streamStartTime = Date.now();
-
       const result = streamText({
         model: scira.languageModel(model),
-        messages: convertToModelMessages(messages),
+        messages: prunedMessages,
         ...getModelParameters(model),
         stopWhen: stepCountIs(5),
-        onAbort: ({ steps }) => {
-          console.log('Stream aborted after', steps.length, 'steps');
-        },
+        ...(model === "scira-default" || model === "scira-grok4.1-fast-thinking" || model === "scira-glm-4.6" || model === "scira-glm-4.6v-flash" || model === "scira-glm-4.6v" ? {
+          maxOutputTokens: getMaxOutputTokens(model),
+        } : {}),
         maxRetries: 10,
-        activeTools: [...activeTools],
+        activeTools:
+          model === 'scira-qwen-coder-plus'
+            ? [...activeTools].filter((tool) => tool !== 'code_interpreter')
+            : [...activeTools],
         experimental_transform: markdownJoinerTransform(),
         system:
           instructions +
           (customInstructions && (isCustomInstructionsEnabled ?? true)
             ? `\n\nThe user's custom instructions are as follows and YOU MUST FOLLOW THEM AT ALL COSTS: ${customInstructions?.content}`
             : '\n') +
-          (latitude && longitude ? `\n\nThe user's location is ${latitude}, ${longitude}.` : ''),
+          (latitude && longitude && userPreferencesResult?.preferences?.['scira-location-metadata-enabled'] === true
+            ? `\n\nThe user's location is ${latitude}, ${longitude}.`
+            : ''),
         toolChoice: 'auto',
+        ...(model === 'scira-anthropic' || model === 'scira-anthropic-think'
+          ? {
+            headers: {
+              'anthropic-beta': 'context-1m-2025-08-07',
+            },
+          } : {}),
         providerOptions: {
           gateway: {
-            only: ['zai', 'deepseek', 'alibaba', 'baseten'],
+            only: ['openai', 'google', 'zai', 'arcee-ai', 'deepseek', 'alibaba', 'baseten', 'minimax', 'fireworks', 'bedrock', 'vercel'],
+            ...(model === 'scira-kimi-k2-v2-thinking' || model === 'scira-kimi-k2-v2'
+              ? {
+                order: ['baseten', 'fireworks'],
+              }
+              : {}),
+            ...(model === 'scira-qwen-coder' || model === 'scira-deepseek-v3' || model === 'scira-qwen-235'
+              ? {
+                order: ['baseten'],
+              }
+              : {}),
+            ...(model === 'scira-nova-2-lite'
+              ? {
+                order: ['bedrock'],
+              }
+              : {}),
           },
           openai: {
             ...(model !== 'scira-qwen-coder'
@@ -361,19 +541,66 @@ export async function POST(req: Request) {
               model === 'scira-o4-mini' ||
               model === 'scira-gpt-4.1' ||
               model === 'scira-gpt-4.1-mini' ||
-              model === 'scira-gpt-4.1-nano'
+              model === 'scira-gpt-4.1-nano' ||
+              model === 'scira-gpt-5.1' ||
+              model === 'scira-gpt-5.1-thinking' ||
+              model === 'scira-gpt-5.1-codex' ||
+              model === 'scira-gpt-5.1-codex-mini' ||
+              model === 'scira-gpt-5.1-codex-max' ||
+              model === 'scira-gpt-5.2' ||
+              model === 'scira-gpt-5.2-thinking'
               ? {
-                reasoningEffort: (
-                  model === 'scira-gpt5-nano' ||
-                    model === 'scira-gpt5' ||
-                    model === 'scira-gpt5-mini' ?
-                    'minimal' :
-                    'medium'
-                ),
-                promptCacheKey: 'scira-oai',
+                reasoningEffort:
+                  model === 'scira-gpt5-nano' || model === 'scira-gpt5' || model === 'scira-gpt5-mini'
+                    ? 'minimal'
+                    : model === 'scira-gpt-5.1' || model === 'scira-gpt-5.2'
+                      ? 'none'
+                      : 'medium',
                 parallelToolCalls: false,
                 reasoningSummary: 'detailed',
-                textVerbosity: (model === 'scira-o3' || model === 'scira-gpt5-codex' || model === 'scira-o4-mini' || model === 'scira-gpt-4.1' || model === 'scira-gpt-4.1-mini' || model === 'scira-gpt-4.1-nano' ? 'medium' : 'high'),
+                promptCacheKey: 'scira-oai',
+                ...(model === 'scira-gpt-5.1' ||
+                  model === 'scira-gpt-5.2' ||
+                  model === 'scira-gpt-5.2-thinking' ||
+                  model === 'scira-gpt-5.1-codex' ||
+                  model === 'scira-gpt-5.1-codex-mini' ||
+                  model === 'scira-gpt-5.1-codex-max' ||
+                  model === 'scira-gpt5' ||
+                  model === 'scira-gpt5-codex' ||
+                  model === 'scira-gpt4.1'
+                  ? {
+                    promptCacheRetention: '24h',
+                  }
+                  : {}),
+                store: false,
+                // only for reasoning models
+                ...(model === 'scira-gpt-5.1' ||
+                  model === 'scira-gpt-5.1-codex' ||
+                  model === 'scira-gpt-5.1-codex-mini' ||
+                  model === 'scira-gpt5' ||
+                  model === 'scira-gpt5-codex' ||
+                  model === 'scira-gpt-5.1-thinking' ||
+                  model === 'scira-gpt5-nano' ||
+                  model === 'scira-gpt5-mini' ||
+                  model === 'scira-gpt-5.1-codex-max' ||
+                  model === 'scira-gpt-5.2' ||
+                  model === 'scira-gpt-5.2-thinking'
+                  ? {
+                    include: ['reasoning.encrypted_content'],
+                  }
+                  : {}),
+                textVerbosity:
+                  model === 'scira-o3' ||
+                    model === 'scira-gpt5-codex' ||
+                    model === 'scira-gpt-5.1-codex' ||
+                    model === 'scira-gpt-5.1-codex-mini' ||
+                    model === 'scira-gpt-5.1-codex-max' ||
+                    model === 'scira-o4-mini' ||
+                    model === 'scira-gpt-4.1' ||
+                    model === 'scira-gpt-4.1-mini' ||
+                    model === 'scira-gpt-4.1-nano'
+                    ? 'medium'
+                    : 'high',
               }
               : {}) satisfies OpenAIResponsesProviderOptions),
           },
@@ -397,8 +624,8 @@ export async function POST(req: Request) {
             serviceTier: 'auto',
           } satisfies GroqProviderOptions,
           xai: {
-            parallel_tool_calls: false,
-          },
+            parallel_function_calling: false,
+          } satisfies XaiProviderOptions,
           cohere: {
             ...(model === 'scira-cmd-a-think'
               ? {
@@ -410,7 +637,7 @@ export async function POST(req: Request) {
               : {}),
           } satisfies CohereChatModelOptions,
           anthropic: {
-            ...(model === 'scira-anthropic-think'
+            ...(model === 'scira-anthropic-think' || model === 'scira-anthropic-opus-think'
               ? {
                 sendReasoning: true,
                 thinking: {
@@ -430,57 +657,51 @@ export async function POST(req: Request) {
                 },
               }
               : {}),
-            threshold: "OFF"
+            ...(model === 'scira-gemini-3-pro'
+              ? {
+                thinkingConfig: {
+                  thinkingLevel: 'low',
+                  includeThoughts: true,
+                },
+              }
+              : {}),
+            ...(model === 'scira-gemini-3-flash-think'
+              ? {
+                thinkingConfig: {
+                  thinkingLevel: 'medium',
+                  includeThoughts: true,
+                },
+              }
+              : {}),
+            threshold: 'OFF',
           } satisfies GoogleGenerativeAIProviderOptions,
+          openrouter: {
+            ...(model === 'scira-anthropic-think' || model === 'scira-anthropic-opus-think'
+              ? {
+                reasoning: {
+                  exclude: false,
+                  max_tokens: 400,
+                },
+              }
+              : {}),
+          },
         },
-        prepareStep: async ({ steps, messages }) => {
-          // Calculate total token usage across all steps
-          const totalTokens = steps.reduce((sum, step) => sum + (step.usage?.totalTokens ?? 0), 0);
+        prepareStep: async ({ steps }) => {
+          // Check if we should disable tool calls (after first tool execution)
+          const shouldDisableTools =
+            steps.length > 0 &&
+            steps[steps.length - 1].toolCalls.length > 0 &&
+            steps[steps.length - 1].toolResults.length > 0;
 
-          // Check if we need to prune messages
-          const shouldPrune = messages.length > 10 || totalTokens > 100000;
-          
-          // Always check if model supports reasoning
-          const modelHasReasoning = hasReasoningSupport(model);
-
-          let prunedMessages = messages;
-          
-          // If model doesn't support reasoning, always prune ALL reasoning content
-          // to prevent errors when switching from reasoning to non-reasoning models
-          if (!modelHasReasoning) {
-            prunedMessages = pruneMessages({
-              messages,
-              reasoning: 'all',
-              toolCalls: shouldPrune ? 'before-last-2-messages' : 'none',
-              emptyMessages: shouldPrune ? 'remove' : 'keep',
-            });
-            console.log(`🧹 Removed reasoning content for non-reasoning model (${messages.length} → ${prunedMessages.length} messages)`);
-          } else if (shouldPrune) {
-            // For reasoning models, only prune when needed
-            console.log(`🔧 Pruning messages: ${messages.length} messages, ${totalTokens} tokens used`);
-            prunedMessages = pruneMessages({
-              messages,
-              toolCalls: 'before-last-2-messages',
-              emptyMessages: 'remove',
-            });
-            console.log(`✂️ Pruned to ${prunedMessages.length} messages`);
+          // Only return object if tools need to be disabled
+          if (shouldDisableTools) {
+            return {
+              toolChoice: 'none' as const,
+              activeTools: [],
+            };
           }
 
-          if (steps.length > 0) {
-            const lastStep = steps[steps.length - 1];
-
-            // If tools were called and results are available, disable further tool calls
-            if (lastStep.toolCalls.length > 0 && lastStep.toolResults.length > 0) {
-              return {
-                toolChoice: 'none',
-                activeTools: [],
-                messages: (!modelHasReasoning || shouldPrune) ? prunedMessages : undefined,
-              };
-            }
-          }
-
-          // Return pruned messages if needed
-          return (!modelHasReasoning || shouldPrune) ? { messages: prunedMessages } : undefined;
+          return undefined;
         },
         tools: (() => {
           const baseTools = {
@@ -490,11 +711,11 @@ export async function POST(req: Request) {
             coin_data_by_contract: coinDataByContractTool,
             coin_ohlc: coinOhlcTool,
 
-            x_search: xSearchTool,
+            x_search: xSearchTool(dataStream),
             web_search: webSearchTool(dataStream, searchProvider),
-            academic_search: academicSearchTool,
+            academic_search: academicSearchTool(dataStream),
             youtube_search: youtubeSearchTool,
-            reddit_search: redditSearchTool,
+            reddit_search: redditSearchTool(dataStream),
             retrieve: retrieveTool,
 
             movie_or_tv_search: movieTvSearchTool,
@@ -506,10 +727,10 @@ export async function POST(req: Request) {
             get_weather_data: weatherTool,
 
             text_translate: textTranslateTool,
-            code_interpreter: codeInterpreterTool,
+            ...(model !== 'scira-qwen-coder-plus' ? { code_interpreter: codeInterpreterTool } : {}),
             track_flight: flightTrackerTool,
             datetime: datetimeTool,
-            extreme_search: extremeSearchTool(dataStream),
+            extreme_search: extremeSearchTool(dataStream, extremeSearchProvider || 'exa'),
             greeting: greetingTool(timezone),
             code_context: codeContextTool,
           };
@@ -544,7 +765,7 @@ export async function POST(req: Request) {
           }
 
           const { object: repairedArgs } = await generateObject({
-            model: scira.languageModel('scira-grok-4-fast'),
+            model: scira.languageModel('scira-default'),
             schema: tool.inputSchema,
             prompt: [
               `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,
@@ -583,25 +804,24 @@ export async function POST(req: Request) {
 
           if (user?.id && event.finishReason === 'stop') {
             // Track usage in background
-            after(async () => {
-              try {
-                if (!shouldBypassRateLimits(model, user)) {
-                  await incrementMessageUsage({ userId: user.id });
-                }
-
-                // Track extreme search usage if used
-                if (group === 'extreme') {
-                  const extremeSearchUsed = event.steps?.some((step) =>
-                    step.toolCalls?.some((toolCall) => toolCall && toolCall.toolName === 'extreme_search'),
-                  );
-                  if (extremeSearchUsed) {
-                    await incrementExtremeSearchUsage({ userId: user.id });
-                  }
-                }
-              } catch (error) {
-                console.error('Failed to track usage:', error);
+            // Track usage synchronously - this is critical for billing and rate limiting
+            try {
+              if (!shouldBypassRateLimits(model, user)) {
+                await incrementMessageUsage({ userId: user.id });
               }
-            });
+
+              // Track extreme search usage if used
+              if (group === 'extreme') {
+                const extremeSearchUsed = event.steps?.some((step) =>
+                  step.toolCalls?.some((toolCall) => toolCall && toolCall.toolName === 'extreme_search'),
+                );
+                if (extremeSearchUsed) {
+                  await incrementExtremeSearchUsage({ userId: user.id });
+                }
+              }
+            } catch (error) {
+              console.error('Failed to track usage:', error);
+            }
           }
         },
         onError(event) {
@@ -639,32 +859,47 @@ export async function POST(req: Request) {
       }
       return 'Oops, an error occurred!';
     },
-    onFinish: async ({ messages }) => {
-      if (lightweightUser) {
-        await saveMessages({
-          messages: messages.map((message) => ({
+    onFinish: async ({ messages: streamedMessages }) => {
+      if (!lightweightUser) {
+        return;
+      }
+
+      const newMessages = streamedMessages.filter((message) => !initialMessageIds.has(message.id));
+
+      if (newMessages.length === 0) {
+        console.log('No new messages to persist for chat', id);
+        return;
+      }
+
+      await saveMessages({
+        messages: newMessages.map((message) => {
+          const attachments = (message as any).experimental_attachments ?? [];
+          const createdAt =
+            typeof message.metadata?.createdAt === 'string' ? new Date(message.metadata.createdAt) : new Date();
+
+          return {
             id: message.id,
             role: message.role,
             parts: message.parts,
-            createdAt: new Date(),
-            attachments: [],
+            createdAt,
+            attachments,
             chatId: id,
             model: model,
             completionTime: message.metadata?.completionTime ?? 0,
             inputTokens: message.metadata?.inputTokens ?? 0,
             outputTokens: message.metadata?.outputTokens ?? 0,
             totalTokens: message.metadata?.totalTokens ?? 0,
-          })),
-        });
-      }
+          };
+        }),
+      });
     },
   });
-  // const streamContext = getStreamContext();
+  const streamContext = getStreamContext();
 
-  // if (streamContext) {
-  //   return new Response(
-  //     await streamContext.resumableStream(streamId, () => stream.pipeThrough(new JsonToSseTransformStream())),
-  //   );
-  // }
+  if (streamContext) {
+    return new Response(
+      await streamContext.resumableStream(streamId, () => stream.pipeThrough(new JsonToSseTransformStream())),
+    );
+  }
   return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
 }
