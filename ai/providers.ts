@@ -64,7 +64,7 @@ export const scira = customProvider({
     'scira-default': xai('grok-4-1-fast-non-reasoning'),
     'scira-grok4.1-fast-thinking': xai('grok-4-1-fast'),
     'scira-nano': groq('llama-3.3-70b-versatile'),
-    'scira-name': gateway('google/gemini-2.5-flash-lite-preview-09-2025'),
+    'scira-name': gateway('mistral/ministral-3b'),
     'scira-grok-3-mini': xai('grok-3-mini'),
     'scira-grok-3': xai('grok-3'),
     'scira-grok-4': xai('grok-4'),

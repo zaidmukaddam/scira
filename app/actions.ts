@@ -218,11 +218,13 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
     - the title should creative and unique
     - do not write anything other than the title
     - do not use quotes or colons
+    - no markdown formatting allowed
+    - keep plain text only
     - do not use any other text other than the title`,
     prompt,
     providerOptions: {
       gateway: {
-        only: ['google'],
+        only: ['mistral'],
       },
     },
   });
