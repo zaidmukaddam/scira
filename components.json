@@ -17,5 +17,7 @@
     "lib": "@/lib",
     "hooks": "@/hooks"
   },
+  "menuColor": "default",
+  "menuAccent": "subtle",
   "iconLibrary": "lucide"
 }

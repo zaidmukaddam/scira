@@ -17,7 +17,7 @@ import {
   isModelRestrictedInRegion,
   supportsExtremeMode,
 } from '@/ai/providers';
-import { X, Check, ChevronsUpDown, Wand2, Upload, CheckIcon, Zap, Sparkles, ArrowUpRight } from 'lucide-react';
+import { X, Check, Wand2, Upload, CheckIcon, Zap, Sparkles, ArrowUpRight } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, getSearchGroups, SearchProvider } from '@/lib/utils';
 
@@ -37,8 +37,6 @@ import {
   Crown02Icon,
   DocumentAttachmentIcon,
   ConnectIcon,
-  ArrowDown05Icon,
-  ArrowDown01Icon,
 } from '@hugeicons/core-free-icons';
 import { AudioLinesIcon } from '@/components/ui/audio-lines';
 import { GripIcon } from '@/components/ui/grip';
