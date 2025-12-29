@@ -35,9 +35,13 @@ import {
   deleteLookout,
   getChatWithUserById,
 } from '@/lib/db/queries';
+import { extractChatPreview } from '@/lib/search-utils';
+import { db } from '@/lib/db';
+import { chat } from '@/lib/db/schema';
+import { eq, desc, ilike, and } from 'drizzle-orm';
 import { getDiscountConfig } from '@/lib/discount';
 import { get } from '@vercel/edge-config';
-import { GroqProviderOptions, groq } from '@ai-sdk/groq';
+import { groq } from '@ai-sdk/groq';
 import { Client } from '@upstash/qstash';
 import { experimental_generateSpeech as generateVoice } from 'ai';
 import { elevenlabs } from '@ai-sdk/elevenlabs';
@@ -2252,6 +2256,30 @@ export async function deleteChat(chatId: string) {
   }
 }
 
+// Add function to bulk delete chats
+export async function bulkDeleteChats(chatIds: string[]) {
+  'use server';
+
+  if (!chatIds || chatIds.length === 0) {
+    return { success: true, deletedCount: 0 };
+  }
+
+  try {
+    // Delete chats in parallel
+    const results = await Promise.all(
+      chatIds.map((id) => deleteChatById({ id }))
+    );
+    
+    // Count successful deletions
+    const deletedCount = results.filter((r) => r !== null).length;
+    
+    return { success: true, deletedCount };
+  } catch (error) {
+    console.error('Error bulk deleting chats:', error);
+    throw new Error('Failed to delete chats');
+  }
+}
+
 // Add function to update chat visibility
 export async function updateChatVisibility(chatId: string, visibility: 'private' | 'public') {
   'use server';
@@ -3543,5 +3571,75 @@ export async function getStudentDomainsAction() {
       fallback: true,
       error: error instanceof Error ? error.message : 'Unknown error',
     };
+  }
+}
+
+// Fetch chats for the authenticated user (paginated)
+export async function getAllChatsWithPreview(limit: number = 25, offset: number = 0) {
+  'use server';
+  
+  try {
+    const user = await getUser();
+    
+    if (!user) {
+      return { error: 'Unauthorized', status: 401 };
+    }
+
+    // Fetch chats only - no messages for better performance
+    const chats = await db.query.chat.findMany({
+      where: eq(chat.userId, user.id),
+      orderBy: [desc(chat.createdAt)],
+      limit,
+      offset,
+    });
+
+    return { chats };
+  } catch (error) {
+    console.error('Error fetching chats:', error);
+    return { error: 'Failed to fetch chats', status: 500 };
+  }
+}
+
+// Search chats by title (paginated)
+export async function searchChatsByTitle(query: string, limit: number = 25, offset: number = 0) {
+  'use server';
+  
+  try {
+    const user = await getUser();
+    
+    if (!user) {
+      return { error: 'Unauthorized', status: 401 };
+    }
+
+    const trimmedQuery = query?.trim() || '';
+
+    // If no query, return paginated chats
+    if (trimmedQuery.length === 0) {
+      const chats = await db.query.chat.findMany({
+        where: eq(chat.userId, user.id),
+        orderBy: [desc(chat.createdAt)],
+        limit,
+        offset,
+      });
+
+      return { chats };
+    }
+
+    // Optimized: Use AND to combine userId and title search at DB level
+    // Use ilike for case-insensitive search
+    const chats = await db.query.chat.findMany({
+      where: and(
+        eq(chat.userId, user.id),
+        ilike(chat.title, `%${trimmedQuery}%`)
+      ),
+      orderBy: [desc(chat.createdAt)],
+      limit,
+      offset,
+    });
+
+    return { chats };
+  } catch (error) {
+    console.error('Error searching chats:', error);
+    return { error: 'Failed to search chats', status: 500 };
   }
 }
