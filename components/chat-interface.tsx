@@ -746,20 +746,20 @@ const ChatInterface = memo(
         if (group) {
           setSelectedGroup(group as SearchGroupId);
         }
-        
+
         // Set the input value directly on the DOM element first
         if (inputRef.current) {
           inputRef.current.value = text;
           // Trigger the onChange event manually so React state stays in sync
           const event = new Event('input', { bubbles: true });
           inputRef.current.dispatchEvent(event);
-          
+
           // Now set the cursor position
           inputRef.current.focus();
           const length = text.length;
           inputRef.current.setSelectionRange(length, length);
         }
-        
+
         // Also update React state
         setInput(text);
       },
@@ -1044,8 +1044,8 @@ const ChatInterface = memo(
 
             <div
               className={`w-full p-2 sm:p-4 relative ${status === 'ready' && messages.length === 0
-                  ? 'flex-1 flex! flex-col! items-center! justify-center!' // Center everything when no messages
-                  : 'flex flex-col! mt-4' // Add top margin when showing messages
+                ? 'flex-1 flex! flex-col! items-center! justify-center!' // Center everything when no messages
+                : 'flex flex-col! mt-4' // Add top margin when showing messages
                 }`}
             >
               <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
@@ -1246,8 +1246,8 @@ const ChatInterface = memo(
                 (messages.length > 0 || chatState.hasSubmitted) && (
                   <div
                     className={`fixed right-0 bottom-0! h-24 sm:h-20! z-10 bg-linear-to-t from-background via-background/95 to-background/80 backdrop-blur-sm pointer-events-none ${state === 'expanded'
-                        ? 'left-0 md:left-[calc(var(--sidebar-width))]'
-                        : 'left-0 md:left-[calc(var(--sidebar-width-icon))]'
+                      ? 'left-0 md:left-[calc(var(--sidebar-width))]'
+                      : 'left-0 md:left-[calc(var(--sidebar-width-icon))]'
                       }`}
                   />
                 )}
@@ -1256,8 +1256,8 @@ const ChatInterface = memo(
               {isLimitBlocked && messages.length > 0 && (
                 <div
                   className={`fixed bottom-8 sm:bottom-4 right-0 w-full max-w-[95%] sm:max-w-2xl mx-auto z-20 ${state === 'expanded'
-                      ? 'left-0 md:left-[calc(var(--sidebar-width))]'
-                      : 'left-0 md:left-[calc(var(--sidebar-width-icon))]'
+                    ? 'left-0 md:left-[calc(var(--sidebar-width))]'
+                    : 'left-0 md:left-[calc(var(--sidebar-width-icon))]'
                     }`}
                 >
                   <div className="p-4 bg-background border border-border rounded-lg shadow-lg">

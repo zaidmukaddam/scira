@@ -340,7 +340,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                     <SidebarTrigger className="size-8" />
                   </TooltipTrigger>
                   <TooltipContent side="right" align="center" hidden={state !== 'expanded' || isMobile}>
-                    Close Sidebar
+                    Close Sidebar <span className='text-xs text-secondary pl-0.5'>⌘B</span>
                   </TooltipContent>
                 </Tooltip>
               </div>
@@ -353,6 +353,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                   </TooltipTrigger>
                   <TooltipContent side="right" align="center" hidden={state !== 'collapsed' || isMobile}>
                     Open Sidebar
+                    <span className='text-xs text-secondary pl-1'>⌘B</span>
                   </TooltipContent>
                 </Tooltip>
               </div>
