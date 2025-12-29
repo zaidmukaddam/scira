@@ -9,27 +9,39 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 function SearchesPageSkeleton() {
   return (
-    <div className="w-full">
-      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b">
-        <div className="flex h-14 items-center justify-between px-4">
+    <div className="w-full h-screen flex flex-col">
+      <main className="flex-1 flex flex-col overflow-hidden px-4 pt-4 md:px-8 md:pt-8 max-w-3xl mx-auto w-full">
+        {/* Header skeleton */}
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Skeleton className="h-5 w-5" />
-            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-6 w-6 md:hidden" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-6 w-6" />
+              <Skeleton className="h-6 w-32 sm:w-40" />
+            </div>
           </div>
+          <Skeleton className="h-8 w-8 sm:w-28" />
         </div>
-      </header>
-      <main className="flex-1 overflow-auto p-4 md:p-6 max-w-5xl mx-auto w-full">
-        <Skeleton className="h-11 w-full mb-6" />
-        <div className="space-y-2">
+
+        {/* Search input skeleton */}
+        <Skeleton className="h-10 w-full mb-6" />
+
+        {/* Count skeleton */}
+        <div className="flex items-center gap-2 mb-4">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-4 w-12" />
+        </div>
+
+        {/* Chat list skeleton */}
+        <div className="space-y-0 flex-1">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="rounded-lg border bg-card p-3">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-4 w-4 rounded shrink-0" />
-                <div className="flex-1 space-y-1.5">
+            <div key={i} className="py-4 border-b border-border/40">
+              <div className="flex items-start gap-3">
+                <div className="flex-1 space-y-2">
                   <Skeleton className="h-4 w-2/3" />
-                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-32" />
                 </div>
-                <Skeleton className="h-3 w-16 shrink-0" />
+                <Skeleton className="h-8 w-8 shrink-0" />
               </div>
             </div>
           ))}

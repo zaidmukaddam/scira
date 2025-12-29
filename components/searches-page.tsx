@@ -299,7 +299,7 @@ export function SearchesPage({ userId }: SearchesPageProps) {
   return (
     <div className="w-full h-screen flex flex-col">
       {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden px-8 pt-8 max-w-3xl mx-auto w-full">
+      <main className="flex-1 flex flex-col overflow-hidden px-4 pt-4 md:px-8 md:pt-8 max-w-3xl mx-auto w-full">
         {/* Fixed Header */}
         <div className="shrink-0">
           <div className="flex items-center justify-between mb-6">
@@ -309,14 +309,14 @@ export function SearchesPage({ userId }: SearchesPageProps) {
                 <SidebarTrigger />
               </div>
               <div className="flex items-center gap-2">
-              <HugeiconsIcon icon={FolderLibraryIcon} size={24} strokeWidth={1.5} />
-              <h1 className="text-2xl font-normal font-be-vietnam-pro tracking-tight">Search Library</h1>
+              <HugeiconsIcon icon={FolderLibraryIcon} size={24} strokeWidth={1.5} className="shrink-0" />
+              <h1 className="text-xl md:text-2xl font-normal font-be-vietnam-pro tracking-tight">Search Library</h1>
               </div>
             </div>
             <Link href="/new" prefetch>
               <Button variant="outline" size="sm" className="gap-2">
                 <Plus className="h-4 w-4" />
-                New Search
+                <span className="hidden sm:inline">New Search</span>
               </Button>
             </Link>
           </div>
@@ -365,10 +365,10 @@ export function SearchesPage({ userId }: SearchesPageProps) {
         </div>
 
         {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto -mx-6 px-6">
+        <div className="flex-1 overflow-y-auto -mx-4 px-4 md:-mx-6 md:px-6">
           {/* Bulk Actions Bar - Only show when in select mode and items are selected */}
           {isSelectMode && selectedChatIds.size > 0 && (
-            <div className="mb-4 flex items-center gap-3 text-sm">
+            <div className="mb-4 flex flex-wrap items-center gap-2 sm:gap-3 text-sm">
               <div className="flex items-center gap-2">
                 <Checkbox
                   checked={allDisplayedSelected ? true : someDisplayedSelected ? 'indeterminate' : false}
@@ -383,11 +383,11 @@ export function SearchesPage({ userId }: SearchesPageProps) {
                   {allDisplayedSelected ? 'Deselect all' : 'Select all'}
                 </button>
               </div>
-              <span className="text-muted-foreground">·</span>
+              <span className="text-muted-foreground hidden sm:inline">·</span>
               <span className="text-muted-foreground">
                 {selectedChatIds.size} selected
               </span>
-              <span className="text-muted-foreground">·</span>
+              <span className="text-muted-foreground hidden sm:inline">·</span>
               <Button
                 variant="link"
                 size="sm"
@@ -477,11 +477,11 @@ export function SearchesPage({ userId }: SearchesPageProps) {
                       {/* Chat Content */}
                       <Link
                         href={`/search/${chat.id}`}
-                        className="flex-1 min-w-0 space-y-1.5"
+                        className="flex-1 min-w-0 space-y-1 sm:space-y-1.5"
                       >
                         {/* Title */}
                         <div className="flex items-center gap-2">
-                          <h3 className="font-normal text-base truncate group-hover:text-primary/80 transition-colors">
+                          <h3 className="font-normal text-sm sm:text-base truncate group-hover:text-primary/80 transition-colors">
                             {chat.title}
                           </h3>
                           {chat.visibility === 'public' && (
@@ -490,13 +490,13 @@ export function SearchesPage({ userId }: SearchesPageProps) {
                         </div>
 
                         {/* Timestamp */}
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           Last message {formatDistanceToNow(createdDate, { addSuffix: false })} ago
                         </p>
                       </Link>
 
-                      {/* Three-dots menu - visible on hover */}
-                      <div className={`shrink-0 transition-opacity ${openDropdownId === chat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                      {/* Three-dots menu - always visible on mobile, visible on hover for desktop */}
+                      <div className={`shrink-0 transition-opacity ${openDropdownId === chat.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
                         <DropdownMenu open={openDropdownId === chat.id} onOpenChange={(open) => setOpenDropdownId(open ? chat.id : null)}>
                           <DropdownMenuTrigger asChild>
                             <Button
