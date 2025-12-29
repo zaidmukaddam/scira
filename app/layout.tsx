@@ -9,7 +9,6 @@ import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from '@/components/ui/sonner';
 import { ClientAnalytics } from '@/components/client-analytics';
 import { SidebarProvider } from '@/components/ui/sidebar';
-import { cookies } from 'next/headers';
 
 import { Providers } from './providers';
 
@@ -137,10 +136,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const sidebarState = cookieStore.get('sidebar_state');
-  const defaultOpen = sidebarState?.value === 'false' ? false : true;
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -149,7 +144,7 @@ export default async function RootLayout({
       >
         <NuqsAdapter>
           <Providers>
-            <SidebarProvider defaultOpen={defaultOpen}>
+            <SidebarProvider>
               <Toaster position="top-center" />
               {children}
             </SidebarProvider>
