@@ -496,7 +496,7 @@ export function SearchesPage({ userId }: SearchesPageProps) {
                       </Link>
 
                       {/* Three-dots menu - visible on hover */}
-                      <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className={`shrink-0 transition-opacity ${openDropdownId === chat.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                         <DropdownMenu open={openDropdownId === chat.id} onOpenChange={(open) => setOpenDropdownId(open ? chat.id : null)}>
                           <DropdownMenuTrigger asChild>
                             <Button
