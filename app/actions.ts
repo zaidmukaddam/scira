@@ -229,7 +229,7 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
     prompt,
     providerOptions: {
       gateway: {
-        only: ['mistral'],
+        only: ['google'],
       },
     },
   });

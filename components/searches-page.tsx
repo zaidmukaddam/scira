@@ -141,7 +141,7 @@ export function SearchesPage({ userId }: SearchesPageProps) {
   const toggleSelectAll = useCallback(() => {
     const displayedIds = new Set(displayedChats.map((c) => c.id));
     const allDisplayedSelected = displayedChats.every((c) => selectedChatIds.has(c.id));
-    
+
     if (allDisplayedSelected) {
       // Deselect all displayed chats
       setSelectedChatIds((prev) => {
@@ -167,14 +167,14 @@ export function SearchesPage({ userId }: SearchesPageProps) {
     try {
       const ids = Array.from(selectedChatIds);
       const result = await bulkDeleteChats(ids);
-      
+
       toast.success(`${result.deletedCount} chat${result.deletedCount > 1 ? 's' : ''} deleted`);
-      
+
       // Clear selection and exit select mode
       setSelectedChatIds(new Set());
       setIsSelectMode(false);
       setShowDeleteDialog(false);
-      
+
       // Invalidate queries to refresh the list
       queryClient.invalidateQueries({ queryKey: ['searches', userId] });
       queryClient.invalidateQueries({ queryKey: ['recent-chats', userId] });
@@ -309,8 +309,8 @@ export function SearchesPage({ userId }: SearchesPageProps) {
                 <SidebarTrigger />
               </div>
               <div className="flex items-center gap-2">
-              <HugeiconsIcon icon={FolderLibraryIcon} size={24} strokeWidth={1.5} className="shrink-0" />
-              <h1 className="text-xl md:text-2xl font-normal font-be-vietnam-pro tracking-tight">Search Library</h1>
+                <HugeiconsIcon icon={FolderLibraryIcon} size={24} strokeWidth={1.5} className="shrink-0" />
+                <h1 className="text-xl md:text-2xl font-normal font-be-vietnam-pro tracking-tight">Search Library</h1>
               </div>
             </div>
             <Link href="/new" prefetch>
@@ -455,7 +455,7 @@ export function SearchesPage({ userId }: SearchesPageProps) {
                 const isSelected = selectedChatIds.has(chat.id);
                 const createdDate = new Date(chat.createdAt);
                 const isLastItem = index === displayedChats.length - 1 && !hasMore;
-                
+
                 return (
                   <div
                     key={chat.id}

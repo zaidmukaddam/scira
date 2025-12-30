@@ -64,7 +64,7 @@ export const scira = customProvider({
     'scira-default': xai('grok-4-1-fast-non-reasoning'),
     'scira-grok4.1-fast-thinking': xai('grok-4-1-fast'),
     'scira-nano': groq('llama-3.3-70b-versatile'),
-    'scira-name': mistral('ministral-3b-2512'),
+    'scira-name': gateway('google/gemini-2.5-flash-lite-preview-09-2025'),
     'scira-grok-3-mini': xai('grok-3-mini'),
     'scira-grok-3': xai('grok-3'),
     'scira-grok-4': xai('grok-4'),
@@ -116,7 +116,7 @@ export const scira = customProvider({
       middleware,
     }),
     'scira-kat-coder': novita.chatModel('kat-coder'),
-    'scira-deepseek-v3': baseten('deepseek-ai/DeepSeek-V3-0324'), // baseten
+    'scira-deepseek-v3': baseten('deepseek-ai/DeepSeek-V3-0324'),
     'scira-deepseek-v3.1-terminus': novita.chatModel('deepseek/deepseek-v3.1-terminus'),
     'scira-deepseek-chat': gateway('deepseek/deepseek-v3.2'),
     'scira-deepseek-chat-think': gateway('deepseek/deepseek-v3.2-thinking'),
@@ -136,7 +136,7 @@ export const scira = customProvider({
       middleware,
     }),
     'scira-qwen-coder-small': novita.chatModel('qwen/qwen3-coder-30b-a3b-instruct'),
-    'scira-qwen-coder': baseten('Qwen/Qwen3-Coder-480B-A35B-Instruct'), // baseten
+    'scira-qwen-coder': baseten('Qwen/Qwen3-Coder-480B-A35B-Instruct'),
     'scira-qwen-coder-plus': gateway('alibaba/qwen3-coder-plus'),
     'scira-qwen-30': huggingface.chatModel('Qwen/Qwen3-30B-A3B-Instruct-2507:nebius'),
     'scira-qwen-30-think': wrapLanguageModel({
@@ -204,9 +204,9 @@ export const scira = customProvider({
     }),
     'scira-cmd-a': cohere('command-a-03-2025'),
     'scira-cmd-a-think': cohere('command-a-reasoning-08-2025'),
-    'scira-kimi-k2-v2': baseten('moonshotai/Kimi-K2-Instruct-0905'), // baseten
+    'scira-kimi-k2-v2': baseten('moonshotai/Kimi-K2-Instruct-0905'),
     'scira-kimi-k2-v2-thinking': wrapLanguageModel({
-      model: baseten('moonshotai/Kimi-K2-Thinking'), // baseten
+      model: baseten('moonshotai/Kimi-K2-Thinking'),
       middleware,
     }),
     'scira-haiku': anannas.chatModel('anthropic/claude-3-5-haiku-20241022'),
