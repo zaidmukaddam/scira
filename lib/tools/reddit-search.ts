@@ -56,13 +56,13 @@ export function redditSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage>
           mode: 'one-shot',
           max_results: currentMaxResults < 10 ? 10 : currentMaxResults,
           excerpts: {
-            max_chars_per_result: 1000,
+            max_chars_per_result: 10000,
           },
           source_policy: {
             include_domains: ['reddit.com'],
           },
           fetch_policy: {
-            max_age_seconds: 3600,
+            max_age_seconds: 6000,
             timeout_seconds: 120,
           },
         });
