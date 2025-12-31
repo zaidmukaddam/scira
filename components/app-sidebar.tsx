@@ -1,11 +1,10 @@
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   PlusIcon,
-  ClockIcon,
   GearIcon,
   CodeIcon,
   SignIn,
@@ -19,16 +18,14 @@ import {
   BugIcon,
   SunIcon,
   MoonIcon,
-  WrenchIcon,
   UsersIcon,
 } from '@phosphor-icons/react';
-import { Crown02Icon, BinocularsIcon, SearchList02Icon, LibrariesIcon, FolderLibraryIcon } from '@hugeicons/core-free-icons';
+import { Crown02Icon, BinocularsIcon, SearchList02Icon, FolderLibraryIcon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import {
   RocketIcon as VercelIcon,
   MonitorIcon,
   Globe,
-  Lock,
   ChevronsUpDown,
   MoreHorizontal,
   Pencil,
@@ -116,6 +113,44 @@ interface AppSidebarProps {
   settingsInitialTab?: string;
 }
 
+// Helper function to group chats by date
+const groupChatsByDate = (chats: any[]) => {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const weekAgo = new Date(today);
+  weekAgo.setDate(weekAgo.getDate() - 7);
+
+  const groups: { label: string; chats: any[] }[] = [];
+  const todayChats: any[] = [];
+  const yesterdayChats: any[] = [];
+  const thisWeekChats: any[] = [];
+  const olderChats: any[] = [];
+
+  chats.forEach((chat) => {
+    const chatDate = new Date(chat.createdAt);
+    const chatDay = new Date(chatDate.getFullYear(), chatDate.getMonth(), chatDate.getDate());
+
+    if (chatDay.getTime() === today.getTime()) {
+      todayChats.push(chat);
+    } else if (chatDay.getTime() === yesterday.getTime()) {
+      yesterdayChats.push(chat);
+    } else if (chatDay > weekAgo) {
+      thisWeekChats.push(chat);
+    } else {
+      olderChats.push(chat);
+    }
+  });
+
+  if (todayChats.length > 0) groups.push({ label: 'Today', chats: todayChats });
+  if (yesterdayChats.length > 0) groups.push({ label: 'Yesterday', chats: yesterdayChats });
+  if (thisWeekChats.length > 0) groups.push({ label: 'This Week', chats: thisWeekChats });
+  if (olderChats.length > 0) groups.push({ label: 'Older', chats: olderChats });
+
+  return groups;
+};
+
 export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarProps) => {
   const { theme, setTheme } = useTheme();
   const [blurPersonalInfo] = useSyncedPreferences<boolean>('scira-blur-personal-info', false);
@@ -158,6 +193,9 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
   });
 
   const recentChats = chatsData?.chats || [];
+
+  // Group chats by date
+  const groupedChats = useMemo(() => groupChatsByDate(recentChats), [recentChats]);
 
   const signedOutLinks: SignedOutLink[] = [
     {
@@ -325,7 +363,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                   <span className="font-be-vietnam-pro font-light tracking-tighter text-xl">scira</span>
                   {user && isProUser && (
                     <div className="w-fit">
-                      <span className="text-xs font-baumans inline-flex items-center justify-center min-w-6 h-4 px-1.5 pt-0 pb-0.5 rounded-md shadow-sm bg-linear-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-linear-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
+                      <span className="animate-shimmer text-xs font-baumans inline-flex items-center justify-center min-w-6 h-4 px-1.5 pt-0 pb-0.5 rounded-md shadow-sm bg-linear-to-br from-secondary/30 via-primary/25 to-accent/30 text-foreground ring-1 ring-primary/25 ring-offset-1 ring-offset-background dark:bg-linear-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground dark:ring-primary/40">
                         pro
                       </span>
                     </div>
@@ -365,12 +403,12 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
       {/* Main Content */}
       <SidebarContent className="p-2">
         <SidebarMenu className="group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center">
-          {/* New Chat - Standalone Primary Action */}
+          {/* New Chat - Primary Action */}
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
               tooltip="New Chat"
-              className="bg-primary/10 hover:bg-primary/20 text-sidebar-accent-foreground font-medium mb-1"
+              className="bg-primary/10 hover:bg-primary/20 text-sidebar-accent-foreground font-medium transition-all duration-200 active:scale-[0.98]"
             >
               <Link
                 prefetch
@@ -390,8 +428,10 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                 asChild
                 tooltip="Search Library"
                 className={cn(
-                  'hover:bg-primary/10',
-                  pathname === '/searches' || pathname?.startsWith('/searches/') ? 'bg-primary/12 text-foreground' : '',
+                  'hover:bg-primary/10 transition-all duration-200',
+                  pathname === '/searches' || pathname?.startsWith('/searches/')
+                    ? 'bg-primary/15 text-foreground font-medium'
+                    : '',
                 )}
               >
                 <Link
@@ -407,15 +447,26 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
             </SidebarMenuItem>
           )}
 
-          {/* Lookout - Standalone Item (requires auth) */}
+          {/* Tools Section Label */}
+          {user && (
+            <div className="px-2 py-1.5 group-data-[collapsible=icon]:hidden">
+              <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">
+                Tools
+              </span>
+            </div>
+          )}
+
+          {/* Lookout */}
           {user && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
                 tooltip="Lookout"
                 className={cn(
-                  'hover:bg-primary/10',
-                  pathname === '/lookout' || pathname?.startsWith('/lookout/') ? 'bg-primary/12 text-foreground' : '',
+                  'hover:bg-primary/10 transition-all duration-200',
+                  pathname === '/lookout' || pathname?.startsWith('/lookout/')
+                    ? 'bg-primary/15 text-foreground font-medium'
+                    : '',
                 )}
               >
                 <Link
@@ -431,13 +482,16 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
             </SidebarMenuItem>
           )}
 
-          {/* XQL - Standalone Tool Item (requires auth) */}
+          {/* XQL */}
           {user && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
                 tooltip="XQL (Beta) - X/Twitter Search"
-                className={cn('hover:bg-primary/10', pathname === '/xql' ? 'bg-primary/12 text-foreground' : '')}
+                className={cn(
+                  'hover:bg-primary/10 transition-all duration-200',
+                  pathname === '/xql' ? 'bg-primary/15 text-foreground font-medium' : ''
+                )}
               >
                 <Link
                   prefetch={true}
@@ -452,13 +506,16 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
             </SidebarMenuItem>
           )}
 
-          {/* Voice - Standalone Tool Item (requires auth) */}
+          {/* Voice */}
           {user && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
                 tooltip="Voice"
-                className={cn('hover:bg-primary/10', pathname === '/voice' ? 'bg-primary/12 text-foreground' : '')}
+                className={cn(
+                  'hover:bg-primary/10 transition-all duration-200',
+                  pathname === '/voice' ? 'bg-primary/15 text-foreground font-medium' : ''
+                )}
               >
                 <Link
                   prefetch={true}
@@ -473,12 +530,15 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
             </SidebarMenuItem>
           )}
 
-          {/* X Wrapped - Standalone Tool Item (all users) */}
+          {/* X Wrapped */}
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
               tooltip="X Wrapped 2025"
-              className={cn('hover:bg-primary/10', pathname === '/x-wrapped' ? 'bg-primary/12 text-foreground' : '')}
+              className={cn(
+                'hover:bg-primary/10 transition-all duration-200',
+                pathname === '/x-wrapped' ? 'bg-primary/15 text-foreground font-medium' : ''
+              )}
             >
               <Link
                 prefetch={true}
@@ -492,12 +552,12 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {/* API - Standalone Tool Item */}
+          {/* API */}
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
               tooltip="API"
-              className="hover:bg-primary/10"
+              className="hover:bg-primary/10 transition-all duration-200"
             >
               <a
                 href="https://api.scira.ai/"
@@ -545,112 +605,126 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
               );
             })}
 
-          {/* Recent Chats - Collapsible Accordion */}
+          {/* Recent Chats - With Date Grouping */}
           {user && (
             <>
-              {/* Expanded state - Accordion with collapsible header */}
+              {/* Expanded state - Accordion with date groups */}
               <div className="group-data-[collapsible=icon]:hidden">
                 <Accordion type="single" collapsible defaultValue="recent" className="w-full">
                   <AccordionItem value="recent" className="border-none">
                     <SidebarMenuItem>
                       <AccordionTrigger className="px-2 py-2 hover:no-underline [&>svg]:size-3 [&>svg]:text-sidebar-foreground/50">
-                        <span className="text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider">
-                          Recent
+                        <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">
+                          Recent Chats
                         </span>
                       </AccordionTrigger>
                     </SidebarMenuItem>
                     <AccordionContent className="pb-0">
                       {isChatsLoading && !recentChats.length ? (
+                        // Loading skeletons with staggered animation
                         Array.from({ length: 5 }).map((_, index) => (
                           <SidebarMenuItem key={`chat-skeleton-${index}`}>
-                            <div className="flex items-center w-full gap-2 rounded-md px-2 py-1.5">
-                              <Skeleton className="h-4 w-4 shrink-0 rounded-full bg-primary/10" />
-                              <Skeleton className="h-4 flex-1 bg-primary/10" />
-                              <Skeleton className="h-6 w-6 shrink-0 rounded-md bg-primary/10" />
+                            <div
+                              className="flex items-center w-full gap-2 rounded-md px-2 py-1.5 animate-pulse"
+                              style={{ animationDelay: `${index * 100}ms` }}
+                            >
+                              <Skeleton className="h-4 flex-1 bg-primary/10 rounded" />
                             </div>
                           </SidebarMenuItem>
                         ))
                       ) : recentChats.length > 0 ? (
                         <>
-                          {recentChats.map((chat: any) => {
-                            const isCurrentChat = pathname?.includes(chat.id);
-                            const isPublic = chat.visibility === 'public';
-                            const normalizedVisibility: VisibilityType = isPublic ? 'public' : 'private';
-                            const isMenuOpen = openMenuChatId === chat.id;
+                          {/* Date-grouped chats */}
+                          {groupedChats.map((group) => (
+                            <div key={group.label} className="mb-2">
+                              <div className="px-2 py-1">
+                                <span className="text-[10px] font-medium text-muted-foreground/50 uppercase">
+                                  {group.label}
+                                </span>
+                              </div>
+                              {group.chats.map((chat: any) => {
+                                const isCurrentChat = pathname?.includes(chat.id);
+                                const isPublic = chat.visibility === 'public';
+                                const normalizedVisibility: VisibilityType = isPublic ? 'public' : 'private';
+                                const isMenuOpen = openMenuChatId === chat.id;
 
-                            const handleRenameClick = () => {
-                              setRenameTarget({ id: chat.id, title: chat.title });
-                              setRenameValue(chat.title || 'Untitled Chat');
-                            };
+                                const handleRenameClick = () => {
+                                  setRenameTarget({ id: chat.id, title: chat.title });
+                                  setRenameValue(chat.title || 'Untitled Chat');
+                                };
 
-                            const handleShareClick = () => {
-                              setShareTarget({ id: chat.id, visibility: normalizedVisibility });
-                              setShareVisibility(normalizedVisibility);
-                              setShareDialogOpen(true);
-                            };
+                                const handleShareClick = () => {
+                                  setShareTarget({ id: chat.id, visibility: normalizedVisibility });
+                                  setShareVisibility(normalizedVisibility);
+                                  setShareDialogOpen(true);
+                                };
 
-                            const handleDeleteClick = () => {
-                              setDeleteTarget({ id: chat.id, title: chat.title });
-                            };
+                                const handleDeleteClick = () => {
+                                  setDeleteTarget({ id: chat.id, title: chat.title });
+                                };
 
-                            return (
-                              <SidebarMenuItem key={chat.id}>
-                                <DropdownMenu
-                                  open={isMenuOpen}
-                                  onOpenChange={(open) => setOpenMenuChatId(open ? chat.id : null)}
-                                >
-                                  <div
-                                    className={cn(
-                                      'group flex items-center w-full rounded-md transition-colors',
-                                      isCurrentChat || isMenuOpen ? 'bg-primary/12' : 'hover:bg-primary/10',
-                                    )}
-                                  >
-                                    <Link
-                                      prefetch={true}
-                                      href={`/search/${chat.id}`}
-                                      onClick={closeMobileSidebar}
-                                      className={cn(
-                                        'flex items-center gap-2 flex-1 min-w-0 px-2 py-1.5',
-                                        isCurrentChat && 'font-medium',
-                                      )}
+                                return (
+                                  <SidebarMenuItem key={chat.id}>
+                                    <DropdownMenu
+                                      open={isMenuOpen}
+                                      onOpenChange={(open) => setOpenMenuChatId(open ? chat.id : null)}
                                     >
-                                      {isPublic && <Globe className="h-3.5 w-3.5 shrink-0 opacity-70" />}
-                                      <span className="truncate flex-1 text-sm">{chat.title || 'Untitled Chat'}</span>
-                                    </Link>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-7 w-7 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 text-muted-foreground hover:text-foreground shrink-0 mr-1"
-                                        onClick={(e) => e.stopPropagation()}
+                                      <div
+                                        className={cn(
+                                          'group flex items-center w-full rounded-md transition-all duration-200',
+                                          isCurrentChat || isMenuOpen
+                                            ? 'bg-primary/15'
+                                            : 'hover:bg-primary/8',
+                                        )}
                                       >
-                                        <MoreHorizontal className="h-4 w-4" />
-                                        <span className="sr-only">Open chat actions</span>
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="start" side="right" sideOffset={20}>
-                                      <DropdownMenuItem onClick={handleRenameClick}>
-                                        <Pencil className="h-4 w-4 mr-2" />
-                                        Edit title
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={handleShareClick}>
-                                        <Share2 className="h-4 w-4 mr-2" />
-                                        Share
-                                      </DropdownMenuItem>
-                                      <DropdownMenuSeparator />
-                                      <DropdownMenuItem
-                                        onClick={handleDeleteClick}
-                                        className="text-destructive focus:text-destructive"
-                                      >
-                                        <Trash2 className="h-4 w-4 mr-2 text-destructive" />
-                                        Delete
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </div>
-                                </DropdownMenu>
-                              </SidebarMenuItem>
-                            );
-                          })}
+                                        <Link
+                                          prefetch={true}
+                                          href={`/search/${chat.id}`}
+                                          onClick={closeMobileSidebar}
+                                          className={cn(
+                                            'flex items-center gap-2 flex-1 min-w-0 px-2 py-1.5',
+                                            isCurrentChat && 'font-medium',
+                                          )}
+                                        >
+                                          {isPublic && <Globe className="h-3.5 w-3.5 shrink-0 opacity-60" />}
+                                          <span className="truncate flex-1 text-sm">{chat.title || 'Untitled Chat'}</span>
+                                        </Link>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100 text-muted-foreground hover:text-foreground shrink-0 mr-1 transition-opacity duration-150"
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
+                                            <MoreHorizontal className="h-4 w-4" />
+                                            <span className="sr-only">Open chat actions</span>
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="start" side="right" sideOffset={20}>
+                                          <DropdownMenuItem onClick={handleRenameClick}>
+                                            <Pencil className="h-4 w-4 mr-2" />
+                                            Edit title
+                                          </DropdownMenuItem>
+                                          <DropdownMenuItem onClick={handleShareClick}>
+                                            <Share2 className="h-4 w-4 mr-2" />
+                                            Share
+                                          </DropdownMenuItem>
+                                          <DropdownMenuSeparator />
+                                          <DropdownMenuItem
+                                            onClick={handleDeleteClick}
+                                            className="text-destructive focus:text-destructive"
+                                          >
+                                            <Trash2 className="h-4 w-4 mr-2 text-destructive" />
+                                            Delete
+                                          </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                      </div>
+                                    </DropdownMenu>
+                                  </SidebarMenuItem>
+                                );
+                              })}
+                            </div>
+                          ))}
                         </>
                       ) : (
                         <SidebarMenuItem>
@@ -665,7 +739,10 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                 {/* View All Button - Outside accordion */}
                 {recentChats.length > 0 && (
                   <SidebarMenuItem>
-                    <SidebarMenuButton onClick={() => { closeMobileSidebar(); onHistoryClick(); }} className="hover:bg-primary/10 w-full">
+                    <SidebarMenuButton
+                      onClick={() => { closeMobileSidebar(); onHistoryClick(); }}
+                      className="hover:bg-primary/10 w-full transition-all duration-200"
+                    >
                       <HugeiconsIcon icon={SearchList02Icon} size={18} />
                       <span className="text-sm">View All</span>
                     </SidebarMenuButton>
@@ -676,7 +753,11 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
               {/* Collapsed state - Show only View All button */}
               <div className="hidden group-data-[collapsible=icon]:block">
                 <SidebarMenuItem>
-                  <SidebarMenuButton onClick={() => { closeMobileSidebar(); onHistoryClick(); }} tooltip="View All Chats" className="hover:bg-primary/10">
+                  <SidebarMenuButton
+                    onClick={() => { closeMobileSidebar(); onHistoryClick(); }}
+                    tooltip="View All Chats"
+                    className="hover:bg-primary/10 transition-all duration-200"
+                  >
                     <HugeiconsIcon icon={SearchList02Icon} size={18} />
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -722,7 +803,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
               <div className="group-data-[collapsible=icon]:hidden">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex items-center justify-between w-full p-2 rounded-md hover:bg-primary/8 transition-colors cursor-pointer focus:outline-none! focus:ring-0! focus:ring-offset-0!">
+                    <button className="flex items-center justify-between w-full p-2 rounded-md hover:bg-primary/8 transition-all duration-200 cursor-pointer focus:outline-none! focus:ring-0! focus:ring-offset-0! active:scale-[0.98]">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <Avatar className="h-8 w-8 shrink-0 overflow-hidden rounded-lg mask-[radial-gradient(white,black)] [-webkit-mask-image:-webkit-radial-gradient(white,black)]">
                           <AvatarImage

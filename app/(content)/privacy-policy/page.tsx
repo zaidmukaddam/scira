@@ -1,62 +1,45 @@
-'use client';
-
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { ExternalLink } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { SciraLogo } from '@/components/logos/scira-logo';
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
-};
 
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-muted/30 to-transparent" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,hsl(var(--border))_1px,transparent_1px),linear-gradient(to_bottom,hsl(var(--border))_1px,transparent_1px)] bg-[size:24px_24px] opacity-20" />
-        <div className="absolute left-0 right-0 top-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-
-        <div className="relative pt-24 pb-12 px-4">
-          <motion.div
-            className="container max-w-3xl mx-auto space-y-8"
-            variants={container}
-            initial="hidden"
-            animate="show"
-          >
-            {/* Logo */}
-            <motion.div variants={item} className="text-center">
-              <Link href="/" className="inline-flex items-center gap-3 font-be-vietnam-pro font-bold">
-                <div className="relative w-14 h-14 rounded-full bg-background/90 shadow-sm flex items-center justify-center border">
-                  <SciraLogo className="size-8 opacity-90" />
-                </div>
-              </Link>
-            </motion.div>
-
-            <motion.div variants={item} className="text-center">
-              <h1 className="text-4xl font-bold tracking-tight">Privacy Policy</h1>
-              <p className="text-muted-foreground mt-3">Last updated: July 24, 2025</p>
-            </motion.div>
-          </motion.div>
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
+        <div className="max-w-3xl mx-auto">
+          <div className="flex items-center justify-between h-14 px-6">
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <SciraLogo className="size-5 transition-transform duration-300 group-hover:scale-110" />
+              <span className="text-lg font-light tracking-tighter font-be-vietnam-pro">scira</span>
+            </Link>
+            <Link
+              href="/about"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back
+            </Link>
+          </div>
         </div>
-      </div>
+      </header>
 
-      {/* Main Content */}
-      <div className="py-16 px-4">
-        <div className="container max-w-3xl mx-auto prose dark:prose-invert prose-neutral prose-headings:font-be-vietnam-pro prose-p:text-muted-foreground prose-a:text-foreground prose-a:no-underline hover:prose-a:text-foreground/80 prose-headings:tracking-tight">
-          <p className="text-lg">
+      {/* Content */}
+      <main className="max-w-3xl mx-auto px-6 py-16">
+        {/* Title */}
+        <div className="mb-12">
+          <p className="text-xs text-muted-foreground tracking-wide mb-3">Legal</p>
+          <h1 className="text-3xl sm:text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro mb-4">
+            Privacy Policy
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Last updated: July 24, 2025
+          </p>
+        </div>
+
+        {/* Content */}
+        <div className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-be-vietnam-pro prose-headings:font-light prose-headings:tracking-tight prose-h2:text-xl prose-h2:mt-12 prose-h2:mb-4 prose-p:text-muted-foreground prose-p:leading-relaxed prose-li:text-muted-foreground prose-a:text-foreground prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-strong:font-medium">
+          <p className="text-base text-foreground/80 leading-relaxed">
             At Scira AI, we respect your privacy and are committed to protecting your personal data. This Privacy Policy
             explains how we collect, use, and safeguard your information when you use our AI-powered search engine.
           </p>
@@ -172,47 +155,43 @@ export default function PrivacyPage() {
           <h2>Contact Us</h2>
           <p>If you have any questions about this Privacy Policy, please contact us at:</p>
           <p>
-            <a href="mailto:zaid@scira.ai" className="flex items-center gap-1">
-              zaid@scira.ai <ExternalLink className="h-4 w-4" />
-            </a>
+            <a href="mailto:zaid@scira.ai">zaid@scira.ai</a>
           </p>
-
-          <div className="my-8 border-t pt-8">
-            <p className="text-sm text-muted-foreground">
-              By using Scira AI, you agree to our Privacy Policy and our{' '}
-              <Link href="/terms" className="underline">
-                Terms of Service
-              </Link>
-              .
-            </p>
-          </div>
         </div>
-      </div>
+
+        {/* Agreement Note */}
+        <div className="mt-16 pt-8 border-t border-border">
+          <p className="text-sm text-muted-foreground">
+            By using Scira AI, you agree to our Privacy Policy and our{' '}
+            <Link href="/terms" className="text-foreground hover:underline">
+              Terms of Service
+            </Link>
+            .
+          </p>
+        </div>
+      </main>
 
       {/* Footer */}
-      <footer className="py-10 mt-10">
-        <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-        <div className="container max-w-3xl mx-auto px-4 pt-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
+      <footer className="border-t border-border">
+        <div className="max-w-3xl mx-auto px-6">
+          <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-background border flex items-center justify-center">
-                <SciraLogo className="size-4 opacity-80" />
-              </div>
-              <div className="text-sm text-muted-foreground">
-                © {new Date().getFullYear()} Scira AI by Zaid Mukaddam
-              </div>
+              <SciraLogo className="size-4" />
+              <span className="text-xs text-muted-foreground">
+                © {new Date().getFullYear()} Scira
+              </span>
             </div>
-            <div className="flex items-center gap-6 text-sm text-muted-foreground">
-              <Link href="/" className="hover:text-foreground transition-colors">
+            <div className="flex items-center gap-6">
+              <Link href="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
                 Home
               </Link>
-              <Link href="/about" className="hover:text-foreground transition-colors">
+              <Link href="/about" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
                 About
               </Link>
-              <Link href="/terms" className="hover:text-foreground transition-colors">
+              <Link href="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
                 Terms
               </Link>
-              <Link href="/privacy-policy" className="text-foreground font-medium">
+              <Link href="/privacy-policy" className="text-xs text-foreground font-medium">
                 Privacy
               </Link>
             </div>

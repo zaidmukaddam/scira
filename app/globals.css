@@ -40,6 +40,36 @@
   }
 }
 
+/* Shimmer animation for Pro badge */
+@keyframes shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.animate-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
 @utility animate-reveal-line {
   animation: revealLine 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -356,7 +386,7 @@
   --sidebar-accent-foreground: oklch(0.325 0 0);
   --sidebar-border: oklch(0.9401 0 0);
   --sidebar-ring: oklch(0.7731 0 0);
-  --radius: 0.625rem;
+  --radius: 0.875rem;
   --shadow-x: 0;
   --shadow-y: 1px;
   --shadow-blur: 3px;
@@ -420,7 +450,7 @@
   --sidebar-accent-foreground: oklch(0.9674 0.0013 286.3752);
   --sidebar-border: oklch(0.2739 0.0055 286.0326);
   --sidebar-ring: oklch(0.8711 0.0055 286.286);
-  --radius: 0.625rem;
+  --radius: 0.875rem;
   --shadow-x: 0;
   --shadow-y: 1px;
   --shadow-blur: 3px;

@@ -1,19 +1,14 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { authClient, signIn } from '@/lib/auth-client';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { Badge } from '@/components/ui/badge';
 
 type AuthProvider = 'github' | 'google' | 'twitter' | 'microsoft';
 
 interface AuthIconProps extends React.ComponentProps<'svg'> {}
 
-/**
- * Authentication provider icons
- */
 const AuthIcons = {
   Github: (props: AuthIconProps) => (
     <svg viewBox="0 0 438.549 438.549" {...props}>
@@ -68,6 +63,7 @@ interface SignInButtonProps {
   setLoading: (loading: boolean) => void;
   callbackURL: string;
   icon: React.ReactNode;
+  isLastUsed?: boolean;
 }
 
 interface AuthCardProps {
@@ -76,15 +72,21 @@ interface AuthCardProps {
   mode?: 'sign-in' | 'sign-up';
 }
 
-/**
- * Button component for social authentication providers
- */
-const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon }: SignInButtonProps) => {
-  const lastMethod = authClient.getLastUsedLoginMethod();
-
+const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon, isLastUsed }: SignInButtonProps) => {
   return (
     <button
-      className="relative w-full h-12 text-sm font-normal bg-muted/50 hover:bg-muted transition-all duration-200 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-start px-4 gap-3 group"
+      className={`
+        relative w-full h-12 text-sm
+        bg-background
+        border border-border
+        hover:bg-muted/50 hover:border-foreground/20
+        active:scale-[0.99]
+        transition-all duration-200
+        disabled:opacity-50 disabled:cursor-not-allowed
+        flex items-center justify-center gap-3
+        group
+        ${isLastUsed ? 'ring-1 ring-foreground/10' : ''}
+      `}
       disabled={loading}
       onClick={async () => {
         await signIn.social(
@@ -103,99 +105,108 @@ const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon 
       <div className="w-5 h-5 flex items-center justify-center">
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : icon}
       </div>
-      <span className="text-foreground/80 group-hover:text-foreground transition-colors">Sign in with {title}</span>
-      {lastMethod === provider && (
-        <Badge variant="default" className="absolute -top-2 -right-2 pointer-events-none z-10">
+      <span className="font-medium text-foreground/80 group-hover:text-foreground transition-colors">
+        {title}
+      </span>
+      {isLastUsed && (
+        <span className="absolute right-3 text-[10px] uppercase tracking-wider text-muted-foreground">
           Last used
-        </Badge>
+        </span>
       )}
     </button>
   );
 };
 
-/**
- * Authentication component with social provider options
- */
 export default function AuthCard({ title, description, mode = 'sign-in' }: AuthCardProps) {
   const [githubLoading, setGithubLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [twitterLoading, setTwitterLoading] = useState(false);
   const [microsoftLoading, setMicrosoftLoading] = useState(false);
 
+  const lastMethod = authClient.getLastUsedLoginMethod();
+
   return (
-    <div className="w-full max-w-[380px] mx-auto">
-      <div className="space-y-6">
-        <div className="text-center space-y-3">
-          <h1 className="text-2xl font-medium">{title}</h1>
-          <p className="text-sm text-muted-foreground/80">{description}</p>
-        </div>
-
-        <div className="space-y-4">
-          <SignInButton
-            title="GitHub"
-            provider="github"
-            loading={githubLoading}
-            setLoading={setGithubLoading}
-            callbackURL="/"
-            icon={<AuthIcons.Github className="w-4 h-4" />}
-          />
-          <SignInButton
-            title="Google"
-            provider="google"
-            loading={googleLoading}
-            setLoading={setGoogleLoading}
-            callbackURL="/"
-            icon={<AuthIcons.Google className="w-4 h-4" />}
-          />
-          <SignInButton
-            title="X"
-            provider="twitter"
-            loading={twitterLoading}
-            setLoading={setTwitterLoading}
-            callbackURL="/"
-            icon={<AuthIcons.Twitter className="w-4 h-4" />}
-          />
-          <SignInButton
-            title="Microsoft"
-            provider="microsoft"
-            loading={microsoftLoading}
-            setLoading={setMicrosoftLoading}
-            callbackURL="/"
-            icon={<AuthIcons.Microsoft className="w-4 h-4" />}
-          />
-        </div>
-
-        <div className="pt-6 space-y-4">
-          <p className="text-[11px] text-center text-muted-foreground/60 leading-relaxed">
-            By continuing, you agree to our{' '}
-            <Link href="/terms" className="hover:text-muted-foreground underline-offset-2 underline">
-              Terms
-            </Link>{' '}
-            and{' '}
-            <Link href="/privacy-policy" className="hover:text-muted-foreground underline-offset-2 underline">
-              Privacy Policy
-            </Link>
-          </p>
-
-          <p className="text-sm text-center text-muted-foreground">
-            {mode === 'sign-in' ? (
-              <>
-                New to Scira?{' '}
-                <Link href="/sign-up" className="text-foreground font-medium hover:underline underline-offset-4">
-                  Create account
-                </Link>
-              </>
-            ) : (
-              <>
-                Already have an account?{' '}
-                <Link href="/sign-in" className="text-foreground font-medium hover:underline underline-offset-4">
-                  Sign in
-                </Link>
-              </>
-            )}
-          </p>
-        </div>
+    <div className="w-full max-w-sm mx-auto">
+      {/* Header */}
+      <div className="text-center mb-10">
+        <h1 className="text-3xl font-light tracking-tight text-foreground font-be-vietnam-pro mb-3">
+          {title}
+        </h1>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          {description}
+        </p>
       </div>
+
+      {/* Auth Buttons */}
+      <div className="space-y-3">
+        <SignInButton
+          title="Google"
+          provider="google"
+          loading={googleLoading}
+          setLoading={setGoogleLoading}
+          callbackURL="/"
+          icon={<AuthIcons.Google className="w-4 h-4" />}
+          isLastUsed={lastMethod === 'google'}
+        />
+        <SignInButton
+          title="GitHub"
+          provider="github"
+          loading={githubLoading}
+          setLoading={setGithubLoading}
+          callbackURL="/"
+          icon={<AuthIcons.Github className="w-4 h-4" />}
+          isLastUsed={lastMethod === 'github'}
+        />
+        <SignInButton
+          title="X"
+          provider="twitter"
+          loading={twitterLoading}
+          setLoading={setTwitterLoading}
+          callbackURL="/"
+          icon={<AuthIcons.Twitter className="w-4 h-4" />}
+          isLastUsed={lastMethod === 'twitter'}
+        />
+        <SignInButton
+          title="Microsoft"
+          provider="microsoft"
+          loading={microsoftLoading}
+          setLoading={setMicrosoftLoading}
+          callbackURL="/"
+          icon={<AuthIcons.Microsoft className="w-4 h-4" />}
+          isLastUsed={lastMethod === 'microsoft'}
+        />
+      </div>
+
+      {/* Switch Auth Mode */}
+      <div className="mt-10 text-center">
+        <span className="text-sm text-muted-foreground">
+          {mode === 'sign-in' ? "Don't have an account? " : 'Already have an account? '}
+        </span>
+        <Link
+          href={mode === 'sign-in' ? '/sign-up' : '/sign-in'}
+          className="text-sm font-medium text-foreground hover:underline underline-offset-4 transition-colors"
+        >
+          {mode === 'sign-in' ? 'Sign up' : 'Sign in'}
+        </Link>
+      </div>
+
+      {/* Legal */}
+      <p className="mt-8 text-[11px] text-center text-muted-foreground leading-relaxed">
+        By continuing, you agree to our{' '}
+        <Link
+          href="/terms"
+          className="text-foreground/70 hover:text-foreground underline-offset-2 hover:underline transition-colors"
+        >
+          Terms
+        </Link>{' '}
+        and{' '}
+        <Link
+          href="/privacy-policy"
+          className="text-foreground/70 hover:text-foreground underline-offset-2 hover:underline transition-colors"
+        >
+          Privacy Policy
+        </Link>
+      </p>
     </div>
   );
 }

@@ -1,10 +1,8 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { authClient, betterauthClient } from '@/lib/auth-client';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { ArrowRight, ArrowLeft, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -16,6 +14,7 @@ import { useLocation } from '@/hooks/use-location';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 import { StudentDomainRequestButton } from '@/components/student-domain-request-button';
 import { SupportedDomainsList } from '@/components/supported-domains-list';
+import { SciraLogo } from '@/components/logos/scira-logo';
 
 type SubscriptionDetails = {
   id: string;
@@ -91,7 +90,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     return discountConfig.enabled && discountConfig.isStudentDiscount;
   };
 
-  const handleCheckout = async (productId: string, slug: string, paymentMethod?: 'dodo' | 'polar') => {
+  const handleCheckout = async (_productId: string, _slug: string, _paymentMethod?: 'dodo' | 'polar') => {
     if (!user) {
       router.push('/sign-up');
       return;
@@ -122,7 +121,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
           'affirm',
           'afterpay_clearpay',
         ],
-        referenceId: `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        referenceId: `order_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`,
         ...(hasStudentDiscount() && discountConfig.dodoDiscountId && { discount_code: 'SCIRASTUD' }),
       });
 
@@ -211,262 +210,276 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="max-w-4xl mx-auto px-6 pt-12">
-        <Link
-          href="/"
-          className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Home
-        </Link>
+      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm border-b border-border">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between h-14 px-6">
+            <Link href="/" className="flex items-center gap-2.5 group">
+              <SciraLogo className="size-5 transition-transform duration-300 group-hover:scale-110" />
+              <span className="text-lg font-light tracking-tighter font-be-vietnam-pro">scira</span>
+            </Link>
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Back
+            </Link>
+          </div>
+        </div>
+      </header>
 
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-medium text-foreground mb-4 font-be-vietnam-pro">Pricing</h1>
-          <p className="text-xl text-muted-foreground">Choose the plan that works for you</p>
+      {/* Hero */}
+      <div className="max-w-4xl mx-auto px-6 pt-16 pb-12">
+        <div className="text-center">
+          <p className="text-xs text-muted-foreground tracking-wide mb-3">Plans</p>
+          <h1 className="text-3xl sm:text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro mb-4">
+            Pricing
+          </h1>
+          <p className="text-base text-muted-foreground">
+            Choose the plan that works for you
+          </p>
         </div>
       </div>
 
       {/* Pricing Cards */}
-      <div className="max-w-4xl mx-auto px-6 pb-24">
-        <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto px-6 pb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border border border-border max-w-3xl mx-auto">
           {/* Free Plan */}
-          <Card className="relative">
-            <CardHeader className="pb-4">
-              <h3 className="text-xl font-medium">Free</h3>
-              <div className="flex items-baseline">
-                <span className="text-4xl font-light">$0</span>
-                <span className="text-muted-foreground ml-2">/month</span>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <ul className="space-y-3">
-                <li className="flex items-center text-muted-foreground">
-                  <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full mr-3 shrink-0"></div>
-                  {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches per day
-                </li>
-                <li className="flex items-center text-muted-foreground">
-                  <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full mr-3 shrink-0"></div>
-                  Basic AI models
-                </li>
-                <li className="flex items-center text-muted-foreground">
-                  <div className="w-1.5 h-1.5 bg-muted-foreground rounded-full mr-3 shrink-0"></div>
-                  Search history
-                </li>
-              </ul>
+          <div className="bg-background p-8 flex flex-col">
+            <h3 className="text-lg font-medium mb-2 text-foreground">Free</h3>
+            <p className="text-sm text-muted-foreground mb-6">Get started with essential features</p>
+            <div className="flex items-baseline mb-8">
+              <span className="text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro">$0</span>
+              <span className="text-sm text-muted-foreground ml-2">/month</span>
+            </div>
 
-              <Button variant="outline" className="w-full" disabled={!hasProAccess()}>
-                {!hasProAccess() ? 'Current plan' : 'Free plan'}
-              </Button>
-            </CardContent>
-          </Card>
+            <ul className="space-y-3 mb-8 flex-1">
+              <li className="flex items-start gap-3 text-sm text-muted-foreground">
+                <span className="w-1 h-1 rounded-full bg-foreground/40 mt-2 shrink-0" />
+                {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} searches per day
+              </li>
+              <li className="flex items-start gap-3 text-sm text-muted-foreground">
+                <span className="w-1 h-1 rounded-full bg-foreground/40 mt-2 shrink-0" />
+                Basic AI models
+              </li>
+              <li className="flex items-start gap-3 text-sm text-muted-foreground">
+                <span className="w-1 h-1 rounded-full bg-foreground/40 mt-2 shrink-0" />
+                Search history
+              </li>
+            </ul>
+
+            <Button variant="outline" className="w-full h-11 rounded-none" disabled={!hasProAccess()}>
+              {!hasProAccess() ? 'Current plan' : 'Free plan'}
+            </Button>
+          </div>
 
           {/* Pro Plan */}
-          <Card className="relative border-2 border-primary">
+          <div className="bg-muted/20 p-8 flex flex-col relative">
             {hasProAccess() && (
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-                <Badge className="bg-primary text-primary-foreground">Current plan</Badge>
+              <div className="absolute top-4 right-4">
+                <span className="text-[10px] uppercase tracking-wider text-foreground border border-foreground px-2 py-1">
+                  Current
+                </span>
               </div>
             )}
             {!hasProAccess() && hasStudentDiscount() && (
-              <div className="absolute -top-3 right-4 z-10">
-                <Badge>🎓 Student Discount</Badge>
+              <div className="absolute top-4 right-4">
+                <span className="text-[10px] uppercase tracking-wider text-green-600 dark:text-green-400 border border-green-600 dark:border-green-400 px-2 py-1">
+                  Student
+                </span>
               </div>
             )}
 
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl font-medium">Scira Pro</h3>
-                <Badge variant="secondary">Popular</Badge>
-              </div>
+            <div className="flex items-center gap-3 mb-2">
+              <h3 className="text-lg font-medium text-foreground">Pro</h3>
+              {!hasProAccess() && !hasStudentDiscount() && (
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground border border-border px-2 py-0.5">
+                  Popular
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground mb-6">Everything for serious research</p>
 
-              {/* Pricing Display - Show currency based on location */}
+            {/* Pricing Display */}
+            <div className="mb-8">
               {hasProAccess() ? (
-                // Show user's current pricing method
                 getProAccessSource() === 'dodo' ? (
                   <div className="flex items-baseline">
-                    <span className="text-4xl font-light">₹{PRICING.PRO_MONTHLY_INR}</span>
-                    <span className="text-muted-foreground ml-2">(excl. GST)/month</span>
+                    <span className="text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro">₹{PRICING.PRO_MONTHLY_INR}</span>
+                    <span className="text-sm text-muted-foreground ml-2">(excl. GST)/month</span>
                   </div>
                 ) : (
                   <div className="flex items-baseline">
-                    <span className="text-4xl font-light">$15</span>
-                    <span className="text-muted-foreground ml-2">/month</span>
+                    <span className="text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro">$15</span>
+                    <span className="text-sm text-muted-foreground ml-2">/month</span>
                   </div>
                 )
               ) : location.isIndia || derivedIsIndianStudentEmail ? (
-                // Show INR pricing for Indian users
                 <div className="space-y-1">
                   <div className="flex items-baseline">
                     {getStudentPrice(true) ? (
                       <>
-                        <span className="text-2xl text-muted-foreground line-through mr-2">
-                          ₹{PRICING.PRO_MONTHLY_INR}
-                        </span>
-                        <span className="text-4xl font-light">₹{getStudentPrice(true)}</span>
+                        <span className="text-xl text-muted-foreground line-through mr-2">₹{PRICING.PRO_MONTHLY_INR}</span>
+                        <span className="text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro">₹{getStudentPrice(true)}</span>
                       </>
                     ) : (
-                      <span className="text-4xl font-light">₹{PRICING.PRO_MONTHLY_INR}</span>
+                      <span className="text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro">₹{PRICING.PRO_MONTHLY_INR}</span>
                     )}
-                    <span className="text-muted-foreground ml-2">(excl. GST)/month</span>
+                    <span className="text-sm text-muted-foreground ml-2">(excl. GST)/month</span>
                   </div>
                   <p className="text-xs text-muted-foreground">Approx. $15/month</p>
                 </div>
               ) : (
-                // Show USD pricing for non-Indian users
                 <div className="space-y-1">
                   <div className="flex items-baseline">
                     {getStudentPrice(false) ? (
                       <>
-                        <span className="text-2xl text-muted-foreground line-through mr-2">$15</span>
-                        <span className="text-4xl font-light">${getStudentPrice(false)}</span>
+                        <span className="text-xl text-muted-foreground line-through mr-2">$15</span>
+                        <span className="text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro">${getStudentPrice(false)}</span>
                       </>
                     ) : (
-                      <span className="text-4xl font-light">$15</span>
+                      <span className="text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro">$15</span>
                     )}
-                    <span className="text-muted-foreground ml-2">/month</span>
+                    <span className="text-sm text-muted-foreground ml-2">/month</span>
                   </div>
                   <p className="text-xs text-muted-foreground">Approx. ₹{PRICING.PRO_MONTHLY_INR}/month</p>
                 </div>
               )}
-            </CardHeader>
+            </div>
 
-            <CardContent className="space-y-6">
-              <ul className="space-y-3">
-                <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 shrink-0"></div>
-                  Unlimited searches
-                </li>
-                <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 shrink-0"></div>
-                  All AI models
-                </li>
-                <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 shrink-0"></div>
-                  PDF analysis
-                </li>
-                <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 shrink-0"></div>
-                  Priority support
-                </li>
-                <li className="flex items-center">
-                  <div className="w-1.5 h-1.5 bg-primary rounded-full mr-3 shrink-0"></div>
-                  Scira Lookout
-                </li>
-              </ul>
+            <ul className="space-y-3 mb-8 flex-1">
+              <li className="flex items-start gap-3 text-sm text-foreground/80">
+                <span className="w-1 h-1 rounded-full bg-foreground mt-2 shrink-0" />
+                Unlimited searches
+              </li>
+              <li className="flex items-start gap-3 text-sm text-foreground/80">
+                <span className="w-1 h-1 rounded-full bg-foreground mt-2 shrink-0" />
+                All AI models
+              </li>
+              <li className="flex items-start gap-3 text-sm text-foreground/80">
+                <span className="w-1 h-1 rounded-full bg-foreground mt-2 shrink-0" />
+                PDF analysis
+              </li>
+              <li className="flex items-start gap-3 text-sm text-foreground/80">
+                <span className="w-1 h-1 rounded-full bg-foreground mt-2 shrink-0" />
+                Priority support
+              </li>
+              <li className="flex items-start gap-3 text-sm text-foreground/80">
+                <span className="w-1 h-1 rounded-full bg-foreground mt-2 shrink-0" />
+                Scira Lookout
+              </li>
+            </ul>
 
-              {hasProAccess() ? (
-                <div className="space-y-4">
-                  <Button className="w-full" onClick={handleManageSubscription}>
-                    {getProAccessSource() === 'dodo' ? 'Manage payment' : 'Manage subscription'}
-                  </Button>
-                  {getProAccessSource() === 'polar' && subscriptionDetails.subscription && (
-                    <p className="text-sm text-muted-foreground text-center">
-                      {subscriptionDetails.subscription.cancelAtPeriodEnd
-                        ? `Subscription expires ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`
-                        : `Renews ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`}
-                    </p>
-                  )}
-                  {getProAccessSource() === 'dodo' && user?.dodoSubscription?.expiresAt && (
-                    <p className="text-sm text-muted-foreground text-center">
-                      Access expires {formatDate(new Date(user.dodoSubscription.expiresAt))}
-                    </p>
-                  )}
-                </div>
-              ) : !user ? (
-                <Button className="w-full group" onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}>
-                  Sign up for Pro
-                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+            {hasProAccess() ? (
+              <div className="space-y-3">
+                <Button className="w-full h-11 rounded-none" onClick={handleManageSubscription}>
+                  {getProAccessSource() === 'dodo' ? 'Manage payment' : 'Manage subscription'}
                 </Button>
-              ) : (
-                <div className="space-y-3">
-                  <Button
-                    className="w-full group"
-                    onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'dodo')}
-                    disabled={location.loading}
-                  >
-                    {location.loading
-                      ? 'Loading...'
-                      : location.isIndia || derivedIsIndianStudentEmail
-                        ? getStudentPrice(true)
-                          ? `Subscribe ₹${getStudentPrice(true)}/month`
-                          : `Subscribe ₹${PRICING.PRO_MONTHLY_INR}/month`
-                        : getStudentPrice(false)
-                          ? `Subscribe $${getStudentPrice(false)}/month`
-                          : 'Subscribe $15/month'}
-                    {!location.loading && (
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    )}
-                  </Button>
-                  <div className="text-xs text-center text-muted-foreground">
-                    💳{' '}
-                    {location.isIndia || derivedIsIndianStudentEmail
-                      ? 'UPI, Cards, Net Banking & more'
-                      : 'Credit/Debit Cards, UPI & more'}{' '}
-                    (auto-renews monthly)
-                  </div>
-                  {(location.isIndia || derivedIsIndianStudentEmail) && (
-                    <div className="text-xs text-center text-amber-600 dark:text-amber-400">
-                      💡 Tip: UPI payments have a higher success rate on PC/Desktop
-                    </div>
+                {getProAccessSource() === 'polar' && subscriptionDetails.subscription && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    {subscriptionDetails.subscription.cancelAtPeriodEnd
+                      ? `Expires ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`
+                      : `Renews ${formatDate(subscriptionDetails.subscription.currentPeriodEnd)}`}
+                  </p>
+                )}
+                {getProAccessSource() === 'dodo' && user?.dodoSubscription?.expiresAt && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Expires {formatDate(new Date(user.dodoSubscription.expiresAt))}
+                  </p>
+                )}
+              </div>
+            ) : !user ? (
+              <Button className="w-full h-11 rounded-none group" onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG)}>
+                Sign up for Pro
+                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            ) : (
+              <div className="space-y-3">
+                <Button
+                  className="w-full h-11 rounded-none group"
+                  onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'dodo')}
+                  disabled={location.loading}
+                >
+                  {location.loading
+                    ? 'Loading...'
+                    : location.isIndia || derivedIsIndianStudentEmail
+                      ? getStudentPrice(true)
+                        ? `Subscribe ₹${getStudentPrice(true)}/month`
+                        : `Subscribe ₹${PRICING.PRO_MONTHLY_INR}/month`
+                      : getStudentPrice(false)
+                        ? `Subscribe $${getStudentPrice(false)}/month`
+                        : 'Subscribe $15/month'}
+                  {!location.loading && (
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   )}
-                  {hasStudentDiscount() && discountConfig.message && (
-                    <p className="text-xs text-green-600 dark:text-green-400 text-center font-medium">
-                      {discountConfig.message}
-                    </p>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                </Button>
+                <p className="text-xs text-center text-muted-foreground">
+                  {location.isIndia || derivedIsIndianStudentEmail
+                    ? 'UPI, Cards, Net Banking & more'
+                    : 'Credit/Debit Cards, UPI & more'}{' '}
+                  (auto-renews monthly)
+                </p>
+                {(location.isIndia || derivedIsIndianStudentEmail) && (
+                  <p className="text-xs text-center text-amber-600 dark:text-amber-400">
+                    Tip: UPI payments have a higher success rate on PC/Desktop
+                  </p>
+                )}
+                {hasStudentDiscount() && discountConfig.message && (
+                  <p className="text-xs text-green-600 dark:text-green-400 text-center font-medium">
+                    {discountConfig.message}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Student Discount */}
+        {/* Student Discount Section */}
         {!hasStudentDiscount() && (
-          <Card className="max-w-2xl mx-auto mt-16">
-            <CardContent className="p-6">
-              <div className="text-center">
-                <h3 className="font-medium mb-2">🎓 Student discount available</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  {location.isIndia || derivedIsIndianStudentEmail
-                    ? 'Get Pro for just ₹450/month (approx. $5)!'
-                    : 'Get Pro for just $5/month (approx. ₹450)!'}{' '}
-                  Simply sign up with your university email address and the discount will be applied automatically.
-                </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4">
-                  <SupportedDomainsList />
-                  <span className="text-xs text-muted-foreground">or</span>
-                  <StudentDomainRequestButton />
+          <div className="max-w-3xl mx-auto mt-8 p-6 border border-border">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-start gap-4">
+                <GraduationCap className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-medium mb-1">Student discount available</h3>
+                  <p className="text-xs text-muted-foreground">
+                    {location.isIndia || derivedIsIndianStudentEmail
+                      ? 'Get Pro for just ₹450/month (approx. $5)!'
+                      : 'Get Pro for just $5/month (approx. ₹450)!'}{' '}
+                    Sign up with your university email.
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Check if your university is already supported, or request to add a new domain.
-                </p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex items-center gap-2">
+                <SupportedDomainsList />
+                <StudentDomainRequestButton />
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Student Discount Active */}
         {hasStudentDiscount() && !hasProAccess() && (
-          <Card className="max-w-2xl mx-auto mt-16 border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20">
-            <CardContent className="p-6">
-              <div className="text-center">
-                <h3 className="font-medium mb-2 text-green-700 dark:text-green-300">🎓 Student discount active!</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Your university email domain has been automatically recognized. Get Pro for just{' '}
+          <div className="max-w-3xl mx-auto mt-8 p-6 border border-green-200 dark:border-green-800 bg-green-50/50 dark:bg-green-900/10">
+            <div className="flex items-start gap-4">
+              <GraduationCap className="h-5 w-5 text-green-600 dark:text-green-400 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-medium mb-1 text-green-700 dark:text-green-300">Student discount active</h3>
+                <p className="text-xs text-muted-foreground">
+                  Your university email has been recognized. Get Pro for{' '}
                   {location.isIndia || derivedIsIndianStudentEmail
-                    ? `₹${getStudentPrice(true) || 450}/month (approx. $5)`
-                    : `$${getStudentPrice(false) || 5}/month (approx. ₹${getStudentPrice(true) || 450})`}
-                  .
+                    ? `₹${getStudentPrice(true) || 450}/month`
+                    : `$${getStudentPrice(false) || 5}/month`}
+                  . Discount applied automatically at checkout.
                 </p>
-                <p className="text-xs text-muted-foreground">Discount automatically applied at checkout</p>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         )}
 
         {/* Footer */}
-        <div className="text-center mt-16 space-y-4">
-          <p className="text-sm text-muted-foreground">
+        <div className="max-w-3xl mx-auto mt-16 text-center space-y-4">
+          <p className="text-xs text-muted-foreground">
             By subscribing, you agree to our{' '}
             <Link href="/terms" className="text-foreground hover:underline">
               Terms of Service
@@ -476,14 +489,40 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
               Privacy Policy
             </Link>
           </p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Questions?{' '}
             <a href="mailto:zaid@scira.ai" className="text-foreground hover:underline">
-              Get in touch
+              zaid@scira.ai
             </a>
           </p>
         </div>
       </div>
+
+      {/* Page Footer */}
+      <footer className="border-t border-border">
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="flex items-center justify-between h-14">
+            <div className="flex items-center gap-3">
+              <SciraLogo className="size-4" />
+              <span className="text-xs text-muted-foreground">© {new Date().getFullYear()} Scira</span>
+            </div>
+            <div className="flex items-center gap-6">
+              <Link href="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Home
+              </Link>
+              <Link href="/about" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                About
+              </Link>
+              <Link href="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Terms
+              </Link>
+              <Link href="/privacy-policy" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                Privacy
+              </Link>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
