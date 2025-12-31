@@ -94,7 +94,7 @@
     "ai-retry": "^1.0.1",
     "amadeus": "^11.0.0",
     "axios": "^1.13.2",
-    "better-auth": "1.4.9",
+    "better-auth": "1.4.10",
     "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

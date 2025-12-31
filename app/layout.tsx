@@ -15,7 +15,7 @@ import { Providers } from './providers';
 export const metadata: Metadata = {
   metadataBase: new URL('https://scira.ai'),
   title: {
-    default: 'Scira AI - Agentic Research Platform.',
+    default: 'Scira AI - Research in speed of thought.',
     template: '%s | Scira AI',
   },
   description:
