@@ -2,8 +2,6 @@
 
 An AI-powered research and search platform that finds, analyzes, and cites information from the live web in seconds.
 
-> **Built on [Scira](https://github.com/zaidmukaddam/scira)** – an open-source AI search engine by [@zaidmukaddam](https://github.com/zaidmukaddam).
-
 <br />
 
 ![HebronAI](/app/opengraph-image.png)
@@ -184,9 +182,9 @@ To run the application locally without Docker:
    ```
 5. Open `http://localhost:3000` in your browser
 
-## Attribution
+## About HebronAI
 
-HebronAI is built on top of [Scira](https://github.com/zaidmukaddam/scira), an open-source minimalistic AI-powered search engine created by [@zaidmukaddam](https://github.com/zaidmukaddam). We are grateful for the original work and maintain compliance with the AGPLv3 license.
+HebronAI is developed and maintained by [Osama Qonaibe](https://github.com/Osama-Qonaibe). The platform combines cutting-edge AI technology with powerful search capabilities to deliver instant, accurate answers.
 
 # License
 
