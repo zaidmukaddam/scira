@@ -11,7 +11,7 @@ export default function PrivacyPage() {
           <div className="flex items-center justify-between h-14 px-6">
             <Link href="/" className="flex items-center gap-2.5 group">
               <SciraLogo className="size-5 transition-transform duration-300 group-hover:scale-110" />
-              <span className="text-lg font-light tracking-tighter font-be-vietnam-pro">scira</span>
+              <span className="text-lg font-light tracking-tighter font-be-vietnam-pro">HebronAI</span>
             </Link>
             <Link
               href="/about"
@@ -33,14 +33,14 @@ export default function PrivacyPage() {
             Privacy Policy
           </h1>
           <p className="text-sm text-muted-foreground">
-            Last updated: July 24, 2025
+            Last updated: January 13, 2026
           </p>
         </div>
 
         {/* Content */}
         <div className="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-be-vietnam-pro prose-headings:font-light prose-headings:tracking-tight prose-h2:text-xl prose-h2:mt-12 prose-h2:mb-4 prose-p:text-muted-foreground prose-p:leading-relaxed prose-li:text-muted-foreground prose-a:text-foreground prose-a:font-medium prose-a:no-underline hover:prose-a:underline prose-strong:text-foreground prose-strong:font-medium">
           <p className="text-base text-foreground/80 leading-relaxed">
-            At Scira AI, we respect your privacy and are committed to protecting your personal data. This Privacy Policy
+            At HebronAI, we respect your privacy and are committed to protecting your personal data. This Privacy Policy
             explains how we collect, use, and safeguard your information when you use our AI-powered search engine.
           </p>
 
@@ -71,7 +71,7 @@ export default function PrivacyPage() {
             </li>
           </ul>
           <p>
-            <strong>Important Note on Payment Data:</strong> Scira AI does not collect, store, or process any payment
+            <strong>Important Note on Payment Data:</strong> HebronAI does not collect, store, or process any payment
             card details, bank information, UPI details, or other sensitive payment data. All payment information is
             handled directly by our payment processors (Polar and DodoPayments) and is subject to their respective
             privacy policies and security standards.
@@ -155,14 +155,14 @@ export default function PrivacyPage() {
           <h2>Contact Us</h2>
           <p>If you have any questions about this Privacy Policy, please contact us at:</p>
           <p>
-            <a href="mailto:zaid@scira.ai">zaid@scira.ai</a>
+            <a href="mailto:support@hebronai.com">support@hebronai.com</a>
           </p>
         </div>
 
         {/* Agreement Note */}
         <div className="mt-16 pt-8 border-t border-border">
           <p className="text-sm text-muted-foreground">
-            By using Scira AI, you agree to our Privacy Policy and our{' '}
+            By using HebronAI, you agree to our Privacy Policy and our{' '}
             <Link href="/terms" className="text-foreground hover:underline">
               Terms of Service
             </Link>
@@ -178,7 +178,7 @@ export default function PrivacyPage() {
             <div className="flex items-center gap-3">
               <SciraLogo className="size-4" />
               <span className="text-xs text-muted-foreground">
-                © {new Date().getFullYear()} Scira
+                © {new Date().getFullYear()} HebronAI
               </span>
             </div>
             <div className="flex items-center gap-6">
