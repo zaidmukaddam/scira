@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import { authClient, signIn } from '@/lib/auth-client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 type AuthProvider = 'github' | 'google' | 'twitter' | 'microsoft';
 
@@ -118,12 +119,47 @@ const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon,
 };
 
 export default function AuthCard({ title, description, mode = 'sign-in' }: AuthCardProps) {
+  const router = useRouter();
   const [githubLoading, setGithubLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [twitterLoading, setTwitterLoading] = useState(false);
   const [microsoftLoading, setMicrosoftLoading] = useState(false);
+  const [emailLoading, setEmailLoading] = useState(false);
+  
+  // Email/Password form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
 
   const lastMethod = authClient.getLastUsedLoginMethod();
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setEmailLoading(true);
+
+    try {
+      if (mode === 'sign-up') {
+        await signIn.email({
+          email,
+          password,
+          callbackURL: '/',
+        });
+      } else {
+        await signIn.email({
+          email,
+          password,
+          callbackURL: '/',
+        });
+      }
+      router.push('/');
+    } catch (err: any) {
+      setError(err.message || 'Authentication failed. Please try again.');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-sm mx-auto">
@@ -137,7 +173,85 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
         </p>
       </div>
 
-      {/* Auth Buttons */}
+      {/* Email/Password Form */}
+      <form onSubmit={handleEmailAuth} className="space-y-4 mb-6">
+        {error && (
+          <div className="p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded">
+            {error}
+          </div>
+        )}
+        
+        <div className="space-y-2">
+          <label htmlFor="email" className="text-sm font-medium text-foreground/70">
+            Email
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="you@example.com"
+              className="w-full h-12 pl-10 pr-4 text-sm bg-background border border-border rounded focus:outline-none focus:ring-2 focus:ring-foreground/20 transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="password" className="text-sm font-medium text-foreground/70">
+            Password
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={8}
+              placeholder="••••••••"
+              className="w-full h-12 pl-10 pr-12 text-sm bg-background border border-border rounded focus:outline-none focus:ring-2 focus:ring-foreground/20 transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={emailLoading}
+          className="w-full h-12 bg-foreground text-background font-medium hover:bg-foreground/90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {emailLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>{mode === 'sign-up' ? 'Creating account...' : 'Signing in...'}</span>
+            </>
+          ) : (
+            <span>{mode === 'sign-up' ? 'Create account' : 'Sign in'}</span>
+          )}
+        </button>
+      </form>
+
+      {/* Divider */}
+      <div className="relative my-8">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-border" />
+        </div>
+        <div className="relative flex justify-center text-xs uppercase">
+          <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+        </div>
+      </div>
+
+      {/* Social Auth Buttons */}
       <div className="space-y-3">
         <SignInButton
           title="Google"
