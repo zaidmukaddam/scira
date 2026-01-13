@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import {
   PlusIcon,
   GearIcon,
-  CodeIcon,
   SignIn,
   XLogoIcon,
   GithubLogoIcon,
@@ -15,7 +14,6 @@ import {
   BookIcon,
   FileTextIcon,
   ShieldIcon,
-  BugIcon,
   SunIcon,
   MoonIcon,
   UsersIcon,
@@ -226,14 +224,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
       id: 'github',
       label: 'GitHub',
       icon: GithubLogoIcon,
-      href: 'https://git.new/scira',
-      external: true,
-    },
-    {
-      id: 'feedback',
-      label: 'Feedback',
-      icon: BugIcon,
-      href: 'https://scira.userjot.com',
+      href: 'https://github.com/Osama-Qonaibe',
       external: true,
     },
   ];
@@ -529,48 +520,6 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
               </SidebarMenuButton>
             </SidebarMenuItem>
           )}
-
-          {/* X Wrapped */}
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="X Wrapped 2025"
-              className={cn(
-                'hover:bg-primary/10 transition-all duration-200',
-                pathname === '/x-wrapped' ? 'bg-primary/15 text-foreground font-medium' : ''
-              )}
-            >
-              <Link
-                prefetch={true}
-                href="/x-wrapped"
-                onClick={closeMobileSidebar}
-                className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full"
-              >
-                <XLogoIcon size={18} weight="regular" />
-                <span className="group-data-[collapsible=icon]:hidden">X Wrapped</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-
-          {/* API */}
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="API"
-              className="hover:bg-primary/10 transition-all duration-200"
-            >
-              <a
-                href="https://api.scira.ai/"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={closeMobileSidebar}
-                className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full"
-              >
-                <CodeIcon size={18} weight="regular" />
-                <span className="group-data-[collapsible=icon]:hidden">API</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
 
           {/* Guest Info Links when signed out */}
           {!user &&
@@ -907,7 +856,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                       </DropdownMenuSubTrigger>
                       <DropdownMenuSubContent sideOffset={8} alignOffset={-20} collisionPadding={{ bottom: 20 }} className="bg-background border shadow-lg">
                         <DropdownMenuItem asChild>
-                          <a href="https://git.new/scira" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
+                          <a href="https://github.com/Osama-Qonaibe" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
                             <GithubLogoIcon size={16} weight="regular" className="mr-2" />
                             <span>GitHub</span>
                           </a>
@@ -922,12 +871,6 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                           <a href="https://www.instagram.com/scira.ai" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
                             <InstagramLogoIcon size={16} weight="regular" className="mr-2" />
                             <span>Instagram</span>
-                          </a>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <a href="https://scira.userjot.com" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
-                            <BugIcon size={16} weight="regular" className="mr-2" />
-                            <span>Feedback</span>
                           </a>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -1008,7 +951,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <a href="https://git.new/scira" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
+                      <a href="https://github.com/Osama-Qonaibe" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
                         <GithubLogoIcon size={16} weight="regular" className="mr-2" />
                         <span>GitHub</span>
                       </a>
