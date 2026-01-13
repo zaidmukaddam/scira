@@ -62,12 +62,12 @@ export default function AboutPage() {
           <div className="flex items-center justify-between h-14 px-6">
             <Link href="/" className="flex items-center gap-2.5 group">
               <SciraLogo className="size-6 transition-transform duration-300 group-hover:scale-110" />
-              <span className="text-xl font-light tracking-tighter font-be-vietnam-pro">scira</span>
+              <span className="text-xl font-light tracking-tighter font-be-vietnam-pro">HebronAI</span>
             </Link>
 
             <div className="flex items-center gap-4">
               <Link
-                href="https://git.new/scira"
+                href="https://github.com/Osama-Qonaibe/HebronAI-Scira"
                 className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 target="_blank"
               >
@@ -87,7 +87,7 @@ export default function AboutPage() {
                 className="h-8 px-4 text-sm rounded-none"
                 onClick={() => router.push('/')}
               >
-                Try Scira
+                Try HebronAI
               </Button>
             </div>
           </div>
@@ -174,7 +174,7 @@ export default function AboutPage() {
             {/* Quick Links */}
             <div className="flex flex-wrap items-center gap-4">
               <Link
-                href="https://git.new/scira"
+                href="https://github.com/Osama-Qonaibe/HebronAI-Scira"
                 className="inline-flex items-center gap-2 text-sm text-foreground hover:text-foreground/70 transition-colors group"
                 target="_blank"
               >
@@ -224,7 +224,7 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto px-6 py-20">
           <div className="mb-12">
             <p className="text-xs text-muted-foreground tracking-wide mb-3">Capabilities</p>
-            <h2 className="text-2xl font-light tracking-tight font-be-vietnam-pro">What makes Scira different</h2>
+            <h2 className="text-2xl font-light tracking-tight font-be-vietnam-pro">What makes HebronAI different</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-border">
@@ -263,58 +263,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Awards Section */}
-      <section className="border-t border-border">
-        <div className="max-w-6xl mx-auto px-6 py-16">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-            <div className="flex items-center gap-8">
-              <div className="flex items-center gap-3 group">
-                <Image
-                  src="https://cdn.prod.website-files.com/657b3d8ca1cab4015f06c850/680a4d679063da73487739e0_No1prgold-caps-removebg-preview.png"
-                  alt="Tiny Startups"
-                  width={32}
-                  height={32}
-                  className="opacity-60 group-hover:opacity-100 transition-opacity"
-                />
-                <div>
-                  <p className="text-xs font-medium text-foreground">#1 Product</p>
-                  <p className="text-xs text-muted-foreground">Tiny Startups</p>
-                </div>
-              </div>
-
-              <span className="w-px h-8 bg-border" />
-
-              <div className="flex items-center gap-3 group">
-                <Image
-                  src="/Winner-Medal-Weekly.svg"
-                  alt="Peerlist"
-                  width={32}
-                  height={32}
-                  className="opacity-60 group-hover:opacity-100 transition-opacity"
-                />
-                <div>
-                  <p className="text-xs font-medium text-foreground">#1 Project</p>
-                  <p className="text-xs text-muted-foreground">Peerlist</p>
-                </div>
-              </div>
-            </div>
-
-            <a
-              href="https://openalternative.co/scira?utm_source=openalternative&utm_medium=badge&utm_campaign=embed&utm_content=tool-scira"
-              target="_blank"
-              className="opacity-60 hover:opacity-100 transition-opacity"
-            >
-              <Image
-                src="https://openalternative.co/scira/badge.svg?theme=dark&width=200&height=50"
-                width={150}
-                height={38}
-                alt="Scira badge"
-              />
-            </a>
-          </div>
-        </div>
-      </section>
-
       {/* Built With Section */}
       <section className="border-t border-border">
         <div className="max-w-6xl mx-auto px-6 py-16">
@@ -334,280 +282,6 @@ export default function AboutPage() {
                 <span className="text-sm text-muted-foreground">ElevenLabs</span>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured on Vercel */}
-      <section className="border-t border-border">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2">
-            <div className="px-6 py-16 lg:py-24 lg:pr-16">
-              <p className="text-xs text-muted-foreground tracking-wide mb-3">Press</p>
-              <h2 className="text-2xl font-light tracking-tight font-be-vietnam-pro mb-4">Featured on Vercel</h2>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-6">
-                Recognized for innovative use of AI technology and contribution to the developer community through the Vercel AI SDK.
-              </p>
-              <Link
-                href="https://vercel.com/blog/ai-sdk-4-1"
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-foreground/70 transition-colors group"
-                target="_blank"
-              >
-                Read the feature
-                <ArrowUpRight className="h-3 w-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-              </Link>
-            </div>
-            <div className="relative aspect-video lg:aspect-auto lg:h-full border-t lg:border-t-0 lg:border-l border-border overflow-hidden">
-              <Image
-                src="/vercel-featured.png"
-                alt="Featured on Vercel Blog"
-                fill
-                className="object-cover"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Models Section */}
-      <section className="border-t border-border">
-        <div className="max-w-6xl mx-auto px-6 py-20">
-          <div className="mb-8">
-            <p className="text-xs text-muted-foreground tracking-wide mb-3">AI Providers</p>
-            <h2 className="text-2xl font-light tracking-tight font-be-vietnam-pro">Models</h2>
-          </div>
-
-          {/* Filter Controls */}
-          <div className="flex flex-wrap gap-3 mb-8">
-            <Popover open={openCategory} onOpenChange={setOpenCategory}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={openCategory}
-                  className="h-9 justify-between rounded-none"
-                >
-                  {selectedCategory === 'all' ? 'All Categories' : selectedCategory}
-                  <ArrowUpRight className="ml-2 h-3 w-3 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[200px] p-0">
-                <Command>
-                  <CommandInput placeholder="Search..." className="h-9" />
-                  <CommandList>
-                    <CommandEmpty>No category found.</CommandEmpty>
-                    <CommandGroup>
-                      {[
-                        { value: 'all', label: 'All Categories' },
-                        { value: 'Free', label: 'Free' },
-                        { value: 'Pro', label: 'Pro' },
-                        { value: 'Experimental', label: 'Experimental' },
-                      ].map((category) => (
-                        <CommandItem
-                          key={category.value}
-                          value={category.value}
-                          onSelect={(currentValue) => {
-                            setSelectedCategory(currentValue);
-                            setOpenCategory(false);
-                          }}
-                        >
-                          {category.label}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-
-            <Popover open={openCapabilities} onOpenChange={setOpenCapabilities}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={openCapabilities}
-                  className="h-9 justify-between rounded-none"
-                >
-                  {selectedCapabilities.length === 0
-                    ? 'All Capabilities'
-                    : selectedCapabilities.length === 1
-                      ? selectedCapabilities[0]
-                      : `${selectedCapabilities.length} selected`}
-                  <ArrowUpRight className="ml-2 h-3 w-3 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[200px] p-0">
-                <Command>
-                  <CommandInput placeholder="Search..." className="h-9" />
-                  <CommandList>
-                    <CommandEmpty>No capability found.</CommandEmpty>
-                    <CommandGroup>
-                      {[
-                        { value: 'vision', label: 'Vision' },
-                        { value: 'reasoning', label: 'Reasoning' },
-                        { value: 'pdf', label: 'PDF' },
-                      ].map((capability) => (
-                        <CommandItem
-                          key={capability.value}
-                          value={capability.value}
-                          onSelect={(currentValue) => {
-                            setSelectedCapabilities((prev) =>
-                              prev.includes(currentValue)
-                                ? prev.filter((item) => item !== currentValue)
-                                : [...prev, currentValue],
-                            );
-                          }}
-                        >
-                          <div className="flex items-center gap-2">
-                            <div
-                              className={`w-2 h-2 ${selectedCapabilities.includes(capability.value) ? 'bg-foreground' : 'bg-border'
-                                }`}
-                            />
-                            {capability.label}
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-
-            {(selectedCategory !== 'all' || selectedCapabilities.length > 0) && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSelectedCategory('all');
-                  setSelectedCapabilities([]);
-                }}
-                className="h-9 text-muted-foreground rounded-none"
-              >
-                <X className="w-3 h-3 mr-1" />
-                Clear
-              </Button>
-            )}
-          </div>
-
-          {/* Models Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-border border border-border">
-            {(() => {
-              let filteredModels = models.filter((model) => {
-                const categoryMatch = selectedCategory === 'all' || model.category === selectedCategory;
-                const capabilityMatch =
-                  selectedCapabilities.length === 0 ||
-                  selectedCapabilities.some((capability) => {
-                    if (capability === 'vision') return model.vision;
-                    if (capability === 'reasoning') return model.reasoning;
-                    if (capability === 'pdf') return model.pdf;
-                    return false;
-                  });
-                return categoryMatch && capabilityMatch;
-              });
-
-              const groupedModels = filteredModels.reduce(
-                (acc, model) => {
-                  const category = model.category;
-                  if (!acc[category]) {
-                    acc[category] = [];
-                  }
-                  acc[category].push(model);
-                  return acc;
-                },
-                {} as Record<string, typeof models>,
-              );
-
-              const groupOrder = ['Free', 'Experimental', 'Pro'];
-              const orderedGroupEntries = groupOrder
-                .filter((category) => groupedModels[category] && groupedModels[category].length > 0)
-                .map((category) => [category, groupedModels[category]] as const);
-
-              const sortedModels = orderedGroupEntries.flatMap(([_, categoryModels]) => categoryModels);
-
-              if (sortedModels.length === 0) {
-                return (
-                  <div className="col-span-full bg-background p-12 text-center">
-                    <Filter className="w-6 h-6 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-sm text-muted-foreground mb-4">No models found</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="rounded-none"
-                      onClick={() => {
-                        setSelectedCategory('all');
-                        setSelectedCapabilities([]);
-                      }}
-                    >
-                      Clear filters
-                    </Button>
-                  </div>
-                );
-              }
-
-              const modelsToShow = showAllModels ? sortedModels : sortedModels.slice(0, 9);
-
-              return (
-                <>
-                  {modelsToShow.map((model: any) => (
-                    <div
-                      key={model.value}
-                      className="bg-background p-6 hover:bg-muted/30 transition-colors"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <h3 className="text-sm font-medium text-foreground">{model.label}</h3>
-                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                          {model.category}
-                        </span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mb-4 line-clamp-2 leading-relaxed">
-                        {model.description}
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {model.vision && (
-                          <span className="text-[10px] text-muted-foreground border border-border px-1.5 py-0.5">Vision</span>
-                        )}
-                        {model.reasoning && (
-                          <span className="text-[10px] text-muted-foreground border border-border px-1.5 py-0.5">Reasoning</span>
-                        )}
-                        {model.pdf && (
-                          <span className="text-[10px] text-muted-foreground border border-border px-1.5 py-0.5">PDF</span>
-                        )}
-                        {model.fast && (
-                          <span className="text-[10px] text-muted-foreground border border-border px-1.5 py-0.5">Fast</span>
-                        )}
-                        {model.isNew && (
-                          <span className="text-[10px] text-muted-foreground border border-border px-1.5 py-0.5">New</span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                  {sortedModels.length > 9 && (
-                    <div className="col-span-full bg-background flex justify-center py-6">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="rounded-none"
-                        onClick={() => setShowAllModels(!showAllModels)}
-                      >
-                        {showAllModels ? 'Show Less' : `Show More (${sortedModels.length - 9} more)`}
-                      </Button>
-                    </div>
-                  )}
-                </>
-              );
-            })()}
-          </div>
-
-          {/* Models Footer */}
-          <div className="mt-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-foreground">{models.length} models available</p>
-              <p className="text-xs text-muted-foreground">Search with any model, switch anytime</p>
-            </div>
-            <Button size="sm" className="rounded-none" onClick={() => router.push('/')}>
-              Start Searching
-              <ArrowRight className="w-3 h-3 ml-1.5" />
-            </Button>
           </div>
         </div>
       </section>
@@ -686,7 +360,7 @@ export default function AboutPage() {
                 </li>
                 <li className="flex items-start gap-3 text-sm text-muted-foreground">
                   <span className="w-1 h-1 rounded-full bg-foreground/40 mt-2 shrink-0" />
-                  Scira Lookout
+                  HebronAI Lookout
                 </li>
               </ul>
 
@@ -722,9 +396,9 @@ export default function AboutPage() {
 
           <ProAccordion type="single" collapsible className="w-full">
             <ProAccordionItem value="item-1">
-              <ProAccordionTrigger>What is Scira?</ProAccordionTrigger>
+              <ProAccordionTrigger>What is HebronAI?</ProAccordionTrigger>
               <ProAccordionContent>
-                Scira is an open-source agentic research platform. It combines planning + tool use with RAG
+                HebronAI is an open-source agentic research platform. It combines planning + tool use with RAG
                 (Retrieval-Augmented Generation) and search grounding to produce accurate, up-to-date answers with
                 citations.
               </ProAccordionContent>
@@ -757,17 +431,17 @@ export default function AboutPage() {
             </ProAccordionItem>
 
             <ProAccordionItem value="item-5">
-              <ProAccordionTrigger>What AI models does Scira use?</ProAccordionTrigger>
+              <ProAccordionTrigger>What AI models does HebronAI use?</ProAccordionTrigger>
               <ProAccordionContent>
-                Scira uses a range of advanced AI models including Grok, Claude, OpenAI GPT, Gemini, and more to
+                HebronAI uses a range of advanced AI models including Grok, Claude, OpenAI GPT, Gemini, and more to
                 provide the best possible answers for different types of queries.
               </ProAccordionContent>
             </ProAccordionItem>
 
             <ProAccordionItem value="item-6">
-              <ProAccordionTrigger>How does Scira ensure information accuracy?</ProAccordionTrigger>
+              <ProAccordionTrigger>How does HebronAI ensure information accuracy?</ProAccordionTrigger>
               <ProAccordionContent>
-                Scira grounds outputs in retrieved sources (RAG + search grounding) and includes citations so you
+                HebronAI grounds outputs in retrieved sources (RAG + search grounding) and includes citations so you
                 can audit the evidence. Agents can cross-check multiple sources before synthesizing an answer.
               </ProAccordionContent>
             </ProAccordionItem>
@@ -779,8 +453,8 @@ export default function AboutPage() {
               <p className="text-sm font-medium text-foreground">Have more questions?</p>
               <p className="text-xs text-muted-foreground">
                 Reach out at{' '}
-                <a href="mailto:zaid@scira.ai" className="text-foreground hover:underline">
-                  zaid@scira.ai
+                <a href="mailto:support@hebronai.com" className="text-foreground hover:underline">
+                  support@hebronai.com
                 </a>
               </p>
             </div>
@@ -803,7 +477,7 @@ export default function AboutPage() {
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-3">
               <SciraLogo className="size-4" />
-              <span className="text-xs text-muted-foreground">© {new Date().getFullYear()} Scira</span>
+              <span className="text-xs text-muted-foreground">© {new Date().getFullYear()} HebronAI</span>
             </div>
             <div className="flex items-center gap-6">
               <Link href="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
@@ -814,14 +488,14 @@ export default function AboutPage() {
               </Link>
               <span className="w-px h-4 bg-border" />
               <Link
-                href="https://x.com/sciraai"
+                href="https://x.com/hebronai"
                 className="text-muted-foreground hover:text-foreground transition-colors"
                 target="_blank"
               >
                 <XLogoIcon className="h-4 w-4" />
               </Link>
               <Link
-                href="https://git.new/scira"
+                href="https://github.com/Osama-Qonaibe/HebronAI-Scira"
                 className="text-muted-foreground hover:text-foreground transition-colors"
                 target="_blank"
               >
