@@ -189,6 +189,13 @@ export const auth = betterAuth({
     window: 60,
   },
   experimental: { joins: true },
+  // Enable email and password authentication
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: false, // Set to true if you want email verification
+    minPasswordLength: 8,
+    maxPasswordLength: 128,
+  },
   database: drizzleAdapter(db, {
     provider: 'pg',
     schema: {
@@ -489,6 +496,6 @@ export const auth = betterAuth({
     }),
     nextCookies(),
   ],
-  trustedOrigins: ['http://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
-  allowedOrigins: ['http://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
+  trustedOrigins: ['http://localhost:3000', 'https://hebronai.com', 'https://www.hebronai.com'],
+  allowedOrigins: ['http://localhost:3000', 'https://hebronai.com', 'https://www.hebronai.com'],
 });
