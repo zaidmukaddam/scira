@@ -2,13 +2,13 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Scira - AI-powered Search Engine',
-    short_name: 'Scira',
+    name: 'HebronAI - AI-Powered Research & Search',
+    short_name: 'HebronAI',
     description:
-      'A minimalistic AI-powered search engine that helps you find information on the internet using advanced AI models like GPT-4, Claude, and Grok',
+      'An AI-powered research and search platform that finds, analyzes, and cites information from the live web using advanced models like GPT-4, Claude, and Gemini.',
     start_url: '/',
     display: 'standalone',
-    categories: ['search', 'ai', 'productivity'],
+    categories: ['search', 'ai', 'productivity', 'research'],
     background_color: '#171717',
     icons: [
       {
