@@ -103,14 +103,13 @@ function XQLPageContent() {
           <div className="md:hidden absolute left-0">
             <SidebarTrigger />
           </div>
-          <span className="text-foreground">Scira</span>
-          <div className="flex items-center relative">
-            <XLogoIcon className="size-6 sm:size-8 md:size-12 text-foreground -mr-1 sm:-mr-2 font-medium" />
-            <h1 className="text-foreground">QL</h1>
-            <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 md:-top-3 md:-right-4">
-              <div className="bg-primary text-primary-foreground px-1 sm:px-1.5 pt-0.5 pb-0.5 sm:pb-0.75 rounded-sm text-[8px] sm:text-xs font-semibold">
-                β
-              </div>
+          <h1 className="text-foreground flex items-center gap-2 sm:gap-3">
+            <span>HebronAI</span>
+            <span>Platform</span>
+          </h1>
+          <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 md:-top-3 md:-right-4">
+            <div className="bg-primary text-primary-foreground px-1 sm:px-1.5 pt-0.5 pb-0.5 sm:pb-0.75 rounded-sm text-[8px] sm:text-xs font-semibold">
+              β
             </div>
           </div>
         </div>
