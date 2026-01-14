@@ -203,12 +203,6 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
       href: '/about',
     },
     {
-      id: 'blog',
-      label: 'Blog',
-      icon: BookIcon,
-      href: '/blog',
-    },
-    {
       id: 'terms',
       label: 'Terms',
       icon: FileTextIcon,
@@ -825,12 +819,6 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                           <Link href="/about" onClick={closeMobileSidebar}>
                             <InfoIcon size={16} weight="regular" className="mr-2" />
                             <span>About</span>
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href="/blog" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
-                            <BookIcon size={16} weight="regular" className="mr-2" />
-                            <span>Blog</span>
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
