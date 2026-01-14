@@ -347,7 +347,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                 <div className="flex flex-row items-center gap-2 leading-none group-data-[collapsible=icon]:hidden">
                   <span className="font-be-vietnam-pro font-light tracking-tighter text-xl">scira</span>
                   {user && isProUser && (
-                    <div className="w-fit">
+                    <div className="w-fit" suppressHydrationWarning={true}>
                       <span className="animate-shimmer text-xs font-baumans inline-flex items-center justify-center min-w-6 h-4 px-1.5 pt-0 pb-0.5 rounded-md shadow-sm bg-linear-to-br from-secondary/30 via-primary/25 to-accent/30 text-foreground ring-1 ring-primary/25 ring-offset-1 ring-offset-background dark:bg-linear-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground dark:ring-primary/40">
                         pro
                       </span>
