@@ -44,7 +44,7 @@ export const coinDataTool = tool({
       const response = await fetch(url, {
         headers: {
           Accept: 'application/json',
-          'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
+          'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY || '',
         },
       });
 
@@ -117,7 +117,7 @@ export const coinDataByContractTool = tool({
       const response = await fetch(url, {
         headers: {
           Accept: 'application/json',
-          'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
+          'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY || '',
         },
       });
 
@@ -172,7 +172,7 @@ export const coinOhlcTool = tool({
         fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=${vsCurrency}&days=${days}`, {
           headers: {
             Accept: 'application/json',
-            'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
+            'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY || '',
           },
         }),
         fetch(
@@ -180,7 +180,7 @@ export const coinOhlcTool = tool({
           {
             headers: {
               Accept: 'application/json',
-              'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
+              'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY || '',
             },
           },
         ),
