@@ -996,9 +996,7 @@ const ChatInterface = memo(
                           onClick={handleStartEditTitle}
                           disabled={status === 'submitted' || status === 'streaming'}
                         >
-                          <span className="text-sm font-medium truncate whitespace-nowrap text-left">
-                            {localChatTitle}
-                          </span>
+                          <span className="text-sm font-medium truncate whitespace-nowrap text-left">{localChatTitle}</span>
                         </Button>
                       )}
                     </div>
@@ -1010,9 +1008,7 @@ const ChatInterface = memo(
             </>
           )}
 
-          <div
-            className="flex flex-col font-sans! items-center h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden scrollbar-thin! scrollbar-thumb-muted-foreground! dark:scrollbar-thumb-muted-foreground! scrollbar-track-transparent! hover:scrollbar-thumb-foreground! dark:hover:scrollbar-thumb-foreground!"
-          >
+          <div className="flex flex-col font-sans! items-center h-screen bg-background text-foreground transition-all duration-500 w-full overflow-x-hidden scrollbar-thin! scrollbar-thumb-muted-foreground! dark:scrollbar-thumb-muted-foreground! scrollbar-track-transparent! hover:scrollbar-thumb-foreground! dark:hover:scrollbar-thumb-foreground!">
             {/* Chat Dialogs Component */}
             <ChatDialogs
               commandDialogOpen={chatState.commandDialogOpen}
@@ -1044,8 +1040,8 @@ const ChatInterface = memo(
 
             <div
               className={`w-full p-2 sm:p-4 relative ${status === 'ready' && messages.length === 0
-                ? 'flex-1 flex! flex-col! items-center! justify-center!' // Center everything when no messages
-                : 'flex flex-col! mt-4' // Add top margin when showing messages
+                ? 'flex-1 flex! flex-col! items-center! justify-center!'
+                : 'flex flex-col! mt-4'
                 }`}
             >
               <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
@@ -1065,9 +1061,7 @@ const ChatInterface = memo(
                           className="rounded-lg bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto"
                         >
                           <PlusIcon size={16} className="group-hover:rotate-90 transition-all" />
-                          <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">
-                            New
-                          </span>
+                          <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">New</span>
                         </Button>
                       </Link>
                     </div>
@@ -1075,7 +1069,7 @@ const ChatInterface = memo(
                       <h1 className="text-4xl sm:text-5xl mb-0! text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
                         HebronAI
                       </h1>
-                      {isUserPro && (
+                      {!proStatusLoading && isUserPro && (
                         <h1 className="text-2xl font-baumans! leading-4 inline-block px-3! pt-1! pb-2.5! rounded-xl shadow-sm m-0! mt-2! bg-linear-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-linear-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
                           pro
                         </h1>
@@ -1098,9 +1092,7 @@ const ChatInterface = memo(
                             strokeWidth={1.5}
                           />
                         </div>
-                        <h2 className="text-xl font-semibold text-foreground mb-2">
-                          All Search Limits Reached
-                        </h2>
+                        <h2 className="text-xl font-semibold text-foreground mb-2">All Search Limits Reached</h2>
                         <p className="text-sm text-muted-foreground">
                           You've used {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} regular searches and {SEARCH_LIMITS.EXTREME_SEARCH_LIMIT} extreme searches
                         </p>
@@ -1232,10 +1224,7 @@ const ChatInterface = memo(
 
                     {/* Example Categories - show only on initial state */}
                     {messages.length === 0 && !chatState.hasSubmitted && (
-                      <ExampleCategories
-                        onSelectExample={handleExampleSelect}
-                        className="mt-5"
-                      />
+                      <ExampleCategories onSelectExample={handleExampleSelect} className="mt-5" />
                     )}
                   </div>
                 )}
@@ -1272,9 +1261,7 @@ const ChatInterface = memo(
                           />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-foreground">
-                            All search limits reached
-                          </p>
+                          <p className="text-sm font-medium text-foreground">All search limits reached</p>
                           <p className="text-xs text-muted-foreground">
                             {SEARCH_LIMITS.DAILY_SEARCH_LIMIT} regular + {SEARCH_LIMITS.EXTREME_SEARCH_LIMIT} extreme searches used
                           </p>
