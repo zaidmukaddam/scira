@@ -6,8 +6,8 @@ import Redis from 'ioredis';
 import * as schema from './schema';
 import { Pool } from 'pg';
 
-// Create Redis client
-const redis = new Redis(serverEnv.REDIS_URL);
+// Create Redis client with fallback
+const redis = new Redis(serverEnv.REDIS_URL || 'redis://localhost:6379');
 
 // Create shared cache instance
 const cache = new RedisDrizzleCache({
