@@ -159,8 +159,8 @@ function XQLPageContent() {
               <div className="h-4 w-48 bg-muted rounded mx-auto animate-pulse" />
               <div className="h-3 w-64 bg-muted/60 rounded mx-auto animate-pulse" />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {[...Array(6)].map((_, i) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              {[...Array(4)].map((_, i) => (
                 <Card key={i} className="shadow-none animate-pulse p-0">
                   <CardContent className="p-3 sm:p-4">
                     <div className="flex items-center gap-2 mb-2">
@@ -182,31 +182,23 @@ function XQLPageContent() {
               <p className="text-sm text-muted-foreground mb-2">Try these XQL queries:</p>
               <p className="text-xs text-muted-foreground/70">Search X posts with natural language</p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {[
                 {
-                  query: '@SciraAI updates from last week',
-                  description: 'Popular content with date range',
+                  query: 'أخبار وتحديثات عن مدينة الخليل من آخر أسبوع',
+                  description: 'محتوى محلي + أخبار حديثة',
                 },
                 {
-                  query: 'Posts from @elonmusk about Tesla',
-                  description: 'Specific user + topic filter',
+                  query: 'Posts about ROUM Token and Roumida project updates',
+                  description: 'عملة مشفرة + تحديثات المشروع',
                 },
                 {
-                  query: 'Research Paper discussions with 1000+ views today',
-                  description: 'High engagement + recent',
+                  query: 'Posts from @Osama_Qonaibe from last week',
+                  description: 'محتوى شخصي + تطوير',
                 },
                 {
-                  query: 'Hugging Face tweets about new AI models',
-                  description: 'Topic with handle exclusion',
-                },
-                {
-                  query: 'Posts from @openai @anthropicai with 500+ likes',
-                  description: 'Multiple handles + engagement',
-                },
-                {
-                  query: 'Tech news from past 3 days with 2000+ views',
-                  description: 'Date range + view threshold',
+                  query: 'Updates from @ViralLinkUp about digital services',
+                  description: 'خدمات الشركة + عروض جديدة',
                 },
               ].map((example, i) => (
                 <Card
