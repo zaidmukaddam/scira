@@ -154,8 +154,15 @@ const Candlestick = (props: CandlestickProps) => {
     openClose: [open, close],
   } = props;
 
+  // Guard: Recharts can temporarily pass undefined/NaN during layout.
+  // Avoid generating invalid SVG path data like `d="M undefined,undefined ..."`.
+  const nums = [x, y, width, height, low, high, open, close];
+  const isValid = nums.every((n) => typeof n === 'number' && Number.isFinite(n));
+  if (!isValid) return null;
+
   const isGrowing = open < close;
-  const ratio = Math.abs(height / (close - open)) || 1;
+  const diff = close - open;
+  const ratio = diff !== 0 ? Math.abs(height / diff) : 1;
 
   return (
     <g>
@@ -268,15 +275,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
             </div>
             <div className="flex justify-between gap-2">
               <span className="text-neutral-500 dark:text-neutral-400 flex-shrink-0">High:</span>
-              <span className="text-neutral-900 dark:text-neutral-100 font-medium truncate">
-                {formatPrice(data.high)}
-              </span>
+              <span className="text-neutral-900 dark:text-neutral-100 font-medium truncate">{formatPrice(data.high)}</span>
             </div>
             <div className="flex justify-between gap-2">
               <span className="text-neutral-500 dark:text-neutral-400 flex-shrink-0">Low:</span>
-              <span className="text-neutral-900 dark:text-neutral-100 font-medium truncate">
-                {formatPrice(data.low)}
-              </span>
+              <span className="text-neutral-900 dark:text-neutral-100 font-medium truncate">{formatPrice(data.low)}</span>
             </div>
             <div className="flex justify-between gap-2">
               <span className="text-neutral-500 dark:text-neutral-400 flex-shrink-0">Close:</span>
@@ -291,9 +294,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       // Regular price tooltip
       return (
         <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 rounded-lg p-2 shadow-sm max-w-[150px] z-50">
-          <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">
-            {new Date(label).toLocaleDateString()}
-          </p>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 truncate">{new Date(label).toLocaleDateString()}</p>
           <p className="text-sm font-medium text-neutral-900 dark:text-neutral-100 truncate">
             {formatPrice(payload[0].value)}
           </p>
@@ -399,9 +400,7 @@ const CryptoTickers: React.FC<CryptoTickersProps> = memo(({ result, coinId }) =>
                   className="flex items-center justify-between py-2 group"
                 >
                   <div className="flex items-center gap-2 flex-1 min-w-0">
-                    <span className="text-xs font-medium text-neutral-900 dark:text-neutral-100 truncate">
-                      {marketName}
-                    </span>
+                    <span className="text-xs font-medium text-neutral-900 dark:text-neutral-100 truncate">{marketName}</span>
                     <span className="text-xs text-neutral-500 dark:text-neutral-400 flex-shrink-0">
                       {base}/{target}
                     </span>
@@ -426,9 +425,7 @@ const CryptoTickers: React.FC<CryptoTickersProps> = memo(({ result, coinId }) =>
 
         {tickers.length > 6 && (
           <div className="mt-3 text-center">
-            <span className="text-xs text-neutral-500 dark:text-neutral-400">
-              Showing 6 of {tickers.length} tickers
-            </span>
+            <span className="text-xs text-neutral-500 dark:text-neutral-400">Showing 6 of {tickers.length} tickers</span>
           </div>
         )}
       </CardContent>
@@ -771,22 +768,14 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
             <div className="flex items-start gap-3">
               {/* Coin Icon */}
               {coinData.image?.small && (
-                <SafeImage
-                  src={coinData.image.small}
-                  alt={displayName}
-                  className="w-8 h-8 rounded-full flex-shrink-0"
-                />
+                <SafeImage src={coinData.image.small} alt={displayName} className="w-8 h-8 rounded-full flex-shrink-0" />
               )}
 
               <div className="flex-1 min-w-0">
                 {/* Name and Symbol */}
                 <div className="flex items-center gap-2 mb-2">
-                  <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 truncate">
-                    {displayName}
-                  </h2>
-                  {symbol && (
-                    <span className="text-sm text-neutral-500 dark:text-neutral-400 font-medium">{symbol}</span>
-                  )}
+                  <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 truncate">{displayName}</h2>
+                  {symbol && <span className="text-sm text-neutral-500 dark:text-neutral-400 font-medium">{symbol}</span>}
                   {url && (
                     <Button variant="ghost" size="sm" asChild className="h-6 px-2 flex-shrink-0">
                       <Link href={url} target="_blank">
@@ -826,9 +815,7 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
                     {marketData.market_cap_rank && (
                       <div>
                         <div className="text-neutral-500 dark:text-neutral-400">Rank</div>
-                        <div className="font-medium text-neutral-900 dark:text-neutral-100">
-                          #{marketData.market_cap_rank}
-                        </div>
+                        <div className="font-medium text-neutral-900 dark:text-neutral-100">#{marketData.market_cap_rank}</div>
                       </div>
                     )}
                   </div>
