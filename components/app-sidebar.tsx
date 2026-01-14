@@ -7,7 +7,7 @@ import {
   PlusIcon,
   GearIcon,
   SignIn,
-  XLogoIcon,
+  FacebookLogoIcon,
   GithubLogoIcon,
   InstagramLogoIcon,
   InfoIcon,
@@ -484,7 +484,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                   onClick={closeMobileSidebar}
                   className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full"
                 >
-                  <XLogoIcon size={18} weight="regular" />
+                  <FacebookLogoIcon size={18} weight="regular" />
                   <span className="group-data-[collapsible=icon]:hidden">XQL (Beta)</span>
                 </Link>
               </SidebarMenuButton>
@@ -850,26 +850,15 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                           </a>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <a href="https://x.com/sciraai" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
-                            <XLogoIcon size={16} weight="regular" className="mr-2" />
-                            <span>X.com</span>
+                          <a href="https://facebook.com/virallinkup" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
+                            <FacebookLogoIcon size={16} weight="regular" className="mr-2" />
+                            <span>Facebook</span>
                           </a>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <a href="https://www.instagram.com/scira.ai" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
+                          <a href="https://instagram.com/virallinkup_services" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
                             <InstagramLogoIcon size={16} weight="regular" className="mr-2" />
                             <span>Instagram</span>
-                          </a>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <a
-                            href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={closeMobileSidebar}
-                          >
-                            <VercelIcon size={16} className="mr-2" />
-                            <span>Deploy</span>
                           </a>
                         </DropdownMenuItem>
                       </DropdownMenuSubContent>
