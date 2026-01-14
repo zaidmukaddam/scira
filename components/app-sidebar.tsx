@@ -467,12 +467,12 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
             </SidebarMenuItem>
           )}
 
-          {/* XQL */}
+          {/* HebronAI Platform */}
           {user && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
-                tooltip="XQL (Beta) - X/Twitter Search"
+                tooltip="HebronAI Platform"
                 className={cn(
                   'hover:bg-primary/10 transition-all duration-200',
                   pathname === '/xql' ? 'bg-primary/15 text-foreground font-medium' : ''
@@ -484,8 +484,8 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                   onClick={closeMobileSidebar}
                   className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full"
                 >
-                  <FacebookLogoIcon size={18} weight="regular" />
-                  <span className="group-data-[collapsible=icon]:hidden">XQL (Beta)</span>
+                  <SciraLogo width={18} height={18} />
+                  <span className="group-data-[collapsible=icon]:hidden">HebronAI Platform</span>
                 </Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
