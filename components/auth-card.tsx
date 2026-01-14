@@ -128,11 +128,21 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
     setEmailLoading(true);
 
     try {
-      await signIn.email({
-        email,
-        password,
-        callbackURL: '/',
-      });
+      if (mode === 'sign-up') {
+        // Sign Up - Create new user
+        await authClient.signUp.email({
+          email,
+          password,
+          callbackURL: '/',
+        });
+      } else {
+        // Sign In - Existing user
+        await signIn.email({
+          email,
+          password,
+          callbackURL: '/',
+        });
+      }
       router.push('/');
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please try again.');
