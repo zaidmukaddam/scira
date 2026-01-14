@@ -185,20 +185,20 @@ function XQLPageContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {[
                 {
-                  query: 'أخبار وتحديثات عن مدينة الخليل من آخر أسبوع',
-                  description: 'محتوى محلي + أخبار حديثة',
+                  query: 'News and updates about Hebron city from last week',
+                  description: 'Local content + recent news',
                 },
                 {
                   query: 'Posts about ROUM Token and Roumida project updates',
-                  description: 'عملة مشفرة + تحديثات المشروع',
+                  description: 'Cryptocurrency + project updates',
                 },
                 {
                   query: 'Posts from @Osama_Qonaibe from last week',
-                  description: 'محتوى شخصي + تطوير',
+                  description: 'Personal content + development',
                 },
                 {
                   query: 'Updates from @ViralLinkUp about digital services',
-                  description: 'خدمات الشركة + عروض جديدة',
+                  description: 'Company services + new offers',
                 },
               ].map((example, i) => (
                 <Card
