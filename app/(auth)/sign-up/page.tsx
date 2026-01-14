@@ -6,7 +6,7 @@ export default function SignUpPage() {
   return (
     <AuthCard
       title="Create an account"
-      description="Join 100K+ researchers using AI-powered search with real-time citations."
+      description="Join HebronAI - Palestinian AI-powered search platform with real-time intelligence."
       mode="sign-up"
     />
   );
