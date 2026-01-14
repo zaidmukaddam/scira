@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { authClient, signIn } from '@/lib/auth-client';
+import { authClient, signIn, signUp } from '@/lib/auth-client';
 import { Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -130,7 +130,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
     try {
       if (mode === 'sign-up') {
         // Sign Up - Create new user
-        await authClient.signUp.email({
+        await signUp.email({
           email,
           password,
           callbackURL: '/',
