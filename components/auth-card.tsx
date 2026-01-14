@@ -1,12 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { authClient, signIn, signUp } from '@/lib/auth-client';
-import { Loader2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { authClient, signIn } from '@/lib/auth-client';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
-type AuthProvider = 'google';
+type AuthProvider = 'google' | 'github';
 
 interface AuthIconProps extends React.ComponentProps<'svg'> {}
 
@@ -29,6 +28,11 @@ const AuthIcons = {
         d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0 79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"
         fill="#EB4335"
       />
+    </svg>
+  ),
+  GitHub: (props: AuthIconProps) => (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
     </svg>
   ),
 };
@@ -95,61 +99,10 @@ const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon,
 };
 
 export default function AuthCard({ title, description, mode = 'sign-in' }: AuthCardProps) {
-  const router = useRouter();
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [emailLoading, setEmailLoading] = useState(false);
-  
-  // Email/Password form state
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [githubLoading, setGithubLoading] = useState(false);
 
   const lastMethod = authClient.getLastUsedLoginMethod();
-
-  const handleEmailAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-
-    // Validation for sign-up
-    if (mode === 'sign-up') {
-      if (password !== confirmPassword) {
-        setError('Passwords do not match');
-        return;
-      }
-      if (password.length < 8) {
-        setError('Password must be at least 8 characters');
-        return;
-      }
-    }
-
-    setEmailLoading(true);
-
-    try {
-      if (mode === 'sign-up') {
-        // Sign Up - Create new user
-        await signUp.email({
-          email,
-          password,
-          callbackURL: '/',
-        });
-      } else {
-        // Sign In - Existing user
-        await signIn.email({
-          email,
-          password,
-          callbackURL: '/',
-        });
-      }
-      router.push('/');
-    } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please try again.');
-    } finally {
-      setEmailLoading(false);
-    }
-  };
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -163,113 +116,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
         </p>
       </div>
 
-      {/* Email/Password Form */}
-      <form onSubmit={handleEmailAuth} className="space-y-5 mb-6">
-        {error && (
-          <div className="p-3.5 text-sm text-red-600 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 rounded-lg">
-            {error}
-          </div>
-        )}
-        
-        <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-medium text-foreground">
-            Email address
-          </label>
-          <div className="relative">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground" />
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              placeholder="you@example.com"
-              className="w-full h-12 pl-11 pr-4 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-medium text-foreground">
-            Password
-          </label>
-          <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground" />
-            <input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-              placeholder="••••••••"
-              className="w-full h-12 pl-11 pr-12 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {showPassword ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
-            </button>
-          </div>
-        </div>
-
-        {mode === 'sign-up' && (
-          <div className="space-y-2">
-            <label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
-              Confirm Password
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground" />
-              <input
-                id="confirmPassword"
-                type={showConfirmPassword ? 'text' : 'password'}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                minLength={8}
-                placeholder="••••••••"
-                className="w-full h-12 pl-11 pr-12 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {showConfirmPassword ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
-              </button>
-            </div>
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={emailLoading}
-          className="w-full h-12 bg-primary text-primary-foreground font-medium rounded-lg hover:bg-primary/90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
-        >
-          {emailLoading ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>{mode === 'sign-up' ? 'Creating account...' : 'Signing in...'}</span>
-            </>
-          ) : (
-            <span>{mode === 'sign-up' ? 'Create account' : 'Sign in'}</span>
-          )}
-        </button>
-      </form>
-
-      {/* Divider */}
-      <div className="relative my-8">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-background px-3 text-muted-foreground">Or continue with</span>
-        </div>
-      </div>
-
-      {/* Google Auth Button */}
+      {/* OAuth Buttons */}
       <div className="space-y-3">
         <SignInButton
           title="Continue with Google"
@@ -279,6 +126,16 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
           callbackURL="/"
           icon={<AuthIcons.Google className="w-5 h-5" />}
           isLastUsed={lastMethod === 'google'}
+        />
+        
+        <SignInButton
+          title="Continue with GitHub"
+          provider="github"
+          loading={githubLoading}
+          setLoading={setGithubLoading}
+          callbackURL="/"
+          icon={<AuthIcons.GitHub className="w-5 h-5" />}
+          isLastUsed={lastMethod === 'github'}
         />
       </div>
 
