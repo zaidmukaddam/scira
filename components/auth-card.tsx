@@ -102,7 +102,9 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
   // Email/Password form state
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
 
   const lastMethod = authClient.getLastUsedLoginMethod();
@@ -110,22 +112,27 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validation for sign-up
+    if (mode === 'sign-up') {
+      if (password !== confirmPassword) {
+        setError('Passwords do not match');
+        return;
+      }
+      if (password.length < 8) {
+        setError('Password must be at least 8 characters');
+        return;
+      }
+    }
+
     setEmailLoading(true);
 
     try {
-      if (mode === 'sign-up') {
-        await signIn.email({
-          email,
-          password,
-          callbackURL: '/',
-        });
-      } else {
-        await signIn.email({
-          email,
-          password,
-          callbackURL: '/',
-        });
-      }
+      await signIn.email({
+        email,
+        password,
+        callbackURL: '/',
+      });
       router.push('/');
     } catch (err: any) {
       setError(err.message || 'Authentication failed. Please try again.');
@@ -197,6 +204,34 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
             </button>
           </div>
         </div>
+
+        {mode === 'sign-up' && (
+          <div className="space-y-2">
+            <label htmlFor="confirmPassword" className="text-sm font-medium text-foreground">
+              Confirm Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px] text-muted-foreground" />
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                minLength={8}
+                placeholder="••••••••"
+                className="w-full h-12 pl-11 pr-12 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showConfirmPassword ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
+              </button>
+            </div>
+          </div>
+        )}
 
         <button
           type="submit"
