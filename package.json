@@ -159,6 +159,7 @@
     "tailwind-merge": "^3.4.0",
     "tailwind-scrollbar": "4.0.2",
     "three": "^0.182.0",
+    "tslib": "^2.8.1",
     "unified": "^11.0.5",
     "unist-util-visit": "^5.0.0",
     "uuid": "^13.0.0",
