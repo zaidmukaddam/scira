@@ -17,7 +17,7 @@ export const codeContextTool = tool({
     const response = await fetch('https://api.exa.ai/context', {
       method: 'POST',
       headers: {
-        'x-api-key': serverEnv.EXA_API_KEY,
+        'x-api-key': serverEnv.EXA_API_KEY || '',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
