@@ -9,30 +9,30 @@ import { SciraLogo } from '@/components/logos/scira-logo';
 const testimonials = [
   {
     content:
-      'Scira is better than Grok at digging up information from X, its own platform! I asked it 3 different queries to help scrape and find some data points I was interested in about my own account and Scira did much much better with insanely accurate answers!',
-    author: 'Chris Universe',
-    handle: '@chrisuniverseb',
-    link: 'https://x.com/chrisuniverseb/status/1943025911043100835',
+      'HebronAI represents the future of Palestinian tech innovation. Building AI solutions that compete globally while staying rooted in our identity.',
+    author: 'Palestinian Tech Community',
+    handle: '@PalTech',
+    link: 'https://github.com/Osama-Qonaibe',
   },
   {
-    content: 'Scira does a really good job scraping through the reddit mines.',
-    author: 'nyaaier',
-    handle: '@nyaaier',
-    link: 'https://x.com/nyaaier/status/1932810453107065284',
-  },
-  {
-    content:
-      "I searched for myself using Gemini 2.5 Pro in extreme mode to see what results it could generate. It is not just the best, it is wild. And the best part is it's 100% accurate.",
-    author: 'Aniruddha Dak',
-    handle: '@aniruddhadak',
-    link: 'https://x.com/aniruddhadak/status/1917140602107445545',
+    content: 'Powerful AI search capabilities with real-time intelligence. HebronAI is making advanced search accessible to everyone.',
+    author: 'Early Adopter',
+    handle: '@hebronai_user',
+    link: 'https://github.com/Osama-Qonaibe',
   },
   {
     content:
-      'Read nothing the whole sem and here I am with Scira to top my mid sems! Literally so good to get all the related diagrams, points and topics from the website my professor uses.',
-    author: 'Rajnandinit',
-    handle: '@itsRajnandinit',
-    link: 'https://x.com/itsRajnandinit/status/1897896134837682288',
+      "The extreme search mode with Gemini 2.5 Pro delivers incredibly accurate results. It's not just fast, it's intelligent.",
+    author: 'AI Researcher',
+    handle: '@ai_researcher',
+    link: 'https://github.com/Osama-Qonaibe',
+  },
+  {
+    content:
+      'Finally, an AI search platform that understands context and delivers precise answers. HebronAI is changing how we discover information.',
+    author: 'Tech Enthusiast',
+    handle: '@tech_enthusiast',
+    link: 'https://github.com/Osama-Qonaibe',
   },
 ];
 
@@ -61,16 +61,16 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <Link href="/" className="inline-flex items-center gap-3 mb-16 group">
               <SciraLogo className="size-12 transition-transform duration-300 group-hover:scale-110" />
               <span className="text-5xl font-light tracking-tighter font-be-vietnam-pro text-foreground">
-                scira
+                hebronai
               </span>
             </Link>
 
             {/* Tagline */}
             <div className="mb-16">
               <p className="text-2xl xl:text-3xl font-light tracking-tight leading-snug text-foreground/90">
-                Research that moves
+                Palestinian AI Innovation
                 <br />
-                at the speed of thought.
+                for Global Impact.
               </p>
             </div>
 
@@ -137,26 +137,25 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="px-12 xl:px-20 pb-12">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-8 text-xs text-muted-foreground">
-              <span>5M+ searches</span>
+              <span>AI-Powered</span>
               <span className="w-px h-3 bg-border" />
-              <span>100K+ users</span>
+              <span>Open Source</span>
               <span className="w-px h-3 bg-border" />
-              <span>11K+ stars</span>
+              <span>Made in Palestine</span>
             </div>
             <div className="flex items-center gap-6 text-xs">
             <Link
-                href="https://git.new/scira"
+                href="https://github.com/Osama-Qonaibe"
                 target="_blank"
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 GitHub
               </Link>
               <Link
-                href="https://vercel.com/blog/ai-sdk-4-1"
-                target="_blank"
+                href="/about"
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                Featured on Vercel
+                About Project
               </Link>
             </div>
           </div>
@@ -169,7 +168,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <header className="lg:hidden flex items-center justify-center h-16 border-b border-border">
           <Link href="/" className="flex items-center gap-2.5">
             <SciraLogo className="size-6" />
-            <span className="text-2xl font-light tracking-tighter font-be-vietnam-pro">scira</span>
+            <span className="text-2xl font-light tracking-tighter font-be-vietnam-pro">hebronai</span>
           </Link>
         </header>
 
@@ -180,7 +179,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
         {/* Footer */}
         <footer className="flex items-center justify-center h-12 text-xs text-muted-foreground">
-          <span>Trusted by researchers worldwide</span>
+          <span>Empowering Palestinian Innovation 🇵🇸</span>
         </footer>
       </div>
     </div>
