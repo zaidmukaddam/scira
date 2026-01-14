@@ -155,11 +155,14 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
   const { state, isMobile, setOpenMobile } = useSidebar();
   const [keyboardShortcutsOpen, setKeyboardShortcutsOpen] = React.useState(false);
 
-  // Track client mount to avoid hydration mismatches for client-only UI (like pro badge)
+  // IMPORTANT: Avoid hydration mismatches by rendering auth-dependent UI only after client mount.
+  // In this app, `user` can effectively change between SSR and the initial client render (e.g., due to auth/session resolution).
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
     setMounted(true);
   }, []);
+
+  const isAuthUiReady = mounted;
 
   // Close mobile sidebar when navigating
   const closeMobileSidebar = React.useCallback(() => {
@@ -355,7 +358,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                   suppressHydrationWarning={true}
                 >
                   <span className="font-be-vietnam-pro font-light tracking-tighter text-xl">HebronAI</span>
-                  {mounted && user && isProUser && (
+                  {isAuthUiReady && user && isProUser && (
                     <div className="w-fit">
                       <span className="animate-shimmer text-xs font-baumans inline-flex items-center justify-center min-w-6 h-4 px-1.5 pt-0 pb-0.5 rounded-md shadow-sm bg-linear-to-br from-secondary/30 via-primary/25 to-accent/30 text-foreground ring-1 ring-primary/25 ring-offset-1 ring-offset-background dark:bg-linear-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground dark:ring-primary/40">
                         pro
@@ -397,7 +400,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
       {/* Main Content */}
       <SidebarContent className="p-2">
         <SidebarMenu className="group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center">
-          {/* New Chat - Primary Action */}
+          {/* New Chat - Primary Action (safe for both guest and authed) */}
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
@@ -416,7 +419,8 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
             </SidebarMenuButton>
           </SidebarMenuItem>
 
-          {user && (
+          {/* Auth-dependent items: render only after mount to keep SSR/CSR consistent */}
+          {isAuthUiReady && user && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
@@ -442,7 +446,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
           )}
 
           {/* Tools Section Label */}
-          {user && (
+          {isAuthUiReady && user && (
             <div className="px-2 py-1.5 group-data-[collapsible=icon]:hidden">
               <span className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-wider">
                 Tools
@@ -451,7 +455,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
           )}
 
           {/* Lookout */}
-          {user && (
+          {isAuthUiReady && user && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
@@ -477,7 +481,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
           )}
 
           {/* HebronAI Platform */}
-          {user && (
+          {isAuthUiReady && user && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
@@ -501,7 +505,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
           )}
 
           {/* Voice */}
-          {user && (
+          {isAuthUiReady && user && (
             <SidebarMenuItem>
               <SidebarMenuButton
                 asChild
@@ -524,8 +528,8 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
             </SidebarMenuItem>
           )}
 
-          {/* Guest Info Links when signed out */}
-          {!user &&
+          {/* Guest Info Links when signed out (also auth-dependent, render after mount) */}
+          {isAuthUiReady && !user &&
             signedOutLinks.map((link) => {
               const Icon = link.icon;
               const content = (
@@ -557,8 +561,8 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
               );
             })}
 
-          {/* Recent Chats - With Date Grouping */}
-          {user && (
+          {/* Recent Chats - With Date Grouping (only after mount + authed user) */}
+          {isAuthUiReady && user && (
             <>
               {/* Expanded state - Accordion with date groups */}
               <div className="group-data-[collapsible=icon]:hidden">
@@ -719,8 +723,8 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
 
         </SidebarMenu>
 
-        {/* Upgrade */}
-        {user && !isProUser && (
+        {/* Upgrade (auth-dependent) */}
+        {isAuthUiReady && user && !isProUser && (
           <SidebarGroup className="p-0 mt-auto">
             <SidebarGroupContent>
               <SidebarMenu className="p-0">
@@ -748,7 +752,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
 
       {/* Footer - User Account with Dropdown Menu */}
       <SidebarFooter>
-        {user ? (
+        {isAuthUiReady && user ? (
           <SidebarMenu>
             <SidebarMenuItem>
               {/* Expanded state - full user card as dropdown trigger */}
@@ -961,7 +965,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
         )}
       </SidebarFooter>
 
-      {user && (
+      {isAuthUiReady && user && (
         <>
           <Dialog open={Boolean(renameTarget)} onOpenChange={(open) => (!open ? closeRenameDialog() : null)}>
             <DialogContent className="sm:max-w-[420px]">
