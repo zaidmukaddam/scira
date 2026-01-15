@@ -4,8 +4,12 @@ import { createJiti } from 'jiti';
 
 const jiti = createJiti(fileURLToPath(import.meta.url));
 
-jiti.import('./env/server.ts');
-jiti.import('./env/client.ts');
+// Allow skipping strict env validation during build (e.g. on CI/preview)
+// Set SKIP_ENV_VALIDATION=true to bypass env schema imports at build time.
+if (process.env.SKIP_ENV_VALIDATION !== 'true') {
+  jiti.import('./env/server.ts');
+  jiti.import('./env/client.ts');
+}
 
 const nextConfig: NextConfig = {
   compiler: {
@@ -13,8 +17,8 @@ const nextConfig: NextConfig = {
     removeConsole:
       process.env.NODE_ENV === 'production'
         ? {
-          exclude: ['error'],
-        }
+            exclude: ['error'],
+          }
         : false,
   },
   // Add Turbopack alias to resolve MathJax default font to NewCM font
