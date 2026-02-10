@@ -1,6 +1,6 @@
 # Scira
 
-A minimalistic AI-powered search engine that helps you find information on the internet.
+Research at the speed of thought. The agentic research platform that plans, retrieves, and cites — so you can think faster.
 
 <a href="https://vercel.com/oss">
   <img alt="Vercel OSS Program" src="https://vercel.com/oss/program-badge.svg" />
@@ -20,10 +20,10 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 <div align="center">
 
-|          [Vercel AI SDK](https://sdk.vercel.ai/docs)          |                [Exa AI](https://exa.ai)                |
-| :-----------------------------------------------------------: | :----------------------------------------------------: |
-| <img src="/public/one.svg" alt="Vercel AI SDK" height="40" /> | <img src="/public/exa.png" alt="Exa AI" height="40" /> |
-|            For AI model integration and streaming             |          For web search and content retrieval          |
+|          [Vercel AI SDK](https://sdk.vercel.ai/docs)          |                [Exa AI](https://exa.ai)                |             [Upstash](https://upstash.com)              |
+| :-----------------------------------------------------------: | :----------------------------------------------------: | :-----------------------------------------------------: |
+| <img src="/public/one.svg" alt="Vercel AI SDK" height="40" /> | <img src="/public/exa.png" alt="Exa AI" height="40" /> | <img src="/public/upstash.svg" alt="Upstash" height="40" /> |
+|            For AI model integration and streaming             |          For web search and content retrieval          |        For serverless Redis and rate limiting           |
 
 </div>
 
@@ -40,82 +40,123 @@ A minimalistic AI-powered search engine that helps you find information on the i
 
 </div>
 
+## How It Works
+
+1. **Ask anything** — Type a question, upload a PDF, or paste a URL. Pick a mode or let Scira decide for you.
+2. **Scira plans & retrieves** — The agent breaks your question into sub-tasks, searches live sources, and cross-checks the evidence.
+3. **Get cited answers** — Receive a grounded answer with inline citations. Click any source to verify it yourself.
+
 ## Features
 
-### Core Search & Information
+### Core Capabilities
 
-- **AI-powered search**: Get answers to your questions using multiple AI models including xAI's Grok, Anthropic's Claude, Google's Gemini, and OpenAI's GPT models
-- **Web search**: Search the web using Exa's API with support for multiple queries, search depths, and topics
-- **URL content retrieval**: Extract and analyze content from any URL using Exa AI with live crawling capabilities
-- **Reddit search**: Search Reddit content with time range filtering using Tavily API
-- **X (Twitter) search**: Search X posts with date ranges and specific handle filtering using xAI Live Search
-- **Extreme search**: Advanced multi-step search capability for complex queries
+- **Agentic Planning** — Breaks complex questions into steps, selects the right models and tools, then executes multi-step workflows end to end
+- **Grounded Retrieval** — Every answer comes with inline citations you can click to audit the evidence yourself
+- **Extensible & Open** — AGPL-3.0 licensed. Self-host, bring your own models, connect custom tools, and tailor everything to your workflow
+- **Lookouts** — Schedule recurring research agents that monitor topics, track changes, and email you updates
 
-### Academic & Research
+### Search Modes (17 modes)
 
-- **Academic search**: Search for academic papers and research using Exa AI with abstracts and summaries
-- **YouTube search**: Find YouTube videos with detailed information, captions, and timestamps powered by Exa AI
+| Mode | Description |
+|---|---|
+| **Web** | Search the entire web with AI-powered analysis |
+| **Chat** | Talk to the model directly, no search |
+| **X** | Real-time posts, trends, and conversations |
+| **Stocks** | Market data, charts, and financial analysis |
+| **Code** | Get context about languages and frameworks |
+| **Academic** | Research papers, citations, and scholarly sources |
+| **Extreme** | Deep research with multiple sources and analysis |
+| **Reddit** | Discussions, opinions, and community insights |
+| **GitHub** | Repositories, code, and developer discussions |
+| **Crypto** | Cryptocurrency research powered by CoinGecko |
+| **Prediction** | Prediction markets from Polymarket and Kalshi |
+| **YouTube** | Video summaries, transcripts, and analysis |
+| **Spotify** | Search songs, artists, and albums |
+| **Connectors** | Search Google Drive, Notion & OneDrive *(Pro)* |
+| **Memory** | Your personal memory companion *(Pro)* |
+| **Voice** | Conversational AI with real-time voice *(Pro)* |
+| **XQL** | Advanced X query language for tweet analysis *(Pro)* |
 
-### Entertainment & Media
+### Tools (28 tools)
 
-- **Movie & TV show search**: Get detailed information about movies and TV shows using TMDB API
-- **Trending movies**: Discover trending movies with cast, ratings, and detailed information
-- **Trending TV shows**: Find popular TV shows with comprehensive metadata
+#### Search & Retrieval
+- **Web search** — Multi-query parallel web search with deduplication using Exa, Firecrawl, Parallel, and Tavily
+- **Extreme search** — LLM-driven deep research agent with multi-step planning, code execution, and R2 artifact storage
+- **Academic search** — Search academic papers and research using Exa and Firecrawl
+- **Reddit search** — Search Reddit with configurable time ranges using Parallel
+- **X search** — Search X posts with date range filtering and handle inclusion/exclusion using xAI Grok
+- **YouTube search** — Search videos, channels, playlists with transcript extraction using Supadata
+- **GitHub search** — Search repositories with structured metadata extraction using Firecrawl
+- **Spotify search** — Search tracks, artists, albums, and playlists via Spotify Web API
+- **URL content retrieval** — Extract content from any URL including tweets, YouTube, TikTok, and Instagram
 
-### Financial & Data Analysis
+#### Financial & Market Data
+- **Stock charts** — Interactive stock charts with OHLC data, earnings, and news using Valyu, Tavily, and Exa
+- **Currency converter** — Forex and crypto conversion with real-time rates using Valyu
+- **Crypto tools** — Cryptocurrency data, contract lookups, and OHLC charts using CoinGecko
+- **Prediction markets** — Query Polymarket and Kalshi data with Cohere reranking using Valyu
 
-- **Stock charts**: Generate interactive stock charts with news integration using yfinance and Tavily
-- **Currency converter**: Convert between currencies with real-time exchange rates using yfinance
-- **Code interpreter**: Write and execute Python code with chart generation capabilities using Daytona sandbox
+#### Location & Travel
+- **Weather** — Current weather, 5-day forecast, air quality, and 16-day extended forecast using OpenWeatherMap and Open-Meteo
+- **Maps & geocoding** — Forward/reverse geocoding and nearby place discovery using Google Maps API
+- **Flight tracking** — Real-time flight status with departure/arrival details
 
-### Location & Travel
+#### Media & Entertainment
+- **Movie/TV search** — Search movies and TV shows with detailed cast, ratings, and metadata using TMDB
+- **Trending movies** — Today's trending movies from TMDB
+- **Trending TV shows** — Today's trending TV shows from TMDB
 
-- **Weather information**: Get current weather and forecasts for any location using OpenWeather API
-- **Maps & geocoding**: Find places and get coordinates using Google Maps API
-- **Nearby places search**: Discover nearby restaurants, attractions, and services with Google Places API
-- **Flight tracking**: Track real-time flight information using Aviation Stack API
-
-### Productivity & Utilities
-
-- **Text translation**: Translate text between languages using AI models
-- **Date & time**: Get current date and time in user's timezone with multiple format options
-- **Memory management**: Add and search personal memories using Mem0 AI
-- **MCP server search**: Search for Model Context Protocol servers using Smithery Registry
-
-### Search Groups
-
-- **Web**: Search across the entire internet powered by Tavily
-- **Memory**: Your personal memory companion (requires authentication)
-- **Analysis**: Code execution, stock charts, and currency conversion
-- **Chat**: Direct conversation with AI models
-- **X**: Search X (Twitter) posts
-- **Reddit**: Search Reddit posts
-- **Academic**: Search academic papers and pdfs
-- **YouTube**: Search YouTube videos powered by Exa
-- **Extreme**: Deep research with multiple sources and analysis
+#### Productivity & Utilities
+- **Code interpreter** — Write and execute Python code in a sandboxed Daytona environment with chart generation
+- **Code context** — Get contextual information about programming topics using Exa Context API
+- **Text translation** — Translate text (and text within images) between languages using AI models
+- **File query search** — Semantic search over uploaded files (PDF, CSV, DOCX, Excel) with Cohere embeddings and reranking
+- **Connectors search** — Search connected Google Drive, Notion, and OneDrive using Supermemory
+- **Memory tools** — Save and search personal memories using Supermemory
+- **Date & time** — Current date/time in multiple formats with timezone support
+- **Greeting** — Personalized time-of-day-aware greetings
 
 ## LLM Models Supported
 
-- **xAI**: Grok 3, Grok 3 Mini, Grok 2 Vision
-- **Google**: Gemini 2.5 Flash (Preview), Gemini 2.5 Pro (Preview)
-- **Anthropic**: Claude 4 Sonnet
-- **OpenAI**: GPT-4o, o4-mini, o3 (with reasoning capabilities)
-- **Groq**: Qwen QwQ 32B, Qwen 3 32B, Meta's Llama 4 Maverick
+- **xAI**: Grok 3, Grok 3 Mini, Grok 4, Grok 4 Fast, Grok 4.1 Fast, Grok Code
+- **OpenAI**: GPT 4.1 (Nano/Mini/Standard), GPT 5 (Nano/Mini/Medium/Standard), GPT 5.1 (Instant/Thinking/Codex), GPT 5.2 (Instant/Thinking/Codex), o3, o4 mini, GPT OSS 20B/120B
+- **Anthropic**: Claude Haiku 4.5, Claude Sonnet 4.5, Claude 4.5 Opus, Claude 4.6 Opus
+- **Google**: Gemini 2.5 Flash (Lite/Standard), Gemini 2.5 Pro, Gemini 3 Flash, Gemini 3 Pro
+- **Alibaba (Qwen)**: Qwen 3 (4B/32B/235B), Qwen 3 VL, Qwen 3 Max, Qwen 3 Coder (Small/Standard/Plus/Next), Qwen 3 Next 80B
+- **Mistral**: Ministral 3 (3B/8B/14B), Mistral Large 3, Mistral Medium, Magistral (Small/Medium), Devstral 2 (Small/Standard)
+- **DeepSeek**: DeepSeek v3, v3.1 Terminus, v3.2, R1, R1 0528
+- **Zhipu (GLM)**: GLM 4.5, GLM 4.5 Air, GLM 4.6, GLM 4.6V, GLM 4.7, GLM 4.7 Flash
+- **Cohere**: Command A, Command A Thinking
+- **MoonShot**: Kimi K2, Kimi K2.5
+- **Minimax**: M1 80K, M2, M2.1, M2.1 Lightning
+- **ByteDance**: Seed 1.6, Seed 1.6 Flash, Seed 1.8
+- **Arcee**: Trinity Mini, Trinity Large
+- **Others**: Vercel v0 (1.0/1.5), Amazon Nova 2 Lite, Xiaomi Mimo V2 Flash, StepFun Step 3.5 Flash, Kwaipilot KAT-Coder-Pro V1
 
 ## Built with
 
 - [Next.js](https://nextjs.org/) - React framework
 - [Tailwind CSS](https://tailwindcss.com/) - Styling
-- [Vercel AI SDK](https://sdk.vercel.ai/docs) - AI model integration
+- [Vercel AI SDK](https://sdk.vercel.ai/docs) - AI model integration and streaming
 - [Shadcn/UI](https://ui.shadcn.com/) - UI components
-- [Exa.AI](https://exa.ai/) - Web search and content retrieval
-- [Tavily](https://tavily.com/) - Search grounding for reddit search
-- [OpenWeather](https://openweathermap.org/) - Weather data
+- [Exa.AI](https://exa.ai/) - Web search, academic search, and content retrieval
+- [Firecrawl](https://firecrawl.dev/) - Web scraping with structured extraction
+- [Parallel](https://parallel.ai/) - Web and Reddit search
+- [Tavily](https://tavily.com/) - Web search and financial news
+- [Valyu](https://valyu.network/) - Financial data, forex, and prediction markets
+- [Supadata](https://supadata.ai/) - YouTube search, transcripts, and social media
+- [CoinGecko](https://www.coingecko.com/) - Cryptocurrency market data
+- [Spotify](https://developer.spotify.com/) - Music search
+- [OpenWeatherMap](https://openweathermap.org/) - Weather data
+- [Open-Meteo](https://open-meteo.com/) - Extended forecasts and geocoding
 - [Daytona](https://daytona.io/) - Code execution sandbox
-- [Google Maps](https://developers.google.com/maps) - Location services
-- [Aviation Stack](https://aviationstack.com/) - Flight tracking
+- [Google Maps](https://developers.google.com/maps) - Geocoding and places
 - [TMDB](https://www.themoviedb.org/) - Movie and TV data
-- [Mem0](https://mem0.ai/) - Memory management
+- [Cohere](https://cohere.com/) - Embeddings and reranking
+- [Supermemory](https://supermemory.ai/) - Memory management and connector search
+- [Upstash](https://upstash.com/) - Serverless Redis and rate limiting
+- [Cloudflare R2](https://www.cloudflare.com/r2/) - Object storage for artifacts
+- [ElevenLabs](https://elevenlabs.io/) - Voice synthesis
 - [Better Auth](https://github.com/better-auth/better-auth) - Authentication
 - [Drizzle ORM](https://orm.drizzle.team/) - Database management
 - [Novita AI](https://novita.ai) - AI Inference
