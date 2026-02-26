@@ -977,9 +977,9 @@ const CryptoChart: React.FC<CryptoChartProps> = memo(({ result, coinId, chartTyp
               )}
           </div>
           <div className="flex items-center gap-2 text-[11px] sm:text-xs">
-            <span className="tabular-nums">H: {formatCompactPrice(maxValue).replace('$', '')}</span>
+            <span className="tabular-nums">H: {formatCompactPrice(maxValue).replace(/\$/g, '')}</span>
             <span className="text-neutral-400">•</span>
-            <span className="tabular-nums">L: {formatCompactPrice(minValue).replace('$', '')}</span>
+            <span className="tabular-nums">L: {formatCompactPrice(minValue).replace(/\$/g, '')}</span>
           </div>
         </div>
       </CardContent>
