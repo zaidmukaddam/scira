@@ -1142,7 +1142,7 @@ const ChatInterface = memo(
                   </div>
                 )}
 
-                {/* Example prompts — shown on empty home screen */}
+                {/* Example prompts — temporarily disabled
                 {status === 'ready' &&
                   messages.length === 0 &&
                   ((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
@@ -1155,6 +1155,7 @@ const ChatInterface = memo(
                       suggestionsLoading={false}
                     />
                   )}
+                */}
 
                 {/* Show initial limit exceeded message */}
                 {status === 'ready' && messages.length === 0 && isLimitBlocked && (
