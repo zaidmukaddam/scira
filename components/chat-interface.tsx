@@ -165,9 +165,7 @@ const ChatInterface = memo(
 
     // Home screen suggestion prompts
     const [homeSuggestions, setHomeSuggestions] = useState<{ text: string; category?: string }[] | null>(null);
-    const [suggestionsLoading, setSuggestionsLoading] = useState(false);
-    // Tracks whether suggestions have been fetched at least once — prevents repeated skeletons
-    const suggestionsLoadedRef = useRef(false);
+    const [suggestionsLoading, setSuggestionsLoading] = useState(true);
 
     const handleOpenSettings = useCallback(
       (tab: string = 'profile') => {
@@ -753,13 +751,7 @@ const ChatInterface = memo(
       dispatch({ type: 'RESET_SUGGESTED_QUESTIONS' });
     }, []);
 
-    // Fetch home-screen suggestion prompts when the chat is empty.
-    // Strategy:
-    //  - Show skeleton only on the first fetch (homeSuggestions === null).
-    //  - On subsequent re-fetches (model/user changes), keep existing suggestions
-    //    visible and silently swap in fresh ones — no flash.
-    //  - getHomeSuggestions reads Redis cache only (near-instant), falling back
-    //    to static if the cache is empty.
+    // Fetch dynamic home suggestions when empty chat is shown
     useEffect(() => {
       const showPrompts =
         status === 'ready' &&
@@ -770,42 +762,44 @@ const ChatInterface = memo(
       if (!showPrompts) {
         setSuggestionsLoading(false);
         setHomeSuggestions(null);
-        suggestionsLoadedRef.current = false;
         return;
       }
 
       let cancelled = false;
-
-      // Show skeleton only on the very first fetch; subsequent re-fetches (triggered
-      // by model/user changes) update silently so there is no visible flash.
-      if (!suggestionsLoadedRef.current) {
-        setSuggestionsLoading(true);
-      }
+      setSuggestionsLoading(true);
+      setHomeSuggestions(null);
 
       getHomeSuggestions(selectedModel, isUserPro)
         .then((suggestions) => {
-          if (!cancelled) {
-            suggestionsLoadedRef.current = true;
-            if (Array.isArray(suggestions) && suggestions.length > 0) {
-              setHomeSuggestions(suggestions);
-            } else {
-              setHomeSuggestions(null);
-            }
+          if (!cancelled && Array.isArray(suggestions) && suggestions.length > 0) {
+            setHomeSuggestions(suggestions);
           }
         })
         .catch(() => {
           if (!cancelled) {
-            suggestionsLoadedRef.current = true;
             setHomeSuggestions(null);
           }
         })
         .finally(() => {
-          if (!cancelled) setSuggestionsLoading(false);
+          if (!cancelled) {
+            setSuggestionsLoading(false);
+          }
         });
 
-      return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [status, messages.length, user, isOwner, initialChatId, chatState.selectedVisibilityType, isLimitBlocked, selectedModel, isUserPro]);
+      return () => {
+        cancelled = true;
+      };
+    }, [
+      status,
+      messages.length,
+      user,
+      isOwner,
+      initialChatId,
+      chatState.selectedVisibilityType,
+      isLimitBlocked,
+      selectedModel,
+      isUserPro,
+    ]);
 
     // Handle example selection from ExampleCategories
     const handleExampleSelect = useCallback(

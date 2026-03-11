@@ -8,7 +8,7 @@ import { UIMessage, generateText } from 'ai';
 import type { ModelMessage } from 'ai';
 import { z } from 'zod';
 import { getUser } from '@/lib/auth-utils';
-import { getChatSuggestionsInstant, type Suggestion } from '@/lib/services/suggestions-service';
+import { getChatSuggestionsInstant, getChatSuggestions, type Suggestion } from '@/lib/services/suggestions-service';
 import { scira } from '@/ai/providers';
 import {
   getChatsByUserId,
@@ -35,11 +35,10 @@ import {
   updateLookoutStatus,
   deleteLookout,
   getChatWithUserById,
+  getChatsPaginated,
+  searchChatsByTitleQuery,
 } from '@/lib/db/queries';
 import { extractChatPreview } from '@/lib/search-utils';
-import { db } from '@/lib/db';
-import { chat } from '@/lib/db/schema';
-import { eq, desc, ilike, and } from 'drizzle-orm';
 import { getDiscountConfig } from '@/lib/discount';
 import { get } from '@vercel/edge-config';
 import { groq } from '@ai-sdk/groq';
@@ -196,10 +195,26 @@ export async function getHomeSuggestions(
   selectedModel: string,
   isProUser: boolean
 ): Promise<Suggestion[]> {
+  const t0 = Date.now();
   try {
-    return await getChatSuggestionsInstant(selectedModel, isProUser);
+    // Cache-only lookup — always returns in milliseconds (cached or static).
+    // Never blocks the UI waiting for LLM generation.
+    const result = await getChatSuggestionsInstant(selectedModel, isProUser);
+    const elapsed = Date.now() - t0;
+    const isCached = result.length > 0 && result[0].category !== undefined;
+    console.log(`[ACTION] getHomeSuggestions (${selectedModel}) completed in ${elapsed}ms — ${result.length} suggestions (${isCached ? 'cached' : 'static fallback'})`);
+
+    // On cache miss, kick off background generation so the next request is cached.
+    // Fire-and-forget — does not block the response.
+    if (!isCached) {
+      getChatSuggestions(selectedModel, isProUser).catch((err) =>
+        console.error('[ACTION] Background suggestion generation failed:', err)
+      );
+    }
+
+    return result;
   } catch (error) {
-    console.error('[ACTION] Error fetching home suggestions:', error);
+    console.error(`[ACTION] Error fetching home suggestions after ${Date.now() - t0}ms:`, error);
     return [];
   }
 }
@@ -3610,22 +3625,15 @@ export async function getStudentDomainsAction() {
 // Fetch chats for the authenticated user (paginated)
 export async function getAllChatsWithPreview(limit: number = 25, offset: number = 0) {
   'use server';
-  
+
   try {
     const user = await getUser();
-    
+
     if (!user) {
       return { error: 'Unauthorized', status: 401 };
     }
 
-    // Fetch chats only - no messages for better performance
-    const chats = await db.query.chat.findMany({
-      where: eq(chat.userId, user.id),
-      orderBy: [desc(chat.createdAt)],
-      limit,
-      offset,
-    });
-
+    const chats = await getChatsPaginated({ userId: user.id, limit, offset });
     return { chats };
   } catch (error) {
     console.error('Error fetching chats:', error);
@@ -3636,40 +3644,15 @@ export async function getAllChatsWithPreview(limit: number = 25, offset: number 
 // Search chats by title (paginated)
 export async function searchChatsByTitle(query: string, limit: number = 25, offset: number = 0) {
   'use server';
-  
+
   try {
     const user = await getUser();
-    
+
     if (!user) {
       return { error: 'Unauthorized', status: 401 };
     }
 
-    const trimmedQuery = query?.trim() || '';
-
-    // If no query, return paginated chats
-    if (trimmedQuery.length === 0) {
-      const chats = await db.query.chat.findMany({
-        where: eq(chat.userId, user.id),
-        orderBy: [desc(chat.createdAt)],
-        limit,
-        offset,
-      });
-
-      return { chats };
-    }
-
-    // Optimized: Use AND to combine userId and title search at DB level
-    // Use ilike for case-insensitive search
-    const chats = await db.query.chat.findMany({
-      where: and(
-        eq(chat.userId, user.id),
-        ilike(chat.title, `%${trimmedQuery}%`)
-      ),
-      orderBy: [desc(chat.createdAt)],
-      limit,
-      offset,
-    });
-
+    const chats = await searchChatsByTitleQuery({ userId: user.id, query: query ?? '', limit, offset });
     return { chats };
   } catch (error) {
     console.error('Error searching chats:', error);

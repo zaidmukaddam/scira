@@ -7,6 +7,13 @@ export async function getRedisClient(): Promise<RedisClientType | null> {
     return null;
   }
 
+  // Re-create the client if the previous one is no longer connected (e.g. after a
+  // serverless cold start where the prior TCP connection was closed by the host).
+  if (redis && !redis.isOpen) {
+    console.log('[redis-config] Client exists but connection is closed — reconnecting');
+    redis = null;
+  }
+
   if (!redis) {
     try {
       redis = createClient({ url: process.env.REDIS_URL });

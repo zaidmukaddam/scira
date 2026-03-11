@@ -1,26 +1,24 @@
 import { useState, useCallback, useEffect } from 'react';
 
-// Get the initial value synchronously during initialization
 function getStoredValue<T>(key: string, defaultValue: T): T {
   // Always return defaultValue on server-side
   if (typeof window === 'undefined') return defaultValue;
 
   try {
     const item = localStorage.getItem(key);
-    if (!item) return defaultValue;
-
-    // Handle special case for undefined
-    if (item === 'undefined') return defaultValue;
-
+    if (!item || item === 'undefined') return defaultValue;
     return JSON.parse(item);
   } catch {
-    // If error, return default value
     return defaultValue;
   }
 }
 
 export function useLocalStorage<T>(key: string, defaultValue: T): [T, (value: T | ((val: T) => T)) => void] {
-  // Initialize with the stored value immediately
+  // Read localStorage synchronously on first client render so derived state
+  // (e.g. isProUser) is stable from the start and doesn't change after mount,
+  // which would trigger unnecessary effect re-runs. The hydration mismatch this
+  // can cause for elements that differ between server and client must be handled
+  // at the component level with suppressHydrationWarning or a useMounted guard.
   const [storedValue, setStoredValue] = useState<T>(() => getStoredValue(key, defaultValue));
 
   // Listen for storage changes from other components/tabs

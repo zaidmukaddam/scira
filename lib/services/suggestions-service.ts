@@ -5,11 +5,59 @@
  * Uses Redis for caching with fallback to static suggestions.
  */
 
-import { generateText } from 'ai';
+import { generateObject } from 'ai';
 import { z } from 'zod';
-import { jsonrepair } from 'jsonrepair';
 import { getRedisClient } from '@/lib/redis-config';
 import { scx } from '@/ai/providers';
+
+// Upstash Redis (HTTP-based) — preferred for Vercel serverless since it avoids
+// TCP handshake overhead on cold starts.
+let upstashRedis: import('@upstash/redis').Redis | null | undefined; // undefined = not yet initialised
+
+function getUpstashRedis(): import('@upstash/redis').Redis | null {
+  if (upstashRedis !== undefined) return upstashRedis;
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    const { Redis } = require('@upstash/redis') as typeof import('@upstash/redis');
+    upstashRedis = Redis.fromEnv();
+  } else {
+    upstashRedis = null;
+  }
+  return upstashRedis;
+}
+
+/** Unified cache helpers — Upstash (HTTP) takes priority over node-redis (TCP). */
+async function cacheGet(key: string): Promise<string | null> {
+  const upstash = getUpstashRedis();
+  if (upstash) {
+    const val = await upstash.get<string>(key);
+    return val ?? null;
+  }
+  const redis = await getRedisClient();
+  if (!redis) return null;
+  return redis.get(key);
+}
+
+async function cacheSet(key: string, ttlSeconds: number, value: string): Promise<void> {
+  const upstash = getUpstashRedis();
+  if (upstash) {
+    await upstash.set(key, value, { ex: ttlSeconds });
+    return;
+  }
+  const redis = await getRedisClient();
+  if (!redis) return;
+  await redis.setEx(key, ttlSeconds, value);
+}
+
+async function cacheDel(key: string): Promise<void> {
+  const upstash = getUpstashRedis();
+  if (upstash) {
+    await upstash.del(key);
+    return;
+  }
+  const redis = await getRedisClient();
+  if (!redis) return;
+  await redis.del(key);
+}
 
 // =============================================================================
 // Types
@@ -239,22 +287,34 @@ function getAustralianSeason(date: Date): string {
 /** Same as title generation, stock tools, Slack: scx + llama-3.3 (see app/actions.ts). */
 const SUGGESTIONS_MODEL_IDS = ['llama-3.3', 'llama-4'] as const;
 
+// ---------------------------------------------------------------------------
+// 400 recovery helpers
+// The SCX API returns HTTP 400 with `error_model_output` when a model generates
+// valid content but not in the expected JSON schema format. We parse that output
+// directly rather than failing entirely.
+// ---------------------------------------------------------------------------
+
 function parseSuggestionsFromText(text: string, count: number): Suggestion[] | null {
   const trimmed = text.trim();
-  // Strip markdown code block if present (e.g. ```json\n[...]\n```)
   const stripped = trimmed.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
   try {
     const parsed = JSON.parse(stripped) as unknown;
     if (Array.isArray(parsed)) {
-      return parsed.map((item) =>
-        typeof item === 'string' ? { text: item } : { text: String((item as { text?: string }).text ?? ''), category: (item as { category?: string }).category }
-      ).filter((s) => s.text.length > 0).slice(0, count);
+      return parsed
+        .map((item) =>
+          typeof item === 'string'
+            ? { text: item }
+            : { text: String((item as { text?: string }).text ?? ''), category: (item as { category?: string }).category }
+        )
+        .filter((s) => s.text.length > 0)
+        .slice(0, count);
     }
     if (parsed && typeof parsed === 'object' && 'suggestions' in parsed && Array.isArray((parsed as { suggestions: unknown }).suggestions)) {
       const arr = (parsed as { suggestions: Array<{ text?: string; category?: string } | string> }).suggestions;
-      return arr.map((item) =>
-        typeof item === 'string' ? { text: item } : { text: item.text ?? '', category: item.category }
-      ).filter((s) => s.text.length > 0).slice(0, count);
+      return arr
+        .map((item) => (typeof item === 'string' ? { text: item } : { text: item.text ?? '', category: item.category }))
+        .filter((s) => s.text.length > 0)
+        .slice(0, count);
     }
   } catch {
     // not valid JSON
@@ -262,7 +322,6 @@ function parseSuggestionsFromText(text: string, count: number): Suggestion[] | n
   return null;
 }
 
-/** When API returns 400 "Model did not output valid JSON", recover from error_model_output. */
 function parseSuggestionsFrom400Error(err: unknown, count: number): Suggestion[] | null {
   if (!err || typeof err !== 'object') return null;
   const body =
@@ -281,53 +340,47 @@ function parseSuggestionsFrom400Error(err: unknown, count: number): Suggestion[]
 }
 
 /**
- * Generate suggestions using LLM with automatic fallback: scx first, then SambaNova.
- * Uses generateText + parse for SambaNova to avoid "invalid JSON" 400 from its API.
+ * Generate suggestions using LLM with automatic fallback.
+ * Uses generateObject (structured output) for reliable JSON.
+ * When the API returns 400 "Invalid structured output", recovers from
+ * error_model_output — the model's actual response is valid, just not
+ * schema-wrapped (identical approach to new-chat).
  */
 async function generateSuggestionsWithLLM(config: SuggestionConfig): Promise<Suggestion[]> {
   const context = await fetchRecentContext(config.newsCategories);
 
-  const promptBase = `${context}
+  const prompt = `${context}
 
 Generate exactly ${config.count} suggested questions. Each should be:
 - Concise (under 80 characters ideally)
 - Specific and actionable
 - Diverse (don't repeat similar questions)
-- Relevant to current events or timeless topics`;
+- Relevant to current events or timeless topics
+
+Return the questions as an array.`;
 
   const schema = z.object({
     suggestions: z.array(
       z.object({
-        text: z.string().max(150),
-        category: z.string().optional(),
+        text: z.string().max(150).describe('The suggestion text'),
+        category: z.string().optional().describe('Category of the suggestion'),
       })
     ).min(config.count).max(config.count),
   });
-
-  const promptForText = `${promptBase}
-
-Respond with ONLY a JSON object in this format (no markdown, no explanation):
-{"suggestions": [{"text": "question here", "category": "optional category"}, ...]}`;
 
   let lastError: unknown;
 
   for (const modelId of SUGGESTIONS_MODEL_IDS) {
     try {
       console.log(`[SUGGESTIONS] Trying ${modelId}`);
-      const { text } = await generateText({
+      const { object } = await generateObject({
         model: scx.languageModel(modelId),
         system: config.systemPrompt,
-        prompt: promptForText,
+        prompt,
+        schema,
       });
-
-      const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-      const rawJSON = fenced ? fenced[1].trim() : (text.match(/\{[\s\S]*\}/) ?? [text])[0];
-      const repaired = jsonrepair(rawJSON);
-      const parsed = JSON.parse(repaired);
-      const result = schema.parse(parsed);
-
       console.log(`[SUGGESTIONS] Successfully generated with ${modelId}`);
-      return result.suggestions;
+      return object.suggestions;
     } catch (err) {
       lastError = err;
       const isNoModelError =
@@ -344,13 +397,17 @@ Respond with ONLY a JSON object in this format (no markdown, no explanation):
         console.warn(`[SUGGESTIONS] API key missing or invalid (401), trying next model`);
         continue;
       }
-      const is400 = (err && typeof err === 'object' && 'statusCode' in err && (err as { statusCode?: number }).statusCode === 400);
+      // 400 "Model did not output valid JSON" — model returned a plain array
+      // instead of a schema-wrapped object. Recover from error_model_output.
+      const is400 = err && typeof err === 'object' && 'statusCode' in err && (err as { statusCode?: number }).statusCode === 400;
       if (is400) {
         const recovered = parseSuggestionsFrom400Error(err, config.count);
         if (recovered && recovered.length >= config.count) {
-          console.log(`[SUGGESTIONS] Recovered ${recovered.length} suggestions from ${modelId} 400 response`);
+          console.log(`[SUGGESTIONS] ✅ Recovered ${recovered.length} suggestions from ${modelId} 400 response`);
           return recovered.slice(0, config.count);
         }
+        console.warn(`[SUGGESTIONS] 400 recovery failed for ${modelId}, trying next`);
+        continue;
       }
       console.error(`[SUGGESTIONS] Error with ${modelId}:`, err);
       throw err;
@@ -358,7 +415,7 @@ Respond with ONLY a JSON object in this format (no markdown, no explanation):
   }
 
   console.error('[SUGGESTIONS] No suggestion model available:', lastError);
-  throw lastError;
+  throw lastError as Error;
 }
 
 // =============================================================================
@@ -372,39 +429,48 @@ Respond with ONLY a JSON object in this format (no markdown, no explanation):
 export async function getSuggestions(modelType: ModelSuggestionType): Promise<Suggestion[]> {
   const config = SUGGESTION_CONFIGS[modelType];
   if (!config) {
-    console.warn(`[SUGGESTIONS] Unknown model type: ${modelType}`);
+    console.warn(`[SUGGESTIONS] ⚠️  Unknown model type: "${modelType}" — returning empty`);
     return [];
   }
 
-  try {
-    const redis = await getRedisClient();
-    if (redis) {
-      const cacheKey = getCacheKey(modelType);
-      const cached = await redis.get(cacheKey);
+  const backend = getUpstashRedis() ? 'upstash (HTTP)' : 'node-redis (TCP)';
+  const cacheKey = getCacheKey(modelType);
+  console.log(`[SUGGESTIONS] Looking up cache key "${cacheKey}" via ${backend}`);
 
-      if (cached) {
-        const parsed: ModelSuggestions = JSON.parse(cached);
-        console.log(`[SUGGESTIONS] Cache hit for ${modelType}`);
-        return parsed.suggestions;
-      }
-      console.log(`[SUGGESTIONS] Cache miss for ${modelType}, generating on demand`);
+  try {
+    const t0 = Date.now();
+    const cached = await cacheGet(cacheKey);
+    const elapsed = Date.now() - t0;
+
+    if (cached) {
+      const parsed: ModelSuggestions = JSON.parse(cached);
+      console.log(`[SUGGESTIONS] ✅ CACHE HIT — ${modelType} | ${parsed.suggestions.length} suggestions | ${elapsed}ms | generated at ${parsed.generatedAt}`);
+      return parsed.suggestions;
     }
+
+    console.warn(`[SUGGESTIONS] ❌ CACHE MISS — ${modelType} | ${elapsed}ms | key "${cacheKey}" not found — falling back to LLM generation`);
   } catch (error) {
-    console.error('[SUGGESTIONS] Error reading from cache:', error);
+    console.error(`[SUGGESTIONS] ❌ Cache read error for ${modelType}:`, error);
   }
 
   // On cache miss: try to generate dynamic suggestions and cache them
   try {
+    console.log(`[SUGGESTIONS] 🔄 Generating on-demand for ${modelType}…`);
+    const t1 = Date.now();
     const result = await generateAndCacheSuggestions(modelType);
+    const genElapsed = Date.now() - t1;
+
     if (result.success && result.suggestions && result.suggestions.length > 0) {
-      console.log(`[SUGGESTIONS] Served on-demand generated suggestions for ${modelType}`);
+      console.log(`[SUGGESTIONS] ✅ LLM generated ${result.suggestions.length} suggestions for ${modelType} in ${genElapsed}ms — now cached`);
       return result.suggestions;
     }
+    console.warn(`[SUGGESTIONS] ⚠️  LLM generation returned no suggestions for ${modelType} after ${genElapsed}ms`);
   } catch (error) {
-    console.error(`[SUGGESTIONS] On-demand generation failed for ${modelType}:`, error);
+    console.error(`[SUGGESTIONS] ❌ LLM generation failed for ${modelType}:`, error);
   }
 
   // Final fallback to static suggestions
+  console.warn(`[SUGGESTIONS] ⚠️  STATIC FALLBACK — ${modelType} — serving hardcoded suggestions (cache miss + LLM failed)`);
   return config.staticFallback;
 }
 
@@ -435,6 +501,7 @@ export async function getChatSuggestions(
 ): Promise<Suggestion[]> {
   const suggestionType: ModelSuggestionType =
     MODEL_TO_SUGGESTION_TYPE[selectedModel] ?? (isProUser ? 'pro-user' : 'free-user');
+  console.log(`[SUGGESTIONS] getChatSuggestions: model="${selectedModel}" isProUser=${isProUser} → type="${suggestionType}"`);
   return getSuggestions(suggestionType);
 }
 
@@ -449,13 +516,14 @@ export async function getSuggestionsInstant(modelType: ModelSuggestionType): Pro
   if (!config) return [];
 
   try {
-    const redis = await getRedisClient();
-    if (redis) {
-      const cached = await redis.get(getCacheKey(modelType));
-      if (cached) {
-        const parsed: ModelSuggestions = JSON.parse(cached);
-        return parsed.suggestions;
-      }
+    const t0 = Date.now();
+    const cached = await cacheGet(getCacheKey(modelType));
+    const elapsed = Date.now() - t0;
+    const backend = getUpstashRedis() ? 'upstash' : 'node-redis';
+    console.log(`[SUGGESTIONS] instant lookup for ${modelType}: ${cached ? 'hit' : 'miss'} via ${backend} in ${elapsed}ms`);
+    if (cached) {
+      const parsed: ModelSuggestions = JSON.parse(cached);
+      return parsed.suggestions;
     }
   } catch {
     // silently fall through to static
@@ -486,12 +554,6 @@ export async function generateAndCacheAllSuggestions(): Promise<{
 }> {
   const results: Record<string, { success: boolean; error?: string }> = {};
 
-  const redis = await getRedisClient();
-  if (!redis) {
-    console.error('[SUGGESTIONS] Redis not available, cannot cache suggestions');
-    return { success: false, results: {} as any };
-  }
-
   const modelTypes = Object.keys(SUGGESTION_CONFIGS) as ModelSuggestionType[];
 
   for (const modelType of modelTypes) {
@@ -512,7 +574,7 @@ export async function generateAndCacheAllSuggestions(): Promise<{
       };
 
       const cacheKey = getCacheKey(modelType);
-      await redis.setEx(cacheKey, CACHE_TTL_SECONDS, JSON.stringify(cacheData));
+      await cacheSet(cacheKey, CACHE_TTL_SECONDS, JSON.stringify(cacheData));
 
       console.log(`[SUGGESTIONS] Cached ${suggestions.length} suggestions for ${modelType}`);
       results[modelType] = { success: true };
@@ -545,22 +607,19 @@ export async function generateAndCacheSuggestions(modelType: ModelSuggestionType
   try {
     const suggestions = await generateSuggestionsWithLLM(config);
 
-    const redis = await getRedisClient();
-    if (redis) {
-      const now = new Date();
-      const expiresAt = new Date(now.getTime() + CACHE_TTL_SECONDS * 1000);
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + CACHE_TTL_SECONDS * 1000);
 
-      const cacheData: ModelSuggestions = {
-        modelType,
-        suggestions,
-        generatedAt: now.toISOString(),
-        expiresAt: expiresAt.toISOString(),
-      };
+    const cacheData: ModelSuggestions = {
+      modelType,
+      suggestions,
+      generatedAt: now.toISOString(),
+      expiresAt: expiresAt.toISOString(),
+    };
 
-      const cacheKey = getCacheKey(modelType);
-      await redis.setEx(cacheKey, CACHE_TTL_SECONDS, JSON.stringify(cacheData));
-      console.log(`[SUGGESTIONS] Cached ${suggestions.length} suggestions for ${modelType}`);
-    }
+    const cacheKey = getCacheKey(modelType);
+    await cacheSet(cacheKey, CACHE_TTL_SECONDS, JSON.stringify(cacheData));
+    console.log(`[SUGGESTIONS] Cached ${suggestions.length} suggestions for ${modelType}`);
 
     return { success: true, suggestions };
   } catch (error) {
@@ -577,13 +636,9 @@ export async function generateAndCacheSuggestions(modelType: ModelSuggestionType
  */
 export async function clearSuggestionsCache(): Promise<boolean> {
   try {
-    const redis = await getRedisClient();
-    if (!redis) return false;
-
     const modelTypes = Object.keys(SUGGESTION_CONFIGS) as ModelSuggestionType[];
     for (const modelType of modelTypes) {
-      const cacheKey = getCacheKey(modelType);
-      await redis.del(cacheKey);
+      await cacheDel(getCacheKey(modelType));
     }
 
     console.log('[SUGGESTIONS] Cache cleared');

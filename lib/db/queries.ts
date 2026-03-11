@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, asc, desc, eq, gt, gte, inArray, lt, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, gte, ilike, inArray, lt, type SQL } from 'drizzle-orm';
 import {
   user,
   chat,
@@ -1093,4 +1093,43 @@ export async function deleteLookout({ id }: { id: string }) {
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to delete lookout');
   }
+}
+
+export async function getChatsPaginated({
+  userId,
+  limit,
+  offset,
+}: {
+  userId: string;
+  limit: number;
+  offset: number;
+}) {
+  return db.query.chat.findMany({
+    where: eq(chat.userId, userId),
+    orderBy: [desc(chat.createdAt)],
+    limit,
+    offset,
+  });
+}
+
+export async function searchChatsByTitleQuery({
+  userId,
+  query,
+  limit,
+  offset,
+}: {
+  userId: string;
+  query: string;
+  limit: number;
+  offset: number;
+}) {
+  if (!query.trim()) {
+    return getChatsPaginated({ userId, limit, offset });
+  }
+  return db.query.chat.findMany({
+    where: and(eq(chat.userId, userId), ilike(chat.title, `%${query.trim()}%`)),
+    orderBy: [desc(chat.createdAt)],
+    limit,
+    offset,
+  });
 }

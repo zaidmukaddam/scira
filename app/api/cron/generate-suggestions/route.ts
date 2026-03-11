@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateAndCacheAllSuggestions } from '@/lib/services/suggestions-service';
+import { generateAndCacheAllSuggestions, clearSuggestionsCache } from '@/lib/services/suggestions-service';
 
 /**
  * Cron endpoint for generating daily suggestions
@@ -69,6 +69,33 @@ export async function GET(request: NextRequest) {
       timestamp: new Date().toISOString(),
     }, { status: 500 });
   }
+}
+
+/**
+ * DELETE endpoint to clear the suggestions cache.
+ * Requires CRON_SECRET in production; open in development.
+ */
+export async function DELETE(request: NextRequest) {
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
+  if (!isDevelopment) {
+    const authHeader = request.headers.get('authorization');
+    const cronSecret = process.env.CRON_SECRET;
+    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+  }
+
+  console.log('[CRON:SUGGESTIONS] 🗑️  Clearing suggestions cache…');
+  const cleared = await clearSuggestionsCache();
+
+  if (cleared) {
+    console.log('[CRON:SUGGESTIONS] ✅ Cache cleared successfully');
+    return NextResponse.json({ status: 'success', message: 'Suggestions cache cleared' });
+  }
+
+  console.warn('[CRON:SUGGESTIONS] ⚠️  Cache clear failed — Redis may be unavailable');
+  return NextResponse.json({ status: 'error', message: 'Failed to clear cache — Redis unavailable' }, { status: 500 });
 }
 
 /**
