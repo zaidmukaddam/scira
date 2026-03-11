@@ -395,9 +395,9 @@ export async function POST(req: Request) {
     }
   }
 
-  // In auto mode, tools are required — fall back to deepseek-v3 if the selected model
-  // doesn't support function calling (e.g. llama-3.3, magpie)
-  const effectiveModel = group === 'auto' && !supportsFunctionCalling(model) ? 'deepseek-v3' : model;
+  // Use the selected model directly. Models that don't support function calling
+  // (e.g. magpie, llama-3.3) receive tools:{} and toolChoice:'none' below.
+  const effectiveModel = model;
 
   // Start config and custom instructions in parallel
   // Use lightweightUser.userId directly instead of waiting for fullUserPromise
@@ -560,6 +560,12 @@ export async function POST(req: Request) {
           return undefined;
         },
         tools: (() => {
+          // Don't pass tools to models that don't support function calling (e.g. magpie, llama-3.3)
+          // Passing tools to these models causes API errors — they respond fine without tools
+          if (!modelSupportsFunctionCalling) {
+            return {};
+          }
+
           const baseTools = {
             stock_chart: stockChartTool,
             stock_chart_simple: stockChartSimpleTool,

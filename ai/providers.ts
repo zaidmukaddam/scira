@@ -17,7 +17,7 @@ type ScxChatModelId =
   | 'Llama-4-Maverick-17B-128E-Instruct'
   | 'Llama-3.3-Swallow-70B-Instruct-v0.4'
   | 'gpt-oss-120b'
-  | 'magpie-small';
+  | 'magpie';
 
 type ScxEmbeddingModelId = 'E5-Mistral-7B-Instruct';
 
@@ -165,7 +165,7 @@ export async function doTranscribe({
 // Reasoning middleware notes:
 // - deepseek-r1 / gpt-oss-120b: emit <think>...</think> blocks in content;
 //   extractReasoningMiddleware converts them to `reasoning` stream parts.
-// - magpie-small: uses a custom channel protocol (<|channel|>analysis<|message|>
+// - magpie: uses a custom channel protocol (<|channel|>analysis<|message|>
 //   ... <|end|> / <|channel|>final<|message|>); magpieProtocolMiddleware parses
 //   the protocol and routes analysis→reasoning, final→text, rest→discard.
 // - deepseek-v3 / v3.1 / llama models: no reasoning output, pass through as-is.
@@ -198,7 +198,7 @@ export const scx = customProvider({
       middleware: [extractReasoningMiddleware({ tagName: 'think' })],
     }),
     magpie: wrapLanguageModel({
-      model: scxProvider.languageModel('magpie-small'),
+      model: scxProvider.languageModel('magpie'),
       middleware: [magpieProtocolMiddleware as LanguageModelMiddleware],
     }),
     // Internal utility aliases (follow-up suggestions, chat naming, prompt enhancement)
