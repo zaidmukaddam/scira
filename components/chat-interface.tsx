@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 import { v7 as uuidv7 } from 'uuid';
 
 // Internal app imports
-import { suggestQuestions, updateChatVisibility, getChatMeta, getHomeSuggestions } from '@/app/actions';
+import { suggestQuestions, updateChatVisibility, getChatMeta/*, getHomeSuggestions*/ } from '@/app/actions';
 import { ExamplePrompts } from '@/components/chat-interface-components';
 
 // Component imports
@@ -163,9 +163,9 @@ const ChatInterface = memo(
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [settingsInitialTab, setSettingsInitialTab] = useState<string>('profile');
 
-    // Home screen suggestion prompts
-    const [homeSuggestions, setHomeSuggestions] = useState<{ text: string; category?: string }[] | null>(null);
-    const [suggestionsLoading, setSuggestionsLoading] = useState(true);
+    // Home screen suggestion prompts — temporarily disabled
+    // const [homeSuggestions, setHomeSuggestions] = useState<{ text: string; category?: string }[] | null>(null);
+    // const [suggestionsLoading, setSuggestionsLoading] = useState(true);
 
     const handleOpenSettings = useCallback(
       (tab: string = 'profile') => {
@@ -751,55 +751,55 @@ const ChatInterface = memo(
       dispatch({ type: 'RESET_SUGGESTED_QUESTIONS' });
     }, []);
 
-    // Fetch dynamic home suggestions when empty chat is shown
-    useEffect(() => {
-      const showPrompts =
-        status === 'ready' &&
-        messages.length === 0 &&
-        ((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
-        !isLimitBlocked;
-
-      if (!showPrompts) {
-        setSuggestionsLoading(false);
-        setHomeSuggestions(null);
-        return;
-      }
-
-      let cancelled = false;
-      setSuggestionsLoading(true);
-      setHomeSuggestions(null);
-
-      getHomeSuggestions(selectedModel, isUserPro)
-        .then((suggestions) => {
-          if (!cancelled && Array.isArray(suggestions) && suggestions.length > 0) {
-            setHomeSuggestions(suggestions);
-          }
-        })
-        .catch(() => {
-          if (!cancelled) {
-            setHomeSuggestions(null);
-          }
-        })
-        .finally(() => {
-          if (!cancelled) {
-            setSuggestionsLoading(false);
-          }
-        });
-
-      return () => {
-        cancelled = true;
-      };
-    }, [
-      status,
-      messages.length,
-      user,
-      isOwner,
-      initialChatId,
-      chatState.selectedVisibilityType,
-      isLimitBlocked,
-      selectedModel,
-      isUserPro,
-    ]);
+    // Fetch dynamic home suggestions — temporarily disabled to avoid unnecessary compute
+    // useEffect(() => {
+    //   const showPrompts =
+    //     status === 'ready' &&
+    //     messages.length === 0 &&
+    //     ((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
+    //     !isLimitBlocked;
+    //
+    //   if (!showPrompts) {
+    //     setSuggestionsLoading(false);
+    //     setHomeSuggestions(null);
+    //     return;
+    //   }
+    //
+    //   let cancelled = false;
+    //   setSuggestionsLoading(true);
+    //   setHomeSuggestions(null);
+    //
+    //   getHomeSuggestions(selectedModel, isUserPro)
+    //     .then((suggestions) => {
+    //       if (!cancelled && Array.isArray(suggestions) && suggestions.length > 0) {
+    //         setHomeSuggestions(suggestions);
+    //       }
+    //     })
+    //     .catch(() => {
+    //       if (!cancelled) {
+    //         setHomeSuggestions(null);
+    //       }
+    //     })
+    //     .finally(() => {
+    //       if (!cancelled) {
+    //         setSuggestionsLoading(false);
+    //       }
+    //     });
+    //
+    //   return () => {
+    //     cancelled = true;
+    //   };
+    // }, [
+    //   status,
+    //   messages.length,
+    //   user,
+    //   isOwner,
+    //   initialChatId,
+    //   chatState.selectedVisibilityType,
+    //   isLimitBlocked,
+    //   selectedModel,
+    //   isUserPro,
+    // ]);
 
     // Handle example selection from ExampleCategories
     const handleExampleSelect = useCallback(
@@ -1151,8 +1151,8 @@ const ChatInterface = memo(
                       selectedModel={selectedModel}
                       isProUser={isUserPro}
                       onPromptSelect={(text) => handleExampleSelect(text)}
-                      suggestions={homeSuggestions}
-                      suggestionsLoading={suggestionsLoading}
+                      suggestions={null}
+                      suggestionsLoading={false}
                     />
                   )}
 
