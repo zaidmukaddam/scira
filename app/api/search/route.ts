@@ -1,4 +1,4 @@
-// /app/api/chat/route.ts
+// /app/api/search/route.ts
 import {
   generateTitleFromUserMessage,
   getGroupConfig,
@@ -13,25 +13,29 @@ import {
   pruneMessages,
   NoSuchToolError,
   createUIMessageStream,
-  generateObject,
+  createUIMessageStreamResponse,
+  generateText as generateTextAI,
   stepCountIs,
-  JsonToSseTransformStream,
 } from 'ai';
+import { jsonrepair } from 'jsonrepair';
 import { createMemoryTools } from '@/lib/tools/supermemory';
+import { scx } from '@/ai/providers';
 import {
-  scira,
   requiresAuthentication,
   requiresProSubscription,
   shouldBypassRateLimits,
   getModelParameters,
   getMaxOutputTokens,
-} from '@/ai/providers';
+  supportsFunctionCalling,
+  hasReasoningSupport,
+} from '@/ai/models';
 import {
   createStreamId,
   getChatByIdForValidation,
   saveChat,
   saveMessages,
   incrementExtremeSearchUsage,
+  updateChatTitleById,
   incrementMessageUsage,
 } from '@/lib/db/queries';
 import { ChatSDKError } from '@/lib/errors';
@@ -43,6 +47,8 @@ import { geolocation } from '@vercel/functions';
 
 import {
   stockChartTool,
+  stockChartSimpleTool,
+  stockPriceTool,
   currencyConverterTool,
   xSearchTool,
   textTranslateTool,
@@ -51,34 +57,33 @@ import {
   trendingMoviesTool,
   trendingTvTool,
   academicSearchTool,
-  youtubeSearchTool,
+  // youtubeSearchTool, // commented out
   retrieveTool,
   weatherTool,
   codeInterpreterTool,
   findPlaceOnMapTool,
   nearbyPlacesSearchTool,
   flightTrackerTool,
+  flightLiveTrackerTool,
   coinDataTool,
   coinDataByContractTool,
   coinOhlcTool,
   datetimeTool,
   greetingTool,
-  // mcpSearchTool,
   redditSearchTool,
   extremeSearchTool,
   createConnectorsSearchTool,
   codeContextTool,
+  mermaidDiagramTool,
+  troveSearchTool,
+  travelAdvisorTool,
+  ragSearchTool,
+  memoryManagerTool,
 } from '@/lib/tools';
-import { GroqProviderOptions } from '@ai-sdk/groq';
-import { markdownJoinerTransform } from '@/lib/parser';
+import { generateDocumentTool } from '@/lib/tools/generate-document';
 import { ChatMessage } from '@/lib/types';
-import { OpenAIResponsesProviderOptions } from '@ai-sdk/openai';
-import { AnthropicProviderOptions } from '@ai-sdk/anthropic';
 import { getCachedCustomInstructionsByUserId, getCachedUserPreferencesByUserId } from '@/lib/user-data-server';
-import { GoogleGenerativeAIProviderOptions } from '@ai-sdk/google';
 import { unauthenticatedRateLimit, getClientIdentifier } from '@/lib/rate-limit';
-import { CohereChatModelOptions } from '@ai-sdk/cohere';
-import { XaiProviderOptions } from '@ai-sdk/xai';
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -119,7 +124,7 @@ function initializeChatAndChecks({
   model,
 }: ChatInitializationParams): {
   criticalChecksPromise: Promise<CriticalChecksResult>;
-  chatInitializationPromise: Promise<{ isNewChat: boolean; chatTitle?: string }>;
+  chatInitializationPromise: Promise<{ isNewChat: boolean; chatTitle?: string; titlePromise?: Promise<string> }>;
 } {
   // Unauthenticated users don't need chat validation
   if (!lightweightUser) {
@@ -236,17 +241,16 @@ function initializeChatAndChecks({
       }
 
       if (!existingChat) {
-        // New chat: create it only after pro check passes (needed before saving messages due to FK constraint)
-        const chatTitle = await titleGenerationPromise;
+        // New chat: create with placeholder immediately — don't block on title generation.
+        // The real title resolves asynchronously and is sent via the stream once ready.
         await saveChat({
           id,
           userId: lightweightUser.userId,
-          title: chatTitle,
+          title: 'New Chat',
           visibility: selectedVisibilityType,
         });
-        // Now create stream ID (chat exists, so this is safe)
         await createStreamId({ streamId, chatId: id });
-        return { isNewChat: true, chatTitle };
+        return { isNewChat: true, titlePromise: titleGenerationPromise };
       } else {
         // Existing chat: create stream ID immediately (needed for resumable streams)
         await createStreamId({ streamId, chatId: id });
@@ -292,6 +296,15 @@ export async function POST(req: Request) {
   }
 
   let opStart = Date.now();
+  let body: Record<string, unknown>;
+  try {
+    body = await req.json();
+  } catch {
+    return new Response(JSON.stringify({ error: 'invalid_request', message: 'Request body is missing or malformed.' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
   const {
     messages,
     model,
@@ -303,7 +316,18 @@ export async function POST(req: Request) {
     searchProvider,
     extremeSearchProvider,
     selectedConnectors,
-  } = await req.json();
+  } = body as {
+    messages: any[];
+    model: string;
+    group: string;
+    timezone?: string;
+    id: string;
+    selectedVisibilityType?: string;
+    isCustomInstructionsEnabled?: boolean;
+    searchProvider?: string;
+    extremeSearchProvider?: string;
+    selectedConnectors?: string[];
+  };
   recordTiming('parse_request_body', opStart);
 
   opStart = Date.now();
@@ -320,6 +344,7 @@ export async function POST(req: Request) {
   // Use lightweight validation query - only fetches id and userId
   const chatQueryPromise = getChatByIdForValidation({ id }); // Start immediately - doesn't depend on auth
   const rateLimitPromise = (async () => {
+    if (!unauthenticatedRateLimit) return { success: true };
     const identifier = getClientIdentifier(req);
     return unauthenticatedRateLimit.limit(identifier);
   })();
@@ -365,6 +390,10 @@ export async function POST(req: Request) {
       return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
     }
   }
+
+  // In auto mode, tools are required — fall back to deepseek-v3 if the selected model
+  // doesn't support function calling (e.g. llama-3.3, magpie)
+  const effectiveModel = group === 'auto' && !supportsFunctionCalling(model) ? 'deepseek-v3' : model;
 
   // Start config and custom instructions in parallel
   // Use lightweightUser.userId directly instead of waiting for fullUserPromise
@@ -433,11 +462,6 @@ export async function POST(req: Request) {
           parts: messages[messages.length - 1].parts,
           attachments: messages[messages.length - 1].experimental_attachments ?? [],
           createdAt: new Date(),
-          model: model,
-          inputTokens: 0,
-          outputTokens: 0,
-          totalTokens: 0,
-          completionTime: 0,
         },
       ],
     });
@@ -467,223 +491,51 @@ export async function POST(req: Request) {
       })()
     : await convertToModelMessages(messages);
 
+  // Computed once and shared between execute and onFinish closures
+  const supportsReasoning = hasReasoningSupport(effectiveModel);
+
   const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer: dataStream }) => {
-      // Stream chat title for new chats so client can update immediately
-      if (chatInitResult.isNewChat && chatInitResult.chatTitle) {
-        dataStream.write({
-          type: 'data-chat_title',
-          data: { title: chatInitResult.chatTitle },
-          transient: true,
-        });
+      // Stream chat title for new chats — title is generated asynchronously so the
+      // stream can start immediately without waiting for the title AI call to finish.
+      if (chatInitResult.isNewChat && chatInitResult.titlePromise) {
+        chatInitResult.titlePromise.then(async (title) => {
+          dataStream.write({
+            type: 'data-chat_title',
+            data: { title },
+            transient: true,
+          });
+          // Persist the real title now that we have it
+          await updateChatTitleById({ chatId: id, title }).catch(() => {});
+        }).catch(() => {});
       }
 
+      const modelSupportsFunctionCalling = supportsFunctionCalling(effectiveModel);
+
       const result = streamText({
-        model: scira.languageModel(model),
+        model: scx.languageModel(effectiveModel),
         messages: prunedMessages,
-        ...getModelParameters(model),
-        stopWhen: stepCountIs(5),
-        ...(model === "scira-default" || model === "scira-grok4.1-fast-thinking" || model === "scira-glm-4.6" || model === "scira-glm-4.6v-flash" || model === "scira-glm-4.6v" ? {
-          maxOutputTokens: getMaxOutputTokens(model),
-        } : {}),
+        ...getModelParameters(effectiveModel),
+        maxOutputTokens: getMaxOutputTokens(effectiveModel),
+        stopWhen: stepCountIs(20),
         maxRetries: 10,
-        activeTools:
-          model === 'scira-qwen-coder-plus'
-            ? [...activeTools].filter((tool) => tool !== 'code_interpreter')
-            : [...activeTools],
-        experimental_transform: markdownJoinerTransform(),
+        activeTools: modelSupportsFunctionCalling ? [...activeTools] : [],
+        toolChoice: modelSupportsFunctionCalling ? 'auto' : 'none',
+        // experimental_transform: markdownJoinerTransform(), // disabled — flush() emits incomplete chunks that break toUIMessageStream
         system:
           instructions +
+          `\n\n## CONVERSATION CONTEXT\nYou have access to the full conversation history. Always read all prior messages before responding. When a user asks a follow-up question or refers to something discussed earlier (e.g. "it", "that", "what you said", "as mentioned"), use the conversation history to understand what they mean — do NOT search for something new if the information was already covered. Only call a tool again if genuinely new or updated information is needed.` +
+          `\n\nIMPORTANT: Provide your final answer directly without showing your reasoning steps or thought process. Do not use numbered steps, "Step 1:", "Step 2:", or similar formatting. Just give the answer.` +
+          `\n\nTOOL USAGE RULES:\n- ALWAYS use the dedicated tool for: translation (text_translate), currency conversion (currency_converter), stock prices (stock_price), weather (get_weather_data), maps/places (find_place_on_map, nearby_places_search), movies/TV (movie_or_tv_search, trending_movies, trending_tv), current date/time (datetime). These tools exist specifically for these requests — never use web_search as a substitute.\n- Use web_search or extreme_search only for: news, current events, research questions, or factual queries not covered by a dedicated tool.\n- Do NOT use any tool for: pure knowledge questions, math, code explanations, or anything fully answerable from training data.\n- After receiving tool results, IMMEDIATELY provide your answer — do NOT make additional tool calls.\n\nCITATION RULES:\n- ONLY add citation links for URLs actually returned by a tool call. NEVER fabricate or invent URLs.\n- If you answered without calling any tool, do NOT add any links or citations at all. A plain answer is correct.` +
           (customInstructions && (isCustomInstructionsEnabled ?? true)
             ? `\n\nThe user's custom instructions are as follows and YOU MUST FOLLOW THEM AT ALL COSTS: ${customInstructions?.content}`
             : '\n') +
           (latitude && longitude && userPreferencesResult?.preferences?.['scira-location-metadata-enabled'] === true
             ? `\n\nThe user's location is ${latitude}, ${longitude}.`
             : ''),
-        toolChoice: 'auto',
-        ...(model === 'scira-anthropic' || model === 'scira-anthropic-think'
-          ? {
-            headers: {
-              'anthropic-beta': 'context-1m-2025-08-07',
-            },
-          } : {}),
         providerOptions: {
-          gateway: {
-            only: ['openai', 'google', 'zai', 'arcee-ai', 'deepseek', 'alibaba', 'baseten', 'minimax', 'fireworks', 'bedrock', 'vercel'],
-            ...(model === 'scira-kimi-k2-v2-thinking' || model === 'scira-kimi-k2-v2'
-              ? {
-                order: ['baseten', 'fireworks'],
-              }
-              : {}),
-            ...(model === 'scira-qwen-coder' || model === 'scira-deepseek-v3' || model === 'scira-qwen-235'
-              ? {
-                order: ['baseten'],
-              }
-              : {}),
-            ...(model === 'scira-nova-2-lite'
-              ? {
-                order: ['bedrock'],
-              }
-              : {}),
-          },
           openai: {
-            ...(model !== 'scira-qwen-coder'
-              ? {
-                parallelToolCalls: false,
-              }
-              : {}),
-            ...((model === 'scira-gpt5' ||
-              model === 'scira-gpt5-mini' ||
-              model === 'scira-o3' ||
-              model === 'scira-gpt5-nano' ||
-              model === 'scira-gpt5-codex' ||
-              model === 'scira-gpt5-medium' ||
-              model === 'scira-o4-mini' ||
-              model === 'scira-gpt-4.1' ||
-              model === 'scira-gpt-4.1-mini' ||
-              model === 'scira-gpt-4.1-nano' ||
-              model === 'scira-gpt-5.1' ||
-              model === 'scira-gpt-5.1-thinking' ||
-              model === 'scira-gpt-5.1-codex' ||
-              model === 'scira-gpt-5.1-codex-mini' ||
-              model === 'scira-gpt-5.1-codex-max' ||
-              model === 'scira-gpt-5.2' ||
-              model === 'scira-gpt-5.2-thinking'
-              ? {
-                reasoningEffort:
-                  model === 'scira-gpt5-nano' || model === 'scira-gpt5' || model === 'scira-gpt5-mini'
-                    ? 'minimal'
-                    : model === 'scira-gpt-5.1' || model === 'scira-gpt-5.2'
-                      ? 'none'
-                      : 'medium',
-                parallelToolCalls: false,
-                reasoningSummary: 'detailed',
-                promptCacheKey: 'scira-oai',
-                ...(model === 'scira-gpt-5.1' ||
-                  model === 'scira-gpt-5.2' ||
-                  model === 'scira-gpt-5.2-thinking' ||
-                  model === 'scira-gpt-5.1-codex' ||
-                  model === 'scira-gpt-5.1-codex-mini' ||
-                  model === 'scira-gpt-5.1-codex-max' ||
-                  model === 'scira-gpt5' ||
-                  model === 'scira-gpt5-codex' ||
-                  model === 'scira-gpt4.1'
-                  ? {
-                    promptCacheRetention: '24h',
-                  }
-                  : {}),
-                store: false,
-                // only for reasoning models
-                ...(model === 'scira-gpt-5.1' ||
-                  model === 'scira-gpt-5.1-codex' ||
-                  model === 'scira-gpt-5.1-codex-mini' ||
-                  model === 'scira-gpt5' ||
-                  model === 'scira-gpt5-codex' ||
-                  model === 'scira-gpt-5.1-thinking' ||
-                  model === 'scira-gpt5-nano' ||
-                  model === 'scira-gpt5-mini' ||
-                  model === 'scira-gpt-5.1-codex-max' ||
-                  model === 'scira-gpt-5.2' ||
-                  model === 'scira-gpt-5.2-thinking'
-                  ? {
-                    include: ['reasoning.encrypted_content'],
-                  }
-                  : {}),
-                textVerbosity:
-                  model === 'scira-o3' ||
-                    model === 'scira-gpt5-codex' ||
-                    model === 'scira-gpt-5.1-codex' ||
-                    model === 'scira-gpt-5.1-codex-mini' ||
-                    model === 'scira-gpt-5.1-codex-max' ||
-                    model === 'scira-o4-mini' ||
-                    model === 'scira-gpt-4.1' ||
-                    model === 'scira-gpt-4.1-mini' ||
-                    model === 'scira-gpt-4.1-nano'
-                    ? 'medium'
-                    : 'high',
-              }
-              : {}) satisfies OpenAIResponsesProviderOptions),
-          },
-          deepseek: {
             parallelToolCalls: false,
-          },
-          groq: {
-            ...(model === 'scira-gpt-oss-20' || model === 'scira-gpt-oss-120'
-              ? {
-                reasoningEffort: 'high',
-                reasoningFormat: 'hidden',
-              }
-              : {}),
-            ...(model === 'scira-qwen-32b'
-              ? {
-                reasoningEffort: 'none',
-              }
-              : {}),
-            parallelToolCalls: false,
-            structuredOutputs: true,
-            serviceTier: 'auto',
-          } satisfies GroqProviderOptions,
-          xai: {
-            parallel_function_calling: false,
-          } satisfies XaiProviderOptions,
-          cohere: {
-            ...(model === 'scira-cmd-a-think'
-              ? {
-                thinking: {
-                  type: 'enabled',
-                  tokenBudget: 1000,
-                },
-              }
-              : {}),
-          } satisfies CohereChatModelOptions,
-          anthropic: {
-            ...(model === 'scira-anthropic-think' || model === 'scira-anthropic-opus-think'
-              ? {
-                sendReasoning: true,
-                thinking: {
-                  type: 'enabled',
-                  budgetTokens: 4000,
-                },
-              }
-              : {}),
-            disableParallelToolUse: true,
-          } satisfies AnthropicProviderOptions,
-          google: {
-            ...(model === 'scira-google-think' || model === 'scira-google-pro-think'
-              ? {
-                thinkingConfig: {
-                  thinkingBudget: 400,
-                  includeThoughts: true,
-                },
-              }
-              : {}),
-            ...(model === 'scira-gemini-3-pro'
-              ? {
-                thinkingConfig: {
-                  thinkingLevel: 'low',
-                  includeThoughts: true,
-                },
-              }
-              : {}),
-            ...(model === 'scira-gemini-3-flash-think'
-              ? {
-                thinkingConfig: {
-                  thinkingLevel: 'medium',
-                  includeThoughts: true,
-                },
-              }
-              : {}),
-            threshold: 'OFF',
-          } satisfies GoogleGenerativeAIProviderOptions,
-          openrouter: {
-            ...(model === 'scira-anthropic-think' || model === 'scira-anthropic-opus-think'
-              ? {
-                reasoning: {
-                  exclude: false,
-                  max_tokens: 400,
-                },
-              }
-              : {}),
           },
         },
         prepareStep: async ({ steps }) => {
@@ -706,6 +558,8 @@ export async function POST(req: Request) {
         tools: (() => {
           const baseTools = {
             stock_chart: stockChartTool,
+            stock_chart_simple: stockChartSimpleTool,
+            stock_price: stockPriceTool,
             currency_converter: currencyConverterTool,
             coin_data: coinDataTool,
             coin_data_by_contract: coinDataByContractTool,
@@ -714,7 +568,7 @@ export async function POST(req: Request) {
             x_search: xSearchTool(dataStream),
             web_search: webSearchTool(dataStream, searchProvider),
             academic_search: academicSearchTool(dataStream),
-            youtube_search: youtubeSearchTool,
+            // youtube_search: youtubeSearchTool,
             reddit_search: redditSearchTool(dataStream),
             retrieve: retrieveTool,
 
@@ -727,12 +581,18 @@ export async function POST(req: Request) {
             get_weather_data: weatherTool,
 
             text_translate: textTranslateTool,
-            ...(model !== 'scira-qwen-coder-plus' ? { code_interpreter: codeInterpreterTool } : {}),
+            code_interpreter: codeInterpreterTool,
             track_flight: flightTrackerTool,
+            flight_live_tracker: flightLiveTrackerTool,
+            mermaid_diagram: mermaidDiagramTool,
+            trove_search: troveSearchTool,
+            travel_advisor: travelAdvisorTool,
+            rag_search: ragSearchTool,
             datetime: datetimeTool,
             extreme_search: extremeSearchTool(dataStream, extremeSearchProvider || 'exa'),
             greeting: greetingTool(timezone),
             code_context: codeContextTool,
+            generate_document: generateDocumentTool,
           };
 
           if (!user) {
@@ -744,6 +604,7 @@ export async function POST(req: Request) {
             ...baseTools,
             search_memories: memoryTools.searchMemories as any,
             add_memory: memoryTools.addMemory as any,
+            memory_manager: memoryManagerTool as any,
             connectors_search: createConnectorsSearchTool(user.id, selectedConnectors),
           } as any;
         })(),
@@ -764,17 +625,16 @@ export async function POST(req: Request) {
             return null;
           }
 
-          const { object: repairedArgs } = await generateObject({
-            model: scira.languageModel('scira-default'),
-            schema: tool.inputSchema,
+          const { text: repairedText } = await generateTextAI({
+            model: scx.languageModel('deepseek-v3'),
             prompt: [
-              `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,
+              `The model tried to call the tool "${toolCall.toolName}" with the following arguments:`,
               JSON.stringify(toolCall.input),
               `The tool accepts the following schema:`,
               JSON.stringify(inputSchema(toolCall)),
-              'Please fix the arguments.',
+              'Please fix the arguments and respond with ONLY the corrected JSON object, no explanation.',
               'For the code interpreter tool do not use print statements.',
-              `For the web search make multiple queries to get the best results but avoid using the same query multiple times and do not use te include and exclude parameters.`,
+              `For the web search make multiple queries to get the best results but avoid using the same query multiple times and do not use the include and exclude parameters.`,
               `Today's date is ${new Date().toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
@@ -782,6 +642,10 @@ export async function POST(req: Request) {
               })}`,
             ].join('\n'),
           });
+
+          const jsonMatch = repairedText.match(/```(?:json)?\s*([\s\S]*?)```/) || repairedText.match(/\{[\s\S]*\}/);
+          const rawJSON = jsonMatch ? (jsonMatch[1] ?? jsonMatch[0]).trim() : repairedText;
+          const repairedArgs = JSON.parse(jsonrepair(rawJSON));
 
           console.log('repairedArgs', repairedArgs);
 
@@ -806,7 +670,7 @@ export async function POST(req: Request) {
             // Track usage in background
             // Track usage synchronously - this is critical for billing and rate limiting
             try {
-              if (!shouldBypassRateLimits(model, user)) {
+              if (!shouldBypassRateLimits(effectiveModel, user)) {
                 await incrementMessageUsage({ userId: user.id });
               }
 
@@ -830,76 +694,69 @@ export async function POST(req: Request) {
         },
       });
 
-      result.consumeStream();
-
+      // Do NOT call result.consumeStream() — it conflicts with toUIMessageStream()
       dataStream.merge(
         result.toUIMessageStream({
-          sendReasoning: true,
-          messageMetadata: ({ part }) => {
-            if (part.type === 'finish') {
-              console.log('Finish part: ', part);
-              const processingTime = (Date.now() - streamStartTime) / 1000;
-              return {
-                model: model as string,
-                completionTime: processingTime,
-                createdAt: new Date().toISOString(),
-                totalTokens: part.totalUsage?.totalTokens ?? null,
-                inputTokens: part.totalUsage?.inputTokens ?? null,
-                outputTokens: part.totalUsage?.outputTokens ?? null,
-              };
-            }
-          },
+          sendFinish: false,
+          sendReasoning: supportsReasoning,
         }),
       );
     },
     onError(error) {
-      console.log('Error: ', error);
-      if (error instanceof Error && error.message.includes('Rate Limit')) {
-        return 'Oops, you have reached the rate limit! Please try again later.';
+      console.error('Stream error:', error);
+      if (error instanceof Error) {
+        if (error.message.includes('Rate Limit') || error.message.includes('rate limit')) {
+          return 'You have reached the usage limit. Please try again in a moment.';
+        }
+        if (error.message.includes('Bad Request') || error.message.includes('Invalid function calling')) {
+          return 'Something went wrong with the AI response. Please try rephrasing your question.';
+        }
+        if (error.message.includes('timeout') || error.message.includes('Timed out')) {
+          return 'The request took too long. Please try again.';
+        }
       }
-      return 'Oops, an error occurred!';
+      return 'Something went wrong. Please try again.';
     },
-    onFinish: async ({ messages: streamedMessages }) => {
+    onFinish: ({ messages: streamedMessages }) => {
       if (!lightweightUser) {
         return;
       }
 
-      const newMessages = streamedMessages.filter((message) => !initialMessageIds.has(message.id));
+      after(async () => {
+        try {
+          await saveMessages({
+            messages: streamedMessages.map((message) => {
+              const validParts = (message.parts ?? [])
+                .filter((part: any) => part != null && typeof part === 'object')
+                .filter((part: any) => part.type !== 'data-thinking_status')
+                .map((part: any) => {
+                  // Guard against text parts with undefined text (can happen when a step only produces tool calls)
+                  if (part.type === 'text' && part.text === undefined) {
+                    return { ...part, text: '' };
+                  }
+                  // Drop reasoning parts if model doesn't support reasoning
+                  if (part.type === 'reasoning' && !supportsReasoning) {
+                    return null;
+                  }
+                  return part;
+                })
+                .filter((part: any) => part !== null);
 
-      if (newMessages.length === 0) {
-        console.log('No new messages to persist for chat', id);
-        return;
-      }
-
-      await saveMessages({
-        messages: newMessages.map((message) => {
-          const attachments = (message as any).experimental_attachments ?? [];
-          const createdAt =
-            typeof message.metadata?.createdAt === 'string' ? new Date(message.metadata.createdAt) : new Date();
-
-          return {
-            id: message.id,
-            role: message.role,
-            parts: message.parts,
-            createdAt,
-            attachments,
-            chatId: id,
-            model: model,
-            completionTime: message.metadata?.completionTime ?? 0,
-            inputTokens: message.metadata?.inputTokens ?? 0,
-            outputTokens: message.metadata?.outputTokens ?? 0,
-            totalTokens: message.metadata?.totalTokens ?? 0,
-          };
-        }),
+              return {
+                id: message.id,
+                role: message.role,
+                parts: validParts,
+                createdAt: new Date(),
+                attachments: [],
+                chatId: id,
+              };
+            }),
+          });
+        } catch (error) {
+          console.error('Failed to save messages in onFinish:', error);
+        }
       });
     },
   });
-  const streamContext = getStreamContext();
-
-  if (streamContext) {
-    return new Response(
-      await streamContext.resumableStream(streamId, () => stream.pipeThrough(new JsonToSseTransformStream())),
-    );
-  }
-  return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
+  return createUIMessageStreamResponse({ stream });
 }

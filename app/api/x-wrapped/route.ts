@@ -55,7 +55,8 @@ function clampPercent(value: number): number {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
 
-const redis = Redis.fromEnv();
+const redis =
+  process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN ? Redis.fromEnv() : null;
 const CACHE_TTL_SECONDS = 5 * 60; // 5 minutes
 
 export async function POST(req: NextRequest) {
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest) {
 
     // Check cache
     const cacheKey = `x-wrapped:${cleanUsername}:${year}`;
-    const cached = await redis.get<XWrappedData>(cacheKey);
+    const cached = redis ? await redis.get<XWrappedData>(cacheKey) : null;
     if (cached) {
       return NextResponse.json(cached);
     }
@@ -348,7 +349,7 @@ Hard rules:
         searchSteps: [...searchSteps],
       };
       // Cache empty result too
-      await redis.set(cacheKey, wrappedData, { ex: CACHE_TTL_SECONDS });
+      await redis?.set(cacheKey, wrappedData, { ex: CACHE_TTL_SECONDS });
       return NextResponse.json(wrappedData);
     }
 
@@ -424,7 +425,7 @@ Output must match the schema exactly.`,
       searchSteps: [...searchSteps],
     };
 
-    await redis.set(cacheKey, wrappedData, { ex: CACHE_TTL_SECONDS });
+    await redis?.set(cacheKey, wrappedData, { ex: CACHE_TTL_SECONDS });
 
     return NextResponse.json(wrappedData);
   } catch (error) {

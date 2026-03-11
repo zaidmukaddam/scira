@@ -7,16 +7,16 @@
 
 import Exa from 'exa-js';
 import { Daytona } from '@daytonaio/sdk';
-import { generateObject, generateText, stepCountIs, tool } from 'ai';
+import { generateText, stepCountIs, tool } from 'ai';
 import type { UIMessageStreamWriter } from 'ai';
 import { z } from 'zod';
 import { serverEnv } from '@/env/server';
-import { scira } from '@/ai/providers';
+import { scx } from '@/ai/providers';
+import { generateJSON } from '@/lib/generate-json';
 import { SNAPSHOT_NAME } from '@/lib/constants';
 import { ChatMessage } from '../types';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import { getTweet } from 'react-tweet/api';
-import { XaiProviderOptions, xai } from '@ai-sdk/xai';
 import Parallel from 'parallel-web';
 
 const pythonLibsAvailable = [
@@ -372,44 +372,53 @@ async function extremeSearch(
     });
   }
 
-  // plan out the research
-  const { object: result } = await generateObject({
-    model: scira.languageModel('scira-grok-4'),
-    schema: z.object({
+  // Plan the research — use generateJSON (generateText + jsonrepair) so no response_format
+  // is sent to the API (DeepSeek doesn't support it). Zod constraints are kept lenient.
+  let plan: { title: string; todos: string[] }[];
+
+  try {
+    const planSchema = z.object({
       plan: z
         .array(
           z.object({
-            title: z.string().min(10).max(70).describe('A title for the research topic'),
-            todos: z.array(z.string()).min(3).max(5).describe('A list of what to research for the given title'),
+            title: z.string().describe('A title for the research topic'),
+            todos: z.array(z.string()).min(1).describe('A list of what to research for the given title'),
           }),
         )
         .min(1)
         .max(5),
-    }),
-    prompt: `
-Plan out the research for the following topic: ${prompt}.
+    });
 
-Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
+    const result = await generateJSON({
+      model: scx.languageModel('deepseek-v3'),
+      schema: planSchema,
+      prompt: `Plan out the research for the following topic: ${prompt}.
+
+Today's Date: ${new Date().toLocaleDateString('en-AU', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
 
 Plan Guidelines:
-- Break down the topic into key aspects to research
-- Generate specific, diverse search queries for each aspect
-- Search for relevant information using the web search tool
-- Analyze the results and identify important facts and insights
-- The plan is limited to 15 actions, do not exceed this limit!
-- Follow up with more specific queries as you learn more
-- Add todos for code execution if it is asked for by the user
-- No need to synthesize your findings into a comprehensive response, just return the results
-- The plan should be concise and to the point, no more than 10 items
-- Keep the titles concise and to the point, no more than 70 characters
-- Mention if the topic needs to use the xSearch tool
-- Mention any need for visualizations in the plan
+- Break down the topic into 1-5 key aspects to research
+- For each aspect, list 1-5 specific search queries or tasks
+- The plan is limited to 15 total actions
+- Keep titles concise (under 70 characters)
 - Make the plan technical and specific to the topic`,
-  });
+    });
 
-  console.log(result.plan);
-
-  const plan = result.plan;
+    console.log('Generated plan:', result.plan);
+    plan = result.plan;
+  } catch (planError) {
+    console.error('Failed to generate research plan, using fallback:', planError);
+    plan = [
+      {
+        title: `Research: ${prompt.slice(0, 60)}`,
+        todos: [
+          `Search for latest information about: ${prompt}`,
+          `Find key facts and statistics about: ${prompt}`,
+          `Look for recent news and developments about: ${prompt}`,
+        ],
+      },
+    ];
+  }
 
   // calculate the total number of todos
   const totalTodos = plan.reduce((acc, curr) => acc + curr.todos.length, 0);
@@ -430,7 +439,7 @@ Plan Guidelines:
 
   // Create the autonomous research agent with tools
   const { text } = await generateText({
-    model: xai('grok-4-1-fast'),
+    model: scx.languageModel('deepseek-v3.1'),
     stopWhen: stepCountIs(totalTodos),
     activeTools: ['codeRunner', 'webSearch', 'xSearch'],
     system: `
@@ -518,9 +527,9 @@ ${JSON.stringify(plan)}
     prompt,
     temperature: 1,
     providerOptions: {
-      xai: {
-        parallel_function_calling: false,
-      } satisfies XaiProviderOptions,
+      openai: {
+        parallelToolCalls: false,
+      },
     },
     tools: {
       codeRunner: {

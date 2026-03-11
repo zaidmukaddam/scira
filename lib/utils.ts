@@ -14,6 +14,7 @@ import {
   AppleStocksIcon,
   ConnectIcon,
   CodeCircleIcon,
+  ArtificialIntelligence04Icon,
 } from '@hugeicons/core-free-icons';
 
 export function cn(...inputs: ClassValue[]) {
@@ -32,7 +33,8 @@ export type SearchGroupId =
   | 'memory'
   | 'crypto'
   | 'code'
-  | 'connectors';
+  | 'connectors'
+  | 'auto';
 
 // Search provider information for dynamic descriptions
 export const searchProviderInfo = {
@@ -54,6 +56,15 @@ export function getWebSearchDescription(provider: SearchProvider = 'exa'): strin
 export function getSearchGroups(searchProvider: SearchProvider = 'exa') {
   return [
     {
+      id: 'auto' as const,
+      name: 'Auto',
+      description: 'Intelligent tool selection with access to all 30+ tools',
+      icon: ArtificialIntelligence04Icon,
+      show: true,
+      requireAuth: true,
+      requirePro: true,
+    },
+    {
       id: 'web' as const,
       name: 'Web',
       description: getWebSearchDescription(searchProvider),
@@ -72,7 +83,7 @@ export function getSearchGroups(searchProvider: SearchProvider = 'exa') {
       name: 'X',
       description: 'Search X posts',
       icon: NewTwitterIcon,
-      show: true,
+      show: false,
     },
     {
       id: 'stocks' as const,
@@ -125,21 +136,21 @@ export function getSearchGroups(searchProvider: SearchProvider = 'exa') {
       name: 'Reddit',
       description: 'Search Reddit posts powered by Parallel',
       icon: RedditIcon,
-      show: true,
+      show: false,
     },
     {
       id: 'crypto' as const,
       name: 'Crypto',
       description: 'Cryptocurrency research powered by CoinGecko',
       icon: Bitcoin02Icon,
-      show: true,
+      show: false,
     },
     {
       id: 'youtube' as const,
       name: 'YouTube',
       description: 'Search content inside YouTube videos, channels and playlists',
       icon: YoutubeIcon,
-      show: true,
+      show: false, // youtube_search tool is disabled
     },
   ] as const;
 }

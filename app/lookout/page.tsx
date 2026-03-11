@@ -308,7 +308,7 @@ export default function LookoutPage() {
                   <SidebarTrigger />
                 </div>
                 <HugeiconsIcon icon={BinocularsIcon} size={32} color="currentColor" strokeWidth={1.5} />
-                <h1 className="text-2xl font-semibold font-be-vietnam-pro">Scira Lookout</h1>
+                <h1 className="text-2xl font-semibold font-be-vietnam-pro">SCX.ai Lookout</h1>
               </div>
 
               {isMobile ? (

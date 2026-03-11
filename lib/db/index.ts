@@ -17,71 +17,70 @@ const cache = new RedisDrizzleCache({
   namespace: 'scira:drizzle',
 });
 
+// Supabase PgBouncer uses a self-signed cert chain; rejectUnauthorized: false
+// keeps the connection encrypted while skipping strict CA verification.
+const sslConfig = { rejectUnauthorized: false };
+
 export const maindb = drizzle({
   client: new Pool({
     connectionString: serverEnv.DATABASE_URL,
-    ssl: true,
+    ssl: sslConfig,
   }),
   schema,
   cache,
 });
 
-const dbread1 = drizzle({
-  client: new Pool({
-    connectionString: process.env.READ_DB_1,
-    ssl: true,
-  }),
-  schema,
-  cache,
-});
+// Only create read replicas when URLs are explicitly configured.
+// When absent, all reads fall through to maindb automatically.
+const readReplicas: ReturnType<typeof drizzle>[] = [];
 
-const dbread2 = drizzle({
-  client: new Pool({
-    connectionString: process.env.READ_DB_2,
-    ssl: true,
-  }),
-  schema,
-  cache,
-});
+if (process.env.READ_DB_1) {
+  readReplicas.push(drizzle({
+    client: new Pool({ connectionString: process.env.READ_DB_1, ssl: sslConfig }),
+    schema,
+    cache,
+  }));
+}
+
+if (process.env.READ_DB_2) {
+  readReplicas.push(drizzle({
+    client: new Pool({ connectionString: process.env.READ_DB_2, ssl: sslConfig }),
+    schema,
+    cache,
+  }));
+}
 
 const REPLICA_WEIGHTS = [4, 6];
 let currentIndex = -1;
 let currentWeight = 0;
 
 const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
-const MAX_WEIGHT = Math.max(...REPLICA_WEIGHTS);
-const WEIGHT_GCD = REPLICA_WEIGHTS.reduce(gcd);
 
 function selectReplica<T>(replicas: readonly T[]): T {
-  if (!replicas.length) {
-    throw new Error('No replicas configured');
-  }
-
+  if (!replicas.length) throw new Error('No replicas configured');
   const weights = REPLICA_WEIGHTS.slice(0, replicas.length);
-
+  const maxWeight = Math.max(...weights);
+  const weightGcd = weights.reduce(gcd);
   while (true) {
     currentIndex = (currentIndex + 1) % replicas.length;
-
     if (currentIndex === 0) {
-      currentWeight -= WEIGHT_GCD;
-      if (currentWeight <= 0) {
-        currentWeight = MAX_WEIGHT;
-      }
+      currentWeight -= weightGcd;
+      if (currentWeight <= 0) currentWeight = maxWeight;
     }
-
-    if (weights[currentIndex] >= currentWeight) {
-      return replicas[currentIndex]!;
-    }
+    if (weights[currentIndex] >= currentWeight) return replicas[currentIndex]!;
   }
 }
 
-export const db = withReplicas(maindb, [dbread1, dbread2], (replicas) => selectReplica(replicas));
+export const db =
+  readReplicas.length > 0
+    ? withReplicas(maindb, readReplicas as any, (replicas: any) => selectReplica(replicas))
+    : maindb;
 
-type ReplicaClient = (typeof db)['$replicas'][number];
+type ReplicaClient = typeof maindb;
 
 export function getReadReplica(): ReplicaClient {
-  return selectReplica(db.$replicas);
+  return readReplicas.length > 0 ? selectReplica(readReplicas as any) : maindb;
 }
 
 // Export all database instances for cache invalidation
-export const allDatabases = [maindb, dbread1, dbread2] as const;
+export const allDatabases = [maindb, ...readReplicas] as const;

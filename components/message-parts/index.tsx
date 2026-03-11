@@ -4,6 +4,7 @@ import { ReasoningUIPart, DataUIPart, isToolUIPart, isStaticToolUIPart } from 'a
 import { ReasoningPartView } from '@/components/reasoning-part';
 import { MarkdownRenderer } from '@/components/markdown';
 import { ChatTextHighlighter } from '@/components/chat-text-highlighter';
+import { DocumentCard } from '@/components/document-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -64,7 +65,7 @@ import {
 } from '@phosphor-icons/react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { getModelConfig } from '@/ai/providers';
+import { getModelConfig } from '@/ai/models';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 import { Spinner } from '../ui/spinner';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -489,7 +490,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                             }
 
                             const payload = {
-                              title: 'Scira AI',
+                              title: 'SCX.ai',
                               content,
                               meta: {
                                 modelLabel: modelLabel || null,
@@ -510,7 +511,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
-                            a.download = `scira-export-${message.id || Date.now()}.pdf`;
+                            a.download = `scx-export-${message.id || Date.now()}.pdf`;
                             document.body.appendChild(a);
                             a.click();
                             a.remove();
@@ -573,7 +574,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                             const url = URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
-                            a.download = `scira-export-${message.id || Date.now()}.md`;
+                            a.download = `scx-export-${message.id || Date.now()}.md`;
                             document.body.appendChild(a);
                             a.click();
                             a.remove();
@@ -1006,6 +1007,254 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     market_movers={part.output.market_movers}
                   />
                 );
+            }
+            break;
+
+          case 'tool-stock_chart_simple':
+            switch (part.state) {
+              case 'input-streaming':
+                return (
+                  <div
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    className="flex items-center gap-3 w-full mt-4 p-3 bg-muted/30 rounded-lg border border-border/40"
+                  >
+                    <TrendingUpIcon className="h-4 w-4 text-primary/80" />
+                    <span className="text-sm text-muted-foreground">Preparing stock chart...</span>
+                  </div>
+                );
+              case 'input-available':
+                return (
+                  <StockChartLoader
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    title={part.input?.title}
+                    input={part.input}
+                  />
+                );
+              case 'output-available':
+                if (!part.output.success || !part.output.chart) {
+                  return (
+                    <Card
+                      key={`${messageIndex}-${partIndex}-tool`}
+                      className="my-2 shadow-none bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+                    >
+                      <CardContent className="py-3 px-4">
+                        <p className="text-red-700 dark:text-red-300 text-sm">
+                          {part.output.error || 'Unable to create stock chart'}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                }
+                return (
+                  <InteractiveStockChart
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    title={part.input.title}
+                    chart={{
+                      ...part.output.chart,
+                      x_scale: 'datetime',
+                    }}
+                    data={part.output.chart.elements}
+                    stock_symbols={part.input.companies || []}
+                    currency_symbols={part.output.currency_symbols || ['USD']}
+                    interval={part.input.time_period || '1 year'}
+                    resolved_companies={part.output.resolved_companies || []}
+                    earnings_data={[]}
+                    news_results={[]}
+                    sec_filings={[]}
+                    company_statistics={part.output.company_statistics || {}}
+                    balance_sheets={{}}
+                    income_statements={{}}
+                    cash_flows={{}}
+                    dividends_data={{}}
+                    insider_transactions={{}}
+                  />
+                );
+            }
+            break;
+
+          case 'tool-stock_price':
+            switch (part.state) {
+              case 'input-streaming':
+                return (
+                  <div
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    className="flex items-center gap-3 w-full mt-4 p-3 bg-muted/30 rounded-lg border border-border/40"
+                  >
+                    <TrendingUpIcon className="h-4 w-4 text-primary/80 animate-pulse" />
+                    <span className="text-sm text-muted-foreground">Looking up stock price...</span>
+                  </div>
+                );
+              case 'input-available':
+                return (
+                  <Card
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    className="my-2 shadow-none bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800"
+                  >
+                    <CardHeader className="py-3 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-neutral-200 dark:bg-neutral-800 animate-pulse flex items-center justify-center">
+                          <TrendingUpIcon className="h-5 w-5 text-neutral-400" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="h-5 w-32 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+                          <div className="h-4 w-20 bg-neutral-200 dark:bg-neutral-800 rounded mt-1 animate-pulse" />
+                        </div>
+                        <div className="text-right">
+                          <div className="h-6 w-24 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+                          <div className="h-4 w-16 bg-neutral-200 dark:bg-neutral-800 rounded mt-1 animate-pulse" />
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                );
+              case 'output-available': {
+                if (!part.output.success) {
+                  return (
+                    <Card
+                      key={`${messageIndex}-${partIndex}-tool`}
+                      className="my-2 shadow-none bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
+                    >
+                      <CardContent className="py-3 px-4">
+                        <p className="text-red-700 dark:text-red-300 text-sm">
+                          {('error' in part.output ? part.output.error : null) || 'Unable to fetch stock price'}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                }
+
+                const stockOutput = part.output as {
+                  success: true;
+                  symbol: string;
+                  name: string;
+                  last_price: number;
+                  currency: string;
+                  exchange: string;
+                  change: number;
+                  change_percent: number;
+                  formatted_price?: string;
+                  price_movement?: string;
+                  day_range?: string | null;
+                  open?: number;
+                  previous_close?: number;
+                  volume?: number;
+                  market_cap?: number;
+                  market_status?: { isOpen: boolean; message: string };
+                };
+
+                const isPositive = (stockOutput.change ?? 0) >= 0;
+                const changeColor = isPositive
+                  ? 'text-green-600 dark:text-green-400'
+                  : 'text-red-600 dark:text-red-400';
+                const changeBg = isPositive ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30';
+
+                return (
+                  <Card
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    className="my-2 shadow-none bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 overflow-hidden"
+                  >
+                    <CardHeader className="py-3 px-4 pb-2">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={cn(
+                              'h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm',
+                              isPositive
+                                ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+                            )}
+                          >
+                            {stockOutput.symbol?.slice(0, 3) || '???'}
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-base text-neutral-900 dark:text-neutral-100">
+                              {stockOutput.name || stockOutput.symbol}
+                            </h3>
+                            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                              {stockOutput.symbol} • {stockOutput.exchange || 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-xl font-bold text-neutral-900 dark:text-neutral-100">
+                            {stockOutput.formatted_price ||
+                              `${stockOutput.currency === 'AUD' ? 'A$' : '$'}${stockOutput.last_price?.toFixed(2)}`}
+                          </p>
+                          <Badge className={cn('text-xs font-medium', changeBg, changeColor)}>
+                            {isPositive ? '↑' : '↓'}{' '}
+                            {stockOutput.price_movement ||
+                              `${isPositive ? '+' : ''}${stockOutput.change?.toFixed(2)} (${isPositive ? '+' : ''}${stockOutput.change_percent?.toFixed(2)}%)`}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    {(stockOutput.day_range ||
+                      stockOutput.open ||
+                      stockOutput.previous_close ||
+                      stockOutput.volume ||
+                      stockOutput.market_cap) && (
+                      <CardContent className="px-4 pb-3 pt-2">
+                        <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                          {stockOutput.day_range && (
+                            <div>
+                              <p className="text-neutral-500 dark:text-neutral-400 text-xs">Day Range</p>
+                              <p className="font-medium text-neutral-700 dark:text-neutral-300">
+                                {stockOutput.day_range}
+                              </p>
+                            </div>
+                          )}
+                          {stockOutput.open && (
+                            <div>
+                              <p className="text-neutral-500 dark:text-neutral-400 text-xs">Open</p>
+                              <p className="font-medium text-neutral-700 dark:text-neutral-300">
+                                {stockOutput.currency === 'AUD' ? 'A$' : '$'}
+                                {stockOutput.open.toFixed(2)}
+                              </p>
+                            </div>
+                          )}
+                          {stockOutput.previous_close && (
+                            <div>
+                              <p className="text-neutral-500 dark:text-neutral-400 text-xs">Prev Close</p>
+                              <p className="font-medium text-neutral-700 dark:text-neutral-300">
+                                {stockOutput.currency === 'AUD' ? 'A$' : '$'}
+                                {stockOutput.previous_close.toFixed(2)}
+                              </p>
+                            </div>
+                          )}
+                          {stockOutput.volume && (
+                            <div>
+                              <p className="text-neutral-500 dark:text-neutral-400 text-xs">Volume</p>
+                              <p className="font-medium text-neutral-700 dark:text-neutral-300">
+                                {stockOutput.volume.toLocaleString()}
+                              </p>
+                            </div>
+                          )}
+                          {stockOutput.market_cap && (
+                            <div>
+                              <p className="text-neutral-500 dark:text-neutral-400 text-xs">Market Cap</p>
+                              <p className="font-medium text-neutral-700 dark:text-neutral-300">
+                                {stockOutput.currency === 'AUD' ? 'A$' : '$'}
+                                {(stockOutput.market_cap / 1e9).toFixed(1)}B
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    )}
+                    {stockOutput.market_status && (
+                      <CardFooter className="px-4 py-2 bg-neutral-50 dark:bg-neutral-800/50 text-xs text-neutral-500 flex items-center gap-2">
+                        <div
+                          className={cn(
+                            'w-2 h-2 rounded-full',
+                            stockOutput.market_status.isOpen ? 'bg-green-500' : 'bg-neutral-400',
+                          )}
+                        />
+                        <span>{stockOutput.market_status.message}</span>
+                      </CardFooter>
+                    )}
+                  </Card>
+                );
+              }
             }
             break;
 
@@ -1952,6 +2201,101 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
             }
             break;
+
+          case 'tool-mermaid_diagram':
+            switch (part.state) {
+              case 'input-streaming':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                    Generating diagram...
+                  </div>
+                );
+              case 'input-available':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                    Creating {part.input?.format || 'SVG'} diagram...
+                  </div>
+                );
+              case 'output-available':
+                if (part.output?.success && part.output?.svg) {
+                  return (
+                    <div key={`${messageIndex}-${partIndex}-tool`} className="my-4">
+                      <Card className="overflow-hidden bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800">
+                        <CardHeader className="pb-3">
+                          <div className="text-sm font-medium flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
+                              />
+                            </svg>
+                            {part.output.title || 'Mermaid Diagram'}
+                          </div>
+                        </CardHeader>
+                        <CardContent className="p-4 flex justify-center items-center bg-white dark:bg-neutral-950/50">
+                          <div
+                            className="w-full flex justify-center overflow-x-auto"
+                            dangerouslySetInnerHTML={{ __html: part.output.svg }}
+                          />
+                        </CardContent>
+                        {part.output.sizeFormatted && (
+                          <CardFooter className="pt-2 pb-3 text-xs text-muted-foreground">
+                            {part.output.format?.toUpperCase()} • {part.output.sizeFormatted}
+                            {part.output.cached && ' • Cached'}
+                          </CardFooter>
+                        )}
+                      </Card>
+                    </div>
+                  );
+                } else if (part.output?.error) {
+                  return (
+                    <div key={`${messageIndex}-${partIndex}-tool`} className="my-4">
+                      <Card className="border-destructive">
+                        <CardHeader>
+                          <div className="text-sm font-medium text-destructive">Diagram Generation Failed</div>
+                        </CardHeader>
+                        <CardContent className="text-sm text-muted-foreground">{part.output.error}</CardContent>
+                      </Card>
+                    </div>
+                  );
+                }
+                return null;
+            }
+            break;
+
+          case 'tool-generate_document':
+            switch (part.state) {
+              case 'input-streaming':
+              case 'input-available':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="flex items-center gap-2 text-sm text-neutral-500">
+                    <svg className="animate-spin h-3.5 w-3.5 text-blue-500" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Writing document{part.input?.title ? `: "${part.input.title}"` : '...'}
+                  </div>
+                );
+              case 'output-available':
+                if (part.output?.content) {
+                  return (
+                    <DocumentCard
+                      key={`${messageIndex}-${partIndex}-tool`}
+                      title={part.output.title ?? 'Document'}
+                      description={part.output.description}
+                      content={part.output.content}
+                      documentType={part.output.documentType}
+                      wordCount={part.output.wordCount}
+                      generatedAt={part.output.generatedAt}
+                    />
+                  );
+                }
+                return null;
+              default:
+                return null;
+            }
 
           case 'tool-retrieve':
             switch (part.state) {

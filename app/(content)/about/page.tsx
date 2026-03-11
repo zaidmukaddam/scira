@@ -16,14 +16,14 @@ import {
   ProAccordionContent,
 } from '@/components/ui/pro-accordion';
 import { useGitHubStars } from '@/hooks/use-github-stars';
-import { models } from '@/ai/providers';
+import { models } from '@/ai/models';
 import { VercelLogo } from '@/components/logos/vercel-logo';
 import { ExaLogo } from '@/components/logos/exa-logo';
 import { ElevenLabsLogo } from '@/components/logos/elevenlabs-logo';
 import { PRICING, SEARCH_LIMITS } from '@/lib/constants';
 
 import { ThemeSwitcher } from '@/components/theme-switcher';
-import { SciraLogo } from '@/components/logos/scira-logo';
+import { SouthernCrossLogo } from '@/components/logos/southerncross-logo';
 import { getSearchGroups } from '@/lib/utils';
 
 export default function AboutPage() {
@@ -61,8 +61,8 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between h-14 px-6">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <SciraLogo className="size-6 transition-transform duration-300 group-hover:scale-110" />
-              <span className="text-xl font-light tracking-tighter font-be-vietnam-pro">scira</span>
+              <SouthernCrossLogo variant="square" className="size-6" />
+              <span className="text-xl font-light tracking-tighter font-be-vietnam-pro">SCX.ai</span>
             </Link>
 
             <div className="flex items-center gap-4">
@@ -87,7 +87,7 @@ export default function AboutPage() {
                 className="h-8 px-4 text-sm rounded-none"
                 onClick={() => router.push('/')}
               >
-                Try Scira
+                Try SCX.ai
               </Button>
             </div>
           </div>
@@ -224,7 +224,7 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto px-6 py-20">
           <div className="mb-12">
             <p className="text-xs text-muted-foreground tracking-wide mb-3">Capabilities</p>
-            <h2 className="text-2xl font-light tracking-tight font-be-vietnam-pro">What makes Scira different</h2>
+            <h2 className="text-2xl font-light tracking-tight font-be-vietnam-pro">What makes SCX.ai different</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-px bg-border">
@@ -308,7 +308,7 @@ export default function AboutPage() {
                 src="https://openalternative.co/scira/badge.svg?theme=dark&width=200&height=50"
                 width={150}
                 height={38}
-                alt="Scira badge"
+                alt="SCX.ai badge"
               />
             </a>
           </div>
@@ -686,7 +686,7 @@ export default function AboutPage() {
                 </li>
                 <li className="flex items-start gap-3 text-sm text-muted-foreground">
                   <span className="w-1 h-1 rounded-full bg-foreground/40 mt-2 shrink-0" />
-                  Scira Lookout
+                  SCX.ai Lookout
                 </li>
               </ul>
 
@@ -722,9 +722,9 @@ export default function AboutPage() {
 
           <ProAccordion type="single" collapsible className="w-full">
             <ProAccordionItem value="item-1">
-              <ProAccordionTrigger>What is Scira?</ProAccordionTrigger>
+              <ProAccordionTrigger>What is SCX.ai?</ProAccordionTrigger>
               <ProAccordionContent>
-                Scira is an open-source agentic research platform. It combines planning + tool use with RAG
+                SCX.ai is an open-source agentic research platform. It combines planning + tool use with RAG
                 (Retrieval-Augmented Generation) and search grounding to produce accurate, up-to-date answers with
                 citations.
               </ProAccordionContent>
@@ -757,17 +757,17 @@ export default function AboutPage() {
             </ProAccordionItem>
 
             <ProAccordionItem value="item-5">
-              <ProAccordionTrigger>What AI models does Scira use?</ProAccordionTrigger>
+              <ProAccordionTrigger>What AI models does SCX.ai use?</ProAccordionTrigger>
               <ProAccordionContent>
-                Scira uses a range of advanced AI models including Grok, Claude, OpenAI GPT, Gemini, and more to
+                SCX.ai uses a range of advanced AI models including Grok, Claude, OpenAI GPT, Gemini, and more to
                 provide the best possible answers for different types of queries.
               </ProAccordionContent>
             </ProAccordionItem>
 
             <ProAccordionItem value="item-6">
-              <ProAccordionTrigger>How does Scira ensure information accuracy?</ProAccordionTrigger>
+              <ProAccordionTrigger>How does SCX.ai ensure information accuracy?</ProAccordionTrigger>
               <ProAccordionContent>
-                Scira grounds outputs in retrieved sources (RAG + search grounding) and includes citations so you
+                SCX.ai grounds outputs in retrieved sources (RAG + search grounding) and includes citations so you
                 can audit the evidence. Agents can cross-check multiple sources before synthesizing an answer.
               </ProAccordionContent>
             </ProAccordionItem>
@@ -779,8 +779,8 @@ export default function AboutPage() {
               <p className="text-sm font-medium text-foreground">Have more questions?</p>
               <p className="text-xs text-muted-foreground">
                 Reach out at{' '}
-                <a href="mailto:zaid@scira.ai" className="text-foreground hover:underline">
-                  zaid@scira.ai
+                <a href="mailto:support@scx.ai" className="text-foreground hover:underline">
+                  support@scx.ai
                 </a>
               </p>
             </div>
@@ -802,8 +802,8 @@ export default function AboutPage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-3">
-              <SciraLogo className="size-4" />
-              <span className="text-xs text-muted-foreground">© {new Date().getFullYear()} Scira</span>
+              <SouthernCrossLogo variant="square" className="size-6" />
+              <span className="text-xs text-muted-foreground">© {new Date().getFullYear()} SCX.ai</span>
             </div>
             <div className="flex items-center gap-6">
               <Link href="/terms" className="text-xs text-muted-foreground hover:text-foreground transition-colors">

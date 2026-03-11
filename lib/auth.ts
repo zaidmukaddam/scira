@@ -62,10 +62,14 @@ const polarClient = new Polar({
   ...(process.env.NODE_ENV === 'production' ? {} : { server: 'sandbox' }),
 });
 
-export const dodoPayments = new DodoPayments({
-  bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
-  ...(process.env.NODE_ENV === 'production' ? { environment: 'live_mode' } : { environment: 'test_mode' }),
-});
+export const dodoPayments = process.env.DODO_PAYMENTS_API_KEY
+  ? new DodoPayments({
+      bearerToken: process.env.DODO_PAYMENTS_API_KEY,
+      ...(process.env.NODE_ENV === 'production' ? { environment: 'live_mode' } : { environment: 'test_mode' }),
+    })
+  : null;
+
+const hasDodoPayments = !!process.env.DODO_PAYMENTS_API_KEY;
 
 // Helper function to handle subscription webhooks
 async function handleSubscriptionWebhook(payload: any, status: string) {
@@ -187,6 +191,14 @@ export const auth = betterAuth({
   rateLimit: {
     max: 100,
     window: 60,
+  },
+  session: {
+    // Cache session data in an encrypted cookie to avoid a DB round-trip on every request.
+    // Without this, every API call blocks ~600ms waiting for the session DB lookup.
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // 5 minutes (seconds)
+    },
   },
   experimental: { joins: true },
   database: drizzleAdapter(db, {
@@ -426,69 +438,65 @@ export const auth = betterAuth({
         }),
       ],
     }),
-    dodopayments({
-      client: dodoPayments,
-      createCustomerOnSignUp: true,
-      use: [
-        dodocheckout({
-          products: [
-            {
-              productId:
-                process.env.NEXT_PUBLIC_PREMIUM_TIER ||
-                (() => {
-                  throw new Error('NEXT_PUBLIC_PREMIUM_TIER environment variable is required');
-                })(),
-              slug:
-                process.env.NEXT_PUBLIC_PREMIUM_SLUG ||
-                (() => {
-                  throw new Error('NEXT_PUBLIC_PREMIUM_SLUG environment variable is required');
-                })(),
-            },
-          ],
-          successUrl: '/success',
-          authenticatedUsersOnly: true,
-        }),
-        dodoportal(),
-        dodowebhooks({
-          webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET!,
-          onPayload: async (payload) => {
-            const webhookPayload = payload;
-            console.log('🔔 Received Dodo Payments webhook:', webhookPayload.type);
-            console.log('📦 Payload data:', JSON.stringify(webhookPayload.data, null, 2));
-          },
-          onSubscriptionActive: async (payload) => {
-            console.log('🎯 Processing subscription.active webhook');
-            await handleSubscriptionWebhook(payload, 'active');
-          },
-          onSubscriptionOnHold: async (payload) => {
-            console.log('🎯 Processing subscription.on_hold webhook');
-            await handleSubscriptionWebhook(payload, 'on_hold');
-          },
-          onSubscriptionRenewed: async (payload) => {
-            console.log('🎯 Processing subscription.renewed webhook');
-            await handleSubscriptionWebhook(payload, 'active');
-          },
-          onSubscriptionPlanChanged: async (payload) => {
-            console.log('🎯 Processing subscription.plan_changed webhook');
-            await handleSubscriptionWebhook(payload, 'active');
-          },
-          onSubscriptionCancelled: async (payload) => {
-            console.log('🎯 Processing subscription.cancelled webhook');
-            await handleSubscriptionWebhook(payload, 'cancelled');
-          },
-          onSubscriptionFailed: async (payload) => {
-            console.log('🎯 Processing subscription.failed webhook');
-            await handleSubscriptionWebhook(payload, 'failed');
-          },
-          onSubscriptionExpired: async (payload) => {
-            console.log('🎯 Processing subscription.expired webhook');
-            await handleSubscriptionWebhook(payload, 'expired');
-          },
-        }),
-      ],
-    }),
+    ...(hasDodoPayments
+      ? [
+          dodopayments({
+            client: dodoPayments!,
+            createCustomerOnSignUp: true,
+            use: [
+              dodocheckout({
+                products: [
+                  {
+                    productId: process.env.NEXT_PUBLIC_PREMIUM_TIER || 'placeholder-product-id',
+                    slug: process.env.NEXT_PUBLIC_PREMIUM_SLUG || 'placeholder-slug',
+                  },
+                ],
+                successUrl: '/success',
+                authenticatedUsersOnly: true,
+              }),
+              dodoportal(),
+              dodowebhooks({
+                webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET || '',
+                onPayload: async (payload) => {
+                  const webhookPayload = payload;
+                  console.log('🔔 Received Dodo Payments webhook:', webhookPayload.type);
+                  console.log('📦 Payload data:', JSON.stringify(webhookPayload.data, null, 2));
+                },
+                onSubscriptionActive: async (payload) => {
+                  console.log('🎯 Processing subscription.active webhook');
+                  await handleSubscriptionWebhook(payload, 'active');
+                },
+                onSubscriptionOnHold: async (payload) => {
+                  console.log('🎯 Processing subscription.on_hold webhook');
+                  await handleSubscriptionWebhook(payload, 'on_hold');
+                },
+                onSubscriptionRenewed: async (payload) => {
+                  console.log('🎯 Processing subscription.renewed webhook');
+                  await handleSubscriptionWebhook(payload, 'active');
+                },
+                onSubscriptionPlanChanged: async (payload) => {
+                  console.log('🎯 Processing subscription.plan_changed webhook');
+                  await handleSubscriptionWebhook(payload, 'active');
+                },
+                onSubscriptionCancelled: async (payload) => {
+                  console.log('🎯 Processing subscription.cancelled webhook');
+                  await handleSubscriptionWebhook(payload, 'cancelled');
+                },
+                onSubscriptionFailed: async (payload) => {
+                  console.log('🎯 Processing subscription.failed webhook');
+                  await handleSubscriptionWebhook(payload, 'failed');
+                },
+                onSubscriptionExpired: async (payload) => {
+                  console.log('🎯 Processing subscription.expired webhook');
+                  await handleSubscriptionWebhook(payload, 'expired');
+                },
+              }),
+            ],
+          }),
+        ]
+      : []),
     nextCookies(),
   ],
-  trustedOrigins: ['http://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
-  allowedOrigins: ['http://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
+  trustedOrigins: ['http://localhost:3000', 'https://chat.southerncrossai.com.au', 'https://scx.ai'],
+  allowedOrigins: ['http://localhost:3000', 'https://chat.southerncrossai.com.au', 'https://scx.ai'],
 });

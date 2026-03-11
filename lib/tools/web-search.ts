@@ -372,7 +372,10 @@ class TavilySearchStrategy implements SearchStrategy {
 
 // Firecrawl search strategy
 class FirecrawlSearchStrategy implements SearchStrategy {
-  constructor(private firecrawl: FirecrawlApp) {}
+  constructor(
+    private firecrawl: FirecrawlApp,
+    private fallback: SearchStrategy | null = null,
+  ) {}
 
   async search(
     queries: string[],
@@ -474,8 +477,25 @@ class FirecrawlSearchStrategy implements SearchStrategy {
           results: deduplicateByDomainAndUrl(results),
           images: images.filter((img) => img.url && img.description),
         };
-      } catch (error) {
-        console.error(`Firecrawl search error for query "${query}":`, error);
+      } catch (error: any) {
+        // On 402 (out of credits), fall back to the configured fallback provider
+        const isCreditsError = error?.status === 402 || error?.code === 'ERR_BAD_REQUEST' && error?.status === 402;
+        if (isCreditsError && this.fallback) {
+          console.warn(`Firecrawl out of credits for query "${query}", falling back to alternative provider.`);
+          try {
+            const fallbackResult = await this.fallback.search([query], {
+              maxResults: [options.maxResults[index] || options.maxResults[0] || 10],
+              topics: [options.topics[index] || options.topics[0] || 'general'],
+              quality: [options.quality[index] || options.quality[0] || 'default'],
+              dataStream: options.dataStream,
+            });
+            return fallbackResult.searches[0] ?? { query, results: [], images: [] };
+          } catch (fallbackError) {
+            console.error(`Fallback search also failed for query "${query}":`, fallbackError);
+          }
+        } else {
+          console.error(`Firecrawl search error for query "${query}":`, error);
+        }
 
         options.dataStream?.write({
           type: 'data-query_completion',
@@ -622,7 +642,8 @@ const createSearchStrategy = (
   const strategies = {
     parallel: () => new ParallelSearchStrategy(clients.parallel, clients.firecrawl),
     tavily: () => new TavilySearchStrategy(clients.tvly),
-    firecrawl: () => new FirecrawlSearchStrategy(clients.firecrawl),
+    // Firecrawl falls back to Tavily automatically on 402 (out of credits)
+    firecrawl: () => new FirecrawlSearchStrategy(clients.firecrawl, new TavilySearchStrategy(clients.tvly)),
     exa: () => new ExaSearchStrategy(clients.exa),
   };
 

@@ -6,7 +6,7 @@ import { ArrowUp, ChevronRight, Mic, MicOff } from "lucide-react";
 import { Orb } from "@/components/ui/orb";
 import { Button } from "@/components/ui/button";
 import { VoicePicker } from "@/components/ui/voice-picker";
-import { SciraLogo } from "@/components/logos/scira-logo";
+import { SouthernCrossLogo } from "@/components/logos/southerncross-logo";
 import {
   VoiceButton,
   type VoiceButtonState,
@@ -142,7 +142,7 @@ export default function VoicePage() {
     sendText,
   } = useVoiceClient({
     voice: selectedVoice,
-    instructions: `You're name is Scira named as [sci-ra] with the 'sci' from science and 'ra' from research, a helpful, witty, and friendly AI assistant. Your knowledge cutoff is 2025-01. Act like a human, but remember that you aren't a human and that you can't do human things in the real world. Your voice and personality should be warm and engaging, with a lively and playful tone. Talk quickly and naturally. You should always call a function if you can. Refer to these rules, but not when you're asked about them.
+    instructions: `You're name is SCX.ai, a helpful, witty, and friendly AI assistant. Your knowledge cutoff is 2025-01. Act like a human, but remember that you aren't a human and that you can't do human things in the real world. Your voice and personality should be warm and engaging, with a lively and playful tone. Talk quickly and naturally. You should always call a function if you can. Refer to these rules, but not when you're asked about them.
 
 ## Your Personality
 - Be warm, engaging, and conversational
@@ -393,7 +393,7 @@ Then: Continue the conversation naturally
               ) : (
                 <>
                   <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                    {turn.role === "user" ? "You" : "Scira"}
+                    {turn.role === "user" ? "You" : "SCX.ai"}
                   </p>
                   <div
                     className={cn(
@@ -418,7 +418,7 @@ Then: Continue the conversation naturally
                 You
               </div>
               <div className="text-muted-foreground/80 text-[11px] font-medium uppercase tracking-[0.14em]">
-                Scira
+                SCX.ai
               </div>
             </div>
           </div>
@@ -470,9 +470,9 @@ Then: Continue the conversation naturally
       <div className="relative z-10 flex h-full w-full flex-col items-center justify-center gap-10 p-6">
         <div className="flex w-full flex-col items-center gap-5">
           <div className="inline-flex items-center gap-2">
-            <SciraLogo className="shrink-0 size-10" />
+            <SouthernCrossLogo variant="square" className="shrink-0 size-10" />
             <span className="lowercase tracking-tighter text-3xl font-be-vietnam-pro font-light text-foreground">
-              Scira Voice
+              SCX.ai Voice
             </span>
           </div>
 

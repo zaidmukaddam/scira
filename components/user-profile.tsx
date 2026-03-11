@@ -106,13 +106,15 @@ const NavigationMenu = memo(() => {
           </Link>
         </DropdownMenuItem>
 
-        <DropdownMenuItem className="cursor-pointer py-1 hover:bg-transparent!">
-          <div className="flex items-center justify-between w-full px-0" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-2">
+        <DropdownMenuItem className="cursor-pointer py-1 hover:bg-transparent! focus:bg-transparent!">
+          <div className="flex items-center justify-between w-full gap-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2 shrink-0">
               <SunIcon size={16} />
               <span className="text-sm">Theme</span>
             </div>
-            <ThemeSwitcher />
+            <div className="w-36 shrink-0">
+              <ThemeSwitcher />
+            </div>
           </div>
         </DropdownMenuItem>
         <DropdownMenuSeparator />

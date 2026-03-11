@@ -1,94 +1,68 @@
 'use client';
 
-import { MonitorIcon, MoonStarIcon, SunIcon } from 'lucide-react';
+import { FlameIcon, MonitorIcon, MoonStarIcon, SunIcon, WavesIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useTheme } from 'next-themes';
-import type { JSX } from 'react';
 import React, { useEffect, useState } from 'react';
 
 import { cn } from '@/lib/utils';
 
-function ThemeOption({
-  icon,
-  value,
-  isActive,
-  onClick,
-}: {
-  icon: JSX.Element;
-  value: string;
-  isActive?: boolean;
-  onClick: (value: string) => void;
-}) {
-  return (
-    <button
-      className={cn(
-        'relative flex size-7 cursor-default items-center justify-center rounded-full transition-all [&_svg]:size-4',
-        isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
-      )}
-      role="radio"
-      aria-checked={isActive}
-      aria-label={`Switch to ${value} theme`}
-      onClick={() => onClick(value)}
-    >
-      {icon}
-
-      {isActive && (
-        <motion.div
-          layoutId="theme-option"
-          transition={{ type: 'spring', bounce: 0.3, duration: 0.6 }}
-          className="absolute inset-0 rounded-full border border-border"
-        />
-      )}
-    </button>
-  );
-}
-
-const THEME_OPTIONS = [
-  {
-    icon: <MonitorIcon />,
-    value: 'system',
-  },
-  {
-    icon: <SunIcon />,
-    value: 'light',
-  },
-  {
-    icon: <MoonStarIcon />,
-    value: 'dark',
-  },
+const THEME_OPTIONS: { value: string; icon: React.ReactNode; label: string }[] = [
+  { value: 'system',  icon: <MonitorIcon  size={14} />, label: 'System'  },
+  { value: 'light',   icon: <SunIcon      size={14} />, label: 'Light'   },
+  { value: 'dark',    icon: <MoonStarIcon size={14} />, label: 'Dark'    },
+  { value: 'reef',    icon: <WavesIcon    size={14} />, label: 'Reef'    },
+  { value: 'outback', icon: <FlameIcon    size={14} />, label: 'Outback' },
 ];
 
 function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
-
   const [isMounted, setIsMounted] = useState(false);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  useEffect(() => { setIsMounted(true); }, []);
 
   if (!isMounted) {
-    return <div className="flex h-7 w-24" />;
+    return <div className="h-7 w-full rounded-full bg-primary/10" />;
   }
 
   return (
     <motion.div
-      key={String(isMounted)}
+      key="theme-switcher"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="inline-flex items-center overflow-hidden rounded-full bg-primary/10 ring-1 ring-border ring-inset"
+      className="flex w-full items-center justify-between rounded-full bg-primary/10 ring-1 ring-border ring-inset p-0.5"
       role="radiogroup"
+      aria-label="Theme"
     >
-      {THEME_OPTIONS.map((option) => (
-        <ThemeOption
-          key={option.value}
-          icon={option.icon}
-          value={option.value}
-          isActive={theme === option.value}
-          onClick={setTheme}
-        />
-      ))}
+      {THEME_OPTIONS.map(({ value, icon, label }) => {
+        const isActive = theme === value;
+        return (
+          <button
+            key={value}
+            role="radio"
+            aria-checked={isActive}
+            aria-label={`${label} theme`}
+            title={label}
+            onClick={() => setTheme(value)}
+            className={cn(
+              'relative flex flex-1 h-6 items-center justify-center rounded-full transition-colors',
+              isActive
+                ? 'text-foreground'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {isActive && (
+              <motion.span
+                layoutId="theme-pill"
+                transition={{ type: 'spring', bounce: 0.25, duration: 0.5 }}
+                className="absolute inset-0 rounded-full bg-background shadow-xs ring-1 ring-border/50"
+              />
+            )}
+            <span className="relative z-10">{icon}</span>
+          </button>
+        );
+      })}
     </motion.div>
   );
 }

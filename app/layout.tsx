@@ -3,8 +3,7 @@ import 'katex/dist/katex.min.css';
 import 'leaflet/dist/leaflet.css';
 
 import { Metadata, Viewport } from 'next';
-import { Be_Vietnam_Pro, Baumans } from 'next/font/google';
-import localFont from 'next/font/local';
+import { Inter, Be_Vietnam_Pro, Baumans } from 'next/font/google';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from '@/components/ui/sonner';
 import { ClientAnalytics } from '@/components/client-analytics';
@@ -13,26 +12,45 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://scira.ai'),
+  metadataBase: new URL('https://chat.southerncrossai.com.au'),
   title: {
-    default: 'Scira AI - Research in speed of thought.',
-    template: '%s | Scira AI',
+    default: 'SCX.ai',
+    template: '%s | SCX.ai',
+  },
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png', sizes: '512x512' },
+    ],
+    apple: [{ url: '/apple-icon.png', sizes: '180x180', type: 'image/png' }],
+    shortcut: '/favicon.ico',
   },
   description:
-    'Scira is a free Agentic Research Platform that finds, analyzes, and cites information from the live web. $15/month—fast answers; 11000+ stars on GitHub.',
+    'SCX.ai is a sovereign Australian AI chat engine powered by GPT-OSS, MAGPiE, and Llama models. Free Pro access until 31 March 2026.',
   openGraph: {
-    url: 'https://scira.ai',
-    siteName: 'Scira AI',
+    url: 'https://chat.southerncrossai.com.au',
+    siteName: 'SCX.ai',
+    title: 'SCX.ai',
+    description:
+      'SCX.ai is a sovereign Australian AI chat engine powered by GPT-OSS, MAGPiE, and Llama models. Free Pro access until 31 March 2026.',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'SCX.ai - Sovereign Australian AI Chat Engine',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SCX.ai',
+    description:
+      'SCX.ai is a sovereign Australian AI chat engine powered by GPT-OSS, MAGPiE, and Llama models. Free Pro access until 31 March 2026.',
+    images: ['/opengraph-image'],
   },
   keywords: [
-    'agentic research platform',
-    'agentic research',
-    'agentic search',
-    'agentic search engine',
-    'agentic search platform',
-    'agentic search tool',
-    'agentic search tool',
-    'scira.ai',
+    'southerncrossai.com.au',
     'free ai search',
     'ai search',
     'ai research tool',
@@ -42,35 +60,21 @@ export const metadata: Metadata = {
     'chatgpt alternative',
     'ai search engine',
     'search engine',
-    'scira ai',
-    'Scira AI',
-    'scira AI',
-    'SCIRA.AI',
-    'scira github',
-    'ai search engine',
-    'Scira',
-    'scira',
-    'scira.app',
-    'scira ai',
-    'scira ai app',
-    'scira',
+    'southerncross ai',
+    'SCX.ai',
+    'southerncross AI',
+    'SOUTHERNCROSS.AI',
+    'southerncross github',
+    'SouthernCross',
+    'southerncross',
+    'southerncross.app',
+    'southerncross ai app',
     'MiniPerplx',
-    'Scira AI',
     'Perplexity alternatives',
     'Perplexity AI alternatives',
     'open source ai search engine',
     'minimalistic ai search engine',
-    'minimalistic ai search alternatives',
-    'ai search',
-    'minimal ai search',
-    'minimal ai search alternatives',
-    'Scira (Formerly MiniPerplx)',
     'AI Search Engine',
-    'mplx.run',
-    'mplx ai',
-    'zaid mukaddam',
-    'scira.how',
-    'search engine',
     'AI',
     'perplexity',
   ],
@@ -97,19 +101,8 @@ export const viewport: Viewport = {
   ],
 };
 
-const sfPro = localFont({
-  src: [
-    {
-      path: '../public/fonts/SF-Pro.ttf',
-      weight: '100 900',
-      style: 'normal',
-    },
-    {
-      path: '../public/fonts/SF-Pro-Italic.ttf',
-      weight: '100 900',
-      style: 'italic',
-    },
-  ],
+const inter = Inter({
+  subsets: ['latin'],
   variable: '--font-sans',
   preload: true,
   display: 'swap',
@@ -139,7 +132,7 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${sfPro.variable} ${beVietnamPro.variable} ${baumans.variable} font-sans antialiased`}
+        className={`${inter.variable} ${beVietnamPro.variable} ${baumans.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <NuqsAdapter>

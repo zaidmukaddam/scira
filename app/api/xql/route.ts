@@ -14,14 +14,14 @@ import {
 import { ChatSDKError } from '@/lib/errors';
 
 import { markdownJoinerTransform } from '@/lib/parser';
-import { scira } from '@/ai/providers';
+import { scx } from '@/ai/providers';
+import { serverEnv } from '@/env/server';
 
 import { z } from 'zod';
-import { GroqProviderOptions } from '@ai-sdk/groq';
 import { createXai } from '@ai-sdk/xai';
 
 const xai = createXai({
-  apiKey: process.env.XAI_API_KEY,
+  apiKey: serverEnv.XAI_API_KEY,
   baseURL: 'https://eu-west-1.api.x.ai/v1',
 });
 
@@ -143,7 +143,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
-    model: scira.languageModel('scira-default'),
+    model: scx.languageModel('deepseek-v3'),
     messages: await convertToModelMessages(messages),
     stopWhen: hasToolCall('xql'),
     onAbort: ({ steps }) => {
@@ -158,12 +158,9 @@ export async function POST(req: Request) {
       }
     },
     providerOptions: {
-      groq: {
-        reasoningEffort: 'none',
+      openai: {
         parallelToolCalls: false,
-        structuredOutputs: true,
-        serviceTier: 'auto',
-      } satisfies GroqProviderOptions,
+      },
     },
     maxRetries: 10,
     experimental_transform: markdownJoinerTransform(),

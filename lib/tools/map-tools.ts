@@ -31,11 +31,11 @@ interface GoogleResult {
 
 export const findPlaceOnMapTool = tool({
   description:
-    'Find places using Google Maps geocoding API. Supports both address-to-coordinates (forward) and coordinates-to-address (reverse) geocoding.',
+    'Find and display a location on a map using Google Maps geocoding. Use this to show a city, address, or landmark on a map. For finding restaurants, hotels, or businesses near a location, use nearby_places_search instead.',
   inputSchema: z.object({
     query: z.string().describe('Address or place name to search for (for forward geocoding)'),
-    latitude: z.number().optional().describe('Latitude for reverse geocoding'),
-    longitude: z.number().optional().describe('Longitude for reverse geocoding'),
+    latitude: z.number().nullish().describe('Latitude for reverse geocoding (omit if using a text query)'),
+    longitude: z.number().nullish().describe('Longitude for reverse geocoding (omit if using a text query)'),
   }),
   execute: async ({ query, latitude, longitude }) => {
     console.log('Executing findPlaceOnMapTool...', query, latitude, longitude);
@@ -113,11 +113,11 @@ export const findPlaceOnMapTool = tool({
 });
 
 export const nearbyPlacesSearchTool = tool({
-  description: 'Search for nearby places using Google Places Nearby Search API.',
+  description: 'Search for restaurants, hotels, cafes, shops, attractions, hospitals, or any type of business/place near a location. Use this when the user asks for recommendations like "restaurants in Sydney", "hotels near me", "things to do in Melbourne", or "find a pharmacy near X". Do NOT use web_search for these queries.',
   inputSchema: z.object({
     location: z.string().describe('The user given location name or coordinates to search around'),
-    latitude: z.number().optional().describe('Latitude of the search center'),
-    longitude: z.number().optional().describe('Longitude of the search center'),
+    latitude: z.number().nullish().describe('Latitude of the search center (omit if using a location name)'),
+    longitude: z.number().nullish().describe('Longitude of the search center (omit if using a location name)'),
     type: z
       .string()
       .describe(

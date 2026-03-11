@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { serverEnv } from '@/env/server';
 
 export const trendingTvTool = tool({
-  description: 'Get trending TV shows from TMDB',
+  description: 'Get currently trending and popular TV shows and series. Use this when the user asks for TV show recommendations, new shows, popular series, what to watch, or anything about TV without a specific title.',
   inputSchema: z.object({}),
   execute: async () => {
     const TMDB_API_KEY = serverEnv.TMDB_API_KEY;

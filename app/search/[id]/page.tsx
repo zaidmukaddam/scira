@@ -52,9 +52,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const id = (await params).id;
   const chat = await fetchChatWithBackoff(id);
   const user = await getUser();
-  // if not chat, return Scira Chat
+  // if not chat, return SCX.ai Chat
   if (!chat) {
-    return { title: 'Scira Chat' };
+    return { title: 'SCX.ai Chat' };
   }
   let title;
   // if chat is public, return title
@@ -64,24 +64,24 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   // if chat is private, return title
   if (chat.visibility === 'private') {
     if (!user) {
-      title = 'Scira Chat';
+      title = 'SCX.ai Chat';
     }
     if (user!.id !== chat.userId) {
-      title = 'Scira Chat';
+      title = 'SCX.ai Chat';
     }
     title = chat.title;
   }
   return {
     title: title,
-    description: 'A search in scira.ai',
+    description: 'A search on SCX.ai',
     openGraph: {
       title: title,
-      url: `https://scira.ai/search/${id}`,
-      description: 'A search in scira.ai',
-      siteName: 'scira.ai',
+      url: `https://chat.southerncrossai.com.au/search/${id}`,
+      description: 'A search on SCX.ai',
+      siteName: 'SCX.ai',
       images: [
         {
-          url: `https://scira.ai/api/og/chat/${id}`,
+          url: `https://chat.southerncrossai.com.au/api/og/chat/${id}`,
           width: 1200,
           height: 630,
         },
@@ -90,20 +90,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     twitter: {
       card: 'summary_large_image',
       title: title,
-      url: `https://scira.ai/search/${id}`,
-      description: 'A search in scira.ai',
-      siteName: 'scira.ai',
+      url: `https://chat.southerncrossai.com.au/search/${id}`,
+      description: 'A search on SCX.ai',
+      siteName: 'SCX.ai',
       creator: '@sciraai',
       images: [
         {
-          url: `https://scira.ai/api/og/chat/${id}`,
+          url: `https://chat.southerncrossai.com.au/api/og/chat/${id}`,
           width: 1200,
           height: 630,
         },
       ],
     },
     alternates: {
-      canonical: `https://scira.ai/search/${id}`,
+      canonical: `https://chat.southerncrossai.com.au/search/${id}`,
     },
   } as Metadata;
 }
