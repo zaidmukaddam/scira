@@ -1098,13 +1098,10 @@ const ChatInterface = memo(
                 dispatch({ type: 'SET_HAS_SHOWN_UPGRADE_DIALOG', payload: value });
                 setPersitedHasShownUpgradeDialog(value);
               }}
-              showLookoutAnnouncement={chatState.showAnnouncementDialog}
-              setShowLookoutAnnouncement={(open) => dispatch({ type: 'SET_SHOW_ANNOUNCEMENT_DIALOG', payload: open })}
-              hasShownLookoutAnnouncement={chatState.hasShownAnnouncementDialog}
-              setHasShownLookoutAnnouncement={(value) => {
-                dispatch({ type: 'SET_HAS_SHOWN_ANNOUNCEMENT_DIALOG', payload: value });
-                setPersitedHasShownLookoutAnnouncement(value);
-              }}
+              showLookoutAnnouncement={false}
+              setShowLookoutAnnouncement={() => {}}
+              hasShownLookoutAnnouncement={true}
+              setHasShownLookoutAnnouncement={() => {}}
               user={user}
               setAnyDialogOpen={(open) => dispatch({ type: 'SET_ANY_DIALOG_OPEN', payload: open })}
             />
