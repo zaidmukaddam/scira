@@ -1,13 +1,55 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { customProvider, extractReasoningMiddleware, wrapLanguageModel } from 'ai';
 import type { JSONValue } from 'ai';
-import type { LanguageModelMiddleware } from 'ai';
-import { magpieProtocolMiddleware } from './magpie-middleware';
 
 // ─── Base URL ────────────────────────────────────────────────────────────────
 // Strip trailing /v1 if present so we can append it consistently in all paths.
 const SCX_BASE = (process.env.SCX_API_URL ?? 'https://api.scx.ai').replace(/\/v1\/?$/, '');
 const SCX_KEY = process.env.SCX_API_KEY ?? '';
+
+// ─── Magpie SSE normalizer ────────────────────────────────────────────────────
+// Magpie streams with multiple `data:` lines per SSE event (no blank-line
+// separator between them). Per the SSE spec those lines are concatenated with
+// "\n", so JSON.parse("{chunk1}\n{chunk2}") fails. This fetch wrapper ensures
+// every `data:` line is flushed as its own standalone SSE event.
+function createMagpieNormalizedFetch(): typeof fetch {
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+  return async (url, init) => {
+    const response = await fetch(url, init);
+    if (!response.body) return response;
+    if (!(response.headers.get('content-type') ?? '').includes('text/event-stream')) return response;
+
+    let buffer = '';
+    const transformedBody = response.body.pipeThrough(
+      new TransformStream<Uint8Array, Uint8Array>({
+        transform(chunk, controller) {
+          buffer += decoder.decode(chunk, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
+          let output = '';
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              output += line + '\n\n'; // each data: line → its own SSE event
+            }
+            // blank lines are dropped; we manage separators ourselves
+          }
+          if (output) controller.enqueue(encoder.encode(output));
+        },
+        flush(controller) {
+          const rem = buffer.trim();
+          if (rem) controller.enqueue(encoder.encode((rem.startsWith('data: ') ? rem + '\n\n' : rem + '\n')));
+        },
+      }),
+    );
+
+    return new Response(transformedBody, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: response.headers,
+    });
+  };
+}
 
 // ─── Chat model IDs (as served by the SCX OpenAI-compatible API) ─────────────
 type ScxChatModelId =
@@ -31,6 +73,15 @@ const scxProvider = createOpenAICompatible<
   baseURL: `${SCX_BASE}/v1`,
   apiKey: SCX_KEY,
   includeUsage: true,
+});
+
+// Separate provider for Magpie with the SSE-normalizing fetch
+const magpieProvider = createOpenAICompatible<'magpie', 'magpie', never, never>({
+  name: 'scx-magpie',
+  baseURL: `${SCX_BASE}/v1`,
+  apiKey: SCX_KEY,
+  includeUsage: true,
+  fetch: createMagpieNormalizedFetch(),
 });
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
@@ -165,9 +216,9 @@ export async function doTranscribe({
 // Reasoning middleware notes:
 // - deepseek-r1 / gpt-oss-120b: emit <think>...</think> blocks in content;
 //   extractReasoningMiddleware converts them to `reasoning` stream parts.
-// - magpie: uses a custom channel protocol (<|channel|>analysis<|message|>
-//   ... <|end|> / <|channel|>final<|message|>); magpieProtocolMiddleware parses
-//   the protocol and routes analysis→reasoning, final→text, rest→discard.
+// - magpie: streams reasoning_content + content as separate delta fields (OpenAI
+//   compatible format). Uses a dedicated provider with SSE-normalizing fetch so
+//   the SDK can parse multiple data: lines per event correctly.
 // - deepseek-v3 / v3.1 / llama models: no reasoning output, pass through as-is.
 // Re-export model helpers so components importing from '@/ai/providers' still work
 export {
@@ -197,10 +248,7 @@ export const scx = customProvider({
       model: scxProvider.languageModel('gpt-oss-120b'),
       middleware: [extractReasoningMiddleware({ tagName: 'think' })],
     }),
-    magpie: wrapLanguageModel({
-      model: scxProvider.languageModel('magpie'),
-      middleware: [magpieProtocolMiddleware as LanguageModelMiddleware],
-    }),
+    magpie: magpieProvider.languageModel('magpie'),
     // Internal utility aliases (follow-up suggestions, chat naming, prompt enhancement)
     'scira-follow-up': scxProvider.languageModel('Llama-4-Maverick-17B-128E-Instruct'),
     'scira-name': scxProvider.languageModel('Llama-4-Maverick-17B-128E-Instruct'),
