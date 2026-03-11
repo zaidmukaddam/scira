@@ -50,10 +50,12 @@ export class RAGSearchService {
 
     if (searchType === 'semantic' || searchType === 'hybrid') {
       // Generate query embedding
-      const { embeddings } = await scx.textEmbeddingModel(EMBEDDING_MODEL).doEmbed({ values: [query] });
+      const embeddingModel = (scx as any).textEmbeddingModel?.(EMBEDDING_MODEL);
+      if (!embeddingModel) throw new Error('Embedding model not available');
+      const { embeddings } = await embeddingModel.doEmbed({ values: [query] });
 
       // Semantic search using cosine similarity
-      chunks = await this.semanticSearch(userId, embeddings[0], maxResults, fileIds);
+      chunks = await this.semanticSearch(userId, embeddings[0] ?? [], maxResults, fileIds);
     }
 
     if (searchType === 'keyword' || (searchType === 'hybrid' && chunks.length === 0)) {

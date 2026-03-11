@@ -19,6 +19,16 @@ export type ComprehensiveUserData = {
   image: string | null;
   createdAt: Date;
   updatedAt: Date;
+  // Location fields from user schema
+  countryCode: string | null;
+  country: string | null;
+  city: string | null;
+  region: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  timezone: string | null;
+  utcOffset: string | null;
+  locationUpdatedAt: Date | null;
   isProUser: boolean;
   proSource: 'polar' | 'dodo' | 'none';
   subscriptionStatus: 'active' | 'canceled' | 'expired' | 'none';
@@ -349,6 +359,16 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
         image: user.image,
         userCreatedAt: user.createdAt,
         userUpdatedAt: user.updatedAt,
+        // Location fields
+        countryCode: user.countryCode,
+        country: user.country,
+        city: user.city,
+        region: user.region,
+        latitude: user.latitude,
+        longitude: user.longitude,
+        timezone: user.timezone,
+        utcOffset: user.utcOffset,
+        locationUpdatedAt: user.locationUpdatedAt,
         // Subscription fields (will be null if no subscription)
         subscriptionId: subscription.id,
         subscriptionCreatedAt: subscription.createdAt,
@@ -506,6 +526,15 @@ export async function getComprehensiveUserData(): Promise<ComprehensiveUserData 
       image: userData.image,
       createdAt: userData.userCreatedAt,
       updatedAt: userData.userUpdatedAt,
+      countryCode: userData.countryCode ?? null,
+      country: userData.country ?? null,
+      city: userData.city ?? null,
+      region: userData.region ?? null,
+      latitude: userData.latitude ?? null,
+      longitude: userData.longitude ?? null,
+      timezone: userData.timezone ?? null,
+      utcOffset: userData.utcOffset ?? null,
+      locationUpdatedAt: userData.locationUpdatedAt ?? null,
       isProUser,
       proSource,
       subscriptionStatus,

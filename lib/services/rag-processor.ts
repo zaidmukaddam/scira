@@ -121,14 +121,14 @@ export class RAGProcessor {
                 text: 'Extract all text from this image. Return only the extracted text without any additional comments or descriptions. If there is no text, return "No text found".',
               },
               {
-                type: 'image',
+                type: 'image' as const,
                 image: base64Image,
-                mimeType: contentType as any,
+                ...(contentType ? { mimeType: contentType as any } : {}),
               },
             ],
           },
         ],
-        maxTokens: 2000,
+        maxOutputTokens: 2000,
       });
 
       return text || 'No text found';

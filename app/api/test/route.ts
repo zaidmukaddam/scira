@@ -426,10 +426,10 @@ async function testAutoGroup(modelValue: string, label: string): Promise<AutoGro
           tools: {
             datetime: tool({
               description: 'Get current date/time for a timezone.',
-              parameters: z.object({ timezone: z.string().describe('IANA timezone name') }),
+              inputSchema: z.object({ timezone: z.string().describe('IANA timezone name') }),
               execute: async ({ timezone }) => {
                 toolCalled = 'datetime';
-                const now = new Date().toLocaleString('en-AU', { timeZone: timezone });
+                const now = new Date().toLocaleString('en-AU', { timeZone: (timezone as string) });
                 return { datetime: now, timezone };
               },
             }),

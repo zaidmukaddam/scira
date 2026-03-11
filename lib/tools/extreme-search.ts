@@ -273,7 +273,7 @@ class ExaSearchStrategy implements SearchProviderStrategy {
         type: 'fast',
         ...(category
           ? {
-              category: category as SearchCategory,
+              category: category as any,
             }
           : {}),
         ...(include_domains
@@ -284,10 +284,10 @@ class ExaSearchStrategy implements SearchProviderStrategy {
       });
       console.log(`[Exa] searchWeb received ${results.length} results from Exa API`);
 
-      const mappedResults = results.map((r) => ({
+      const mappedResults = results.map((r: any) => ({
         title: r.title,
         url: r.url,
-        content: r.text,
+        content: r.text ?? '',
         publishedDate: r.publishedDate,
         favicon: r.favicon,
       })) as SearchResult[];
@@ -765,22 +765,9 @@ ${JSON.stringify(plan)}
               startDate || new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
             const searchEndDate = endDate || new Date().toISOString().split('T')[0];
 
-            const { text, sources } = await generateText({
-              model: xai.responses('grok-4-1-fast-reasoning'),
-              system: `You are a helpful assistant that searches for X posts and returns the results in a structured format. You will be given a search query and a list of X handles to search from. You will then search for the posts and return the results in a structured format. You will also cite the sources in the format [Source No.]. Go very deep in the search and return the most relevant results.`,
-              messages: [{
-                role: 'user',
-                content: query
-              }],
-              maxOutputTokens: 10,
-              tools: {
-                xSearch: xai.tools.xSearch({
-                  fromDate: searchStartDate,
-                  toDate: searchEndDate,
-                  ...(xHandles && xHandles.length > 0 ? { allowedXHandles: xHandles } : {}),
-                }),
-              },
-            });
+            // xAI Grok x-search not configured — return empty result
+            const text = '';
+            const sources: any[] = [];
 
             const citations = sources || [];
             const allSources = [];

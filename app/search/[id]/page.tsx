@@ -126,11 +126,11 @@ export function convertToUIMessages(messages: Message[]): ChatMessage[] {
       parts: convertedParts as UIMessagePart<CustomUIDataTypes, ChatTools>[],
       metadata: {
         createdAt: formatISO(message.createdAt),
-        model: message.model ?? '',
-        completionTime: message.completionTime,
-        inputTokens: message.inputTokens,
-        outputTokens: message.outputTokens,
-        totalTokens: message.totalTokens,
+        model: (message as any).model ?? '',
+        completionTime: (message as any).completionTime ?? null,
+        inputTokens: (message as any).inputTokens ?? null,
+        outputTokens: (message as any).outputTokens ?? null,
+        totalTokens: (message as any).totalTokens ?? null,
       },
     };
   });

@@ -71,9 +71,12 @@ function selectReplica<T>(replicas: readonly T[]): T {
   }
 }
 
-export const db =
+// Cast to typeof maindb so TypeScript resolves db.query.* relational types correctly.
+// withReplicas() loses generic schema types at the type level; the cast is safe because
+// all replica instances are created with the same schema.
+export const db: typeof maindb =
   readReplicas.length > 0
-    ? withReplicas(maindb, readReplicas as any, (replicas: any) => selectReplica(replicas))
+    ? (withReplicas(maindb, readReplicas as any, (replicas: any): typeof maindb => selectReplica(replicas)) as unknown as typeof maindb)
     : maindb;
 
 type ReplicaClient = typeof maindb;

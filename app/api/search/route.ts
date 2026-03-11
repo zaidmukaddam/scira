@@ -84,6 +84,7 @@ import { generateDocumentTool } from '@/lib/tools/generate-document';
 import { ChatMessage } from '@/lib/types';
 import { getCachedCustomInstructionsByUserId, getCachedUserPreferencesByUserId } from '@/lib/user-data-server';
 import { unauthenticatedRateLimit, getClientIdentifier } from '@/lib/rate-limit';
+import { SearchGroupId } from '@/lib/utils';
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -319,14 +320,14 @@ export async function POST(req: Request) {
   } = body as {
     messages: any[];
     model: string;
-    group: string;
+    group: SearchGroupId;
     timezone?: string;
     id: string;
     selectedVisibilityType?: string;
     isCustomInstructionsEnabled?: boolean;
-    searchProvider?: string;
-    extremeSearchProvider?: string;
-    selectedConnectors?: string[];
+    searchProvider?: 'parallel' | 'exa' | 'tavily' | 'firecrawl';
+    extremeSearchProvider?: 'parallel' | 'exa';
+    selectedConnectors?: import('@/lib/connectors').ConnectorProvider[];
   };
   recordTiming('parse_request_body', opStart);
 
@@ -364,7 +365,10 @@ export async function POST(req: Request) {
   // Rate limit check for unauthenticated users (already started in parallel)
   if (!lightweightUser) {
     opStart = Date.now();
-    const { success, limit, reset } = await rateLimitPromise;
+    const rateLimitResult = await rateLimitPromise;
+    const { success } = rateLimitResult;
+    const limit = 'limit' in rateLimitResult ? rateLimitResult.limit : 0;
+    const reset = 'reset' in rateLimitResult ? rateLimitResult.reset : Date.now();
     recordTiming('unauthenticated_rate_limit', opStart);
 
     if (!success) {
