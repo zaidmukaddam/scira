@@ -8,6 +8,7 @@ import { UIMessage, generateText } from 'ai';
 import type { ModelMessage } from 'ai';
 import { z } from 'zod';
 import { getUser } from '@/lib/auth-utils';
+import { getChatSuggestionsInstant, type Suggestion } from '@/lib/services/suggestions-service';
 import { scira } from '@/ai/providers';
 import {
   getChatsByUserId,
@@ -184,6 +185,23 @@ export async function suggestQuestions(history: any[]) {
   return {
     questions: questions.length >= 3 ? questions : questions.concat(['What else would you like to know?']).slice(0, 5),
   };
+}
+
+/**
+ * Fetch home-screen suggestions for the currently selected model.
+ * Reads from Redis cache only — never waits for LLM generation — so it
+ * always returns in milliseconds. The cron job pre-warms the cache daily.
+ */
+export async function getHomeSuggestions(
+  selectedModel: string,
+  isProUser: boolean
+): Promise<Suggestion[]> {
+  try {
+    return await getChatSuggestionsInstant(selectedModel, isProUser);
+  } catch (error) {
+    console.error('[ACTION] Error fetching home suggestions:', error);
+    return [];
+  }
 }
 
 export async function checkImageModeration(images: string[]) {
@@ -2284,10 +2302,10 @@ export async function bulkDeleteChats(chatIds: string[]) {
     const results = await Promise.all(
       chatIds.map((id) => deleteChatById({ id }))
     );
-
+    
     // Count successful deletions
     const deletedCount = results.filter((r) => r !== null).length;
-
+    
     return { success: true, deletedCount };
   } catch (error) {
     console.error('Error bulk deleting chats:', error);
@@ -3592,10 +3610,10 @@ export async function getStudentDomainsAction() {
 // Fetch chats for the authenticated user (paginated)
 export async function getAllChatsWithPreview(limit: number = 25, offset: number = 0) {
   'use server';
-
+  
   try {
     const user = await getUser();
-
+    
     if (!user) {
       return { error: 'Unauthorized', status: 401 };
     }
@@ -3618,10 +3636,10 @@ export async function getAllChatsWithPreview(limit: number = 25, offset: number 
 // Search chats by title (paginated)
 export async function searchChatsByTitle(query: string, limit: number = 25, offset: number = 0) {
   'use server';
-
+  
   try {
     const user = await getUser();
-
+    
     if (!user) {
       return { error: 'Unauthorized', status: 401 };
     }

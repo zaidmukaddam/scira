@@ -168,11 +168,6 @@ export async function POST(req: Request) {
             parts: userMessage.parts,
             attachments: [],
             createdAt: new Date(),
-            model: 'scira-grok-4-fast-think',
-            completionTime: null,
-            inputTokens: null,
-            outputTokens: null,
-            totalTokens: null,
           },
         ],
       }),
@@ -616,11 +611,6 @@ $$
                 createdAt: new Date(),
                 attachments: [],
                 chatId: chatId,
-                model: 'scira-grok-4-fast-think',
-                completionTime: message.metadata?.completionTime ?? 0,
-                inputTokens: message.metadata?.inputTokens ?? 0,
-                outputTokens: message.metadata?.outputTokens ?? 0,
-                totalTokens: message.metadata?.totalTokens ?? 0,
               })),
             });
           } else {

@@ -201,7 +201,7 @@ function formatSupadataResponse(metadata: SupadataMetadata, url: string, transcr
 }
 
 
-const supadata = new Supadata({ apiKey: serverEnv.SUPADATA_API_KEY });
+const supadata = new Supadata({ apiKey: serverEnv.SUPADATA_API_KEY ?? '' });
 const exa = new Exa(serverEnv.EXA_API_KEY as string);
 const parallel = new Parallel({ apiKey: serverEnv.PARALLEL_API_KEY });
 const firecrawl = new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY });

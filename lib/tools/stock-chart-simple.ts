@@ -142,11 +142,11 @@ ${combinedContent}`,
 
         companyStatistics[displaySymbol] = {
           stock_price_summary: {
-            current_price: data.currentPrice,
-            period_high: data.periodHigh,
-            period_low: data.periodLow,
-            period_change: data.periodChange,
-            period_change_percent: data.periodChangePercent,
+            current_price: data.currentPrice ?? 0,
+            period_high: data.periodHigh ?? 0,
+            period_low: data.periodLow ?? 0,
+            period_change: data.periodChange ?? 0,
+            period_change_percent: data.periodChangePercent ?? 0,
           },
         };
 

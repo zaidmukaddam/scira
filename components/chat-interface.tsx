@@ -17,7 +17,8 @@ import { toast } from 'sonner';
 import { v7 as uuidv7 } from 'uuid';
 
 // Internal app imports
-import { suggestQuestions, updateChatVisibility, getChatMeta } from '@/app/actions';
+import { suggestQuestions, updateChatVisibility, getChatMeta, getHomeSuggestions } from '@/app/actions';
+import { ExamplePrompts } from '@/components/chat-interface-components';
 
 // Component imports
 import { ChatDialogs } from '@/components/chat-dialogs';
@@ -162,6 +163,12 @@ const ChatInterface = memo(
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [settingsInitialTab, setSettingsInitialTab] = useState<string>('profile');
 
+    // Home screen suggestion prompts
+    const [homeSuggestions, setHomeSuggestions] = useState<{ text: string; category?: string }[] | null>(null);
+    const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+    // Tracks whether suggestions have been fetched at least once — prevents repeated skeletons
+    const suggestionsLoadedRef = useRef(false);
+
     const handleOpenSettings = useCallback(
       (tab: string = 'profile') => {
         setSettingsInitialTab(tab);
@@ -233,6 +240,7 @@ const ChatInterface = memo(
       document.title = isNewChat ? 'SCX.ai' : `${localChatTitle} | SCX.ai`;
       return () => { document.title = 'SCX.ai'; };
     }, [localChatTitle, initialChatId]);
+
 
     const handleStartEditTitle = useCallback(() => {
       const currentChatId = initialChatId || (pathname?.startsWith('/search/') ? pathname.split('/')[2] : null);
@@ -745,6 +753,60 @@ const ChatInterface = memo(
       dispatch({ type: 'RESET_SUGGESTED_QUESTIONS' });
     }, []);
 
+    // Fetch home-screen suggestion prompts when the chat is empty.
+    // Strategy:
+    //  - Show skeleton only on the first fetch (homeSuggestions === null).
+    //  - On subsequent re-fetches (model/user changes), keep existing suggestions
+    //    visible and silently swap in fresh ones — no flash.
+    //  - getHomeSuggestions reads Redis cache only (near-instant), falling back
+    //    to static if the cache is empty.
+    useEffect(() => {
+      const showPrompts =
+        status === 'ready' &&
+        messages.length === 0 &&
+        ((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
+        !isLimitBlocked;
+
+      if (!showPrompts) {
+        setSuggestionsLoading(false);
+        setHomeSuggestions(null);
+        suggestionsLoadedRef.current = false;
+        return;
+      }
+
+      let cancelled = false;
+
+      // Show skeleton only on the very first fetch; subsequent re-fetches (triggered
+      // by model/user changes) update silently so there is no visible flash.
+      if (!suggestionsLoadedRef.current) {
+        setSuggestionsLoading(true);
+      }
+
+      getHomeSuggestions(selectedModel, isUserPro)
+        .then((suggestions) => {
+          if (!cancelled) {
+            suggestionsLoadedRef.current = true;
+            if (Array.isArray(suggestions) && suggestions.length > 0) {
+              setHomeSuggestions(suggestions);
+            } else {
+              setHomeSuggestions(null);
+            }
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            suggestionsLoadedRef.current = true;
+            setHomeSuggestions(null);
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setSuggestionsLoading(false);
+        });
+
+      return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status, messages.length, user, isOwner, initialChatId, chatState.selectedVisibilityType, isLimitBlocked, selectedModel, isUserPro]);
+
     // Handle example selection from ExampleCategories
     const handleExampleSelect = useCallback(
       (text: string, group?: string) => {
@@ -1088,6 +1150,20 @@ const ChatInterface = memo(
                     </div>
                   </div>
                 )}
+
+                {/* Example prompts — shown on empty home screen */}
+                {status === 'ready' &&
+                  messages.length === 0 &&
+                  ((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
+                  !isLimitBlocked && (
+                    <ExamplePrompts
+                      selectedModel={selectedModel}
+                      isProUser={isUserPro}
+                      onPromptSelect={(text) => handleExampleSelect(text)}
+                      suggestions={homeSuggestions}
+                      suggestionsLoading={suggestionsLoading}
+                    />
+                  )}
 
                 {/* Show initial limit exceeded message */}
                 {status === 'ready' && messages.length === 0 && isLimitBlocked && (

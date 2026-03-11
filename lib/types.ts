@@ -12,6 +12,9 @@ import type {
   textTranslateTool,
   xSearchTool,
   stockChartTool,
+  stockChartSimpleTool,
+  stockPriceTool,
+  mermaidDiagramTool,
   webSearchTool,
   youtubeSearchTool,
   weatherTool,
@@ -30,6 +33,7 @@ import type {
   AddMemoryTool,
   codeContextTool,
 } from '@/lib/tools';
+import type { generateDocumentTool } from '@/lib/tools/generate-document';
 
 import type { InferUITool, UIMessage } from 'ai';
 
@@ -120,6 +124,10 @@ type trendingMoviesTool = InferUITool<typeof trendingMoviesTool>;
 type textTranslateTool = InferUITool<typeof textTranslateTool>;
 type xSearchTool = InferUITool<ReturnType<typeof xSearchTool>>;
 type stockChartTool = InferUITool<typeof stockChartTool>;
+type stockChartSimpleTool = InferUITool<typeof stockChartSimpleTool>;
+type stockPriceTool = InferUITool<typeof stockPriceTool>;
+type mermaidDiagramTool = InferUITool<typeof mermaidDiagramTool>;
+type generateDocumentTool = InferUITool<typeof generateDocumentTool>;
 type greetingTool = InferUITool<ReturnType<typeof greetingTool>>;
 type flightTrackerTool = InferUITool<typeof flightTrackerTool>;
 type findPlaceOnMapTool = InferUITool<typeof findPlaceOnMapTool>;
@@ -140,6 +148,10 @@ type codeContextTool = InferUITool<typeof codeContextTool>;
 
 export type ChatTools = {
   stock_chart: stockChartTool;
+  stock_chart_simple: stockChartSimpleTool;
+  stock_price: stockPriceTool;
+  mermaid_diagram: mermaidDiagramTool;
+  generate_document: generateDocumentTool;
   currency_converter: currencyConverterTool;
   coin_data: coinDataTool;
   coin_data_by_contract: coinDataByContractTool;
