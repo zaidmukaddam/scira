@@ -386,7 +386,7 @@
   --sidebar-accent-foreground: oklch(0.325 0 0);
   --sidebar-border: oklch(0.9401 0 0);
   --sidebar-ring: oklch(0.7731 0 0);
-  --radius: 0.875rem;
+  --radius: 1rem;
   --shadow-x: 0;
   --shadow-y: 1px;
   --shadow-blur: 3px;
@@ -450,7 +450,7 @@
   --sidebar-accent-foreground: oklch(0.9674 0.0013 286.3752);
   --sidebar-border: oklch(0.2739 0.0055 286.0326);
   --sidebar-ring: oklch(0.8711 0.0055 286.286);
-  --radius: 0.875rem;
+  --radius: 1rem;
   --shadow-x: 0;
   --shadow-y: 1px;
   --shadow-blur: 3px;
@@ -465,6 +465,101 @@
   --shadow-lg: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 4px 6px -1px hsl(0 0% 0% / 0.10);
   --shadow-xl: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 8px 10px -1px hsl(0 0% 0% / 0.10);
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
+}
+
+/* ─── Australian-inspired colour palettes ─────────────────────────────── */
+.reef {
+  --sh-identifier: #0c6473;
+  --sh-keyword: #007a8c;
+  --sh-string: #009c9b;
+  --sh-class: #006473;
+  --sh-property: #0c6473;
+  --sh-entity: #0f4c5c;
+  --sh-jsxliterals: #007a8c;
+  --sh-sign: #0f4c5c;
+  --sh-comment: #4d7d87;
+
+  --font-be-vietnam-pro: 'Be Vietnam Pro';
+  --background: #e3fbff;
+  --foreground: #082e36;
+  --card: #f2feff;
+  --card-foreground: #082e36;
+  --popover: #f2feff;
+  --popover-foreground: #082e36;
+  --primary: #008c9d;
+  --primary-foreground: #f1fdff;
+  --secondary: #00bfa5;
+  --secondary-foreground: #003c3c;
+  --muted: #c8eef2;
+  --muted-foreground: #265056;
+  --accent: #ff9e80;
+  --accent-foreground: #3a1f1b;
+  --destructive: #dd5746;
+  --destructive-foreground: #fff8f6;
+  --border: #9fd7df;
+  --input: #9fd7df;
+  --ring: #00bfa5;
+  --chart-1: #008c9d;
+  --chart-2: #ff9e80;
+  --chart-3: #0f4c5c;
+  --chart-4: #00bfa5;
+  --chart-5: #4dd0e1;
+  --sidebar: #d8f4f7;
+  --sidebar-foreground: #08363f;
+  --sidebar-primary: #007a8c;
+  --sidebar-primary-foreground: #f1fdff;
+  --sidebar-accent: #b2ebf2;
+  --sidebar-accent-foreground: #08363f;
+  --sidebar-border: #9fd7df;
+  --sidebar-ring: #00bfa5;
+  --radius: 1rem;
+}
+
+.outback {
+  --sh-identifier: #7d3a12;
+  --sh-keyword: #a64208;
+  --sh-string: #c95a21;
+  --sh-class: #7d3a12;
+  --sh-property: #7d3a12;
+  --sh-entity: #4f2c16;
+  --sh-jsxliterals: #a64208;
+  --sh-sign: #4f2c16;
+  --sh-comment: #a06b4b;
+
+  --font-be-vietnam-pro: 'Be Vietnam Pro';
+  --background: #fff5e9;
+  --foreground: #2c1404;
+  --card: #ffeeda;
+  --card-foreground: #2c1404;
+  --popover: #ffeeda;
+  --popover-foreground: #2c1404;
+  --primary: #c75a24;
+  --primary-foreground: #fff7ef;
+  --secondary: #f7b500;
+  --secondary-foreground: #3a1c00;
+  --muted: #ecd6c2;
+  --muted-foreground: #5d3b23;
+  --accent: #5f7a66;
+  --accent-foreground: #fff5e9;
+  --destructive: #b13a16;
+  --destructive-foreground: #fff2ec;
+  --border: #e0c4a9;
+  --input: #e0c4a9;
+  --ring: #c75a24;
+  --chart-1: #c75a24;
+  --chart-2: #f7b500;
+  --chart-3: #5f7a66;
+  --chart-4: #a64208;
+  --chart-5: #ffd29b;
+  --sidebar: #fff0db;
+  --sidebar-foreground: #2c1404;
+  --sidebar-primary: #a64208;
+  --sidebar-primary-foreground: #fff7ef;
+  --sidebar-accent: #f5c388;
+  --sidebar-accent-foreground: #2c1404;
+  --sidebar-border: #e0c4a9;
+  --sidebar-ring: #c75a24;
+  --radius: 1rem;
 }
 
 @theme inline {

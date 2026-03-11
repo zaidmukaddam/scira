@@ -537,8 +537,23 @@ const LoadingState: React.FC<{
     }
   };
 
+  const completedCount = annotations.filter((a) => a.data.status === 'completed' || a.data.status === 'error').length;
+  const allDone = queries.length > 0 && completedCount >= queries.length;
+
   return (
     <div className="w-full space-y-3">
+      {/* Thinking indicator — shown while queries are still running */}
+      {!allDone && (
+        <div className="flex items-center gap-2 px-1 py-0.5">
+          <div className="flex gap-[3px] items-center">
+            <span className="w-1.5 h-1.5 rounded-full bg-foreground/40 animate-bounce [animation-delay:0ms]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-foreground/40 animate-bounce [animation-delay:150ms]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-foreground/40 animate-bounce [animation-delay:300ms]" />
+          </div>
+          <span className="text-xs text-muted-foreground">Searching the web…</span>
+        </div>
+      )}
+
       {/* Sources Section */}
       <div className="border border-border rounded-lg overflow-hidden bg-card">
         {/* Header */}

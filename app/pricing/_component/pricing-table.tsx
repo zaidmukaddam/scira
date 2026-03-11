@@ -14,7 +14,7 @@ import { useLocation } from '@/hooks/use-location';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 import { StudentDomainRequestButton } from '@/components/student-domain-request-button';
 import { SupportedDomainsList } from '@/components/supported-domains-list';
-import { SciraLogo } from '@/components/logos/scira-logo';
+import { SouthernCrossLogo } from '@/components/logos/southerncross-logo';
 
 type SubscriptionDetails = {
   id: string;
@@ -214,8 +214,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between h-14 px-6">
             <Link href="/" className="flex items-center gap-2.5 group">
-              <SciraLogo className="size-5 transition-transform duration-300 group-hover:scale-110" />
-              <span className="text-lg font-light tracking-tighter font-be-vietnam-pro">scira</span>
+              <SouthernCrossLogo variant="square" className="size-5 transition-transform duration-300 group-hover:scale-110" />
+              <span className="text-lg font-light tracking-tighter font-be-vietnam-pro">SCX.ai</span>
             </Link>
             <Link
               href="/"
@@ -366,7 +366,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
               </li>
               <li className="flex items-start gap-3 text-sm text-foreground/80">
                 <span className="w-1 h-1 rounded-full bg-foreground mt-2 shrink-0" />
-                Scira Lookout
+                SCX.ai Lookout
               </li>
             </ul>
 
@@ -491,8 +491,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
           </p>
           <p className="text-xs text-muted-foreground">
             Questions?{' '}
-            <a href="mailto:zaid@scira.ai" className="text-foreground hover:underline">
-              zaid@scira.ai
+            <a href="mailto:support@scx.ai" className="text-foreground hover:underline">
+              support@scx.ai
             </a>
           </p>
         </div>
@@ -503,8 +503,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
         <div className="max-w-4xl mx-auto px-6">
           <div className="flex items-center justify-between h-14">
             <div className="flex items-center gap-3">
-              <SciraLogo className="size-4" />
-              <span className="text-xs text-muted-foreground">© {new Date().getFullYear()} Scira</span>
+              <SouthernCrossLogo variant="square" className="size-4" />
+              <span className="text-xs text-muted-foreground">© {new Date().getFullYear()} SCX.ai</span>
             </div>
             <div className="flex items-center gap-6">
               <Link href="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">

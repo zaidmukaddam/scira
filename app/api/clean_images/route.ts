@@ -1,15 +1,20 @@
 import { serverEnv } from '@/env/server';
-import { del, list, ListBlobResult } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
+import { supabaseStorage } from '@/lib/supabase-storage';
 
 export async function GET(req: NextRequest) {
-  if (req.headers.get('Authorization') !== `Bearer ${serverEnv.CRON_SECRET}`) {
+  if (!serverEnv.CRON_SECRET || req.headers.get('Authorization') !== `Bearer ${serverEnv.CRON_SECRET}`) {
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
   try {
-    await deleteAllBlobsWithPrefix('mplx/public');
-    return new NextResponse('All public files with mplx/public prefix were deleted', {
+    if (!supabaseStorage) {
+      return new NextResponse('Supabase storage is not configured', {
+        status: 503,
+      });
+    }
+    await deleteAllFilesWithPrefix('public/');
+    return new NextResponse('All public files were deleted', {
       status: 200,
     });
   } catch (error) {
@@ -20,23 +25,36 @@ export async function GET(req: NextRequest) {
   }
 }
 
-async function deleteAllBlobsWithPrefix(filePrefix: string) {
-  let cursor;
-
-  do {
-    const listResult: ListBlobResult = await list({
-      prefix: filePrefix,
-      cursor,
+async function deleteAllFilesWithPrefix(filePrefix: string) {
+  try {
+    // List all files in the uploads bucket with the prefix
+    const { data: files, error: listError } = await supabaseStorage.storage.from('uploads').list(filePrefix, {
       limit: 1000,
+      sortBy: { column: 'created_at', order: 'asc' },
     });
 
-    if (listResult.blobs.length > 0) {
-      await del(listResult.blobs.map((blob) => blob.url));
-      console.log(`Deleted ${listResult.blobs.length} blobs`);
+    if (listError) {
+      console.error('Error listing files:', listError);
+      throw listError;
     }
 
-    cursor = listResult.cursor;
-  } while (cursor);
+    if (!files || files.length === 0) {
+      console.log('No files found with prefix:', filePrefix);
+      return;
+    }
 
-  console.log('All blobs in the specified folder were deleted');
+    // Delete all files
+    const filePaths = files.map((file: { name: string }) => `${filePrefix}${file.name}`);
+    const { error: deleteError } = await supabaseStorage.storage.from('uploads').remove(filePaths);
+
+    if (deleteError) {
+      console.error('Error deleting files:', deleteError);
+      throw deleteError;
+    }
+
+    console.log(`Deleted ${files.length} files with prefix: ${filePrefix}`);
+  } catch (error) {
+    console.error('Error in deleteAllFilesWithPrefix:', error);
+    throw error;
+  }
 }

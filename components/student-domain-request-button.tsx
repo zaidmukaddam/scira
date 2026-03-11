@@ -42,7 +42,7 @@ ${additionalInfo}
 
 `
     : ''
-}I am a current student at this university and would love to access the student discount for Scira Pro.
+}I am a current student at this university and would love to access the student discount for SCX.ai Pro.
 
 Thank you for considering my request!
 
@@ -61,7 +61,7 @@ Best regards`;
 
     // Ensure proper line breaks for email clients
     const formattedBody = body.replace(/\n/g, '%0D%0A');
-    const mailtoLink = `mailto:zaid@scira.ai?subject=${encodeURIComponent(subject)}&body=${formattedBody}`;
+    const mailtoLink = `mailto:support@scx.ai?subject=${encodeURIComponent(subject)}&body=${formattedBody}`;
 
     // Open email client
     window.location.href = mailtoLink;

@@ -341,7 +341,7 @@ export function SearchesPage({ userId }: SearchesPageProps) {
               <Skeleton className="h-4 w-16" />
             ) : (
               <p className="text-sm text-muted-foreground">
-                {displayedChats.length} {displayedChats.length === 1 ? 'search' : 'searches'} with Scira
+                {displayedChats.length} {displayedChats.length === 1 ? 'search' : 'searches'} with SCX.ai
               </p>
             )}
             <Button

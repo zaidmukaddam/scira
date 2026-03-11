@@ -2,10 +2,10 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Scira - AI-powered Search Engine',
-    short_name: 'Scira',
+    name: 'SCX.ai Chat - AI-powered Search Engine',
+    short_name: 'SCX.ai',
     description:
-      'A minimalistic AI-powered search engine that helps you find information on the internet using advanced AI models like GPT-4, Claude, and Grok',
+      'A sovereign Australian AI-powered search engine using advanced models like GPT-OSS, MAGPiE, Llama, and DeepSeek',
     start_url: '/',
     display: 'standalone',
     categories: ['search', 'ai', 'productivity'],

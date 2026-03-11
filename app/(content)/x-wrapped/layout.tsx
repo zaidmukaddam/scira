@@ -3,15 +3,15 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'X Wrapped 2025 - Your Year on X',
   description:
-    'Discover your 2025 on X! Get personalized insights about your posting activity, top topics, sentiment analysis, and more with X Wrapped powered by Scira AI.',
+    'Discover your 2025 on X! Get personalized insights about your posting activity, top topics, sentiment analysis, and more with X Wrapped powered by SCX.ai.',
   openGraph: {
     title: 'X Wrapped 2025 - Your Year on X',
     description: 'Discover your personalized year-in-review on X with AI-powered insights and beautiful visualizations.',
     type: 'website',
-    url: 'https://scira.ai/x-wrapped',
+    url: 'https://chat.southerncrossai.com.au/x-wrapped',
     images: [
       {
-        url: 'https://scira.ai/api/og/x-wrapped',
+        url: 'https://chat.southerncrossai.com.au/api/og/x-wrapped',
         width: 1200,
         height: 630,
         alt: 'X Wrapped 2025',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'X Wrapped 2025',
     description: 'Get your personalized year-in-review on X',
-    images: ['https://scira.ai/api/og/x-wrapped'],
+    images: ['https://chat.southerncrossai.com.au/api/og/x-wrapped'],
   },
 };
 

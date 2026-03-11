@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { serverEnv } from '@/env/server';
 
 export const movieTvSearchTool = tool({
-  description: 'Search for a movie or TV show using TMDB API',
+  description: 'Search for details about a specific movie or TV show by name (cast, rating, synopsis, release date). Use this when the user asks about a specific title. For general recommendations or "what movies are popular/new/trending", use trending_movies or trending_tv instead.',
   inputSchema: z.object({
     query: z.string().describe('The search query for movies/TV shows'),
   }),

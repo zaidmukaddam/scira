@@ -406,7 +406,7 @@ export default function XWrappedUsernamePage() {
           <a href="https://x.ai/api" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">
             Grok
           </a>{' '}
-          · Built with Scira
+          · Built with SCX.ai
           <br />
           Results are cached for 5 minutes
         </p>

@@ -396,7 +396,7 @@ export const youtubeSearchTool = tool({
     query: z.string().describe('The search query for YouTube videos'),
     timeRange: z.enum(['day', 'week', 'month', 'year', 'anytime']),
     mode: searchModeEnum.default('general').describe('general search, channel videos, or playlist videos'),
-    channelVideoType: channelVideoTypeEnum.optional().describe('When mode=channel, filter to video/short/live/all'),
+    channelVideoType: channelVideoTypeEnum.nullish().describe('When mode=channel, filter to video/short/live/all'),
   }),
   execute: async ({
     query,
@@ -410,6 +410,10 @@ export const youtubeSearchTool = tool({
     channelVideoType?: ChannelVideoType;
   }) => {
     try {
+      if (!serverEnv.SUPADATA_API_KEY) {
+        return { results: [], error: 'YouTube search is not configured (missing SUPADATA_API_KEY)' };
+      }
+
       const supadata = new Supadata({
         apiKey: serverEnv.SUPADATA_API_KEY,
       });

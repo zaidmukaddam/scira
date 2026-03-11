@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Share } from 'lucide-react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { SciraLogo } from '@/components/logos/scira-logo';
+import { SouthernCrossLogo } from '@/components/logos/southerncross-logo';
 
 export function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
@@ -41,9 +41,9 @@ export function InstallPrompt() {
         >
           <div className="flex items-start justify-between gap-3">
             {/* App Icon */}
-            <SciraLogo className="size-9" />
+            <SouthernCrossLogo variant="square" className="size-9" />
             <div className="flex-grow">
-              <p className="text-sm font-semibold text-foreground">Install Scira on your device</p>
+              <p className="text-sm font-semibold text-foreground">Install SCX.ai on your device</p>
               <p className="mt-0.5 text-xs text-muted-foreground inline-flex items-center gap-1">
                 Tap <Share className="w-3 h-3 text-primary" /> then &quot;Add to Home Screen&quot;{' '}
                 <span role="img" aria-label="plus icon" className="text-primary font-medium">

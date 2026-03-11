@@ -1,0 +1,32 @@
+{
+  "framework": "nextjs",
+  "installCommand": "pnpm install",
+  "buildCommand": "pnpm build",
+  "functions": {
+    "app/api/**/*.ts": {
+      "maxDuration": 300
+    }
+  },
+  "crons": [
+    {
+      "path": "/api/clean_images",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/health-check",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/daily-summary",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/sandbox-cleanup",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/generate-suggestions",
+      "schedule": "0 18 * * *"
+    }
+  ]
+}

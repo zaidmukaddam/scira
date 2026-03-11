@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { elevenlabs } from '@ai-sdk/elevenlabs';
-import { groq } from '@ai-sdk/groq';
 import { experimental_transcribe as transcribe } from 'ai';
 
 export async function POST(request: NextRequest) {

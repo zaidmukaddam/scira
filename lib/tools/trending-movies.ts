@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { serverEnv } from '@/env/server';
 
 export const trendingMoviesTool = tool({
-  description: 'Get trending movies from TMDB',
+  description: 'Get currently trending and popular movies. Use this when the user asks for movie recommendations, new movies, popular movies, what to watch, good movies, or anything about movies without a specific title.',
   inputSchema: z.object({}),
   execute: async () => {
     const TMDB_API_KEY = serverEnv.TMDB_API_KEY;

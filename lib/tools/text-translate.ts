@@ -1,7 +1,20 @@
-import { tool } from 'ai';
+import { tool, generateText } from 'ai';
 import { z } from 'zod';
-import { generateObject } from 'ai';
-import { scira } from '@/ai/providers';
+import { jsonrepair } from 'jsonrepair';
+import { scx } from '@/ai/providers';
+
+const translationSchema = z.object({
+  translatedText: z.string(),
+  detectedLanguage: z.string(),
+});
+
+function extractJSON(text: string): string {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenced) return fenced[1].trim();
+  const braced = text.match(/\{[\s\S]*\}/);
+  if (braced) return braced[0];
+  return text;
+}
 
 export const textTranslateTool = tool({
   description: 'Translate text from one language to another.',
@@ -10,16 +23,20 @@ export const textTranslateTool = tool({
     to: z.string().describe('The language to translate to in the format of ISO 639-1.'),
   }),
   execute: async ({ text, to }: { text: string; to: string }) => {
-    const { object: translation } = await generateObject({
-      model: scira.languageModel('scira-default'),
-      system: `You are a helpful assistant that translates text from one language to another.`,
-      prompt: `Translate the following text to ${to} language: ${text}`,
-      schema: z.object({
-        translatedText: z.string(),
-        detectedLanguage: z.string().describe('The detected language of the input text in the format of ISO 639-1.'),
-      }),
+    const { text: response } = await generateText({
+      model: scx.languageModel('llama-4'),
+      maxOutputTokens: 1000,
+      system: 'You translate text between languages. Use Australian spelling for English. Respond with ONLY JSON, no markdown.',
+      prompt: `Translate to ${to}: ${text}
+
+{"translatedText":"translated text","detectedLanguage":"ISO 639-1 code"}`,
     });
-    console.log(translation);
+
+    const rawJSON = extractJSON(response);
+    const repaired = jsonrepair(rawJSON);
+    const parsed = JSON.parse(repaired);
+    const translation = translationSchema.parse(parsed);
+
     return {
       translatedText: translation.translatedText,
       detectedLanguage: translation.detectedLanguage,

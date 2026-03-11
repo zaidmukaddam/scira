@@ -1,20 +1,13 @@
 import { webSearchTool } from '@/lib/tools';
 import { xSearchTool } from '@/lib/tools/x-search';
-import { groq } from '@ai-sdk/groq';
-import { xai } from '@ai-sdk/xai';
-import { convertToModelMessages, customProvider, generateText, stepCountIs } from 'ai';
-
-const scira = customProvider({
-  languageModels: {
-    'scira-default': xai('grok-4-fast-reasoning'),
-  },
-});
+import { convertToModelMessages, generateText, stepCountIs } from 'ai';
+import { scx } from '@/ai/providers';
 
 export const maxDuration = 800;
 
 // Define separate system prompts for each group
 const groupSystemPrompts = {
-  web: `You are Scira for Raycast, a powerful AI web search assistant.
+  web: `You are SCX.ai for Raycast, a powerful AI web search assistant.
 
 Today's Date: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
 Current Time: ${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' })}
@@ -89,7 +82,7 @@ export async function POST(req: Request) {
         : ['web_search' as const, 'x_search' as const];
 
   const { text, steps } = await generateText({
-    model: scira.languageModel(model),
+    model: scx.languageModel('deepseek-v3'),
     system: systemPrompt,
     stopWhen: stepCountIs(2),
     messages: await convertToModelMessages(messages),

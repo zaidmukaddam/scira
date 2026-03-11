@@ -59,11 +59,11 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { getSearchGroups, type SearchGroupId } from '@/lib/utils';
-import { models } from '@/ai/providers';
+import { models } from '@/ai/models';
 import { cn } from '@/lib/utils';
 import { Switch } from '@/components/ui/switch';
 import { useIsProUser } from '@/contexts/user-context';
-import { SciraLogo } from './logos/scira-logo';
+import { SouthernCrossLogo } from './logos/southerncross-logo';
 import Image from 'next/image';
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { HugeiconsIcon } from '@/components/ui/hugeicons';
@@ -1300,7 +1300,7 @@ export function SubscriptionSection({ subscriptionData, isProUser, user }: any) 
       console.error('Subscription management error:', error);
 
       if (proSource === 'dodo') {
-        toast.error('Unable to access DodoPayments portal. Please contact support at zaid@scira.ai');
+        toast.error('Unable to access DodoPayments portal. Please contact support at support@scx.ai');
       } else {
         toast.error('Failed to open subscription management');
       }
@@ -1507,7 +1507,7 @@ export function SubscriptionSection({ subscriptionData, isProUser, user }: any) 
                         <div className="flex items-center justify-between">
                           <div className="flex-1 min-w-0">
                             <p className={cn('font-medium truncate', isMobile ? 'text-xs' : 'text-sm')}>
-                              Scira Pro (DodoPayments)
+                              SCX Pro (DodoPayments)
                             </p>
                             <div className="flex items-center gap-2">
                               <p className={cn('text-muted-foreground', isMobile ? 'text-[10px]' : 'text-xs')}>
@@ -2273,7 +2273,7 @@ export function SettingsDialog({
             {/* Header - more compact */}
             <DrawerHeader className="pb-2 px-4 pt-3 shrink-0">
               <DrawerTitle className="text-base font-medium flex items-center gap-2">
-                <SciraLogo className="size-6" />
+                <SouthernCrossLogo variant="square" className="size-6" />
                 Settings
               </DrawerTitle>
             </DrawerHeader>
@@ -2335,7 +2335,7 @@ export function SettingsDialog({
       <DialogContent className="max-w-4xl! w-full! max-h-[85vh] p-0! gap-0 overflow-hidden">
         <DialogHeader className="p-4 m-0!">
           <DialogTitle className="text-xl font-medium tracking-normal flex items-center gap-2">
-            <SciraLogo className="size-6" color="currentColor" />
+            <SouthernCrossLogo variant="square" className="size-6" />
             Settings
           </DialogTitle>
         </DialogHeader>
