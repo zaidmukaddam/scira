@@ -56,52 +56,48 @@ export const SUGGESTION_CONFIGS: Record<ModelSuggestionType, SuggestionConfig> =
   'scira-magpie': {
     modelType: 'scira-magpie',
     count: 6,
-    newsCategories: ['australia news', 'australian politics', 'australia economy', 'australian environment'],
-    systemPrompt: `You are generating suggested questions for SCX.ai's Magpie model — an Australian reasoning and analysis assistant.
+    newsCategories: ['australia news', 'australian culture', 'australia economy', 'australian environment'],
+    systemPrompt: `You are generating suggested questions for an Australian AI assistant that excels at reasoning and step-by-step thinking.
 
 CRITICAL REQUIREMENTS:
-- This model does NOT use tools; questions must be answerable from knowledge and reasoning
 - ALL suggestions MUST be focused on Australia and Australian context
-- Questions should encourage deep thinking, analysis, and step-by-step reasoning
-- Use phrases like "Explain step-by-step", "Think through", "Reason through", "Analyse", "Compare"
-- Cover topics: government policy, economy, environment, history, culture, society
+- Questions should encourage deep thinking, analysis, and reasoning
+- Use phrases like "Explain step-by-step", "Think through", "Reason through", "Analyse"
+- Cover topics: government, economy, environment, culture, history, society
 - Questions should be educational and thought-provoking
-- NO questions about real-time data (stock prices, weather, movies, restaurants)
 
-Based on recent Australian news and developments, generate 6 reasoning-focused questions.`,
+Based on recent Australian news and developments, generate reasoning-focused questions.`,
     staticFallback: [
-      { text: "Explain step-by-step how Australia's federal budget process works", category: "government" },
-      { text: "Think through the pros and cons of nuclear energy for Australia", category: "environment" },
-      { text: "Reason through Australia's housing affordability crisis and possible solutions", category: "economics" },
-      { text: "Write a detailed analysis of the Great Barrier Reef's ecological importance", category: "environment" },
-      { text: "Compare Australia's Medicare system with the UK's NHS", category: "policy" },
-      { text: "Create a persuasive essay arguing for Australia becoming a republic", category: "politics" },
+      { text: "Explain step-by-step how the Australian government works", category: "government" },
+      { text: "Think through the pros and cons of renewable energy in Australia", category: "environment" },
+      { text: "Reason through why the Great Barrier Reef is important to Australia", category: "environment" },
+      { text: "Create a detailed poem about the Australian outback", category: "creative" },
+      { text: "Explain the difference between Australian and American English", category: "language" },
+      { text: "Think step-by-step about Australia's role in the Asia-Pacific region", category: "geopolitics" },
     ],
   },
 
   'scx-default': {
     modelType: 'scx-default',
     count: 6,
-    newsCategories: ['australia news', 'world news', 'technology', 'business', 'science'],
-    systemPrompt: `You are generating suggested questions for SCX.ai's GPT-OSS model — a general-purpose Australian AI assistant with full tool access.
+    newsCategories: ['australia news', 'world news', 'technology', 'science'],
+    systemPrompt: `You are generating suggested questions for a general-purpose Australian AI assistant.
 
 CRITICAL REQUIREMENTS:
-- Questions should leverage the available tools: web search, stock prices, maps/restaurants, movies, text translation, diagram generation
-- Include Australian-focused questions
-- Show variety across the available tools
-- Questions should feel timely and relevant to current events
-- Make questions practical and action-oriented
+- Suggestions should be diverse covering different topics
+- Include mix of Australian-focused and general knowledge questions
+- Topics: current events, history, culture, science, technology, practical help
+- Questions should be accessible to general users
+- Make questions engaging and interesting
 
-Available tools: web_search (current news/facts), stock_price (ASX/NYSE share prices), find_place_on_map / nearby_places_search (locations, restaurants, businesses), movie_or_tv_search / trending_movies / trending_tv (entertainment), text_translate (translates into ONE target language only — never suggest translating into multiple languages at once), create_diagram (mermaid flowcharts/diagrams).
-
-Based on recent Australian news and what's happening today, generate 6 tool-leveraging questions.`,
+Based on recent news and trending topics, generate diverse and engaging questions.`,
     staticFallback: [
-      { text: "What's the current share price of CBA?", category: "finance" },
-      { text: "Find Italian restaurants near Sydney CBD", category: "local" },
-      { text: "Show me trending movies this week", category: "entertainment" },
-      { text: "What's happening in Australian tech news today?", category: "news" },
-      { text: "Translate 'Good morning, how are you?' into French", category: "translation" },
-      { text: "Draw a flowchart of the software development lifecycle", category: "diagram" },
+      { text: "Explain how the Australian electoral system works", category: "government" },
+      { text: "Write a short story set in the Australian outback", category: "creative" },
+      { text: "Compare the economies of Australia and New Zealand", category: "economics" },
+      { text: "Help me write a professional email to my manager", category: "productivity" },
+      { text: "Explain the history of Indigenous Australians", category: "history" },
+      { text: "Create a meal plan using Australian ingredients", category: "lifestyle" },
     ],
   },
 
@@ -109,73 +105,66 @@ Based on recent Australian news and what's happening today, generate 6 tool-leve
     modelType: 'scira-llama-4',
     count: 6,
     newsCategories: ['australia news', 'technology', 'science', 'business'],
-    systemPrompt: `You are generating suggested questions for SCX.ai's Llama model — a general knowledge, coding and writing assistant.
+    systemPrompt: `You are generating suggested questions for Meta's Llama 4 model optimised for Australian context.
 
 CRITICAL REQUIREMENTS:
-- This model does NOT use tools; questions must be answerable from knowledge
-- Questions should showcase coding, writing, analysis, and reasoning capabilities
-- Include some Australian-focused questions
-- Cover diverse topics: programming, data, writing, explanation, history, science
-- NO questions about real-time data (stock prices, weather, movies, restaurants)
+- Include Australian-focused questions
+- Cover diverse topics: current events, technology, science, business, culture
+- Questions should showcase the model's capabilities
+- Make questions practical and useful
 
-Based on recent developments, generate 6 practical and engaging questions.`,
+Based on recent news and developments, generate engaging questions.`,
     staticFallback: [
-      { text: "Write a Python script to fetch and display live stock prices", category: "coding" },
-      { text: "Explain the difference between machine learning and deep learning", category: "technology" },
-      { text: "Help me write a professional email declining a job offer", category: "writing" },
-      { text: "Summarise the key events of World War II in 300 words", category: "history" },
-      { text: "Create a SQL query to find the top 10 customers by revenue", category: "coding" },
-      { text: "Explain how Australia's superannuation system works", category: "finance" },
+      { text: "Explain how the Australian electoral system works", category: "government" },
+      { text: "Write a short story set in the Australian outback", category: "creative" },
+      { text: "Compare the economies of Australia and New Zealand", category: "economics" },
+      { text: "Help me write a professional email to my manager", category: "productivity" },
+      { text: "Explain the history of Indigenous Australians", category: "history" },
+      { text: "Create a meal plan using Australian ingredients", category: "lifestyle" },
     ],
   },
 
   'pro-user': {
     modelType: 'pro-user',
     count: 6,
-    newsCategories: ['australia news', 'world news', 'technology', 'finance australia', 'asx stocks'],
-    systemPrompt: `You are generating suggested questions for SCX.ai — an Australian AI assistant with full tool access.
+    newsCategories: ['australia news', 'world news', 'technology', 'finance', 'weather australia'],
+    systemPrompt: `You are generating suggested questions for Pro users of an Australian AI search assistant with full tool access.
 
 CRITICAL REQUIREMENTS:
-- Questions should leverage the available tools: web search, stock prices, maps/restaurants, movies, text translation, diagram generation
+- Questions should leverage the AI's tools: web search, weather, stock prices, maps, movies, academic search
 - Include Australian-focused questions
-- Show variety: news, finance (ASX stocks), local search, entertainment, translation, diagrams
+- Show variety: news, weather, finance, local search, entertainment
 - Questions should feel timely and relevant to current events
+- Make questions practical and action-oriented
 
-Available tools: web_search, stock_price (ASX/NYSE), find_place_on_map, nearby_places_search, movie_or_tv_search, trending_movies, trending_tv, text_translate (ONE target language only), create_diagram.
-
-Based on recent news and what's happening today, generate 6 tool-leveraging questions.`,
+Based on recent news and what's happening today, generate tool-utilizing questions.`,
     staticFallback: [
-      { text: "What's the current share price of BHP?", category: "finance" },
-      { text: "Find cafes near Melbourne CBD", category: "local" },
-      { text: "Show me trending TV shows right now", category: "entertainment" },
       { text: "What's happening in Australian news today?", category: "news" },
-      { text: "Translate 'Thank you very much' into Japanese", category: "translation" },
-      { text: "Draw a diagram of how a neural network works", category: "diagram" },
+      { text: "Find the best restaurants near me", category: "local" },
+      { text: "Analyse the latest academic papers on quantum mechanics", category: "academic" },
+      { text: "What's the weather forecast for Melbourne this week?", category: "weather" },
+      { text: "What's the share price of CBA?", category: "finance" },
+      { text: "Show me trending movies", category: "entertainment" },
     ],
   },
 
   'free-user': {
     modelType: 'free-user',
-    count: 6,
-    newsCategories: ['australia news', 'world news', 'technology'],
-    systemPrompt: `You are generating suggested questions for SCX.ai — an Australian AI assistant.
+    count: 3,
+    newsCategories: ['australia news', 'world news'],
+    systemPrompt: `You are generating suggested questions for free users of an Australian AI search assistant.
 
 CRITICAL REQUIREMENTS:
-- Generate exactly 6 suggestions
-- Mix tool-based questions (news, stocks, movies) with knowledge questions (writing, explanation)
-- At least two should be Australian-focused
-- Questions should showcase the AI's breadth of capabilities
+- Generate exactly 3 suggestions
+- Include a mix: one news-related, one creative, one practical
+- Questions should be engaging and showcase the AI's capabilities
+- At least one should be Australian-focused
 
-Available tools: web_search, stock_price, nearby_places_search, movie_or_tv_search, trending_movies, text_translate (ONE target language only), create_diagram.
-
-Based on recent news, generate 6 diverse and engaging questions.`,
+Based on recent news, generate 3 diverse and engaging questions.`,
     staticFallback: [
       { text: "What's happening in Australian news today?", category: "news" },
-      { text: "What's the share price of CBA?", category: "finance" },
-      { text: "Show me trending movies this week", category: "entertainment" },
-      { text: "Find restaurants near me", category: "local" },
-      { text: "Translate 'Hello, how are you?' into Spanish", category: "translation" },
-      { text: "Write a short poem about the Sydney Opera House", category: "creative" },
+      { text: "Create a poem about the fall of the Roman Empire", category: "creative" },
+      { text: "Analyse www.scx.ai", category: "analysis" },
     ],
   },
 };
@@ -410,18 +399,14 @@ export async function getSuggestions(modelType: ModelSuggestionType): Promise<Su
 
 /** Map UI model IDs (short names from model switcher) to suggestion config types */
 const MODEL_TO_SUGGESTION_TYPE: Record<string, ModelSuggestionType> = {
-  // Magpie models
   'scira-magpie': 'scira-magpie',
   magpie: 'scira-magpie',
-  // General / tool-capable models (all get the same tool-rich suggestions)
   'scx-default': 'scx-default',
-  'scira-default': 'scx-default', // localStorage default — map to same as gpt-oss
   'deepseek-v3': 'scx-default',
   'deepseek-v3.1': 'scx-default',
   'deepseek-r1': 'scx-default',
   'gpt-oss-120b': 'scx-default',
   'llama-3.3': 'scx-default',
-  // Llama 4
   'scira-llama-4': 'scira-llama-4',
   'llama-4': 'scira-llama-4',
 };
@@ -436,44 +421,6 @@ export async function getChatSuggestions(
   const suggestionType: ModelSuggestionType =
     MODEL_TO_SUGGESTION_TYPE[selectedModel] ?? (isProUser ? 'pro-user' : 'free-user');
   return getSuggestions(suggestionType);
-}
-
-/**
- * Instant cache-only lookup — never triggers LLM generation.
- * Returns cached suggestions if available, otherwise static fallback.
- * Used by the UI so the home screen is always instant.
- * The cron job keeps the cache warm so cached results are the normal case.
- */
-export async function getSuggestionsInstant(modelType: ModelSuggestionType): Promise<Suggestion[]> {
-  const config = SUGGESTION_CONFIGS[modelType];
-  if (!config) return [];
-
-  try {
-    const redis = await getRedisClient();
-    if (redis) {
-      const cached = await redis.get(getCacheKey(modelType));
-      if (cached) {
-        const parsed: ModelSuggestions = JSON.parse(cached);
-        return parsed.suggestions;
-      }
-    }
-  } catch {
-    // silently fall through to static
-  }
-
-  return config.staticFallback;
-}
-
-/**
- * Instant version of getChatSuggestions for UI use.
- */
-export async function getChatSuggestionsInstant(
-  selectedModel: string,
-  isProUser: boolean
-): Promise<Suggestion[]> {
-  const suggestionType: ModelSuggestionType =
-    MODEL_TO_SUGGESTION_TYPE[selectedModel] ?? (isProUser ? 'pro-user' : 'free-user');
-  return getSuggestionsInstant(suggestionType);
 }
 
 /**
