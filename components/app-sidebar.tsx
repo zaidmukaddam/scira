@@ -241,7 +241,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
   };
 
   // Bottom feature nav items (always visible for signed-in users)
-  const featureLinks = user
+  const featureLinks: { id: string; label: string; icon: React.ReactElement; href: string; external?: boolean }[] = user
     ? [
         { id: 'files', label: 'Files', icon: <FolderOpenIcon size={18} weight="regular" />, href: '/files' },
         { id: 'api-keys', label: 'API Playground', icon: <CodeIcon size={18} weight="regular" />, href: '/api-keys' },
