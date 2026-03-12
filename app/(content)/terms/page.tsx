@@ -125,7 +125,7 @@ export default function TermsPage() {
               <strong>Free Plan:</strong> Includes limited daily searches with access to basic AI models
             </li>
             <li>
-              <strong>SCX.ai Pro:</strong> $15/month subscription with unlimited searches and access to all AI models
+              <strong>SCX.ai Pro:</strong> $20/month subscription with unlimited searches and access to all AI models
             </li>
           </ul>
           <p>

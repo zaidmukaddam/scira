@@ -42,13 +42,6 @@ import { SettingsDialog } from './settings-dialog';
 import { SettingsIcon, type SettingsIconHandle } from '@/components/ui/settings';
 import { SignInPromptDialog } from '@/components/sign-in-prompt-dialog';
 
-const VercelIcon = ({ size = 16 }: { size: number }) => {
-  return (
-    <svg height={size} strokeLinejoin="round" viewBox="0 0 16 16" width={size} style={{ color: 'currentcolor' }}>
-      <path fillRule="evenodd" clipRule="evenodd" d="M8 1L16 15H0L8 1Z" fill="currentColor"></path>
-    </svg>
-  );
-};
 
 // Navigation Menu Component - contains all the general navigation items
 const NavigationMenu = memo(() => {
@@ -93,10 +86,10 @@ const NavigationMenu = memo(() => {
         )}
 
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <a href={'https://api.scira.ai/'} target="_blank" className="w-full flex items-center gap-2">
+          <Link href="/api-keys" className="w-full flex items-center gap-2">
             <CodeIcon size={16} />
             <span>API</span>
-          </a>
+          </Link>
         </DropdownMenuItem>
 
         <DropdownMenuItem className="cursor-pointer" asChild>
@@ -150,35 +143,25 @@ const NavigationMenu = memo(() => {
 
         {/* Social and External Links */}
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <a href={'https://git.new/scira'} target="_blank" className="w-full flex items-center gap-2">
+          <a href={'https://github.com/SouthernCrossAI'} target="_blank" className="w-full flex items-center gap-2">
             <GithubLogoIcon size={16} />
             <span>Github</span>
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <a href={'https://x.com/sciraai'} target="_blank" className="w-full flex items-center gap-2">
+          <a href={'https://x.com/southerncrossai'} target="_blank" className="w-full flex items-center gap-2">
             <XLogoIcon size={16} />
             <span>X.com</span>
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <a href={'https://www.instagram.com/scira.ai'} target="_blank" className="w-full flex items-center gap-2">
+          <a href={'https://www.instagram.com/southerncrossai'} target="_blank" className="w-full flex items-center gap-2">
             <InstagramLogoIcon size={16} />
             <span>Instagram</span>
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <a
-            href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira&env=XAI_API_KEY,OPENAI_API_KEY,ANTHROPIC_API_KEY,GROQ_API_KEY,GOOGLE_GENERATIVE_AI_API_KEY,DAYTONA_API_KEY,E2B_API_KEY,DATABASE_URL,BETTER_AUTH_SECRET,GITHUB_CLIENT_ID,GITHUB_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,TWITTER_CLIENT_ID,TWITTER_CLIENT_SECRET,REDIS_URL,ELEVENLABS_API_KEY,TAVILY_API_KEY,EXA_API_KEY,SUPADATA_API_KEY,TMDB_API_KEY,YT_ENDPOINT,FIRECRAWL_API_KEY,OPENWEATHER_API_KEY,SANDBOX_TEMPLATE_ID,GOOGLE_MAPS_API_KEY,MAPBOX_ACCESS_TOKEN,AVIATION_STACK_API_KEY,CRON_SECRET,BLOB_READ_WRITE_TOKEN,MEM0_API_KEY,MEM0_ORG_ID,MEM0_PROJECT_ID,SMITHERY_API_KEY,NEXT_PUBLIC_MAPBOX_TOKEN,NEXT_PUBLIC_POSTHOG_KEY,NEXT_PUBLIC_POSTHOG_HOST,NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,SCIRA_PUBLIC_API_KEY,NEXT_PUBLIC_SCIRA_PUBLIC_API_KEY&envDescription=API%20keys%20and%20configuration%20required%20for%20Scira%20to%20function"
-            target="_blank"
-            className="w-full flex items-center gap-2"
-          >
-            <VercelIcon size={14} />
-            <span>Deploy with Vercel</span>
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem className="cursor-pointer" asChild>
-          <a href={'https://scira.userjot.com'} target="_blank" className="w-full flex items-center gap-2">
+          <a href={'mailto:support@scx.ai'} className="w-full flex items-center gap-2">
             <BugIcon className="size-4" />
             <span>Feature/Bug Request</span>
           </a>

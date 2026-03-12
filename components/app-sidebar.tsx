@@ -600,23 +600,6 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
                         </DropdownMenuItem>
                       </DropdownMenuSubContent>
                     </DropdownMenuSub>
-                    <DropdownMenuSub>
-                      <DropdownMenuSubTrigger>
-                        <UsersIcon size={16} weight="regular" className="mr-2" /><span>Community</span>
-                      </DropdownMenuSubTrigger>
-                      <DropdownMenuSubContent sideOffset={8} alignOffset={-20} collisionPadding={{ bottom: 20 }} className="bg-background border shadow-lg">
-                        <DropdownMenuItem asChild>
-                          <a href="https://www.instagram.com/southerncrossai" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
-                            <InstagramLogoIcon size={16} weight="regular" className="mr-2" /><span>Instagram</span>
-                          </a>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <a href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira" target="_blank" rel="noopener noreferrer" onClick={closeMobileSidebar}>
-                            <VercelIcon size={16} className="mr-2" /><span>Deploy</span>
-                          </a>
-                        </DropdownMenuItem>
-                      </DropdownMenuSubContent>
-                    </DropdownMenuSub>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

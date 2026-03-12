@@ -327,7 +327,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                     )}
                     <span className="text-sm text-muted-foreground ml-2">(excl. GST)/month</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">Approx. ${PRICING.PRO_MONTHLY}/month</p>
+                  <p className="text-xs text-muted-foreground">Billed monthly · cancel anytime</p>
                 </div>
               ) : (
                 <div className="space-y-1">
@@ -342,7 +342,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                     )}
                     <span className="text-sm text-muted-foreground ml-2">/month</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">Approx. ₹{PRICING.PRO_MONTHLY_INR}/month</p>
+                  <p className="text-xs text-muted-foreground">Billed monthly · cancel anytime</p>
                 </div>
               )}
             </div>
@@ -444,9 +444,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                   <h3 className="text-sm font-medium mb-1">Student discount available</h3>
                   <p className="text-xs text-muted-foreground">
                     {location.isIndia || derivedIsIndianStudentEmail
-                      ? 'Get Pro for just ₹450/month (approx. $5)!'
-                      : 'Get Pro for just $5/month (approx. ₹450)!'}{' '}
-                    Sign up with your university email.
+                      ? 'Get Pro for just ₹450/month with a university email!'
+                      : 'Get Pro for just $5/month with a university email!'}
                   </p>
                 </div>
               </div>
@@ -469,8 +468,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                   Your university email has been recognized. Get Pro for{' '}
                   {location.isIndia || derivedIsIndianStudentEmail
                     ? `₹${getStudentPrice(true) || 450}/month`
-                    : `$${getStudentPrice(false) || 5}/month`}
-                  . Discount applied automatically at checkout.
+                    : `$${getStudentPrice(false) || 5}/month`}{' '}
+                  — discount applied automatically at checkout.
                 </p>
               </div>
             </div>
