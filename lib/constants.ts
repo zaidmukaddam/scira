@@ -5,7 +5,7 @@ export const SEARCH_LIMITS = {
 } as const;
 
 export const PRICING = {
-  PRO_MONTHLY: 15, // USD
+  PRO_MONTHLY: 20, // USD
   PRO_MONTHLY_INR: 1330, // INR for Indian users
 } as const;
 

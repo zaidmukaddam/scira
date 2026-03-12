@@ -310,7 +310,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                   </div>
                 ) : (
                   <div className="flex items-baseline">
-                    <span className="text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro">$15</span>
+                    <span className="text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro">${PRICING.PRO_MONTHLY}</span>
                     <span className="text-sm text-muted-foreground ml-2">/month</span>
                   </div>
                 )
@@ -327,18 +327,18 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                     )}
                     <span className="text-sm text-muted-foreground ml-2">(excl. GST)/month</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">Approx. $15/month</p>
+                  <p className="text-xs text-muted-foreground">Approx. ${PRICING.PRO_MONTHLY}/month</p>
                 </div>
               ) : (
                 <div className="space-y-1">
                   <div className="flex items-baseline">
                     {getStudentPrice(false) ? (
                       <>
-                        <span className="text-xl text-muted-foreground line-through mr-2">$15</span>
+                        <span className="text-xl text-muted-foreground line-through mr-2">${PRICING.PRO_MONTHLY}</span>
                         <span className="text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro">${getStudentPrice(false)}</span>
                       </>
                     ) : (
-                      <span className="text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro">$15</span>
+                      <span className="text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro">${PRICING.PRO_MONTHLY}</span>
                     )}
                     <span className="text-sm text-muted-foreground ml-2">/month</span>
                   </div>
@@ -408,7 +408,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                         : `Subscribe ₹${PRICING.PRO_MONTHLY_INR}/month`
                       : getStudentPrice(false)
                         ? `Subscribe $${getStudentPrice(false)}/month`
-                        : 'Subscribe $15/month'}
+                        : `Subscribe $${PRICING.PRO_MONTHLY}/month`}
                   {!location.loading && (
                     <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                   )}
