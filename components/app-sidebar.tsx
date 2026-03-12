@@ -250,7 +250,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
   const featureLinks: { id: string; label: string; icon: React.ReactElement; href: string; external?: boolean }[] = user
     ? [
         { id: 'files', label: 'Files', icon: <FolderOpenIcon size={18} weight="regular" />, href: '/files' },
-        { id: 'api-keys', label: 'API Playground', icon: <CodeIcon size={18} weight="regular" />, href: '/api-keys' },
+        { id: 'api-keys', label: 'API Playground', icon: <CodeIcon size={18} weight="regular" />, href: 'https://platform.scx.ai', external: true },
       ]
     : [];
 
