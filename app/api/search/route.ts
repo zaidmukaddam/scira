@@ -45,6 +45,7 @@ import { after } from 'next/server';
 import { CustomInstructions } from '@/lib/db/schema';
 import { v7 as uuidv7 } from 'uuid';
 import { geolocation } from '@vercel/functions';
+import { getGeolocation } from '@/lib/geolocation';
 
 import {
   stockChartTool,
@@ -315,6 +316,8 @@ export async function POST(req: Request) {
     searchProvider,
     extremeSearchProvider,
     selectedConnectors,
+    browserLat,
+    browserLon,
   } = body as {
     messages: any[];
     model: string;
@@ -326,16 +329,77 @@ export async function POST(req: Request) {
     searchProvider?: 'parallel' | 'exa' | 'tavily' | 'firecrawl';
     extremeSearchProvider?: 'parallel' | 'exa';
     selectedConnectors?: import('@/lib/connectors').ConnectorProvider[];
+    browserLat?: number;
+    browserLon?: number;
   };
   recordTiming('parse_request_body', opStart);
 
   opStart = Date.now();
-  const { latitude, longitude, city, countryRegion, country } = geolocation(req);
+
+  // Location resolution priority:
+  // 1. Browser GPS (precise, user-granted) — sent from the client in the request body
+  // 2. Vercel geolocation headers (IP-based, ISP-level accuracy, deployment only)
+  // 3. ip-api.com fallback (IP-based, works locally and any platform)
+  let geoCity: string | undefined;
+  let geoRegion: string | undefined;
+  let geoCountry: string | undefined;
+  let geoLatitude: string | undefined;
+  let geoLongitude: string | undefined;
+  let locationSource: 'browser' | 'ip' = 'ip';
+
+  if (browserLat !== undefined && browserLon !== undefined) {
+    // Browser GPS available — most accurate; reverse-geocode to get city/country name
+    locationSource = 'browser';
+    geoLatitude = String(browserLat);
+    geoLongitude = String(browserLon);
+    try {
+      const reverseRes = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${browserLat}&lon=${browserLon}&format=json`,
+        {
+          headers: { 'User-Agent': 'SCX-AI-Chat/1.0' },
+          signal: AbortSignal.timeout(3000),
+        },
+      );
+      if (reverseRes.ok) {
+        const reverseData = await reverseRes.json();
+        const addr = reverseData.address ?? {};
+        geoCity = addr.city || addr.town || addr.village || addr.suburb || addr.county;
+        geoRegion = addr.state;
+        geoCountry = addr.country;
+      }
+    } catch (reverseError) {
+      console.warn('Reverse geocoding failed for browser location:', reverseError);
+      // Still have lat/lon — system prompt will use coordinates even without city name
+    }
+  } else {
+    // Fall back to IP geolocation — try Vercel headers first, then ip-api.com
+    const vercelGeo = geolocation(req);
+    geoCity = vercelGeo.city;
+    geoRegion = vercelGeo.countryRegion;
+    geoCountry = vercelGeo.country;
+    geoLatitude = vercelGeo.latitude;
+    geoLongitude = vercelGeo.longitude;
+
+    if (!geoCity && !geoCountry) {
+      try {
+        const fallbackGeo = await getGeolocation(req);
+        if (fallbackGeo.city || fallbackGeo.country) {
+          geoCity = fallbackGeo.city;
+          geoRegion = fallbackGeo.region;
+          geoCountry = fallbackGeo.country;
+          geoLatitude = fallbackGeo.latitude !== undefined ? String(fallbackGeo.latitude) : undefined;
+          geoLongitude = fallbackGeo.longitude !== undefined ? String(fallbackGeo.longitude) : undefined;
+        }
+      } catch (fallbackError) {
+        console.warn('Fallback geolocation failed:', fallbackError);
+      }
+    }
+  }
   recordTiming('geolocation_lookup', opStart);
 
   const streamId = 'stream-' + uuidv7();
 
-  console.log('🔍 Search API:', { model: model.trim(), group, city, countryRegion, country, latitude, longitude });
+  console.log('🔍 Search API:', { model: model.trim(), group, locationSource, city: geoCity, region: geoRegion, country: geoCountry, latitude: geoLatitude, longitude: geoLongitude });
 
   // Start all independent operations in parallel immediately
   opStart = Date.now();
@@ -539,11 +603,14 @@ export async function POST(req: Request) {
       const modelSupportsFunctionCalling = supportsFunctionCalling(effectiveModel);
       const modelSupportsParallelToolCalling = supportsParallelToolCalling(effectiveModel);
 
-      // Build location context string from Vercel geolocation headers
-      const locationParts = [city, countryRegion, country].filter(Boolean);
+      // Build location context string. Browser GPS is precise; IP-based is approximate.
+      const locationParts = [geoCity, geoRegion, geoCountry].filter(Boolean);
+      const coordsStr = geoLatitude && geoLongitude ? ` (${geoLatitude}, ${geoLongitude})` : '';
       const locationContext =
-        locationParts.length > 0
-          ? `\n\nThe user's location: ${locationParts.join(', ')}${latitude && longitude ? ` (${latitude}, ${longitude})` : ''}.`
+        locationParts.length > 0 || (geoLatitude && geoLongitude)
+          ? locationSource === 'browser'
+            ? `\n\nThe user's precise GPS location (granted by the user's device): ${locationParts.length > 0 ? locationParts.join(', ') : ''}${coordsStr}. When the user asks about their location or needs location-based services (weather, restaurants, directions, etc.), USE these coordinates. This is accurate to their real physical location.`
+            : `\n\nThe user's approximate location (detected via IP address — may reflect the nearest ISP city, not the user's exact location): ${locationParts.join(', ')}${coordsStr}. When the user asks about their location or requests location-based services, use this location. If they ask "where am I?", tell them this is an IP-based estimate and may not be perfectly accurate — they can allow location access in their browser for a precise result.`
           : '';
 
       // Warning appended when the model has no tools and responds from training data only

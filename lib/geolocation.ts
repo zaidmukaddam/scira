@@ -73,16 +73,16 @@ export async function getGeolocationFromIp(ip: string): Promise<GeoData> {
       ip.startsWith('10.') ||
       ip.startsWith('172.')
     ) {
-      // Return Australia for localhost testing
-      console.log('Private/localhost IP detected, returning test location (Australia)');
-      const testLat = -33.8688;
-      const testLon = 151.2093;
+      // Return Canberra for localhost/dev testing (Australian capital, more neutral than Sydney)
+      console.log('Private/localhost IP detected, returning dev placeholder location (Canberra, AU)');
+      const testLat = -35.2809;
+      const testLon = 149.1300;
       const { timezone, utcOffset } = getTimezoneFromCoordinates(testLat, testLon);
       return {
         country: 'Australia',
         countryCode: 'AU',
-        city: 'Sydney',
-        region: 'New South Wales',
+        city: 'Canberra',
+        region: 'Australian Capital Territory',
         latitude: testLat,
         longitude: testLon,
         timezone,

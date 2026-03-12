@@ -56,6 +56,7 @@ import {
 import { useAutoResume } from '@/hooks/use-auto-resume';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useUsageData } from '@/hooks/use-usage-data';
+import { useBrowserLocation } from '@/hooks/use-browser-location';
 import { useUser } from '@/contexts/user-context';
 import { useOptimizedScroll } from '@/hooks/use-optimized-scroll';
 
@@ -328,6 +329,9 @@ const ChatInterface = memo(
     // Use clean React Query hooks for all data fetching
     const { data: usageData } = useUsageData(user || null);
 
+    // Browser GPS location — requested non-blockingly on first message send
+    const { requestLocation } = useBrowserLocation();
+
     // Sign-in prompt timer
     const signInTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -453,8 +457,21 @@ const ChatInterface = memo(
       // resume: true,
       transport: new DefaultChatTransport({
         api: '/api/search',
-        prepareSendMessagesRequest({ messages, body }) {
-          // Use ref values to get current state
+        async prepareSendMessagesRequest({ messages, body }) {
+          // Attempt to get precise browser GPS location — non-blocking, silently falls back
+          // to server-side IP geolocation if permission is denied or unavailable.
+          let browserLat: number | undefined;
+          let browserLon: number | undefined;
+          try {
+            const loc = await requestLocation();
+            if (loc) {
+              browserLat = loc.lat;
+              browserLon = loc.lon;
+            }
+          } catch {
+            // Silently ignore — IP geolocation on server is the fallback
+          }
+
           return {
             body: {
               id: chatId,
@@ -466,6 +483,9 @@ const ChatInterface = memo(
               searchProvider: searchProviderRef.current,
               extremeSearchProvider: extremeSearchProviderRef.current,
               selectedConnectors: selectedConnectorsRef.current,
+              ...(browserLat !== undefined && browserLon !== undefined
+                ? { browserLat, browserLon }
+                : {}),
               ...(initialChatId ? { chat_id: initialChatId } : {}),
               ...body,
             },
