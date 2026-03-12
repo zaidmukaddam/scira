@@ -137,28 +137,46 @@ async function testModel(modelValue: string, label: string): Promise<ModelTestRe
 
 async function testStream(modelValue: string, label: string): Promise<StreamTestResult> {
   const start = Date.now();
+  const isReasoning = hasReasoningSupport(modelValue);
 
   try {
-    const { ttftMs, totalMs, charCount, preview } = await withTimeout(
+    const streamResult = await withTimeout(
       (async () => {
         let ttftMs = -1;
         let charCount = 0;
         let preview = '';
 
-        const { textStream } = streamText({
+        // Use fullStream so we capture both text-delta and reasoning parts.
+        // Reasoning models (gpt-oss-120b, magpie) produce reasoning chunks rather
+        // than text chunks, so textStream alone would yield nothing for them.
+        const { fullStream } = streamText({
           model: scx.languageModel(modelValue as any),
           prompt: 'Say the word "hello" and nothing else.',
-          maxOutputTokens: 20,
+          // Give reasoning models enough budget to produce output.
+          maxOutputTokens: isReasoning ? 500 : 50,
           ...getModelParameters(modelValue),
         });
 
-        for await (const chunk of textStream) {
-          if (ttftMs === -1 && chunk.length > 0) {
-            ttftMs = Date.now() - start;
-            preview = chunk;
+        for await (const part of fullStream) {
+          let delta = '';
+
+          if (part.type === 'text-delta') {
+            // AI SDK v5: text-delta uses `text` field; cast to handle both SDK variants
+            delta = (part as any).text ?? (part as any).textDelta ?? '';
+          } else if (part.type === 'reasoning-delta') {
+            // reasoning-delta shape: { type: 'reasoning-delta', delta: string }
+            delta = (part as any).delta ?? (part as any).text ?? '';
+            if (delta && ttftMs === -1) preview = `[thinking] ${delta.slice(0, 60)}`;
           }
-          charCount += chunk.length;
-          if (charCount > 300) break;
+
+          if (delta.length > 0) {
+            if (ttftMs === -1) {
+              ttftMs = Date.now() - start;
+              if (!preview) preview = delta;
+            }
+            charCount += delta.length;
+          }
+          if (charCount > 500) break;
         }
 
         return { ttftMs, totalMs: Date.now() - start, charCount, preview };
@@ -169,12 +187,12 @@ async function testStream(modelValue: string, label: string): Promise<StreamTest
     return {
       model: modelValue,
       label,
-      status: charCount > 0 ? 'pass' : 'fail',
-      ttftMs,
-      totalMs,
-      charCount,
-      preview: preview.trim() || '(no output)',
-      error: charCount > 0 ? undefined : 'No tokens streamed',
+      status: streamResult.charCount > 0 ? 'pass' : 'fail',
+      ttftMs: streamResult.ttftMs,
+      totalMs: streamResult.totalMs,
+      charCount: streamResult.charCount,
+      preview: streamResult.preview.trim() || '(no output)',
+      error: streamResult.charCount > 0 ? undefined : 'No tokens streamed',
     };
   } catch (err: any) {
     return {
