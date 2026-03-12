@@ -86,7 +86,7 @@ const NavigationMenu = memo(() => {
         )}
 
         <DropdownMenuItem className="cursor-pointer" asChild>
-          <Link href="/api-keys" className="w-full flex items-center gap-2">
+          <Link href="https://platform.scx.ai" target="_blank" rel="noopener noreferrer" className="w-full flex items-center gap-2">
             <CodeIcon size={16} />
             <span>API</span>
           </Link>
