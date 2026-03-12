@@ -10,7 +10,6 @@ import Link from 'next/link';
 import { PRICING, SEARCH_LIMITS } from '@/lib/constants';
 import { getDiscountConfigAction } from '@/app/actions';
 import { DiscountConfig } from '@/lib/discount';
-import { useLocation } from '@/hooks/use-location';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 import { StudentDomainRequestButton } from '@/components/student-domain-request-button';
 import { SupportedDomainsList } from '@/components/supported-domains-list';
@@ -44,12 +43,6 @@ interface PricingTableProps {
 
 export default function PricingTable({ subscriptionDetails, user }: PricingTableProps) {
   const router = useRouter();
-  const location = useLocation();
-  const userEmail = user?.email?.toLowerCase() ?? '';
-  const derivedIsIndianStudentEmail = Boolean(
-    userEmail && (userEmail.endsWith('.ac.in') || userEmail.endsWith('.edu.in')),
-  );
-
   const [discountConfig, setDiscountConfig] = useState<DiscountConfig>({
     enabled: false,
     isStudentDiscount: false,
@@ -60,7 +53,6 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
       try {
         const config = await getDiscountConfigAction({
           email: user?.email,
-          isIndianUser: location.isIndia || derivedIsIndianStudentEmail,
         });
 
         setDiscountConfig(config as DiscountConfig);
@@ -70,7 +62,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
     };
 
     fetchDiscountConfig();
-  }, [location.isIndia, user?.email, derivedIsIndianStudentEmail]);
+  }, [user?.email]);
 
   // Helper function to get student discount price
   const getStudentPrice = (isINR: boolean = false) => {
@@ -106,7 +98,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
           email: user.email || '',
           name: user.name || '',
         },
-        billing_currency: location.isIndia ? 'INR' : 'USD',
+        billing_currency: 'USD',
         allowed_payment_method_types: [
           'credit',
           'debit',
@@ -314,21 +306,6 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                     <span className="text-sm text-muted-foreground ml-2">/month</span>
                   </div>
                 )
-              ) : location.isIndia || derivedIsIndianStudentEmail ? (
-                <div className="space-y-1">
-                  <div className="flex items-baseline">
-                    {getStudentPrice(true) ? (
-                      <>
-                        <span className="text-xl text-muted-foreground line-through mr-2">₹{PRICING.PRO_MONTHLY_INR}</span>
-                        <span className="text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro">₹{getStudentPrice(true)}</span>
-                      </>
-                    ) : (
-                      <span className="text-4xl font-light tracking-tight text-foreground font-be-vietnam-pro">₹{PRICING.PRO_MONTHLY_INR}</span>
-                    )}
-                    <span className="text-sm text-muted-foreground ml-2">(excl. GST)/month</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">Billed monthly · cancel anytime</p>
-                </div>
               ) : (
                 <div className="space-y-1">
                   <div className="flex items-baseline">
@@ -398,32 +375,15 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                 <Button
                   className="w-full h-11 rounded-none group"
                   onClick={() => handleCheckout(STARTER_TIER, STARTER_SLUG, 'dodo')}
-                  disabled={location.loading}
                 >
-                  {location.loading
-                    ? 'Loading...'
-                    : location.isIndia || derivedIsIndianStudentEmail
-                      ? getStudentPrice(true)
-                        ? `Subscribe ₹${getStudentPrice(true)}/month`
-                        : `Subscribe ₹${PRICING.PRO_MONTHLY_INR}/month`
-                      : getStudentPrice(false)
-                        ? `Subscribe $${getStudentPrice(false)}/month`
-                        : `Subscribe $${PRICING.PRO_MONTHLY}/month`}
-                  {!location.loading && (
-                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                  )}
+                  {getStudentPrice(false)
+                    ? `Subscribe $${getStudentPrice(false)}/month`
+                    : `Subscribe $${PRICING.PRO_MONTHLY}/month`}
+                  <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">
-                  {location.isIndia || derivedIsIndianStudentEmail
-                    ? 'UPI, Cards, Net Banking & more'
-                    : 'Credit/Debit Cards, UPI & more'}{' '}
-                  (auto-renews monthly)
+                  Credit/Debit Cards & more (auto-renews monthly)
                 </p>
-                {(location.isIndia || derivedIsIndianStudentEmail) && (
-                  <p className="text-xs text-center text-amber-600 dark:text-amber-400">
-                    Tip: UPI payments have a higher success rate on PC/Desktop
-                  </p>
-                )}
                 {hasStudentDiscount() && discountConfig.message && (
                   <p className="text-xs text-green-600 dark:text-green-400 text-center font-medium">
                     {discountConfig.message}
@@ -443,9 +403,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                 <div>
                   <h3 className="text-sm font-medium mb-1">Student discount available</h3>
                   <p className="text-xs text-muted-foreground">
-                    {location.isIndia || derivedIsIndianStudentEmail
-                      ? 'Get Pro for just ₹450/month with a university email!'
-                      : 'Get Pro for just $5/month with a university email!'}
+                    Get Pro for just $5/month with a university email!
                   </p>
                 </div>
               </div>
@@ -465,11 +423,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
               <div>
                 <h3 className="text-sm font-medium mb-1 text-green-700 dark:text-green-300">Student discount active</h3>
                 <p className="text-xs text-muted-foreground">
-                  Your university email has been recognized. Get Pro for{' '}
-                  {location.isIndia || derivedIsIndianStudentEmail
-                    ? `₹${getStudentPrice(true) || 450}/month`
-                    : `$${getStudentPrice(false) || 5}/month`}{' '}
-                  — discount applied automatically at checkout.
+                  Your university email has been recognized. Get Pro for $
+                  {getStudentPrice(false) || 5}/month — discount applied automatically at checkout.
                 </p>
               </div>
             </div>

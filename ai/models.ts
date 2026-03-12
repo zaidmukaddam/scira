@@ -70,7 +70,7 @@ export const models: Model[] = [
     supportsFunctionCalling: true,
     supportsParallelToolCalling: true,
     documentSupport: true,
-    extreme: false,
+    extreme: true,
     fast: true,
   },
   {

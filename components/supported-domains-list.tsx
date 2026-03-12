@@ -44,7 +44,7 @@ export function SupportedDomainsList({ className }: SupportedDomainsListProps) {
       console.error('Failed to load domains:', error);
       setDomainsData({
         success: false,
-        domains: ['.edu', '.ac.in'],
+        domains: ['.edu', '.edu.au'],
         count: 2,
         fallback: true,
         error: 'Failed to load',
@@ -73,14 +73,14 @@ export function SupportedDomainsList({ className }: SupportedDomainsListProps) {
 
   const getDomainDisplayName = (domain: string) => {
     if (domain === '.edu') return 'US Educational Institutions (.edu)';
-    if (domain === '.ac.in') return 'Indian Academic Institutions (.ac.in)';
+    if (domain === '.edu.au') return 'Australian Educational Institutions (.edu.au)';
     if (domain.startsWith('.')) return `${domain} domains`;
     return domain;
   };
 
   const getDomainType = (domain: string) => {
     if (domain === '.edu') return 'US';
-    if (domain === '.ac.in') return 'India';
+    if (domain === '.edu.au') return 'AU';
     if (domain.includes('.edu')) return 'Educational';
     if (domain.includes('.ac.')) return 'Academic';
     return 'University';

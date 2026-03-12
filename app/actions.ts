@@ -3605,7 +3605,7 @@ export async function getStudentDomainsAction() {
     }
 
     // Fallback to hardcoded domains if Edge Config fails
-    const fallbackDomains = ['.edu', '.ac.in'].sort();
+    const fallbackDomains = ['.edu', '.edu.au'].sort();
     return {
       success: true,
       domains: fallbackDomains,
@@ -3616,7 +3616,7 @@ export async function getStudentDomainsAction() {
     console.error('Failed to fetch student domains from Edge Config:', error);
 
     // Return fallback domains on error
-    const fallbackDomains = ['.edu', '.ac.in'].sort();
+    const fallbackDomains = ['.edu', '.edu.au'].sort();
     return {
       success: false,
       domains: fallbackDomains,

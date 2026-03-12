@@ -65,7 +65,7 @@ export async function getDiscountConfig(userEmail?: string, isIndianUser?: boole
   } catch (error) {
     console.warn('Failed to fetch student domains from Edge Config:', error);
     // Fallback to hardcoded domains
-    studentDomains = ['.edu', '.ac.in', '.edu.in'];
+    studentDomains = ['.edu', '.edu.au'];
   }
 
   // Check if user is a student
