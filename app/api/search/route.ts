@@ -742,7 +742,7 @@ export async function POST(req: Request) {
 
           try {
             const { text: repairedText } = await generateTextAI({
-              model: scx.languageModel('deepseek-v3'),
+              model: scx.languageModel('llama-4'),
               prompt: [
                 `The model tried to call the tool "${toolCall.toolName}" with the following arguments:`,
                 JSON.stringify(toolCall.input),

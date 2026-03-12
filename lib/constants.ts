@@ -14,4 +14,6 @@ export const CURRENCIES = {
   INR: 'INR',
 } as const;
 
-export const SNAPSHOT_NAME = 'scira-analysis:1752127473';
+// Daytona snapshot for Python code execution
+// Using daytona-medium: 2 vCPU, 4 GiB RAM, 8 GiB disk — suitable for pandas/numpy/matplotlib workloads
+export const SNAPSHOT_NAME = 'daytona-medium';

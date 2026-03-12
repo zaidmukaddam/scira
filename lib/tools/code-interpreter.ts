@@ -13,7 +13,10 @@ export const codeInterpreterTool = tool({
       .describe(
         'The Python code to execute. put the variables in the end of the code to print them. do use the print function in the code to print the variables.',
       ),
-    icon: z.enum(['stock', 'date', 'calculation', 'default']).describe('The icon to display for the code snippet.'),
+    icon: z
+      .enum(['stock', 'date', 'calculation', 'default'])
+      .default('default')
+      .describe('The icon to display for the code snippet.'),
   }),
   execute: async ({ code, title, icon }: { code: string; title: string; icon: string }) => {
     console.log('Code:', code);
