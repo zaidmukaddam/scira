@@ -61,16 +61,16 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             <Link href="/" className="inline-flex items-center gap-3 mb-16 group">
               <SouthernCrossLogo variant="square" className="size-12 transition-transform duration-300 group-hover:scale-110" />
               <span className="text-5xl font-light tracking-tighter font-be-vietnam-pro text-foreground">
-                scira
+                SCX.ai
               </span>
             </Link>
 
             {/* Tagline */}
             <div className="mb-16">
               <p className="text-2xl xl:text-3xl font-light tracking-tight leading-snug text-foreground/90">
-                Research that moves
+                Sovereign Australian AI.
                 <br />
-                at the speed of thought.
+                Your data stays in Australia.
               </p>
             </div>
 
@@ -98,7 +98,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                       >
                         <div className="pr-4">
                           <blockquote className="text-sm leading-relaxed text-muted-foreground group-hover/testimonial:text-foreground/80 transition-colors mb-4">
-                            "{testimonial.content}"
+                            &ldquo;{testimonial.content}&rdquo;
                           </blockquote>
                           <div className="flex items-center gap-2">
                             <span className="text-sm font-medium text-foreground">
@@ -136,27 +136,21 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         {/* Bottom Stats & Links */}
         <div className="px-12 xl:px-20 pb-12">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-8 text-xs text-muted-foreground">
-              <span>5M+ searches</span>
-              <span className="w-px h-3 bg-border" />
-              <span>100K+ users</span>
-              <span className="w-px h-3 bg-border" />
-              <span>11K+ stars</span>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Powered by SCX.ai • Australian sovereign cloud infrastructure
+            </p>
             <div className="flex items-center gap-6 text-xs">
-            <Link
-                href="https://git.new/scira"
-                target="_blank"
+              <Link
+                href="/terms"
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                GitHub
+                Terms
               </Link>
               <Link
-                href="https://vercel.com/blog/ai-sdk-4-1"
-                target="_blank"
+                href="/privacy-policy"
                 className="text-muted-foreground hover:text-foreground transition-colors"
               >
-                Featured on Vercel
+                Privacy
               </Link>
             </div>
           </div>
@@ -180,7 +174,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
         {/* Footer */}
         <footer className="flex items-center justify-center h-12 text-xs text-muted-foreground">
-          <span>Trusted by researchers worldwide</span>
+          <span>Trusted by researchers across Australia &amp; New Zealand</span>
         </footer>
       </div>
     </div>

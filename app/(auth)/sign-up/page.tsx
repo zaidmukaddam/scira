@@ -6,7 +6,7 @@ export default function SignUpPage() {
   return (
     <AuthCard
       title="Create an account"
-      description="Join 100K+ researchers using AI-powered search with real-time citations."
+      description="Get started with SCX.ai today"
       mode="sign-up"
     />
   );

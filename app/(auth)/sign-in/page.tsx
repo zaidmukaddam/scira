@@ -6,7 +6,7 @@ export default function SignInPage() {
   return (
     <AuthCard
       title="Welcome back"
-      description="Sign in to access your research history and continue where you left off."
+      description="Sign in to continue to SCX.ai"
       mode="sign-in"
     />
   );
