@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateText, tool, stepCountIs } from 'ai';
+import { generateText, streamText, tool, stepCountIs } from 'ai';
 import { z } from 'zod';
 import { scx } from '@/ai/providers';
 import { models, supportsFunctionCalling, hasReasoningSupport, getModelParameters, getMaxOutputTokens } from '@/ai/models';
@@ -38,11 +38,23 @@ export interface AutoGroupTestResult {
   note?: string;
 }
 
+export interface StreamTestResult {
+  model: string;
+  label: string;
+  status: TestStatus;
+  ttftMs: number;
+  totalMs: number;
+  charCount: number;
+  preview?: string;
+  error?: string;
+}
+
 export interface TestReport {
   timestamp: string;
   models: ModelTestResult[];
   tools: ToolTestResult[];
   autoGroup: AutoGroupTestResult[];
+  streams: StreamTestResult[];
   summary: {
     modelsPass: number;
     modelsFail: number;
@@ -53,6 +65,8 @@ export interface TestReport {
     autoPass: number;
     autoFail: number;
     autoSkip: number;
+    streamsPass: number;
+    streamsFail: number;
     totalMs: number;
   };
 }
@@ -93,7 +107,6 @@ async function testModel(modelValue: string, label: string): Promise<ModelTestRe
       ),
     );
 
-    // Reasoning models may return text via result.text or result.reasoning (Array<ReasoningOutput>)
     const text = result.text?.trim() ?? '';
     const reasoningParts: Array<{ type: string; text: string }> = (result as any).reasoning ?? [];
     const reasoningText = Array.isArray(reasoningParts)
@@ -120,6 +133,62 @@ async function testModel(modelValue: string, label: string): Promise<ModelTestRe
   }
 }
 
+// ─── Streaming tests ──────────────────────────────────────────────────────────
+
+async function testStream(modelValue: string, label: string): Promise<StreamTestResult> {
+  const start = Date.now();
+
+  try {
+    const { ttftMs, totalMs, charCount, preview } = await withTimeout(
+      (async () => {
+        let ttftMs = -1;
+        let charCount = 0;
+        let preview = '';
+
+        const { textStream } = streamText({
+          model: scx.languageModel(modelValue as any),
+          prompt: 'Say the word "hello" and nothing else.',
+          maxOutputTokens: 20,
+          ...getModelParameters(modelValue),
+        });
+
+        for await (const chunk of textStream) {
+          if (ttftMs === -1 && chunk.length > 0) {
+            ttftMs = Date.now() - start;
+            preview = chunk;
+          }
+          charCount += chunk.length;
+          if (charCount > 300) break;
+        }
+
+        return { ttftMs, totalMs: Date.now() - start, charCount, preview };
+      })(),
+      25_000,
+    );
+
+    return {
+      model: modelValue,
+      label,
+      status: charCount > 0 ? 'pass' : 'fail',
+      ttftMs,
+      totalMs,
+      charCount,
+      preview: preview.trim() || '(no output)',
+      error: charCount > 0 ? undefined : 'No tokens streamed',
+    };
+  } catch (err: any) {
+    return {
+      model: modelValue,
+      label,
+      status: 'fail',
+      ttftMs: -1,
+      totalMs: Date.now() - start,
+      charCount: 0,
+      error: truncate(err?.message ?? String(err)),
+    };
+  }
+}
+
 // ─── Tool tests ───────────────────────────────────────────────────────────────
 
 type ToolTest = {
@@ -131,7 +200,7 @@ type ToolTest = {
 
 function buildToolTests(): ToolTest[] {
   return [
-    // ── Active auto-group tools (15) ──────────────────────────────────────────
+    // ── Active auto-group tools ───────────────────────────────────────────────
     {
       tool: 'web_search',
       requiredEnv: ['EXA_API_KEY'],
@@ -145,7 +214,6 @@ function buildToolTests(): ToolTest[] {
           quality: ['default'],
         }, {});
       },
-      // Returns { searches: [{ query, results: [...] }] }
       validate: (o: any) => Array.isArray(o?.searches) && o.searches.length > 0,
     },
     {
@@ -153,10 +221,8 @@ function buildToolTests(): ToolTest[] {
       requiredEnv: ['EXA_API_KEY'],
       run: async () => {
         const { retrieveTool } = await import('@/lib/tools/retrieve');
-        // Tool expects url as an array of strings
         return (retrieveTool as any).execute({ url: ['https://www.abc.net.au/news'] }, {});
       },
-      // Returns { results: [{ content, title, url }], ... } or { error }
       validate: (o: any) => o != null && (Array.isArray(o?.results) || o?.content != null || o?.title != null),
     },
     {
@@ -165,7 +231,6 @@ function buildToolTests(): ToolTest[] {
       run: async () => {
         const { extremeSearchTool } = await import('@/lib/tools/extreme-search');
         const t = extremeSearchTool(undefined, 'exa');
-        // Tool expects `prompt` not `query`
         return (t as any).execute({ prompt: 'What is SCX.ai and what does it do in Australia?' }, {});
       },
       validate: (o: any) => o != null && (o?.research != null || o?.sources != null),
@@ -176,7 +241,6 @@ function buildToolTests(): ToolTest[] {
         const { weatherTool } = await import('@/lib/tools/weather');
         return (weatherTool as any).execute({ location: 'Sydney, Australia' }, {});
       },
-      // Returns raw OpenWeatherMap format: { cod, list, city } or { current, location }
       validate: (o: any) => o != null && (o?.list != null || o?.city != null || o?.current != null || o?.location != null),
     },
     {
@@ -185,7 +249,6 @@ function buildToolTests(): ToolTest[] {
         const { datetimeTool } = await import('@/lib/tools/datetime');
         return (datetimeTool as any).execute({ timezone: 'Australia/Sydney' }, {});
       },
-      // Returns { timestamp, iso, timezone, formatted }
       validate: (o: any) => o != null && (typeof o?.iso === 'string' || typeof o?.timestamp === 'number' || typeof o?.datetime === 'string'),
     },
     {
@@ -230,7 +293,6 @@ function buildToolTests(): ToolTest[] {
         const { findPlaceOnMapTool } = await import('@/lib/tools/map-tools');
         return (findPlaceOnMapTool as any).execute({ query: 'Sydney Opera House' }, {});
       },
-      // Returns { success, search_type, places: [...] }
       validate: (o: any) => o?.success === true || Array.isArray(o?.places) || o?.name != null,
     },
     {
@@ -255,7 +317,6 @@ function buildToolTests(): ToolTest[] {
         const { movieTvSearchTool } = await import('@/lib/tools/movie-tv-search');
         return (movieTvSearchTool as any).execute({ query: 'Inception', type: 'movie' }, {});
       },
-      // Returns { result: {...} }
       validate: (o: any) => o?.result != null || o?.title != null || Array.isArray(o?.results),
     },
     {
@@ -310,7 +371,6 @@ function buildToolTests(): ToolTest[] {
         const t = academicSearchTool(undefined);
         return (t as any).execute({ queries: ['machine learning Australia'], maxResults: [3] }, {});
       },
-      // Returns { searches: [{ query, results: [] }] }
       validate: (o: any) => Array.isArray(o?.searches) || Array.isArray(o?.results),
     },
     {
@@ -319,7 +379,6 @@ function buildToolTests(): ToolTest[] {
       run: async () => {
         const { redditSearchTool } = await import('@/lib/tools/reddit-search');
         const t = redditSearchTool(undefined);
-        // Tool expects `queries` (array), not `query` (string)
         return (t as any).execute({ queries: ['Australia tech news'], maxResults: [3] }, {});
       },
       validate: (o: any) => Array.isArray(o?.results) || Array.isArray(o?.searches),
@@ -330,7 +389,6 @@ function buildToolTests(): ToolTest[] {
       run: async () => {
         const { xSearchTool } = await import('@/lib/tools/x-search');
         const t = xSearchTool(undefined);
-        // Tool expects `queries` (array), not `query` (string)
         return (t as any).execute({ queries: ['Australia AI news'] }, {});
       },
       validate: (o: any) => Array.isArray(o?.results) || Array.isArray(o?.searches),
@@ -355,7 +413,6 @@ function buildToolTests(): ToolTest[] {
           location: 'Sydney',
         }, {});
       },
-      // Returns a markdown string or { results, success }
       validate: (o: any) => o != null && (Array.isArray(o?.results) || o?.success === true || typeof o === 'string'),
     },
     {
@@ -364,14 +421,12 @@ function buildToolTests(): ToolTest[] {
         const { coinDataTool } = await import('@/lib/tools/crypto-tools');
         return (coinDataTool as any).execute({ coinId: 'bitcoin' }, {});
       },
-      // Returns { success: true, coinId, data: { id, name, ... } }
       validate: (o: any) => o?.success === true || o?.id != null || o?.data?.id != null,
     },
     {
       tool: 'mermaid_diagram',
       run: async () => {
         const { mermaidDiagramTool } = await import('@/lib/tools/mermaid-diagram');
-        // Tool expects `diagram` not `code`
         return (mermaidDiagramTool as any).execute({
           diagram: 'graph LR\n  A --> B',
           title: 'Test',
@@ -387,7 +442,6 @@ function buildToolTests(): ToolTest[] {
         const { ragSearchTool } = await import('@/lib/tools/rag-search');
         return (ragSearchTool as any).execute({ query: 'test', userId: 'test-user' }, {});
       },
-      // Accepts any response including auth-required or empty results
       validate: (o: any) => o != null,
     },
     {
@@ -405,12 +459,19 @@ function buildToolTests(): ToolTest[] {
 // ─── Auto group tests ─────────────────────────────────────────────────────────
 
 async function testAutoGroup(modelValue: string, label: string): Promise<AutoGroupTestResult> {
-  // Models that don't support function calling fall back to deepseek-v3 in auto mode
   const canUseTools = supportsFunctionCalling(modelValue);
-  const effectiveModelValue = canUseTools ? modelValue : 'deepseek-v3';
-  const note = !canUseTools
-    ? `${label} doesn't support function calling — auto group uses deepseek-v3 fallback`
-    : undefined;
+
+  // Models that don't support function calling are skipped — in production,
+  // llama-4 handles tool repair via experimental_repairToolCall.
+  if (!canUseTools) {
+    return {
+      model: modelValue,
+      label,
+      status: 'skip',
+      responseMs: 0,
+      note: 'Does not support function calling — llama-4 handles tool repair in production',
+    };
+  }
 
   try {
     let toolCalled: string | undefined;
@@ -418,18 +479,18 @@ async function testAutoGroup(modelValue: string, label: string): Promise<AutoGro
     const { result, ms } = await timed(() =>
       withTimeout(
         generateText({
-          model: scx.languageModel(effectiveModelValue as any),
+          model: scx.languageModel(modelValue as any),
           prompt: 'What is the current date and time in Sydney, Australia? Use the datetime tool.',
           stopWhen: stepCountIs(3),
-          ...getModelParameters(effectiveModelValue),
-          maxOutputTokens: getMaxOutputTokens(effectiveModelValue),
+          ...getModelParameters(modelValue),
+          maxOutputTokens: getMaxOutputTokens(modelValue),
           tools: {
             datetime: tool({
               description: 'Get current date/time for a timezone.',
               inputSchema: z.object({ timezone: z.string().describe('IANA timezone name') }),
               execute: async ({ timezone }) => {
                 toolCalled = 'datetime';
-                const now = new Date().toLocaleString('en-AU', { timeZone: (timezone as string) });
+                const now = new Date().toLocaleString('en-AU', { timeZone: timezone as string });
                 return { datetime: now, timezone };
               },
             }),
@@ -449,7 +510,6 @@ async function testAutoGroup(modelValue: string, label: string): Promise<AutoGro
       toolCalled,
       preview: truncate(text),
       error: passed ? undefined : toolCalled ? 'Tool called but empty response' : 'Tool was not called',
-      note,
     };
   } catch (err: any) {
     return {
@@ -458,10 +518,11 @@ async function testAutoGroup(modelValue: string, label: string): Promise<AutoGro
       status: 'fail',
       responseMs: 0,
       error: truncate(err?.message ?? String(err)),
-      note,
     };
   }
 }
+
+// ─── Tool runner ──────────────────────────────────────────────────────────────
 
 function checkEnvs(required?: string[]): string | null {
   if (!required || required.length === 0) return null;
@@ -504,16 +565,42 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  const scope = req.nextUrl.searchParams.get('scope');
+  const itemId = req.nextUrl.searchParams.get('id');
+
+  // ── Per-item retry mode ──────────────────────────────────────────────────────
+  if (scope && itemId) {
+    if (scope === 'model') {
+      const m = models.find((m) => m.value === itemId);
+      if (!m) return NextResponse.json({ error: 'Model not found' }, { status: 404 });
+      return NextResponse.json({ type: 'model', result: await testModel(m.value, m.label) });
+    }
+    if (scope === 'stream') {
+      const m = models.find((m) => m.value === itemId);
+      if (!m) return NextResponse.json({ error: 'Model not found' }, { status: 404 });
+      return NextResponse.json({ type: 'stream', result: await testStream(m.value, m.label) });
+    }
+    if (scope === 'auto') {
+      const m = models.find((m) => m.value === itemId);
+      if (!m) return NextResponse.json({ error: 'Model not found' }, { status: 404 });
+      return NextResponse.json({ type: 'auto', result: await testAutoGroup(m.value, m.label) });
+    }
+    if (scope === 'tool') {
+      const test = buildToolTests().find((t) => t.tool === itemId);
+      if (!test) return NextResponse.json({ error: 'Tool not found' }, { status: 404 });
+      return NextResponse.json({ type: 'tool', result: await runToolTest(test) });
+    }
+    return NextResponse.json({ error: 'Unknown scope' }, { status: 400 });
+  }
+
+  // ── Full test run ────────────────────────────────────────────────────────────
   const globalStart = Date.now();
 
-  const modelTests: Promise<ModelTestResult>[] = models.map((m) => testModel(m.value, m.label));
-  const toolTests: Promise<ToolTestResult>[] = buildToolTests().map(runToolTest);
-  const autoTests: Promise<AutoGroupTestResult>[] = models.map((m) => testAutoGroup(m.value, m.label));
-
-  const [modelResults, toolResults, autoResults] = await Promise.all([
-    Promise.all(modelTests),
-    Promise.all(toolTests),
-    Promise.all(autoTests),
+  const [modelResults, toolResults, autoResults, streamResults] = await Promise.all([
+    Promise.all(models.map((m) => testModel(m.value, m.label))),
+    Promise.all(buildToolTests().map(runToolTest)),
+    Promise.all(models.map((m) => testAutoGroup(m.value, m.label))),
+    Promise.all(models.map((m) => testStream(m.value, m.label))),
   ]);
 
   const report: TestReport = {
@@ -521,6 +608,7 @@ export async function GET(req: NextRequest) {
     models: modelResults,
     tools: toolResults,
     autoGroup: autoResults,
+    streams: streamResults,
     summary: {
       modelsPass: modelResults.filter((r) => r.status === 'pass').length,
       modelsFail: modelResults.filter((r) => r.status === 'fail').length,
@@ -531,6 +619,8 @@ export async function GET(req: NextRequest) {
       autoPass: autoResults.filter((r) => r.status === 'pass').length,
       autoFail: autoResults.filter((r) => r.status === 'fail').length,
       autoSkip: autoResults.filter((r) => r.status === 'skip').length,
+      streamsPass: streamResults.filter((r) => r.status === 'pass').length,
+      streamsFail: streamResults.filter((r) => r.status === 'fail').length,
       totalMs: Date.now() - globalStart,
     },
   };
