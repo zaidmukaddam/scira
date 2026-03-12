@@ -17,11 +17,12 @@ import { toast } from 'sonner';
 import { v7 as uuidv7 } from 'uuid';
 
 // Internal app imports
-import { suggestQuestions, updateChatVisibility, getChatMeta/*, getHomeSuggestions*/ } from '@/app/actions';
+import { suggestQuestions, updateChatVisibility, getChatMeta, hasAcceptedTerms/*, getHomeSuggestions*/ } from '@/app/actions';
 import { ExamplePrompts } from '@/components/chat-interface-components';
 
 // Component imports
 import { ChatDialogs } from '@/components/chat-dialogs';
+import { TermsAcceptanceModal } from '@/components/terms-acceptance-modal';
 import Messages from '@/components/messages';
 import { AppSidebar } from '@/components/app-sidebar';
 import { SidebarInset, useSidebar, SidebarTrigger } from '@/components/ui/sidebar';
@@ -216,6 +217,26 @@ const ChatInterface = memo(
       shouldCheckLimits: shouldCheckUserLimits,
       shouldBypassLimitsForModel,
     } = useUser();
+
+    const [showTermsModal, setShowTermsModal] = useState(false);
+
+    // Show the Terms Acceptance Modal once per session for authenticated Pro users who haven't accepted yet
+    useEffect(() => {
+      if (!user || proStatusLoading) return;
+
+      let cancelled = false;
+      hasAcceptedTerms()
+        .then((accepted) => {
+          if (!cancelled && !accepted) {
+            setShowTermsModal(true);
+          }
+        })
+        .catch(() => {
+          // Fail open — don't block the user if the check fails
+        });
+
+      return () => { cancelled = true; };
+    }, [user, proStatusLoading]);
 
     const { setDataStream } = useDataStream();
 
@@ -1122,6 +1143,13 @@ const ChatInterface = memo(
               setHasShownLookoutAnnouncement={() => {}}
               user={user}
               setAnyDialogOpen={(open) => dispatch({ type: 'SET_ANY_DIALOG_OPEN', payload: open })}
+            />
+
+            <TermsAcceptanceModal
+              open={showTermsModal}
+              onOpenChange={setShowTermsModal}
+              onAccept={() => setShowTermsModal(false)}
+              onDecline={() => setShowTermsModal(false)}
             />
 
             <div

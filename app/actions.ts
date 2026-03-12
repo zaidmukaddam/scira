@@ -3664,3 +3664,106 @@ export async function searchChatsByTitle(query: string, limit: number = 25, offs
     return { error: 'Failed to search chats', status: 500 };
   }
 }
+
+// ---------------------------------------------------------------------------
+// Terms acceptance
+// ---------------------------------------------------------------------------
+
+/**
+ * Record that the authenticated user has accepted the current terms version.
+ * Uses an upsert so re-acceptance always reflects the latest timestamp.
+ */
+export async function acceptTermsAction(ipAddress?: string, userAgent?: string) {
+  'use server';
+
+  try {
+    const { db } = await import('@/lib/db');
+    const { userTermsAcceptance } = await import('@/lib/db/schema');
+    const { eq } = await import('drizzle-orm');
+
+    const user = await getUser();
+    if (!user) {
+      throw new Error('Not authenticated — please sign in and try again');
+    }
+
+    const termsVersion = '1.0';
+
+    await db
+      .insert(userTermsAcceptance)
+      .values({
+        userId: user.id,
+        termsVersion,
+        acceptedAt: new Date(),
+        ipAddress,
+        userAgent,
+        createdAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [userTermsAcceptance.userId, userTermsAcceptance.termsVersion],
+        set: {
+          acceptedAt: new Date(),
+          ipAddress,
+          userAgent,
+        },
+      });
+  } catch (error) {
+    console.error('[acceptTermsAction] Failed to record terms acceptance:', error);
+    throw new Error('Failed to accept terms. Please try again.');
+  }
+}
+
+/**
+ * Returns true if the authenticated user has accepted the current terms version.
+ * Returns false for unauthenticated users or on error (fail open).
+ */
+export async function hasAcceptedTerms(): Promise<boolean> {
+  'use server';
+
+  try {
+    const { db } = await import('@/lib/db');
+    const { userTermsAcceptance } = await import('@/lib/db/schema');
+    const { eq, and } = await import('drizzle-orm');
+
+    const user = await getUser();
+    if (!user) return false;
+
+    const result = await db
+      .select({ id: userTermsAcceptance.id })
+      .from(userTermsAcceptance)
+      .where(and(eq(userTermsAcceptance.userId, user.id), eq(userTermsAcceptance.termsVersion, '1.0')))
+      .limit(1);
+
+    return result.length > 0;
+  } catch (error) {
+    console.error('[hasAcceptedTerms] Error checking acceptance:', error);
+    return false;
+  }
+}
+
+/**
+ * Returns the most recent terms acceptance record for the authenticated user, or null.
+ */
+export async function getTermsAcceptanceDetails() {
+  'use server';
+
+  try {
+    const { db } = await import('@/lib/db');
+    const { userTermsAcceptance } = await import('@/lib/db/schema');
+    const { eq, desc } = await import('drizzle-orm');
+
+    const user = await getUser();
+    if (!user) return null;
+
+    const result = await db
+      .select()
+      .from(userTermsAcceptance)
+      .where(eq(userTermsAcceptance.userId, user.id))
+      .orderBy(desc(userTermsAcceptance.acceptedAt))
+      .limit(1);
+
+    return result[0] ?? null;
+  } catch (error) {
+    console.error('[getTermsAcceptanceDetails] Error fetching details:', error);
+    return null;
+  }
+}

@@ -10,6 +10,7 @@ import { ClientAnalytics } from '@/components/client-analytics';
 import { SidebarProvider } from '@/components/ui/sidebar';
 
 import { Providers } from './providers';
+import { RegionWarningBanner, RegionBlockingOverlay } from '@/components/region-warning-banner';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://chat.southerncrossai.com.au'),
@@ -138,6 +139,8 @@ export default async function RootLayout({
         <NuqsAdapter>
           <Providers>
             <SidebarProvider>
+              <RegionWarningBanner />
+              <RegionBlockingOverlay />
               <Toaster position="top-center" />
               {children}
             </SidebarProvider>

@@ -87,6 +87,7 @@ import { ChatMessage } from '@/lib/types';
 import { getCachedCustomInstructionsByUserId, getCachedUserPreferencesByUserId } from '@/lib/user-data-server';
 import { unauthenticatedRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { SearchGroupId } from '@/lib/utils';
+import { isUserAllowedInRegion, isProOnlyAllowedCountry } from '@/lib/allowed-regions';
 
 let globalStreamContext: ResumableStreamContext | null = null;
 
@@ -440,6 +441,22 @@ export async function POST(req: Request) {
         `You've reached the limit of ${limit} searches per day for unauthenticated users. Sign in for more searches or wait until ${resetDate.toLocaleString()}.`,
       ).toResponse();
     }
+  }
+
+  // Region-based access control:
+  // - Free users: AU/NZ only
+  // - Pro users: AU/NZ + USA, Canada, UK, EU countries, Singapore
+  // Allow through when country is unknown (fail open) to avoid blocking legitimate users.
+  // In development, the X-Test-Region header can override the detected country for QA.
+  const effectiveCountry =
+    (process.env.NODE_ENV === 'development' ? req.headers.get('X-Test-Region') : null) ?? geoCountry;
+
+  if (effectiveCountry && !isUserAllowedInRegion(effectiveCountry, isProUser)) {
+    const canUpgradeForAccess = isProOnlyAllowedCountry(effectiveCountry);
+    const message = canUpgradeForAccess
+      ? 'SCX.ai Pro is available in your region. Upgrade to access all features from Australia, New Zealand, USA, Canada, UK, EU, and Singapore.'
+      : 'SCX.ai Chat is only available to users in Australia and New Zealand. Pro users can access from additional regions. Visit scx.ai to learn more.';
+    return new ChatSDKError('forbidden:region', message).toResponse();
   }
 
   // Early exit checks (no DB operations needed)

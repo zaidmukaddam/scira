@@ -8,7 +8,7 @@ export type ErrorType =
   | 'model_restricted'
   | 'offline';
 
-export type Surface = 'chat' | 'auth' | 'api' | 'stream' | 'database' | 'history' | 'model';
+export type Surface = 'chat' | 'auth' | 'api' | 'stream' | 'database' | 'history' | 'model' | 'region';
 
 export type ErrorCode = `${ErrorType}:${Surface}`;
 
@@ -22,6 +22,7 @@ export const visibilityBySurface: Record<Surface, ErrorVisibility> = {
   api: 'response',
   history: 'response',
   model: 'response',
+  region: 'response',
 };
 
 export class ChatSDKError extends Error {
@@ -108,6 +109,9 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
 
     case 'forbidden:api':
       return 'Access denied';
+
+    case 'forbidden:region':
+      return 'SCX.ai Chat is only available to users in Australia and New Zealand.';
 
     default:
       return 'Something went wrong. Please try again later.';
