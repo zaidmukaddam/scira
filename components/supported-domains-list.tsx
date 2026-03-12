@@ -12,7 +12,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { toast } from 'sonner';
 import { Eye, Search, AlertCircle, RefreshCw } from 'lucide-react';
 import { getStudentDomainsAction } from '@/app/actions';
 
@@ -41,15 +40,8 @@ export function SupportedDomainsList({ className }: SupportedDomainsListProps) {
     try {
       const result = await getStudentDomainsAction();
       setDomainsData(result);
-
-      if (result.fallback && result.error) {
-        toast.error('Failed to load latest domains, showing fallback list');
-      } else if (result.fallback) {
-        toast.info('Showing basic domain list');
-      }
     } catch (error) {
       console.error('Failed to load domains:', error);
-      toast.error('Failed to load supported domains');
       setDomainsData({
         success: false,
         domains: ['.edu', '.ac.in'],
