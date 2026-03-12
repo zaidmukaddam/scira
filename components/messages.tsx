@@ -448,8 +448,8 @@ const Messages: React.FC<MessagesProps> = ({
         </div>
       )}
 
-      {/* Show global error when there is no assistant message to display it */}
-      {error && memoizedMessages[memoizedMessages.length - 1]?.role !== 'assistant' && (
+      {/* Show global error — always visible when present, even after partial assistant output */}
+      {error && (
         <EnhancedErrorDisplay
           error={error}
           user={user ?? undefined}

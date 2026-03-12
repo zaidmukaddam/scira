@@ -9,8 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Copy, Trash2, Key, Building2, AlertCircle, BarChart3, Loader2, TrendingUp } from 'lucide-react';
-import CommercialAccountModal from '@/components/api-docs/commercial-account-modal';
+import { Copy, Trash2, Key, AlertCircle, BarChart3, Loader2, TrendingUp } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ApiKey {
@@ -85,8 +84,6 @@ export function ApiKeysClient() {
   const [newKey, setNewKey] = useState<{ key: string; name: string } | null>(null);
   const [keyName, setKeyName] = useState('');
   const [expiresIn, setExpiresIn] = useState('never');
-  const [showCommercialModal, setShowCommercialModal] = useState(false);
-
   const [formError, setFormError] = useState<string>('');
   const [validationError, setValidationError] = useState<string>('');
 
@@ -266,37 +263,71 @@ export function ApiKeysClient() {
         <p className="text-muted-foreground">Manage API keys for external access to SCX.ai models and tools.</p>
       </div>
 
-      <Card className="mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border-blue-200">
+      <Card>
         <CardHeader>
-          <CardTitle>🚀 Early Access API Keys</CardTitle>
-          <CardDescription>
-            SCX.ai API is currently in early access. Apply for a commercial account to get API access.
-          </CardDescription>
+          <CardTitle>Create New API Key</CardTitle>
+          <CardDescription>Generate a new API key for your application. Keep it secure and do not share it.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="p-4 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-              <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Early Access Program</h4>
-              <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
-                We&apos;re currently in early access with limited availability. API keys are provided through our
-                commercial account application process.
-              </p>
-              <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                <li>• Server-side tool execution with 30+ tools</li>
-                <li>• Advanced models from OpenAI, Google, Meta and DeepSeek</li>
-                <li>• 60 requests/minute, 100K tokens/day</li>
-                <li>• Priority support and dedicated assistance</li>
-              </ul>
+            <div className="space-y-2">
+              <Label htmlFor="keyName">Key Name</Label>
+              <Input
+                id="keyName"
+                placeholder="e.g. My Application, Production Key"
+                value={keyName}
+                onChange={(e) => handleKeyNameChange(e.target.value)}
+                onKeyDown={handleKeyPress}
+                disabled={creating}
+                className={validationError ? 'border-destructive' : ''}
+              />
+              {validationError && (
+                <p className="text-sm text-destructive flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {validationError}
+                </p>
+              )}
             </div>
 
-            <Button onClick={() => setShowCommercialModal(true)} className="w-full" size="lg">
-              <Building2 className="mr-2 h-5 w-5" />
-              Apply for Early Access API Key
-            </Button>
+            <div className="space-y-2">
+              <Label htmlFor="expiresIn">Expiry</Label>
+              <Select value={expiresIn} onValueChange={setExpiresIn} disabled={creating}>
+                <SelectTrigger id="expiresIn">
+                  <SelectValue placeholder="Select expiry" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="never">Never</SelectItem>
+                  <SelectItem value="30d">30 days</SelectItem>
+                  <SelectItem value="90d">90 days</SelectItem>
+                  <SelectItem value="1y">1 year</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-            <p className="text-xs text-muted-foreground text-center">
-              Applications are typically reviewed within 24-48 hours
-            </p>
+            {formError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{formError}</AlertDescription>
+              </Alert>
+            )}
+
+            <Button
+              onClick={createApiKey}
+              disabled={creating || !keyName.trim() || !!validationError}
+              className="w-full"
+            >
+              {creating ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Key className="mr-2 h-4 w-4" />
+                  Create API Key
+                </>
+              )}
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -307,16 +338,10 @@ export function ApiKeysClient() {
           <CardDescription>Active API keys for your account. Keep these secure and do not share them.</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Early access - key creation disabled */}
-          {/* Creation form kept for future enablement */}
-          {/* <div className="mb-6 p-4 border rounded-lg bg-muted/50">
-            ...
-          </div> */}
-
           {loading ? (
             <p>Loading...</p>
           ) : apiKeys.length === 0 ? (
-            <p className="text-muted-foreground">No API keys yet. Apply for a commercial account to get API access.</p>
+            <p className="text-muted-foreground">No API keys yet. Create your first key above to get started.</p>
           ) : (
             <div className="space-y-4">
               {apiKeys.map((key) => (
@@ -576,7 +601,6 @@ export function ApiKeysClient() {
         </DialogContent>
       </Dialog>
 
-      <CommercialAccountModal open={showCommercialModal} onOpenChange={setShowCommercialModal} />
     </div>
   );
 }

@@ -27,6 +27,7 @@ import {
   getModelParameters,
   getMaxOutputTokens,
   supportsFunctionCalling,
+  supportsParallelToolCalling,
   hasReasoningSupport,
 } from '@/ai/models';
 import {
@@ -301,10 +302,7 @@ export async function POST(req: Request) {
   try {
     body = await req.json();
   } catch {
-    return new Response(JSON.stringify({ error: 'invalid_request', message: 'Request body is missing or malformed.' }), {
-      status: 400,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return new ChatSDKError('bad_request:api', 'Request body is missing or malformed.').toResponse();
   }
   const {
     messages,
@@ -332,12 +330,12 @@ export async function POST(req: Request) {
   recordTiming('parse_request_body', opStart);
 
   opStart = Date.now();
-  const { latitude, longitude } = geolocation(req);
+  const { latitude, longitude, city, countryRegion, country } = geolocation(req);
   recordTiming('geolocation_lookup', opStart);
 
   const streamId = 'stream-' + uuidv7();
 
-  console.log('🔍 Search API:', { model: model.trim(), group, latitude, longitude });
+  console.log('🔍 Search API:', { model: model.trim(), group, city, countryRegion, country, latitude, longitude });
 
   // Start all independent operations in parallel immediately
   opStart = Date.now();
@@ -431,25 +429,44 @@ export async function POST(req: Request) {
 
   // Wait for critical checks, config, and chat initialization in parallel
   // Chat initialization is critical: for new chats it must complete before streaming (FK constraint)
-  const [
-    criticalResult,
-    { tools: activeTools, instructions },
-    customInstructionsResult,
-    user,
-    chatInitResult,
-    userPreferencesResult,
-  ] = await Promise.all([
-    criticalChecksPromise,
-    configPromise,
-    customInstructionsPromise,
-    fullUserPromise,
-    chatInitializationPromise, // Must complete before streaming (especially for new chats)
-    userPreferencesPromise,
-  ]);
+  let criticalResult: Awaited<typeof criticalChecksPromise>;
+  let activeTools: any[];
+  let instructions: string;
+  let customInstructionsResult: Awaited<typeof customInstructionsPromise>;
+  let user: Awaited<typeof fullUserPromise>;
+  let chatInitResult: Awaited<typeof chatInitializationPromise>;
+  let userPreferencesResult: Awaited<typeof userPreferencesPromise>;
+
+  try {
+    [
+      criticalResult,
+      { tools: activeTools, instructions },
+      customInstructionsResult,
+      user,
+      chatInitResult,
+      userPreferencesResult,
+    ] = await Promise.all([
+      criticalChecksPromise,
+      configPromise,
+      customInstructionsPromise,
+      fullUserPromise,
+      chatInitializationPromise, // Must complete before streaming (especially for new chats)
+      userPreferencesPromise,
+    ]);
+  } catch (error) {
+    if (error instanceof ChatSDKError) {
+      return error.toResponse();
+    }
+    console.error('Critical setup failed:', error);
+    return new ChatSDKError('bad_request:api', 'Failed to initialise request. Please try again.').toResponse();
+  }
   recordTiming('await_parallel_setup', opStart);
 
   if (!criticalResult.canProceed) {
-    throw criticalResult.error;
+    if (criticalResult.error instanceof ChatSDKError) {
+      return criticalResult.error.toResponse();
+    }
+    return new ChatSDKError('bad_request:api', 'Request could not be processed. Please try again.').toResponse();
   }
 
   customInstructions = customInstructionsResult;
@@ -457,18 +474,23 @@ export async function POST(req: Request) {
   // Save user message (chat is guaranteed to exist now) - await synchronously (no background)
   if (user) {
     opStart = Date.now();
-    await saveMessages({
-      messages: [
-        {
-          chatId: id,
-          id: messages[messages.length - 1].id,
-          role: 'user',
-          parts: messages[messages.length - 1].parts,
-          attachments: messages[messages.length - 1].experimental_attachments ?? [],
-          createdAt: new Date(),
-        },
-      ],
-    });
+    try {
+      await saveMessages({
+        messages: [
+          {
+            chatId: id,
+            id: messages[messages.length - 1].id,
+            role: 'user',
+            parts: messages[messages.length - 1].parts,
+            attachments: messages[messages.length - 1].experimental_attachments ?? [],
+            createdAt: new Date(),
+          },
+        ],
+      });
+    } catch (error) {
+      console.error('Failed to save user message:', error);
+      return new ChatSDKError('bad_request:database', 'Failed to save your message. Please try again.').toResponse();
+    }
     recordTiming('save_user_message', opStart);
   }
 
@@ -515,6 +537,19 @@ export async function POST(req: Request) {
       }
 
       const modelSupportsFunctionCalling = supportsFunctionCalling(effectiveModel);
+      const modelSupportsParallelToolCalling = supportsParallelToolCalling(effectiveModel);
+
+      // Build location context string from Vercel geolocation headers
+      const locationParts = [city, countryRegion, country].filter(Boolean);
+      const locationContext =
+        locationParts.length > 0
+          ? `\n\nThe user's location: ${locationParts.join(', ')}${latitude && longitude ? ` (${latitude}, ${longitude})` : ''}.`
+          : '';
+
+      // Warning appended when the model has no tools and responds from training data only
+      const noToolsWarning = !modelSupportsFunctionCalling
+        ? `\n\n⚠️ IMPORTANT: You are operating WITHOUT any search or real-time tools. Your response will be based entirely on your training data, which has a knowledge cutoff date and may be outdated. You MUST clearly state at the beginning of your response that your answer is based on your training data and may not reflect current information. Do not attempt to provide current data, prices, news, or real-time information.`
+        : '';
 
       const result = streamText({
         model: scx.languageModel(effectiveModel),
@@ -534,27 +569,30 @@ export async function POST(req: Request) {
           (customInstructions && (isCustomInstructionsEnabled ?? true)
             ? `\n\nThe user's custom instructions are as follows and YOU MUST FOLLOW THEM AT ALL COSTS: ${customInstructions?.content}`
             : '\n') +
-          (latitude && longitude && userPreferencesResult?.preferences?.['scira-location-metadata-enabled'] === true
-            ? `\n\nThe user's location is ${latitude}, ${longitude}.`
-            : ''),
+          locationContext +
+          noToolsWarning,
         providerOptions: {
           openai: {
-            parallelToolCalls: false,
+            parallelToolCalls: modelSupportsParallelToolCalling,
           },
         },
         prepareStep: async ({ steps }) => {
-          // Check if we should disable tool calls (after first tool execution)
-          const shouldDisableTools =
-            steps.length > 0 &&
-            steps[steps.length - 1].toolCalls.length > 0 &&
-            steps[steps.length - 1].toolResults.length > 0;
+          // For models that support parallel tool calling (e.g. Llama 4), allow
+          // multiple tool-call rounds — the stopWhen ceiling handles termination.
+          // For sequential-only models, disable tools after the first round-trip
+          // to prevent unsupported multi-call behaviour.
+          if (!modelSupportsParallelToolCalling) {
+            const shouldDisableTools =
+              steps.length > 0 &&
+              steps[steps.length - 1].toolCalls.length > 0 &&
+              steps[steps.length - 1].toolResults.length > 0;
 
-          // Only return object if tools need to be disabled
-          if (shouldDisableTools) {
-            return {
-              toolChoice: 'none' as const,
-              activeTools: [],
-            };
+            if (shouldDisableTools) {
+              return {
+                toolChoice: 'none' as const,
+                activeTools: [],
+              };
+            }
           }
 
           return undefined;
@@ -635,31 +673,36 @@ export async function POST(req: Request) {
             return null;
           }
 
-          const { text: repairedText } = await generateTextAI({
-            model: scx.languageModel('deepseek-v3'),
-            prompt: [
-              `The model tried to call the tool "${toolCall.toolName}" with the following arguments:`,
-              JSON.stringify(toolCall.input),
-              `The tool accepts the following schema:`,
-              JSON.stringify(inputSchema(toolCall)),
-              'Please fix the arguments and respond with ONLY the corrected JSON object, no explanation.',
-              'For the code interpreter tool do not use print statements.',
-              `For the web search make multiple queries to get the best results but avoid using the same query multiple times and do not use the include and exclude parameters.`,
-              `Today's date is ${new Date().toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-              })}`,
-            ].join('\n'),
-          });
+          try {
+            const { text: repairedText } = await generateTextAI({
+              model: scx.languageModel('deepseek-v3'),
+              prompt: [
+                `The model tried to call the tool "${toolCall.toolName}" with the following arguments:`,
+                JSON.stringify(toolCall.input),
+                `The tool accepts the following schema:`,
+                JSON.stringify(inputSchema(toolCall)),
+                'Please fix the arguments and respond with ONLY the corrected JSON object, no explanation.',
+                'For the code interpreter tool do not use print statements.',
+                `For the web search make multiple queries to get the best results but avoid using the same query multiple times and do not use the include and exclude parameters.`,
+                `Today's date is ${new Date().toLocaleDateString('en-US', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}`,
+              ].join('\n'),
+            });
 
-          const jsonMatch = repairedText.match(/```(?:json)?\s*([\s\S]*?)```/) || repairedText.match(/\{[\s\S]*\}/);
-          const rawJSON = jsonMatch ? (jsonMatch[1] ?? jsonMatch[0]).trim() : repairedText;
-          const repairedArgs = JSON.parse(jsonrepair(rawJSON));
+            const jsonMatch = repairedText.match(/```(?:json)?\s*([\s\S]*?)```/) || repairedText.match(/\{[\s\S]*\}/);
+            const rawJSON = jsonMatch ? (jsonMatch[1] ?? jsonMatch[0]).trim() : repairedText;
+            const repairedArgs = JSON.parse(jsonrepair(rawJSON));
 
-          console.log('repairedArgs', repairedArgs);
+            console.log('repairedArgs', repairedArgs);
 
-          return { ...toolCall, args: JSON.stringify(repairedArgs) };
+            return { ...toolCall, args: JSON.stringify(repairedArgs) };
+          } catch (repairError) {
+            console.error('Tool call repair failed, skipping repair:', repairError);
+            return null;
+          }
         },
         onChunk(event) {
           if (event.chunk.type === 'tool-call') {
@@ -714,18 +757,36 @@ export async function POST(req: Request) {
     },
     onError(error) {
       console.error('Stream error:', error);
-      if (error instanceof Error) {
-        if (error.message.includes('Rate Limit') || error.message.includes('rate limit')) {
-          return 'You have reached the usage limit. Please try again in a moment.';
-        }
-        if (error.message.includes('Bad Request') || error.message.includes('Invalid function calling')) {
-          return 'Something went wrong with the AI response. Please try rephrasing your question.';
-        }
-        if (error.message.includes('timeout') || error.message.includes('Timed out')) {
-          return 'The request took too long. Please try again.';
-        }
+      const msg = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+
+      if (msg.includes('rate limit') || msg.includes('429') || msg.includes('too many requests')) {
+        return "I'm handling a lot of requests right now. Please wait a moment and try again.";
       }
-      return 'Something went wrong. Please try again.';
+      if (msg.includes('timeout') || msg.includes('timed out') || msg.includes('deadline') || msg.includes('etimedout')) {
+        return "My response took too long to generate. Please try again or rephrase your question.";
+      }
+      if (msg.includes('context length') || msg.includes('maximum context') || msg.includes('token limit') || msg.includes('too long')) {
+        return "Your conversation is getting very long. Try starting a new chat or shortening your message.";
+      }
+      if (msg.includes('bad request') || msg.includes('invalid function') || msg.includes('function call') || msg.includes('invalid request')) {
+        return "I had trouble processing that request. Please try rephrasing your question.";
+      }
+      if (msg.includes('network') || msg.includes('fetch failed') || msg.includes('econnreset') || msg.includes('enotfound') || msg.includes('connect')) {
+        return "I'm having trouble reaching my knowledge sources right now. Please check your connection and try again.";
+      }
+      if (msg.includes('unauthorized') || msg.includes('401') || msg.includes('auth')) {
+        return "It looks like your session has expired. Please refresh the page and sign in again.";
+      }
+      if (msg.includes('forbidden') || msg.includes('403') || msg.includes('access denied')) {
+        return "You don't have access to this feature. Please check your subscription.";
+      }
+      if (msg.includes('not found') || msg.includes('404')) {
+        return "I couldn't find the resource I needed to answer your question. Please try again.";
+      }
+      if (msg.includes('service unavailable') || msg.includes('503') || msg.includes('overloaded')) {
+        return "The service is temporarily unavailable due to high demand. Please try again in a moment.";
+      }
+      return "I encountered an unexpected issue while processing your request. Please try again.";
     },
     onFinish: ({ messages: streamedMessages }) => {
       if (!lightweightUser) {

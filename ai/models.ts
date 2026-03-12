@@ -26,6 +26,7 @@ export interface Model {
   isNew?: boolean;
   parameters?: ModelParameters;
   supportsFunctionCalling?: boolean;
+  supportsParallelToolCalling?: boolean;
   documentSupport?: boolean;
   maxContextTokens?: number;
   toolTokenBudget?: number;
@@ -35,7 +36,7 @@ export interface Model {
 export const models: Model[] = [
   {
     value: 'gpt-oss-120b',
-    label: 'GPT-OSS 120B',
+    label: 'OpenAI GPT-OSS 120B',
     description: "OpenAI's 120B open-source model on Australian sovereign cloud.",
     vision: false,
     reasoning: true,
@@ -47,10 +48,30 @@ export const models: Model[] = [
     freeUnlimited: false,
     maxOutputTokens: 8192,
     supportsFunctionCalling: true,
+    supportsParallelToolCalling: false,
     documentSupport: true,
     maxContextTokens: 131072,
     toolTokenBudget: 25000,
     extreme: true,
+  },
+  {
+    value: 'llama-4',
+    label: 'Meta Llama 4',
+    description: "Meta's latest model on Australian sovereign cloud.",
+    vision: true,
+    reasoning: false,
+    experimental: false,
+    category: 'Aussie Sovereign',
+    pdf: false,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 8000,
+    supportsFunctionCalling: true,
+    supportsParallelToolCalling: true,
+    documentSupport: true,
+    extreme: false,
+    fast: true,
   },
   {
     value: 'magpie',
@@ -66,28 +87,11 @@ export const models: Model[] = [
     freeUnlimited: true,
     maxOutputTokens: 8192,
     supportsFunctionCalling: false,
+    supportsParallelToolCalling: false,
     documentSupport: true,
     maxContextTokens: 131072,
     toolTokenBudget: 25000,
     extreme: true,
-    fast: true,
-  },
-  {
-    value: 'llama-3.3',
-    label: 'Meta Llama 3.3',
-    description: 'Optimised Llama 3.3 on Australian sovereign cloud.',
-    vision: false,
-    reasoning: false,
-    experimental: false,
-    category: 'Aussie Sovereign',
-    pdf: false,
-    pro: false,
-    requiresAuth: false,
-    freeUnlimited: true,
-    maxOutputTokens: 32000,
-    supportsFunctionCalling: false,
-    documentSupport: true,
-    extreme: false,
     fast: true,
   },
 ];
@@ -100,8 +104,8 @@ export const models: Model[] = [
     description: 'Advanced coding & reasoning model on Australian sovereign cloud.',
     vision: false, reasoning: false, experimental: false, category: 'Aussie Sovereign',
     pdf: false, pro: false, requiresAuth: true, freeUnlimited: false,
-    maxOutputTokens: 16000, supportsFunctionCalling: true, documentSupport: true,
-    maxContextTokens: 65536, toolTokenBudget: 20000, extreme: true,
+    maxOutputTokens: 16000, supportsFunctionCalling: true, supportsParallelToolCalling: false,
+    documentSupport: true, maxContextTokens: 65536, toolTokenBudget: 20000, extreme: true,
   },
   {
     value: 'deepseek-v3.1',
@@ -109,7 +113,8 @@ export const models: Model[] = [
     description: 'Latest DeepSeek with enhanced reasoning on Australian sovereign cloud.',
     vision: false, reasoning: true, experimental: false, category: 'Aussie Sovereign',
     pdf: false, pro: true, requiresAuth: true, freeUnlimited: false,
-    maxOutputTokens: 16000, supportsFunctionCalling: true, documentSupport: true, extreme: true,
+    maxOutputTokens: 16000, supportsFunctionCalling: true, supportsParallelToolCalling: false,
+    documentSupport: true, extreme: true,
   },
   {
     value: 'deepseek-r1',
@@ -117,16 +122,17 @@ export const models: Model[] = [
     description: "DeepSeek's 671B reasoning model on Australian sovereign cloud.",
     vision: false, reasoning: true, experimental: false, category: 'Aussie Sovereign',
     pdf: false, pro: true, requiresAuth: true, freeUnlimited: false,
-    maxOutputTokens: 7168, supportsFunctionCalling: true, documentSupport: true,
-    maxContextTokens: 128000, toolTokenBudget: 20000, extreme: true,
+    maxOutputTokens: 7168, supportsFunctionCalling: true, supportsParallelToolCalling: false,
+    documentSupport: true, maxContextTokens: 128000, toolTokenBudget: 20000, extreme: true,
   },
   {
-    value: 'llama-4',
-    label: 'Meta Llama 4',
-    description: "Meta's latest model on Australian sovereign cloud.",
-    vision: true, reasoning: false, experimental: false, category: 'Aussie Sovereign',
-    pdf: false, pro: true, requiresAuth: true, freeUnlimited: false,
-    maxOutputTokens: 8000, supportsFunctionCalling: false, documentSupport: true, extreme: false,
+    value: 'llama-3.3',
+    label: 'Meta Llama 3.3',
+    description: 'Optimised Llama 3.3 on Australian sovereign cloud.',
+    vision: false, reasoning: false, experimental: false, category: 'Aussie Sovereign',
+    pdf: false, pro: false, requiresAuth: false, freeUnlimited: true,
+    maxOutputTokens: 32000, supportsFunctionCalling: false, supportsParallelToolCalling: false,
+    documentSupport: true, extreme: false, fast: true,
   },
 */
 
@@ -167,6 +173,10 @@ export function hasDocumentSupport(modelValue: string): boolean {
 
 export function supportsFunctionCalling(modelValue: string): boolean {
   return getModelConfig(modelValue)?.supportsFunctionCalling ?? true;
+}
+
+export function supportsParallelToolCalling(modelValue: string): boolean {
+  return getModelConfig(modelValue)?.supportsParallelToolCalling ?? false;
 }
 
 export function isExperimentalModel(modelValue: string): boolean {

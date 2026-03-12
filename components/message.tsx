@@ -75,7 +75,6 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
         isChatSDKError = true;
       }
     } catch (e) {
-      // Not JSON, fallback
       parsedError = {
         type: 'unknown',
         surface: 'chat',
@@ -86,18 +85,45 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
     }
   }
 
-  // Get error details
-  const errorIcon = getErrorIcon(parsedError as any);
   const errorMessage = isChatSDKError
     ? parsedError.message
     : typeof error === 'string'
       ? error
-      : (error as any).message || 'Something went wrong while processing your message';
-  const errorCause = isChatSDKError ? parsedError.cause : typeof error === 'string' ? undefined : (error as any).cause;
-  const errorCode = isChatSDKError ? `${parsedError.type}:${parsedError.surface}` : null;
-  const actions = isChatSDKError
-    ? getErrorActions(parsedError as any)
-    : { primary: { label: 'Try Again', action: 'retry' } };
+      : (error as any).message || 'I encountered an unexpected issue. Please try again.';
+
+  // Plain-string errors from the stream onError handler are conversational AI-toned messages.
+  // Render them as an assistant-style chat bubble rather than a structured error card.
+  if (!isChatSDKError) {
+    return (
+      <div className="mt-3 flex items-start gap-3">
+        <div className="flex-shrink-0 mt-0.5">
+          <div className="size-7 rounded-full bg-muted flex items-center justify-center">
+            <AlertCircle className="h-3.5 w-3.5 text-muted-foreground" />
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-foreground leading-relaxed">{errorMessage}</p>
+          {(user || selectedVisibilityType === 'private') && handleRetry && (
+            <Button
+              onClick={handleRetry}
+              variant="ghost"
+              size="sm"
+              className="mt-2 h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+            >
+              <RefreshCw className="mr-1.5 h-3 w-3" />
+              Try again
+            </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Structured ChatSDKError — keep the action card for auth/upgrade/rate-limit errors
+  const errorIcon = getErrorIcon(parsedError as any);
+  const errorCause = parsedError.cause;
+  const errorCode = `${parsedError.type}:${parsedError.surface}`;
+  const actions = getErrorActions(parsedError as any);
 
   // Get icon component based on error type
   const getIconComponent = () => {
@@ -206,16 +232,12 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
           </div>
           <div className="flex-1">
             <h3 className={`font-medium ${colors.title}`}>
-              {isChatSDKError && isSignInRequired(parsedError as any) && 'Sign In Required'}
-              {isChatSDKError &&
-                (isProRequired(parsedError as any) || isRateLimited(parsedError as any)) &&
-                'Upgrade Required'}
-              {isChatSDKError &&
-                !isSignInRequired(parsedError as any) &&
+              {isSignInRequired(parsedError as any) && 'Sign In Required'}
+              {(isProRequired(parsedError as any) || isRateLimited(parsedError as any)) && 'Upgrade Required'}
+              {!isSignInRequired(parsedError as any) &&
                 !isProRequired(parsedError as any) &&
                 !isRateLimited(parsedError as any) &&
                 'Error'}
-              {!isChatSDKError && 'Error'}
             </h3>
             <p className={`text-sm ${colors.text} mt-0.5`}>{errorMessage}</p>
             {errorCode && <p className={`text-xs ${colors.text} mt-1 font-mono`}>Error Code: {errorCode}</p>}

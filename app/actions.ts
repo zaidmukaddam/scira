@@ -135,9 +135,10 @@ export async function suggestQuestions(history: any[]) {
 
   console.log(history);
 
-  const { text } = await generateText({
-    model: scira.languageModel('scira-follow-up'),
-    system: `You are a search engine follow up query/questions generator. You MUST create between 3 and 5 questions for the search engine based on the conversation history.
+  try {
+    const { text } = await generateText({
+      model: scira.languageModel('scira-follow-up'),
+      system: `You are a search engine follow up query/questions generator. You MUST create between 3 and 5 questions for the search engine based on the conversation history.
 
 ### Question Generation Guidelines:
 - Create 3-5 questions that are open-ended and encourage further discussion
@@ -172,18 +173,22 @@ export async function suggestQuestions(history: any[]) {
 - Each question must end with a question mark
 - Questions must be diverse and not redundant
 - Do not include instructions or meta-commentary in the questions`,
-    messages: history,
-  });
+      messages: history,
+    });
 
-  const questions = text
-    .split('\n')
-    .map((q) => q.trim())
-    .filter((q) => q.length > 0 && q.endsWith('?'))
-    .slice(0, 5);
+    const questions = text
+      .split('\n')
+      .map((q) => q.trim())
+      .filter((q) => q.length > 0 && q.endsWith('?'))
+      .slice(0, 5);
 
-  return {
-    questions: questions.length >= 3 ? questions : questions.concat(['What else would you like to know?']).slice(0, 5),
-  };
+    return {
+      questions: questions.length >= 3 ? questions : questions.concat(['What else would you like to know?']).slice(0, 5),
+    };
+  } catch (error) {
+    console.error('Failed to generate follow-up questions:', error);
+    return { questions: [] };
+  }
 }
 
 /**

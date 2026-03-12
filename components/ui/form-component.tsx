@@ -4073,6 +4073,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
           </div>
         </div>
 
+        <p className="text-center text-xs text-muted-foreground/60 mt-1.5 px-2 select-none">
+          AI can make mistakes. Verify important information.
+        </p>
+
         {/* Pro Upgrade Dialog */}
         <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
           <DialogContent className="p-0 overflow-hidden gap-0 bg-background sm:max-w-[450px]" showCloseButton={false}>
