@@ -366,7 +366,9 @@ export async function POST(req: Request) {
         const addr = reverseData.address ?? {};
         geoCity = addr.city || addr.town || addr.village || addr.suburb || addr.county;
         geoRegion = addr.state;
-        geoCountry = addr.country;
+        // Use ISO 2-letter country_code for region checks (e.g. "AU"), not the full name
+        // Full country name is kept only for display — the block check uses the code
+        geoCountry = addr.country_code ? addr.country_code.toUpperCase() : addr.country;
       }
     } catch (reverseError) {
       console.warn('Reverse geocoding failed for browser location:', reverseError);
