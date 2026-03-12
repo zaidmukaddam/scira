@@ -517,11 +517,18 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         console.log('Selected model:', model.value);
         setSelectedModel(model.value.trim());
 
+        // Notify user when switching from a no-attachment model (Magpie) to one that supports files
+        const fromNoAttachments = selectedModel === 'magpie' || selectedModel === 'magpie-legal';
+        const toSupportsAttachments = model.value !== 'magpie' && model.value !== 'magpie-legal';
+        if (fromNoAttachments && toSupportsAttachments) {
+          toast.info('You can now attach files and photos with this model');
+        }
+
         if (onModelSelect) {
           onModelSelect(model);
         }
       },
-      [availableModels, user, isProUser, isSubscriptionLoading, setSelectedModel, onModelSelect, fetchDiscountConfig],
+      [availableModels, user, isProUser, isSubscriptionLoading, setSelectedModel, onModelSelect, fetchDiscountConfig, selectedModel],
     );
 
     // Shared command content renderer (not a component) to preserve focus

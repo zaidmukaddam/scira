@@ -754,6 +754,37 @@ const ChatInterface = memo(
       }
     }, [messages, status, scrollToBottom]);
 
+    // Restore attachments passed from the /files page via localStorage
+    useEffect(() => {
+      if (typeof window === 'undefined') return;
+      if (chatState.attachments.length > 0) return;
+
+      try {
+        const storedAttachments = localStorage.getItem('initial-attachments');
+        if (storedAttachments) {
+          const parsed = JSON.parse(storedAttachments);
+          if (Array.isArray(parsed) && parsed.length) {
+            dispatch({ type: 'SET_ATTACHMENTS', payload: parsed });
+          }
+          localStorage.removeItem('initial-attachments');
+          return;
+        }
+
+        const storedAttachment = localStorage.getItem('initial-attachment');
+        if (storedAttachment) {
+          const parsed = JSON.parse(storedAttachment);
+          if (parsed) {
+            dispatch({ type: 'SET_ATTACHMENTS', payload: [parsed] });
+          }
+          localStorage.removeItem('initial-attachment');
+        }
+      } catch (err) {
+        console.error('Failed to restore attachments from localStorage', err);
+        localStorage.removeItem('initial-attachments');
+        localStorage.removeItem('initial-attachment');
+      }
+    }, [chatState.attachments.length, dispatch]);
+
     // Dialog management state - track command dialog state in chat state
     useEffect(() => {
       dispatch({
