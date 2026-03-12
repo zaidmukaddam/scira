@@ -16,8 +16,9 @@ import {
   getFilteredModels,
   isModelRestrictedInRegion,
   supportsExtremeMode,
+  supportsFunctionCalling,
 } from '@/ai/providers';
-import { X, Check, Wand2, Upload, CheckIcon, Zap, Sparkles, ArrowUpRight } from 'lucide-react';
+import { X, Check, Wand2, Upload, CheckIcon, Zap, Sparkles, ArrowUpRight, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, getSearchGroups, SearchProvider } from '@/lib/utils';
 
@@ -2393,6 +2394,16 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
   const hasInteracted = useMemo(() => messages.length > 0, [messages.length]);
 
+  const isMagpieModel = useMemo(
+    () => selectedModel === 'magpie' || selectedModel === 'magpie-legal',
+    [selectedModel],
+  );
+
+  const modelSupportsFunctionCalling = useMemo(
+    () => supportsFunctionCalling(selectedModel),
+    [selectedModel],
+  );
+
   const cleanupMediaRecorder = useCallback(() => {
     if (mediaRecorderRef.current?.stream) {
       mediaRecorderRef.current.stream.getTracks().forEach((track) => track.stop());
@@ -3849,10 +3860,32 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     user={user}
                     selectedGroup={selectedGroup}
                   />
+
+                  {!modelSupportsFunctionCalling && (
+                    <Tooltip delayDuration={300}>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center text-amber-500/80 dark:text-amber-400/80 cursor-help ml-0.5">
+                          <Info size={13} />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="top"
+                        sideOffset={6}
+                        className="border-0 backdrop-blur-xs py-2 px-3 shadow-none! max-w-[200px]"
+                      >
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-medium text-[11px]">No search tools</span>
+                          <span className="text-[10px] text-accent leading-tight">
+                            Answers from training data only · may be outdated
+                          </span>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
                 </div>
 
                 <div className={cn('flex items-center shrink-0 gap-1')}>
-                  {hasVisionSupport(selectedModel) && (
+                  {!isMagpieModel && (
                     <Tooltip delayDuration={300}>
                       <TooltipTrigger asChild>
                         <Button

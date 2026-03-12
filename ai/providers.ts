@@ -232,6 +232,7 @@ export {
   getFilteredModels,
   isModelRestrictedInRegion,
   supportsExtremeMode,
+  supportsFunctionCalling,
 } from '@/ai/models';
 
 export const scx = customProvider({
