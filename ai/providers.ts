@@ -1,5 +1,6 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { customProvider, extractReasoningMiddleware, wrapLanguageModel } from 'ai';
+import { magpieProtocolMiddleware } from '@/ai/magpie-middleware';
 import type { JSONValue } from 'ai';
 
 // ─── Base URL ────────────────────────────────────────────────────────────────
@@ -249,7 +250,10 @@ export const scx = customProvider({
       model: scxProvider.languageModel('gpt-oss-120b'),
       middleware: [extractReasoningMiddleware({ tagName: 'think' })],
     }),
-    magpie: magpieProvider.languageModel('magpie'),
+    magpie: wrapLanguageModel({
+      model: magpieProvider.languageModel('magpie'),
+      middleware: [magpieProtocolMiddleware],
+    }),
     // Internal utility aliases (follow-up suggestions, chat naming, prompt enhancement)
     'scira-follow-up': scxProvider.languageModel('Llama-4-Maverick-17B-128E-Instruct'),
     'scira-name': scxProvider.languageModel('Llama-4-Maverick-17B-128E-Instruct'),

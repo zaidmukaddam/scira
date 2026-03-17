@@ -1,62 +1,27 @@
 /**
  * Magpie Protocol Middleware
  *
- * The magpie-small model streams content using a custom channel protocol
- * instead of standard <think>...</think> tags:
+ * The magpie model streams responses using a <|call|>-delimited protocol:
  *
- *   <|channel|>analysis<|message|>  ...thinking...  <|end|>
- *   <|start|>assistant<|channel|>commentary...<|call|>   ← internal call (skipped)
- *   <|start|>assistant<|channel|>final<|message|>  ...response text...
+ *   {JSON tool args}<|call|>We need to see the tool output.<|call|><|call|><|call|>## Actual answer...
  *
- * This middleware intercepts the raw text stream and:
- *  - Emits "analysis" channel content as `reasoning-*` parts  → shown in the thinking indicator
- *  - Emits "final" channel content as `text-delta` parts      → shown as the chat response
- *  - Discards everything else (commentary, protocol tokens)
+ * Segments are delimited by <|call|> tokens. The FINAL answer is everything
+ * after the last run of 2+ consecutive <|call|> tokens.
  *
- * IMPORTANT: Uses AI SDK v3 stream part types:
- *  - text-delta uses `delta` field (not `textDelta`)
- *  - reasoning uses reasoning-start / reasoning-delta / reasoning-end events
+ * This middleware:
+ *  1. Buffers all content during the preamble phase
+ *  2. Detects when 2+ consecutive <|call|> tokens appear (marks start of answer)
+ *  3. Emits only the answer content as text-delta parts
+ *  4. Falls back to emitting everything if no protocol tokens appear (direct responses)
  */
 
 import type { LanguageModelMiddleware } from 'ai';
 
-const ANALYSIS_START = '<|channel|>analysis<|message|>';
-const FINAL_START = '<|channel|>final<|message|>';
-const END_TOKEN = '<|end|>';
-const START_TOKEN = '<|start|>';
+const CALL_TOKEN = '<|call|>';
+const CALL_LEN = CALL_TOKEN.length;
 
-// All tokens that begin or delimit a protocol section — used to detect
-// partial tokens at stream chunk boundaries so we never split one across chunks.
-const PROTOCOL_TOKENS = [
-  '<|channel|>analysis<|message|>',
-  '<|channel|>final<|message|>',
-  '<|channel|>',
-  '<|message|>',
-  '<|end|>',
-  '<|start|>',
-  '<|call|>',
-  '<|constrain|>',
-];
-
-const MAX_TOKEN_LEN = Math.max(...PROTOCOL_TOKENS.map((t) => t.length));
-
-/**
- * Returns how many leading bytes of `buffer` are safe to emit immediately —
- * none of the buffer's suffixes could be the start of a protocol token
- * that hasn't fully arrived yet.
- */
-function safeEmitLength(buffer: string): number {
-  const checkLen = Math.min(buffer.length, MAX_TOKEN_LEN);
-  for (let i = checkLen; i >= 1; i--) {
-    const tail = buffer.slice(buffer.length - i);
-    if (PROTOCOL_TOKENS.some((tok) => tok.startsWith(tail))) {
-      return buffer.length - i;
-    }
-  }
-  return buffer.length;
-}
-
-type Channel = 'seeking' | 'analysis' | 'final' | 'skip';
+// Regex to strip any remaining protocol tokens from answer content
+const PROTOCOL_RE = /<\|[^|]*\|>/g;
 
 export const magpieProtocolMiddleware: LanguageModelMiddleware = {
   specificationVersion: 'v3',
@@ -64,150 +29,128 @@ export const magpieProtocolMiddleware: LanguageModelMiddleware = {
   wrapStream: async ({ doStream }) => {
     const { stream, ...rest } = await doStream();
 
-    let buffer = '';
-    let channel: Channel = 'seeking';
-
-    // Track IDs needed for the AI SDK v3 stream part format
     let textId: string | null = null;
     let delayedTextStart: { type: 'text-start'; id: string; [key: string]: unknown } | null = null;
-    let reasoningId = 0;
-    let reasoningOpen = false;
+
+    // Buffer all incoming text during the preamble phase.
+    // Once we detect 2+ consecutive <|call|> tokens we transition to 'answer' and
+    // start streaming the content that follows them.
+    // If we never detect the pattern (direct response), we emit the whole buffer on flush.
+    let phase: 'preamble' | 'answer' = 'preamble';
+    let preambleBuffer = '';
+
+    /**
+     * Scan preambleBuffer for a run of 2+ consecutive <|call|> tokens.
+     * If found, extract the content after the run as the answer start,
+     * transition to answer phase, and emit what we have.
+     */
+    function detectAndTransition(controller: TransformStreamDefaultController): void {
+      let searchFrom = 0;
+      let runStart = -1;
+      let runCount = 0;
+
+      while (true) {
+        const idx = preambleBuffer.indexOf(CALL_TOKEN, searchFrom);
+        if (idx === -1) break;
+
+        // Is this call token immediately adjacent to the previous one?
+        if (runStart !== -1 && idx === runStart + CALL_LEN * runCount) {
+          runCount++;
+        } else {
+          // New run
+          runStart = idx;
+          runCount = 1;
+        }
+
+        if (runCount >= 2) {
+          // Found a consecutive run — find where this run ends
+          let runEnd = idx + CALL_LEN;
+          while (preambleBuffer.startsWith(CALL_TOKEN, runEnd)) {
+            runEnd += CALL_LEN;
+          }
+
+          // Everything after the run is the start of the answer
+          const answerStart = preambleBuffer.slice(runEnd);
+          preambleBuffer = '';
+          phase = 'answer';
+
+          if (answerStart && textId) {
+            if (delayedTextStart) {
+              controller.enqueue(delayedTextStart);
+              delayedTextStart = null;
+            }
+            controller.enqueue({ type: 'text-delta', id: textId, delta: answerStart });
+          }
+          return;
+        }
+
+        searchFrom = idx + CALL_LEN;
+      }
+    }
+
+    function emitText(
+      controller: TransformStreamDefaultController,
+      text: string,
+    ): void {
+      if (!text || !textId) return;
+      const cleaned = text.replace(PROTOCOL_RE, '');
+      if (!cleaned) return;
+      if (delayedTextStart) {
+        controller.enqueue(delayedTextStart);
+        delayedTextStart = null;
+      }
+      controller.enqueue({ type: 'text-delta', id: textId, delta: cleaned });
+    }
 
     const transformed = stream.pipeThrough(
       new TransformStream({
         transform(chunk: any, controller) {
-          // Delay text-start until we know we have final-section content to emit
+          // Hold text-start until we have real content to emit
           if (chunk.type === 'text-start') {
             textId = chunk.id;
             delayedTextStart = chunk;
             return;
           }
 
-          // Pass text-end through once text-start has been flushed
+          // Only pass text-end through if we already flushed text-start
           if (chunk.type === 'text-end') {
             if (!delayedTextStart) {
-              // text-start was already emitted — pass text-end normally
               controller.enqueue(chunk);
             }
-            // If delayedTextStart is still held, we never emitted text at all;
-            // discard text-end too (no text block was opened).
             delayedTextStart = null;
             return;
           }
 
-          // Only intercept text-delta — all other chunk types pass through unchanged
+          // All non-text-delta chunks (usage, finish, etc.) pass through unchanged
           if (chunk.type !== 'text-delta') {
             controller.enqueue(chunk);
             return;
           }
 
-          // chunk.delta (v3 SDK) carries the raw protocol text
-          buffer += (chunk.delta as string);
+          const delta = chunk.delta as string;
 
-          let advanced = true;
-          while (advanced) {
-            advanced = false;
-
-            if (channel === 'seeking' || channel === 'skip') {
-              const analysisIdx = buffer.indexOf(ANALYSIS_START);
-              const finalIdx = buffer.indexOf(FINAL_START);
-
-              if (analysisIdx !== -1 && (finalIdx === -1 || analysisIdx < finalIdx)) {
-                buffer = buffer.slice(analysisIdx + ANALYSIS_START.length);
-                channel = 'analysis';
-                advanced = true;
-              } else if (finalIdx !== -1) {
-                buffer = buffer.slice(finalIdx + FINAL_START.length);
-                channel = 'final';
-                advanced = true;
-              }
-
-            } else if (channel === 'analysis') {
-              const endIdx = buffer.indexOf(END_TOKEN);
-              if (endIdx !== -1) {
-                const content = buffer.slice(0, endIdx);
-                if (content) {
-                  if (!reasoningOpen) {
-                    controller.enqueue({ type: 'reasoning-start', id: `mag-r-${reasoningId}` });
-                    reasoningOpen = true;
-                  }
-                  controller.enqueue({ type: 'reasoning-delta', id: `mag-r-${reasoningId}`, delta: content });
-                }
-                if (reasoningOpen) {
-                  controller.enqueue({ type: 'reasoning-end', id: `mag-r-${reasoningId}` });
-                  reasoningId++;
-                  reasoningOpen = false;
-                }
-                buffer = buffer.slice(endIdx + END_TOKEN.length);
-                channel = 'skip';
-                advanced = true;
-              } else {
-                const safe = safeEmitLength(buffer);
-                if (safe > 0) {
-                  const content = buffer.slice(0, safe);
-                  if (!reasoningOpen) {
-                    controller.enqueue({ type: 'reasoning-start', id: `mag-r-${reasoningId}` });
-                    reasoningOpen = true;
-                  }
-                  controller.enqueue({ type: 'reasoning-delta', id: `mag-r-${reasoningId}`, delta: content });
-                  buffer = buffer.slice(safe);
-                }
-              }
-
-            } else if (channel === 'final') {
-              // Close any open reasoning block before emitting text
-              if (reasoningOpen) {
-                controller.enqueue({ type: 'reasoning-end', id: `mag-r-${reasoningId}` });
-                reasoningId++;
-                reasoningOpen = false;
-              }
-
-              const startIdx = buffer.indexOf(START_TOKEN);
-              if (startIdx !== -1) {
-                const content = buffer.slice(0, startIdx);
-                if (content && textId) {
-                  if (delayedTextStart) {
-                    controller.enqueue(delayedTextStart);
-                    delayedTextStart = null;
-                  }
-                  controller.enqueue({ type: 'text-delta', id: textId, delta: content });
-                }
-                buffer = buffer.slice(startIdx + START_TOKEN.length);
-                channel = 'seeking';
-                advanced = true;
-              } else {
-                const safe = safeEmitLength(buffer);
-                if (safe > 0 && textId) {
-                  if (delayedTextStart) {
-                    controller.enqueue(delayedTextStart);
-                    delayedTextStart = null;
-                  }
-                  controller.enqueue({ type: 'text-delta', id: textId, delta: buffer.slice(0, safe) });
-                  buffer = buffer.slice(safe);
-                }
-              }
-            }
+          if (phase === 'preamble') {
+            preambleBuffer += delta;
+            detectAndTransition(controller);
+          } else {
+            // Already in answer phase — stream directly
+            emitText(controller, delta);
           }
         },
 
         flush(controller) {
-          if (!buffer) return;
-
-          if (channel === 'analysis') {
-            if (!reasoningOpen) {
-              controller.enqueue({ type: 'reasoning-start', id: `mag-r-${reasoningId}` });
+          if (phase === 'preamble' && preambleBuffer) {
+            // Stream ended without detecting the protocol — this is a direct response.
+            // Emit everything, stripping any stray protocol tokens.
+            const cleaned = preambleBuffer.replace(PROTOCOL_RE, '').trim();
+            if (cleaned && textId) {
+              if (delayedTextStart) {
+                controller.enqueue(delayedTextStart);
+              }
+              controller.enqueue({ type: 'text-delta', id: textId, delta: cleaned });
             }
-            controller.enqueue({ type: 'reasoning-delta', id: `mag-r-${reasoningId}`, delta: buffer });
-            controller.enqueue({ type: 'reasoning-end', id: `mag-r-${reasoningId}` });
-          } else if (channel === 'final' && textId) {
-            if (reasoningOpen) {
-              controller.enqueue({ type: 'reasoning-end', id: `mag-r-${reasoningId}` });
-            }
-            if (delayedTextStart) {
-              controller.enqueue(delayedTextStart);
-            }
-            controller.enqueue({ type: 'text-delta', id: textId, delta: buffer });
           }
+          // In 'answer' phase there's no pending buffer — we emit chunks immediately.
         },
       }),
     );
