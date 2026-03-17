@@ -37,6 +37,24 @@ export const magpieProtocolMiddleware: LanguageModelMiddleware = {
     let latestTextStartChunk: any = null;
     let buffer = '';
 
+    const emitBuffer = (controller: TransformStreamDefaultController) => {
+      if (!latestTextId || !latestTextStartChunk || !buffer) return;
+
+      let answer: string;
+      const lastCallIdx = buffer.lastIndexOf(CALL_TOKEN);
+      if (lastCallIdx !== -1) {
+        answer = buffer.slice(lastCallIdx + CALL_TOKEN.length);
+      } else {
+        answer = buffer;
+      }
+      const cleaned = answer.replace(PROTOCOL_RE, '').trim();
+      if (cleaned) {
+        controller.enqueue(latestTextStartChunk);
+        controller.enqueue({ type: 'text-delta', id: latestTextId, delta: cleaned });
+        controller.enqueue({ type: 'text-end', id: latestTextId });
+      }
+    };
+
     const transformed = stream.pipeThrough(
       new TransformStream({
         transform(chunk: any, controller) {
@@ -63,32 +81,47 @@ export const magpieProtocolMiddleware: LanguageModelMiddleware = {
         },
 
         flush(controller) {
-          if (!latestTextId || !latestTextStartChunk) return;
-
-          let answer: string;
-
-          // Find the LAST occurrence of the call token
-          const lastCallIdx = buffer.lastIndexOf(CALL_TOKEN);
-          if (lastCallIdx !== -1) {
-            // Everything after the last <|call|> is the answer
-            answer = buffer.slice(lastCallIdx + CALL_TOKEN.length);
-          } else {
-            // No protocol tokens — direct answer
-            answer = buffer;
-          }
-
-          // Strip any remaining protocol tokens (e.g. <|im_end|>) and trim
-          const cleaned = answer.replace(PROTOCOL_RE, '').trim();
-
-          if (cleaned) {
-            controller.enqueue(latestTextStartChunk);
-            controller.enqueue({ type: 'text-delta', id: latestTextId, delta: cleaned });
-            controller.enqueue({ type: 'text-end', id: latestTextId });
-          }
+          // Normal completion: emit whatever we buffered
+          emitBuffer(controller);
         },
       }),
     );
 
-    return { stream: transformed, ...rest };
+    // If the upstream stream errors (network drop, server crash), pipeThrough will
+    // reject the readable side. Catch that and emit any buffered text so the user
+    // sees a partial response rather than a blank bubble.
+    const safeTransformed = new ReadableStream({
+      start(controller) {
+        const reader = transformed.getReader();
+        const pump = () =>
+          reader.read().then(
+            ({ done, value }) => {
+              if (done) {
+                controller.close();
+                return;
+              }
+              controller.enqueue(value);
+              pump();
+            },
+            (err) => {
+              // Stream errored — emit whatever we buffered before closing
+              if (latestTextId && latestTextStartChunk && buffer) {
+                const lastCallIdx = buffer.lastIndexOf(CALL_TOKEN);
+                const answer = lastCallIdx !== -1 ? buffer.slice(lastCallIdx + CALL_TOKEN.length) : buffer;
+                const cleaned = answer.replace(PROTOCOL_RE, '').trim();
+                if (cleaned) {
+                  controller.enqueue(latestTextStartChunk);
+                  controller.enqueue({ type: 'text-delta', id: latestTextId, delta: cleaned });
+                  controller.enqueue({ type: 'text-end', id: latestTextId });
+                }
+              }
+              controller.error(err);
+            },
+          );
+        pump();
+      },
+    });
+
+    return { stream: safeTransformed, ...rest };
   },
 };

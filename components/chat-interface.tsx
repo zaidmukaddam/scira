@@ -673,6 +673,20 @@ const ChatInterface = memo(
       }
     }, [status]);
 
+    // Watchdog: if status stays 'submitted' or 'streaming' for more than 90 seconds
+    // without transitioning to 'ready' (e.g. silent TCP disconnect, Vercel timeout),
+    // call stop() to reset the UI so the user isn't locked out indefinitely.
+    useEffect(() => {
+      if (status !== 'submitted' && status !== 'streaming') return;
+
+      const watchdog = setTimeout(() => {
+        console.warn('[watchdog] Status stuck at', status, 'for 90s — calling stop()');
+        stop();
+      }, 90_000);
+
+      return () => clearTimeout(watchdog);
+    }, [status, stop]);
+
     // Removed header/recents invalidation effects; chat meta now refetches based on messages.length via query key
 
     useEffect(() => {

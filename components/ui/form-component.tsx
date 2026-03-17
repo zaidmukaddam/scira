@@ -102,9 +102,13 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     // Fetch country code on mount
     useEffect(() => {
-      getUserCountryCode().then((code) => {
-        setCountryCode(code);
-      });
+      getUserCountryCode()
+        .then((code) => {
+          setCountryCode(code);
+        })
+        .catch(() => {
+          // Non-critical: falls back to unfiltered model list
+        });
     }, []);
 
     const availableModels = useMemo(() => getFilteredModels(countryCode || undefined), [countryCode]);
@@ -3518,6 +3522,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
             toast.error('Please wait for the response to complete!');
           } else if (isRecording) {
             toast.error('Please stop recording before submitting!');
+          } else if (uploadQueue.length > 0) {
+            toast.error('Please wait for the file upload to complete!');
           } else {
             const shouldBypassLimitsForThisModel = shouldBypassRateLimits(selectedModel, user);
             if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
@@ -3532,7 +3538,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
         }
       }
     },
-    [isProcessing, isRecording, selectedModel, user, isLimitBlocked, submitForm, inputRef, isMobile],
+    [isProcessing, isRecording, uploadQueue, selectedModel, user, isLimitBlocked, submitForm, inputRef, isMobile],
   );
 
   const resizeTextarea = useCallback(() => {

@@ -36,18 +36,17 @@ export function useAutoResume({
   }, [autoResume, initialMessages.at, resumeStream]);
 
   useEffect(() => {
-    if (!dataStream) {
-      return;
-    }
-    if (dataStream.length === 0) {
+    if (!dataStream || dataStream.length === 0) {
       return;
     }
 
-    const dataPart = dataStream[0];
+    // Process ALL buffered data-appendMessage parts, not just the first one.
+    // Multiple messages can arrive between render cycles (e.g. on stream resume
+    // after a disconnect where several turns were buffered server-side).
+    const appendParts = dataStream.filter((p) => p.type === "data-appendMessage");
+    if (appendParts.length === 0) return;
 
-    if (dataPart.type === "data-appendMessage") {
-      const message = JSON.parse(dataPart.data);
-      setMessages([...initialMessages, message]);
-    }
+    const newMessages = appendParts.map((p) => JSON.parse(p.data));
+    setMessages([...initialMessages, ...newMessages]);
   }, [dataStream, initialMessages, setMessages]);
 }

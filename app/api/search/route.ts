@@ -692,21 +692,36 @@ export async function POST(req: Request) {
 
   // Replace PDF/document file parts with extracted text so providers that don't
   // support raw file URLs (Groq, SCX) don't throw UnsupportedFunctionalityError.
-  const preprocessedMessages = await preprocessMessagesForModel(messages);
+  let preprocessedMessages: any[];
+  try {
+    preprocessedMessages = await preprocessMessagesForModel(messages);
+  } catch (err) {
+    console.error('[search] preprocessMessagesForModel failed:', err);
+    preprocessedMessages = messages; // fall back to raw messages
+  }
 
-  const prunedMessages = shouldPrune
-    ? await (async () => {
-        console.log(`🔧 Pruning messages: ${messages.length} messages`);
-        const pruned = pruneMessages({
-          reasoning: 'none',
-          messages: await convertToModelMessages(preprocessedMessages),
-          toolCalls: 'before-last-3-messages',
-          emptyMessages: 'remove',
-        });
-        console.log(`✂️ Pruned to ${pruned.length} messages`);
-        return pruned;
-      })()
-    : await convertToModelMessages(preprocessedMessages);
+  let prunedMessages: any[];
+  try {
+    prunedMessages = shouldPrune
+      ? await (async () => {
+          console.log(`🔧 Pruning messages: ${messages.length} messages`);
+          const pruned = pruneMessages({
+            reasoning: 'none',
+            messages: await convertToModelMessages(preprocessedMessages),
+            toolCalls: 'before-last-3-messages',
+            emptyMessages: 'remove',
+          });
+          console.log(`✂️ Pruned to ${pruned.length} messages`);
+          return pruned;
+        })()
+      : await convertToModelMessages(preprocessedMessages);
+  } catch (err) {
+    console.error('[search] convertToModelMessages failed:', err);
+    return new Response(
+      JSON.stringify({ error: 'Failed to process message history. Please refresh and try again.' }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
 
   // Computed once and shared between execute and onFinish closures
   const supportsReasoning = hasReasoningSupport(effectiveModel);
