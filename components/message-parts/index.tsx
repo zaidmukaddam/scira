@@ -2355,6 +2355,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     </div>
                   </div>
                 );
+              case 'output-error':
+                // Tool call failed validation - render nothing (model will have answered with text)
+                return null;
               case 'output-available':
                 // Handle error responses
                 if (part.output && 'error' in part.output && part.output.error && !part.output.results?.length) {
