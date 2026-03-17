@@ -26,7 +26,7 @@ import { track } from '@vercel/analytics';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Kbd, KbdGroup } from '@/components/ui/kbd';
 import { ComprehensiveUserData } from '@/hooks/use-user-data';
-import { checkImageModeration, enhancePrompt, getDiscountConfigAction, getUserCountryCode } from '@/app/actions';
+import { checkImageModeration, checkTextModeration, enhancePrompt, getDiscountConfigAction, getUserCountryCode } from '@/app/actions';
 import { DiscountConfig } from '@/lib/discount';
 import { PRICING, SEARCH_LIMITS } from '@/lib/constants';
 import { LockIcon, Eye, Brain, FilePdf } from '@phosphor-icons/react';
@@ -3423,7 +3423,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
   }, []);
 
   const onSubmit = useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
       if (status !== 'ready') {
@@ -3449,6 +3449,21 @@ const FormComponent: React.FC<FormComponentProps> = ({
       }
 
       if (input.trim() || attachments.length > 0) {
+        // Run text moderation before sending
+        if (input.trim()) {
+          try {
+            const textModResult = await checkTextModeration(input.trim());
+            if (textModResult.violation) {
+              toast.error(
+                `Message content violates safety guidelines${textModResult.category ? ` (${textModResult.category})` : ''}. Please revise your message.`,
+              );
+              return;
+            }
+          } catch (error) {
+            console.error('Text moderation check failed:', error);
+          }
+        }
+
         track('model_selected', {
           model: selectedModel,
         });

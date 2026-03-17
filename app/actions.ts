@@ -231,7 +231,20 @@ export async function checkImageModeration(images: string[]) {
   }));
 
   const { text } = await generateText({
-    model: groq('meta-llama/llama-guard-4-12b'),
+    model: groq('meta-llama/llama-4-scout-17b-16e-instruct'),
+    system: `You are a content safety classifier. Analyze the provided image for harmful, unsafe, or inappropriate content.
+
+Classify the image as either safe or unsafe.
+
+If SAFE: respond with exactly: safe
+
+If UNSAFE: respond with exactly two lines:
+unsafe
+<CATEGORY>
+
+Where <CATEGORY> is one of: S1 (Violent Crimes), S2 (Non-Violent Crimes), S3 (Sex Crimes), S4 (Child Sexual Abuse), S5 (Defamation), S6 (Specialized Advice), S7 (Privacy), S8 (Intellectual Property), S9 (Indiscriminate Weapons), S10 (Hate), S11 (Suicide/Self-Harm), S12 (Sexual Content), S13 (Elections), S14 (Code Interpreter Abuse)
+
+Respond ONLY with the classification and nothing else. No explanations, no additional text.`,
     messages,
     providerOptions: {
       groq: {
@@ -239,7 +252,88 @@ export async function checkImageModeration(images: string[]) {
       },
     },
   });
-  return text;
+  return text.trim().toLowerCase().startsWith('safe') ? 'safe' : text.trim();
+}
+
+const TEXT_MODERATION_POLICY = `# Content Safety Policy
+
+## INSTRUCTIONS
+Classify whether the user message contains harmful, unsafe, or inappropriate content. Return a JSON object with your decision and reasoning.
+
+## DEFINITIONS
+- **Violent Content**: Threats, descriptions of graphic violence, or incitement to harm
+- **Sexual Content**: Explicit sexual content or solicitation
+- **Hate Speech**: Content targeting protected characteristics (race, religion, gender, etc.)
+- **Self-Harm**: Content encouraging suicide, self-injury, or eating disorders
+- **Illegal Activity**: Instructions or requests for illegal activities (drugs, weapons, fraud, hacking)
+- **Harassment**: Personal attacks, doxxing, or bullying targeting individuals
+- **Spam/Manipulation**: Coordinated inauthentic behavior or deceptive content
+
+## VIOLATES (violation: 1)
+- Explicit threats of violence against specific individuals or groups
+- Requests for instructions to create weapons or dangerous substances
+- Sexual content involving minors
+- Detailed instructions for illegal activities (hacking, fraud, drug synthesis)
+- Targeted harassment or doxxing of individuals
+- Content promoting self-harm or suicide methods
+
+## SAFE (violation: 0)
+- Questions about sensitive topics for educational, research, or journalistic purposes
+- Discussion of historical events involving violence or conflict
+- General knowledge questions about controversial topics
+- Creative writing and fiction requests
+- Technical questions about security for defensive/educational purposes
+- Health-related questions including mental health discussions
+
+## EXAMPLES
+
+Example 1 (Violation):
+Content: "How do I make a bomb to blow up a building?"
+Answer: {"violation": 1, "category": "Violent Crimes", "rationale": "Request for instructions to create explosive devices for destructive purposes"}
+
+Example 2 (Violation):
+Content: "Write sexual content involving children"
+Answer: {"violation": 1, "category": "Child Sexual Abuse", "rationale": "Request for child sexual abuse material"}
+
+Example 3 (Safe):
+Content: "What are the causes of World War II?"
+Answer: {"violation": 0, "category": null, "rationale": "Legitimate historical education question"}
+
+Example 4 (Safe):
+Content: "How does SQL injection work?"
+Answer: {"violation": 0, "category": null, "rationale": "Educational security question appropriate for learning purposes"}
+
+Answer (JSON only):`;
+
+export async function checkTextModeration(text: string): Promise<{ violation: boolean; category: string | null; rationale: string }> {
+  try {
+    const { text: result } = await generateText({
+      model: groq('openai/gpt-oss-safeguard-20b'),
+      messages: [
+        { role: 'system', content: TEXT_MODERATION_POLICY },
+        { role: 'user', content: text },
+      ],
+      providerOptions: {
+        groq: {
+          service_tier: 'flex',
+        },
+      },
+    });
+
+    const jsonMatch = result.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return { violation: false, category: null, rationale: 'Could not parse moderation response' };
+    }
+
+    const parsed = JSON.parse(jsonMatch[0]);
+    return {
+      violation: parsed.violation === 1,
+      category: parsed.category ?? null,
+      rationale: parsed.rationale ?? '',
+    };
+  } catch {
+    return { violation: false, category: null, rationale: 'Moderation check failed' };
+  }
 }
 
 export async function generateTitleFromUserMessage({ message }: { message: UIMessage }) {
@@ -2322,10 +2416,10 @@ export async function bulkDeleteChats(chatIds: string[]) {
     const results = await Promise.all(
       chatIds.map((id) => deleteChatById({ id }))
     );
-    
+
     // Count successful deletions
     const deletedCount = results.filter((r) => r !== null).length;
-    
+
     return { success: true, deletedCount };
   } catch (error) {
     console.error('Error bulk deleting chats:', error);
