@@ -2941,28 +2941,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return;
       }
 
-      const currentModelData = models.find((m) => m.value === selectedModel);
-      if (pdfFiles.length > 0 && (!currentModelData || !currentModelData.pdf)) {
-        console.log('PDFs detected, switching to compatible model');
-
-        const compatibleModel = models.find((m) => m.pdf && m.vision);
-
-        if (compatibleModel) {
-          console.log('Switching to compatible model:', compatibleModel.value);
-          setSelectedModel(compatibleModel.value);
-        } else {
-          console.warn('No PDF-compatible model found');
-          toast.error('PDFs are only supported by Gemini and Claude models');
-
-          if (imageFiles.length === 0) {
-            event.target.value = '';
-            return;
-          }
-        }
+      const currentModelSupportsPdf = hasPdfSupport(selectedModel, isProUser);
+      if (pdfFiles.length > 0 && !currentModelSupportsPdf) {
+        console.warn('Current model may not have native PDF support — will attempt processing via document extraction');
       }
 
       let validFiles: File[] = [...imageFiles];
-      if (hasPdfSupport(selectedModel) || pdfFiles.length > 0) {
+      if (pdfFiles.length > 0) {
         validFiles = [...validFiles, ...pdfFiles];
       }
 
@@ -2987,7 +2972,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
       if (imageFiles.length > 0) {
         try {
           console.log('Checking image moderation for', imageFiles.length, 'images');
-          toast.info('Checking images for safety...');
 
           const imageDataURLs = await Promise.all(imageFiles.map((file) => fileToDataURL(file)));
 
@@ -3006,10 +2990,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
           console.log('Images passed moderation check');
         } catch (error) {
-          console.error('Error during image moderation:', error);
-          toast.error('Unable to verify image safety. Please try again.');
-          event.target.value = '';
-          return;
+          // Moderation API failure should not block the upload — log and continue
+          console.error('Error during image moderation (non-fatal, proceeding with upload):', error);
         }
       }
 
@@ -3123,8 +3105,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return;
       }
 
-      toast.info(`Detected ${allFiles.length} dropped files`);
-
       const imageFiles: File[] = [];
       const pdfFiles: File[] = [];
       const unsupportedFiles: File[] = [];
@@ -3190,25 +3170,13 @@ const FormComponent: React.FC<FormComponentProps> = ({
         return;
       }
 
-      const currentModelData = models.find((m) => m.value === selectedModel);
-      if (pdfFiles.length > 0 && (!currentModelData || !currentModelData.pdf)) {
-        console.log('PDFs detected, switching to compatible model');
-
-        const compatibleModel = models.find((m) => m.pdf && m.vision);
-
-        if (compatibleModel) {
-          console.log('Switching to compatible model:', compatibleModel.value);
-          setSelectedModel(compatibleModel.value);
-          toast.info(`Switching to ${compatibleModel.label} to support PDF files`);
-        } else {
-          console.warn('No PDF-compatible model found');
-          toast.error('PDFs are only supported by Gemini and Claude models');
-          if (imageFiles.length === 0) return;
-        }
+      const currentModelSupportsPdf = hasPdfSupport(selectedModel, isProUser);
+      if (pdfFiles.length > 0 && !currentModelSupportsPdf) {
+        console.warn('Current model may not have native PDF support — will attempt processing via document extraction');
       }
 
       let validFiles: File[] = [...imageFiles];
-      if (hasPdfSupport(selectedModel) || pdfFiles.length > 0) {
+      if (pdfFiles.length > 0) {
         validFiles = [...validFiles, ...pdfFiles];
       }
 
@@ -3232,7 +3200,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
       if (imageFiles.length > 0) {
         try {
           console.log('Checking image moderation for', imageFiles.length, 'images');
-          toast.info('Checking images for safety...');
 
           const imageDataURLs = await Promise.all(imageFiles.map((file) => fileToDataURL(file)));
 
@@ -3250,32 +3217,19 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
           console.log('Images passed moderation check');
         } catch (error) {
-          console.error('Error during image moderation:', error);
-          toast.error('Unable to verify image safety. Please try again.');
-          return;
+          // Moderation API failure should not block the upload — log and continue
+          console.error('Error during image moderation (non-fatal, proceeding with upload):', error);
         }
       }
 
-      if (!currentModelData?.vision) {
-        let visionModel: string;
-
-        if (pdfFiles.length > 0) {
-          const pdfCompatibleModel = models.find((m) => m.vision && m.pdf);
-          if (pdfCompatibleModel) {
-            visionModel = pdfCompatibleModel.value;
-          } else {
-            visionModel = getFirstVisionModel();
-          }
-        } else {
-          visionModel = getFirstVisionModel();
-        }
-
+      const currentDropModelData = models.find((m) => m.value === selectedModel);
+      if (imageFiles.length > 0 && !currentDropModelData?.vision) {
+        const visionModel = getFirstVisionModel();
         console.log('Switching to vision model:', visionModel);
         setSelectedModel(visionModel);
       }
 
       setUploadQueue(validFiles.map((file) => file.name));
-      toast.info(`Starting upload of ${validFiles.length} files...`);
 
       setTimeout(async () => {
         try {
@@ -3355,7 +3309,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
       if (filesToUpload.length > 0) {
         try {
           console.log('Checking image moderation for', filesToUpload.length, 'pasted images');
-          toast.info('Checking pasted images for safety...');
 
           const imageDataURLs = await Promise.all(filesToUpload.map((file) => fileToDataURL(file)));
 
@@ -3375,9 +3328,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
           console.log('Pasted images passed moderation check');
         } catch (error) {
-          console.error('Error during pasted image moderation:', error);
-          toast.error('Unable to verify pasted image safety. Please try again.');
-          return;
+          // Moderation API failure should not block the upload — log and continue
+          console.error('Error during pasted image moderation (non-fatal, proceeding with upload):', error);
         }
       }
 
@@ -3414,13 +3366,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
     }
   }, [status, inputRef]);
 
-  const updateChatUrl = useCallback((chatIdToAdd: string) => {
-    const currentPath = window.location.pathname;
-    if (currentPath === '/') {
-      window.history.pushState({}, '', `/search/${chatIdToAdd}`);
-      return;
-    }
-  }, []);
 
   const onSubmit = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
@@ -3488,13 +3433,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
           ],
         });
 
-        // Update URL immediately after sending message for authenticated users
-        // This keeps the URL in sync without triggering Next.js navigation
-
-        if (user && typeof window !== 'undefined') {
-          updateChatUrl(chatId);
-        }
-
         setInput('');
         setAttachments([]);
         if (fileInputRef.current) {
@@ -3518,7 +3456,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
       isLimitBlocked,
       user,
       isRecording,
-      chatId,
     ],
   );
 
@@ -3936,7 +3873,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                         <div className="flex flex-col gap-0.5">
                           <span className="font-medium text-[11px]">Attach File</span>
                           <span className="text-[10px] text-accent leading-tight">
-                            {hasPdfSupport(selectedModel) ? 'Upload an image or PDF document' : 'Upload an image'}
+                            {hasPdfSupport(selectedModel, isProUser) ? 'Upload an image or PDF document' : 'Upload an image'}
                           </span>
                         </div>
                       </TooltipContent>

@@ -2,8 +2,11 @@ import { db } from '@/lib/db';
 import { userFile, fileChunk } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { generateText } from 'ai';
-import { scx, doEmbed } from '@/ai/providers';
+import { createGroq } from '@ai-sdk/groq';
+import { doEmbed } from '@/ai/providers';
 import { parsePDF } from './pdf-parser';
+
+const groq = createGroq({ apiKey: process.env.GROQ_API_KEY });
 
 const CHUNK_SIZE = 1000; // characters
 const CHUNK_OVERLAP = 200;
@@ -86,56 +89,58 @@ export class RAGProcessor {
     const buffer = Buffer.from(await response.arrayBuffer());
 
     const pdfResult = await parsePDF(buffer);
-    if (pdfResult?.text) {
+    if (pdfResult?.text?.trim()) {
       return pdfResult.text;
     }
 
-    // Fall back to vision OCR if no text extracted
-    return await this.extractImageText(fileUrl);
+    // Fall back to vision OCR for image-based (scanned) PDFs
+    console.log('[RAG] No text layer found in PDF, attempting vision OCR');
+    try {
+      return await this.extractImageText(fileUrl);
+    } catch (ocrError) {
+      console.warn('[RAG] Vision OCR fallback failed — returning empty text:', ocrError);
+      return '';
+    }
   }
 
   /**
-   * Extract text from image using Llama-4 vision model via SCX
+   * Extract text from image using Groq's vision model (llama-4-scout).
+   * Groq is used here because the SCX provider returns 500 for image inputs.
    */
   private async extractImageText(url: string): Promise<string> {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch image: ${response.statusText}`);
-      }
-
-      const contentType = response.headers.get('content-type') || 'image/jpeg';
-      const buffer = await response.arrayBuffer();
-      const base64Image = Buffer.from(buffer).toString('base64');
-
-      console.log(`[RAG] Extracting text from image using Llama-4 vision model`);
-
-      const { text } = await generateText({
-        model: scx.languageModel('llama-4'),
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: 'Extract all text from this image. Return only the extracted text without any additional comments or descriptions. If there is no text, return "No text found".',
-              },
-              {
-                type: 'image' as const,
-                image: base64Image,
-                ...(contentType ? { mimeType: contentType as any } : {}),
-              },
-            ],
-          },
-        ],
-        maxOutputTokens: 2000,
-      });
-
-      return text || 'No text found';
-    } catch (error) {
-      console.error('[RAG] Image OCR error:', error);
-      throw new Error('Failed to extract text from image');
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
     }
+
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+    const buffer = await response.arrayBuffer();
+    const base64Image = Buffer.from(buffer).toString('base64');
+
+    console.log('[RAG] Extracting text from image using Groq vision model');
+
+    const { text } = await generateText({
+      model: groq('meta-llama/llama-4-scout-17b-16e-instruct'),
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Extract all text from this image. Return only the extracted text, no extra commentary. If there is no text, return "No text found".',
+            },
+            {
+              type: 'image' as const,
+              image: base64Image,
+              ...(contentType ? { mimeType: contentType as any } : {}),
+            },
+          ],
+        },
+      ],
+      maxOutputTokens: 4000,
+    });
+
+    return text?.trim() || 'No text found';
   }
 
   private async extractTextFile(fileUrl: string): Promise<string> {

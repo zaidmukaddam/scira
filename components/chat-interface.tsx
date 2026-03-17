@@ -532,6 +532,20 @@ const ChatInterface = memo(
       },
       onFinish: async ({ message }) => {
         console.log('onFinish<Client>', message.parts);
+
+        // If this is a new chat started from the home page, navigate to the permanent chat URL.
+        // We do this AFTER streaming completes so that both the user message and assistant
+        // response are already saved in the DB — the new page will load with full history.
+        if (!initialChatId && typeof window !== 'undefined' && window.location.pathname === '/') {
+          router.replace(`/search/${chatId}`);
+          // Still invalidate queries so the sidebar refreshes on the new page
+          if (user) {
+            queryClient.invalidateQueries({ queryKey: ['user-usage', user.id] });
+            queryClient.refetchQueries({ queryKey: ['recent-chats', user.id] });
+          }
+          return;
+        }
+
         // Refresh usage data after message completion for authenticated users
         if (user) {
           // Invalidate usage data to force fresh fetch and update tooltips

@@ -39,6 +39,10 @@ import {
   updateChatTitleById,
   incrementMessageUsage,
 } from '@/lib/db/queries';
+import { db } from '@/lib/db';
+import { userFile } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
+import { parsePDF } from '@/lib/services/pdf-parser';
 import { ChatSDKError } from '@/lib/errors';
 import { createResumableStreamContext, type ResumableStreamContext } from 'resumable-stream';
 import { after } from 'next/server';
@@ -90,6 +94,106 @@ import { SearchGroupId } from '@/lib/utils';
 import { isUserAllowedInRegion, isProOnlyAllowedCountry } from '@/lib/allowed-regions';
 
 let globalStreamContext: ResumableStreamContext | null = null;
+
+/**
+ * Look up extracted text for a file URL from the RAG DB.
+ * Falls back to direct PDF parsing if the file hasn't been RAG-processed yet.
+ */
+async function getFileTextContent(fileUrl: string, fileName: string): Promise<string | null> {
+  try {
+    // First try: RAG-indexed text in the DB (already extracted at upload time)
+    const rows = await db
+      .select({ extractedText: userFile.extractedText, ragStatus: userFile.ragStatus })
+      .from(userFile)
+      .where(eq(userFile.fileUrl, fileUrl))
+      .limit(1);
+
+    if (rows.length > 0 && rows[0].ragStatus === 'completed' && rows[0].extractedText) {
+      console.log(`[PDF] Using RAG-extracted text for "${fileName}" (${rows[0].extractedText.length} chars)`);
+      return rows[0].extractedText;
+    }
+
+    // Second try: download and parse the PDF directly
+    console.log(`[PDF] RAG text unavailable for "${fileName}", parsing directly from URL`);
+    const response = await fetch(fileUrl, { signal: AbortSignal.timeout(15000) });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const result = await parsePDF(buffer);
+    if (result?.text?.trim()) {
+      console.log(`[PDF] Direct parse succeeded for "${fileName}" (${result.text.length} chars)`);
+      return result.text;
+    }
+
+    console.warn(`[PDF] No text could be extracted from "${fileName}"`);
+    return null;
+  } catch (error) {
+    console.error(`[PDF] Failed to get text content for "${fileName}":`, error);
+    return null;
+  }
+}
+
+/**
+ * Replace PDF/document file parts in messages with their extracted text content
+ * so providers that don't support file parts (e.g. Groq) can still read the document.
+ * Image parts are left untouched — those go through the model's vision capability.
+ */
+async function preprocessMessagesForModel(messages: any[]): Promise<any[]> {
+  const result = [];
+  for (const message of messages) {
+    if (!Array.isArray(message.parts)) {
+      result.push(message);
+      continue;
+    }
+
+    const hasPdfPart = message.parts.some(
+      (p: any) =>
+        p.type === 'file' &&
+        (p.mediaType === 'application/pdf' ||
+          p.mediaType?.includes('word') ||
+          p.mediaType?.includes('text/plain') ||
+          p.mediaType?.includes('spreadsheet') ||
+          p.mediaType?.includes('presentation')),
+    );
+
+    if (!hasPdfPart) {
+      result.push(message);
+      continue;
+    }
+
+    const newParts: any[] = [];
+    for (const part of message.parts) {
+      const isDocumentPart =
+        part.type === 'file' &&
+        part.mediaType !== 'image/png' &&
+        part.mediaType !== 'image/jpeg' &&
+        part.mediaType !== 'image/jpg' &&
+        part.mediaType !== 'image/webp' &&
+        part.mediaType !== 'image/gif';
+
+      if (!isDocumentPart) {
+        newParts.push(part);
+        continue;
+      }
+
+      const text = await getFileTextContent(part.url, part.name || 'document');
+      if (text) {
+        newParts.push({
+          type: 'text',
+          text: `<attached_file name="${part.name || 'document'}">\n${text}\n</attached_file>`,
+        });
+      } else {
+        // Can't read it — tell the model so it can respond helpfully
+        newParts.push({
+          type: 'text',
+          text: `<attached_file name="${part.name || 'document'}">\n[File content could not be extracted. The file may be image-based or encrypted.]\n</attached_file>`,
+        });
+      }
+    }
+
+    result.push({ ...message, parts: newParts });
+  }
+  return result;
+}
 
 // Shared config promise to avoid duplicate calls
 let configPromise: Promise<any>;
@@ -586,19 +690,23 @@ export async function POST(req: Request) {
 
   const shouldPrune = messages.length > 10;
 
+  // Replace PDF/document file parts with extracted text so providers that don't
+  // support raw file URLs (Groq, SCX) don't throw UnsupportedFunctionalityError.
+  const preprocessedMessages = await preprocessMessagesForModel(messages);
+
   const prunedMessages = shouldPrune
     ? await (async () => {
         console.log(`🔧 Pruning messages: ${messages.length} messages`);
         const pruned = pruneMessages({
           reasoning: 'none',
-          messages: await convertToModelMessages(messages),
+          messages: await convertToModelMessages(preprocessedMessages),
           toolCalls: 'before-last-3-messages',
           emptyMessages: 'remove',
         });
         console.log(`✂️ Pruned to ${pruned.length} messages`);
         return pruned;
       })()
-    : await convertToModelMessages(messages);
+    : await convertToModelMessages(preprocessedMessages);
 
   // Computed once and shared between execute and onFinish closures
   const supportsReasoning = hasReasoningSupport(effectiveModel);
@@ -636,6 +744,13 @@ export async function POST(req: Request) {
       const noToolsWarning = !modelSupportsFunctionCalling
         ? `\n\n⚠️ IMPORTANT: You are operating WITHOUT any search or real-time tools. Your response will be based entirely on your training data, which has a knowledge cutoff date and may be outdated. You MUST clearly state at the beginning of your response that your answer is based on your training data and may not reflect current information. Do not attempt to provide current data, prices, news, or real-time information.`
         : '';
+
+      if (!modelSupportsFunctionCalling) {
+        dataStream.write({
+          type: 'data-no_tools_warning',
+          data: { model: effectiveModel },
+        });
+      }
 
       const result = streamText({
         model: scx.languageModel(effectiveModel),

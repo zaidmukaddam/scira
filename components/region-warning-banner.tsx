@@ -182,16 +182,14 @@ export function RegionBlockingOverlay() {
       <div className="max-w-md w-full bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
         {/* Header */}
         <div
-          className={`px-8 py-10 text-center ${
-            canUpgrade
+          className={`px-8 py-10 text-center ${canUpgrade
               ? 'bg-gradient-to-br from-purple-500/10 to-indigo-500/10 dark:from-purple-500/20 dark:to-indigo-500/20'
               : 'bg-gradient-to-br from-orange-500/10 to-amber-500/10 dark:from-orange-500/20 dark:to-amber-500/20'
-          }`}
+            }`}
         >
           <div
-            className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${
-              canUpgrade ? 'bg-purple-100 dark:bg-purple-950/50' : 'bg-orange-100 dark:bg-orange-950/50'
-            }`}
+            className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-6 ${canUpgrade ? 'bg-purple-100 dark:bg-purple-950/50' : 'bg-orange-100 dark:bg-orange-950/50'
+              }`}
           >
             {canUpgrade ? (
               <Sparkles className="w-10 h-10 text-purple-600 dark:text-purple-400" />

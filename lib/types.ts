@@ -205,6 +205,7 @@ export type CustomUIDataTypes = {
   };
   extreme_search: DataExtremeSearchPart['data'];
   chat_title: { title: string };
+  no_tools_warning: { model: string };
 };
 
 export type ChatMessage = UIMessage<MessageMetadata, CustomUIDataTypes, ChatTools>;

@@ -225,14 +225,17 @@ export async function getHomeSuggestions(
 }
 
 export async function checkImageModeration(images: string[]) {
+  console.log('[ImageModeration] Checking', images.length, 'image(s)...');
+
   const messages: ModelMessage[] = images.map((image) => ({
     role: 'user',
     content: [{ type: 'image', image: image }],
   }));
 
-  const { text } = await generateText({
-    model: groq('meta-llama/llama-4-scout-17b-16e-instruct'),
-    system: `You are a content safety classifier. Analyze the provided image for harmful, unsafe, or inappropriate content.
+  try {
+    const { text } = await generateText({
+      model: groq('meta-llama/llama-4-scout-17b-16e-instruct'),
+      system: `You are a content safety classifier. Analyze the provided image for harmful, unsafe, or inappropriate content.
 
 Classify the image as either safe or unsafe.
 
@@ -245,14 +248,16 @@ unsafe
 Where <CATEGORY> is one of: S1 (Violent Crimes), S2 (Non-Violent Crimes), S3 (Sex Crimes), S4 (Child Sexual Abuse), S5 (Defamation), S6 (Specialized Advice), S7 (Privacy), S8 (Intellectual Property), S9 (Indiscriminate Weapons), S10 (Hate), S11 (Suicide/Self-Harm), S12 (Sexual Content), S13 (Elections), S14 (Code Interpreter Abuse)
 
 Respond ONLY with the classification and nothing else. No explanations, no additional text.`,
-    messages,
-    providerOptions: {
-      groq: {
-        service_tier: 'flex',
-      },
-    },
-  });
-  return text.trim().toLowerCase().startsWith('safe') ? 'safe' : text.trim();
+      messages,
+    });
+    const result = text.trim().toLowerCase().startsWith('safe') ? 'safe' : text.trim();
+    console.log('[ImageModeration] Result:', result);
+    return result;
+  } catch (error) {
+    console.error('[ImageModeration] Error calling moderation API:', error);
+    // Return 'safe' as a fallback so uploads are not blocked by API failures
+    return 'safe';
+  }
 }
 
 const TEXT_MODERATION_POLICY = `# Content Safety Policy
