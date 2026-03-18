@@ -29,6 +29,8 @@ import {
   supportsFunctionCalling,
   supportsParallelToolCalling,
   hasReasoningSupport,
+  DEFAULT_MODEL,
+  getModelConfig,
 } from '@/ai/models';
 import {
   createStreamId,
@@ -580,9 +582,13 @@ export async function POST(req: Request) {
     }
   }
 
-  // Use the selected model directly. Models that don't support function calling
-  // (e.g. magpie, llama-3.3) receive tools:{} and toolChoice:'none' below.
-  const effectiveModel = model;
+  // Validate model. If the client sends a model that no longer exists (e.g. a
+  // stale localStorage value like 'scira-default'), fall back to DEFAULT_MODEL
+  // rather than letting the provider call fail with an opaque error.
+  const effectiveModel = getModelConfig(model) ? model : DEFAULT_MODEL;
+  if (effectiveModel !== model) {
+    console.warn(`[search] Unknown model '${model}' — falling back to '${effectiveModel}'`);
+  }
 
   // Start config and custom instructions in parallel
   // Use lightweightUser.userId directly instead of waiting for fullUserPromise

@@ -66,6 +66,7 @@ import { SEARCH_LIMITS } from '@/lib/constants';
 import { ChatSDKError } from '@/lib/errors';
 import { cn, SearchGroupId } from '@/lib/utils';
 import { requiresProSubscription } from '@/ai/providers';
+import { DEFAULT_MODEL, models } from '@/ai/models';
 import { ConnectorProvider } from '@/lib/connectors';
 
 // State management imports
@@ -144,7 +145,7 @@ const ChatInterface = memo(
       queueMicrotask(() => measureHeaderMenuAlignment());
     }, [pathname, localChatTitle, headerMenuOpen, measureHeaderMenuAlignment]);
 
-    const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', 'scira-default');
+    const [selectedModel, setSelectedModel] = useLocalStorage('scira-selected-model', DEFAULT_MODEL);
     const initialGroupDefault = (
       groupParam ? (groupParam as unknown as SearchGroupId) : ('web' as SearchGroupId)
     ) as SearchGroupId;
@@ -392,17 +393,26 @@ const ChatInterface = memo(
       extremeSearchCountExhausted
     );
 
+    // Guard: if the stored model no longer exists in the models list (e.g. a model
+    // was removed, or localStorage has a legacy value like 'scira-default'), reset
+    // immediately to DEFAULT_MODEL so the UI always shows a valid selection.
+    useEffect(() => {
+      const modelExists = models.some((m) => m.value === selectedModel);
+      if (!modelExists) {
+        console.log(`[model-guard] '${selectedModel}' not in models list — resetting to '${DEFAULT_MODEL}'`);
+        setSelectedModel(DEFAULT_MODEL);
+      }
+    }, [selectedModel, setSelectedModel]);
+
     // Auto-switch away from pro models when user loses pro access
     useEffect(() => {
       if (proStatusLoading) return;
 
       const currentModelRequiresPro = requiresProSubscription(selectedModel);
 
-      // If current model requires pro but user is not pro, switch to default
-      // Also prevent infinite loops by ensuring we're not already on the default model
-      if (currentModelRequiresPro && !isUserPro && selectedModel !== 'scira-default') {
-        console.log(`Auto-switching from pro model '${selectedModel}' to 'scira-default' - user lost pro access`);
-        setSelectedModel('scira-default');
+      if (currentModelRequiresPro && !isUserPro && selectedModel !== DEFAULT_MODEL) {
+        console.log(`Auto-switching from pro model '${selectedModel}' to '${DEFAULT_MODEL}' - user lost pro access`);
+        setSelectedModel(DEFAULT_MODEL);
       }
     }, [selectedModel, isUserPro, proStatusLoading, setSelectedModel]);
 

@@ -32,6 +32,12 @@ export interface Model {
   toolTokenBudget?: number;
 }
 
+// The model used when nothing is stored in localStorage or when the stored
+// value no longer matches any active model (e.g. after a model is removed).
+// Must be a value that exists in the models array below, requires no auth,
+// and has freeUnlimited: true so it works for all users on first visit.
+export const DEFAULT_MODEL = 'magpie';
+
 // Active models shown in the UI
 export const models: Model[] = [
   {

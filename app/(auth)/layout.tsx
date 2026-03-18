@@ -1,62 +1,32 @@
-'use client';
-
 import Link from 'next/link';
-import { Carousel, CarouselContent, CarouselItem, type CarouselApi } from '@/components/ui/carousel';
-import { useState, useEffect } from 'react';
-import Autoplay from 'embla-carousel-autoplay';
 import { SouthernCrossLogo } from '@/components/logos/southerncross-logo';
 
-const testimonials = [
+const features = [
   {
-    content:
-      'SCX.ai is better than Grok at digging up information from X, its own platform! I asked it 3 different queries to help scrape and find some data points I was interested in about my own account and SCX.ai did much much better with insanely accurate answers!',
-    author: 'Chris Universe',
-    handle: '@chrisuniverseb',
-    link: 'https://x.com/chrisuniverseb/status/1943025911043100835',
+    title: 'GPT-OSS & MAGPiE',
+    description: 'Advanced reasoning with Australian cultural and legal context',
   },
   {
-    content: 'SCX.ai does a really good job scraping through the reddit mines.',
-    author: 'nyaaier',
-    handle: '@nyaaier',
-    link: 'https://x.com/nyaaier/status/1932810453107065284',
+    title: 'Data Sovereignty',
+    description: 'Every query processed on Australian sovereign cloud infrastructure',
   },
   {
-    content:
-      "I searched for myself using Gemini 2.5 Pro in extreme mode to see what results it could generate. It is not just the best, it is wild. And the best part is it's 100% accurate.",
-    author: 'Aniruddha Dak',
-    handle: '@aniruddhadak',
-    link: 'https://x.com/aniruddhadak/status/1917140602107445545',
+    title: 'Local Knowledge',
+    description: 'Australian spelling, dates, legislation, and regional context',
   },
   {
-    content:
-      'Read nothing the whole sem and here I am with SCX.ai to top my mid sems! Literally so good to get all the related diagrams, points and topics from the website my professor uses.',
-    author: 'Rajnandinit',
-    handle: '@itsRajnandinit',
-    link: 'https://x.com/itsRajnandinit/status/1897896134837682288',
+    title: 'Enterprise Ready',
+    description: 'Secure, compliant, and built to scale with your organisation',
   },
 ];
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
-  const [api, setApi] = useState<CarouselApi>();
-  const [current, setCurrent] = useState(0);
-
-  useEffect(() => {
-    if (!api) return;
-
-    setCurrent(api.selectedScrollSnap());
-
-    api.on('select', () => {
-      setCurrent(api.selectedScrollSnap());
-    });
-  }, [api]);
-
   return (
     <div className="flex min-h-svh w-full bg-background">
       {/* Left Panel - Minimal Brand */}
       <div className="hidden lg:flex lg:w-[45%] xl:w-[50%] flex-col bg-background">
         {/* Centered Content */}
         <div className="flex-1 flex flex-col items-center justify-center px-12 xl:px-20">
-          {/* Logo and Title */}
           <div className="w-full max-w-md">
             <Link href="/" className="inline-flex items-center gap-3 mb-16 group">
               <SouthernCrossLogo variant="square" className="size-12 transition-transform duration-300 group-hover:scale-110" />
@@ -66,7 +36,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             </Link>
 
             {/* Tagline */}
-            <div className="mb-16">
+            <div className="mb-12">
               <p className="text-2xl xl:text-3xl font-light tracking-tight leading-snug text-foreground/90">
                 Sovereign Australian AI.
                 <br />
@@ -74,61 +44,17 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               </p>
             </div>
 
-            {/* Testimonial Carousel */}
-            <div className="relative">
-              <Carousel
-                className="w-full"
-                opts={{ loop: true }}
-                setApi={setApi}
-                plugins={[
-                  Autoplay({
-                    delay: 6000,
-                    stopOnInteraction: true,
-                    stopOnMouseEnter: true,
-                  }),
-                ]}
-              >
-                <CarouselContent>
-                  {testimonials.map((testimonial, index) => (
-                    <CarouselItem key={index}>
-                      <Link
-                        href={testimonial.link}
-                        target="_blank"
-                        className="block group/testimonial"
-                      >
-                        <div className="pr-4">
-                          <blockquote className="text-sm leading-relaxed text-muted-foreground group-hover/testimonial:text-foreground/80 transition-colors mb-4">
-                            &ldquo;{testimonial.content}&rdquo;
-                          </blockquote>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium text-foreground">
-                              {testimonial.author}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {testimonial.handle}
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                    </CarouselItem>
-                  ))}
-                </CarouselContent>
-              </Carousel>
-
-              {/* Minimal Indicators */}
-              <div className="flex items-center gap-1.5 mt-6">
-                {testimonials.map((_, index) => (
-                  <button
-                    key={index}
-                    onClick={() => api?.scrollTo(index)}
-                    className={`h-px transition-all duration-500 ${index === current
-                        ? 'w-8 bg-foreground'
-                        : 'w-4 bg-foreground/20 hover:bg-foreground/40'
-                      }`}
-                    aria-label={`Go to testimonial ${index + 1}`}
-                  />
-                ))}
-              </div>
+            {/* Feature Grid */}
+            <div className="grid grid-cols-2 gap-3">
+              {features.map((feature) => (
+                <div
+                  key={feature.title}
+                  className="bg-muted/40 border border-border/50 rounded-lg p-4"
+                >
+                  <h4 className="font-medium text-sm mb-1 text-foreground">{feature.title}</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{feature.description}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -18,6 +18,7 @@ import {
   supportsExtremeMode,
   supportsFunctionCalling,
 } from '@/ai/providers';
+import { DEFAULT_MODEL } from '@/ai/models';
 import { X, Check, Wand2, Upload, CheckIcon, Zap, Sparkles, ArrowUpRight, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, getSearchGroups, SearchProvider } from '@/lib/utils';
@@ -477,19 +478,18 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       const isCurrentModelRestricted = isModelRestrictedInRegion(selectedModel, countryCode || undefined);
 
       // If current model is restricted in user's region, switch to default
-      if (isCurrentModelRestricted && selectedModel !== 'scira-default') {
+      if (isCurrentModelRestricted && selectedModel !== DEFAULT_MODEL) {
         console.log(
-          `Auto-switching from restricted model '${selectedModel}' to 'scira-default' - model not available in region ${countryCode}`,
+          `Auto-switching from restricted model '${selectedModel}' to '${DEFAULT_MODEL}' - model not available in region ${countryCode}`,
         );
-        setSelectedModel('scira-default');
+        setSelectedModel(DEFAULT_MODEL);
         return;
       }
 
       // If current model requires pro but user is not pro, switch to default
-      // Also prevent infinite loops by ensuring we're not already on the default model
-      if (currentModelExists && currentModelRequiresPro && !isProUser && selectedModel !== 'scira-default') {
-        console.log(`Auto-switching from pro model '${selectedModel}' to 'scira-default' - user lost pro access`);
-        setSelectedModel('scira-default');
+      if (currentModelExists && currentModelRequiresPro && !isProUser && selectedModel !== DEFAULT_MODEL) {
+        console.log(`Auto-switching from pro model '${selectedModel}' to '${DEFAULT_MODEL}' - user lost pro access`);
+        setSelectedModel(DEFAULT_MODEL);
       }
     }, [selectedModel, isProUser, isSubscriptionLoading, setSelectedModel, availableModels, countryCode]);
 
@@ -2819,8 +2819,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
           });
 
           if (extremeModels.length > 0) {
-            // Prioritize: scira-default if available, otherwise first free model, then first available
-            const defaultModel = extremeModels.find((m) => m.value === 'scira-default');
+            // Prioritize: DEFAULT_MODEL if it supports extreme, otherwise first free model, then first available
+            const defaultModel = extremeModels.find((m) => m.value === DEFAULT_MODEL);
             const firstFreeModel = extremeModels.find((m) => !m.pro);
             const fallbackModel = extremeModels[0];
 
