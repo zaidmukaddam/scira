@@ -538,7 +538,7 @@ class ExaSearchStrategy implements SearchProviderStrategy {
 
       const { results } = await this.exa.search(query, {
         numResults: 8,
-        type: 'instant',
+        type: 'auto',
         ...(exaCategory && { category: exaCategory }),
         ...(include_domains && { include_domains }),
         ...(startPublishedDate && { startPublishedDate }),
