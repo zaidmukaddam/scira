@@ -10,7 +10,25 @@ snapshot_name = f"scira-analysis:{int(time.time())}"
 # Create a Python image
 image = (
     Image.debian_slim("3.12")
-    .pip_install(["numpy", "pandas", "matplotlib", "scipy", "scikit-learn", "yfinance", "requests", "keras", "uv", "torch", "torchvision", "torchaudio"])
+    .pip_install(
+        [
+            "numpy", 
+            "pandas", 
+            "matplotlib", 
+            "scipy", 
+            "scikit-learn", 
+            "yfinance", 
+            "requests", 
+            "keras", 
+            "uv", 
+            "torch", 
+            "torchvision", 
+            "torchaudio", 
+            "plotly", 
+            "plotly.express", 
+            "plotly.graph_objects"
+        ]
+    )
     .run_commands(
             "apt-get update && apt-get install -y git",
             "groupadd -r daytona && useradd -r -g daytona -m daytona",

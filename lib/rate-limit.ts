@@ -1,10 +1,10 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-// Create a new ratelimiter that allows 3 requests per day for unauthenticated users
+// Create a ratelimiter that allows 25 requests per week for unauthenticated users
 export const unauthenticatedRateLimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(3, '7 d'), // 3 requests per 1 day
+  limiter: Ratelimit.slidingWindow(25, '7 d'), // 25 requests per 1 week
   analytics: true,
   prefix: '@upstash/ratelimit:unauth',
 });
@@ -13,6 +13,7 @@ export const unauthenticatedRateLimit = new Ratelimit({
 export function getClientIdentifier(req: Request): string {
   const forwarded = req.headers.get('x-forwarded-for');
   const realIp = req.headers.get('x-real-ip');
-  const ip = forwarded?.split(',')[0] ?? realIp ?? 'unknown';
-  return `ip:${ip}`;
+  const cfConnectingIp = req.headers.get('cf-connecting-ip');
+  const ip = forwarded?.split(',')[0]?.trim() || realIp?.trim() || cfConnectingIp?.trim();
+  return ip ? `ip:${ip}` : 'ip:unknown';
 }

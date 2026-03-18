@@ -5,6 +5,8 @@ import { serverEnv } from '@/env/server';
 import FirecrawlApp from '@mendable/firecrawl-js';
 import Parallel from 'parallel-web';
 import { Supadata } from '@supadata/js';
+import { allSettled } from 'better-all';
+import { getBetterAllOptions } from '@/lib/better-all';
 
 // Content type enum for different sources
 const ContentType = z.enum(['general', 'twitter', 'youtube', 'tiktok', 'instagram']);
@@ -260,10 +262,12 @@ async function retrieveSingleUrl(
           }
           // Check if we got a job ID (for large files) or direct result
           else if (transcriptResult && typeof transcriptResult === 'object' && 'jobId' in transcriptResult) {
-            // For large files, poll for job completion
+            // For large files, poll for job completion with exponential backoff
             const jobResponse = transcriptResult as TranscriptJobResponse;
-            console.log(`Got job ID: ${jobResponse.jobId}, polling for completion...`);
-            const maxAttempts = 30;
+            console.log(`Got job ID: ${jobResponse.jobId}, polling for completion with exponential backoff...`);
+            const maxAttempts = 10; // Reduced from 30 - exponential backoff covers more time
+            const baseDelayMs = 500; // Start with 500ms
+            const maxDelayMs = 8000; // Cap at 8 seconds
             let attempts = 0;
 
             while (attempts < maxAttempts) {
@@ -286,14 +290,16 @@ async function retrieveSingleUrl(
                 console.error('Transcript job failed:', jobResult.error);
                 break;
               } else {
-                console.log(`Job status: ${jobResult.status}, waiting...`);
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                // Exponential backoff: 500ms, 1s, 2s, 4s, 8s, 8s, 8s...
+                const delay = Math.min(baseDelayMs * Math.pow(2, attempts), maxDelayMs);
+                console.log(`Job status: ${jobResult.status}, waiting ${delay}ms (attempt ${attempts + 1}/${maxAttempts})...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
                 attempts++;
               }
             }
 
             if (attempts >= maxAttempts) {
-              console.warn('Transcript job timed out after 30 attempts');
+              console.warn(`Transcript job timed out after ${maxAttempts} attempts with exponential backoff`);
             }
           } else {
             // Direct result for smaller files or native transcripts
@@ -421,6 +427,7 @@ async function retrieveSingleUrl(
           urls: [url],
           excerpts: false,
           full_content: true,
+          betas: ['search-extract-2025-10-10']
         });
 
         if (parallelResult.results && parallelResult.results.length > 0) {
@@ -580,7 +587,11 @@ export const retrieveTool = tool({
         )
       );
 
-      const settledResults = await Promise.allSettled(urlPromises);
+      const taskMap = await allSettled(
+        Object.fromEntries(urlPromises.map((promise, index) => [`u:${index}`, async () => promise])),
+        getBetterAllOptions(),
+      );
+      const settledResults = url.map((_, index) => taskMap[`u:${index}`]);
 
       // Aggregate results
       const successfulResults: any[] = [];

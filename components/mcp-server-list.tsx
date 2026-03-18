@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Copy, ExternalLink, Server, Database, Network, Code } from 'lucide-react';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -125,7 +125,7 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({ servers, query, is
                           variant="ghost"
                           onClick={() => {
                             navigator.clipboard.writeText(server.qualifiedName);
-                            toast.success('Server ID copied!');
+                            sileo.success({ title: 'Server ID copied!' });
                           }}
                           className="h-6 w-6 hover:bg-neutral-100 dark:hover:bg-neutral-800"
                         >
@@ -155,7 +155,7 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({ servers, query, is
                             onClick={() => {
                               if (conn.url) {
                                 navigator.clipboard.writeText(conn.url);
-                                toast.success(`${conn.type} URL copied!`);
+                                sileo.success({ title: `${conn.type} URL copied!` });
                               }
                             }}
                           >
@@ -180,7 +180,7 @@ export const MCPServerList: React.FC<MCPServerListProps> = ({ servers, query, is
                             className="bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-800/60 hover:text-emerald-800 dark:hover:text-emerald-200 border-0 px-2 py-0.5 text-xs flex items-center gap-1 cursor-pointer transition-colors duration-150"
                             onClick={() => {
                               navigator.clipboard.writeText(server.deploymentUrl!);
-                              toast.success('Deployment URL copied!');
+                              sileo.success({ title: 'Deployment URL copied!' });
                             }}
                           >
                             <Server className="h-3.5 w-3.5" />

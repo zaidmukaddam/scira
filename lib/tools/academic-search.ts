@@ -1,9 +1,10 @@
 import { tool } from 'ai';
 import { z } from 'zod';
-import Exa from 'exa-js';
 import { serverEnv } from '@/env/server';
 import { UIMessageStreamWriter } from 'ai';
 import { ChatMessage } from '@/lib/types';
+import { all } from 'better-all';
+import { getBetterAllOptions } from '@/lib/better-all';
 
 import Firecrawl, { SearchResultWeb } from '@mendable/firecrawl-js';
 
@@ -22,8 +23,6 @@ export function academicSearchTool(dataStream?: UIMessageStreamWriter<ChatMessag
     }),
     execute: async ({ queries, maxResults }: { queries: string[]; maxResults?: number[] }) => {
       try {
-        const exa = new Exa(serverEnv.EXA_API_KEY as string);
-
         console.log('Academic search queries:', queries);
         console.log('Max results:', maxResults);
 
@@ -44,40 +43,29 @@ export function academicSearchTool(dataStream?: UIMessageStreamWriter<ChatMessag
               },
             });
 
-            const firecrawlResults = await firecrawl.search(query, {
-              categories: ['research', 'pdf'],
-              limit: currentMaxResults,
-              scrapeOptions: {
-                storeInCache: true,
-              },
-            });
-
-            // check if firecrawlResults.web is defined
-            if (!firecrawlResults.web) {
-              // Send completion notification with 0 results
-              dataStream?.write({
-                type: 'data-query_completion',
-                data: {
-                  query,
-                  index,
-                  total: queries.length,
-                  status: 'completed',
-                  resultsCount: 0,
-                  imagesCount: 0,
+            const { processedResults } = await all(
+              {
+                firecrawlResults: async function () {
+                  return firecrawl.search(query, {
+                    categories: ['research', 'pdf'],
+                    limit: currentMaxResults,
+                    scrapeOptions: {
+                      storeInCache: true,
+                    },
+                  });
                 },
-              });
-
-              return {
-                query,
-                results: [],
-              };
-            }
-
-            const processedResults = firecrawlResults.web.map((result) => ({
-              url: (result as SearchResultWeb).url || '',
-              title: (result as SearchResultWeb).title || '',
-              summary: (result as SearchResultWeb).description || '',
-            }));
+                processedResults: async function () {
+                  const firecrawlResults = await this.$.firecrawlResults;
+                  if (!firecrawlResults.web || !Array.isArray(firecrawlResults.web)) return [];
+                  return firecrawlResults.web.map((result) => ({
+                    url: (result as SearchResultWeb).url || '',
+                    title: (result as SearchResultWeb).title || '',
+                    summary: (result as SearchResultWeb).description || '',
+                  }));
+                },
+              },
+              getBetterAllOptions(),
+            );
 
             const resultsCount = processedResults.length;
 
@@ -121,7 +109,11 @@ export function academicSearchTool(dataStream?: UIMessageStreamWriter<ChatMessag
           }
         });
 
-        const searches = await Promise.all(searchPromises);
+        const searchMap = await all(
+          Object.fromEntries(searchPromises.map((promise, index) => [`q:${index}`, async () => promise])),
+          getBetterAllOptions(),
+        );
+        const searches = queries.map((_, index) => searchMap[`q:${index}`]);
 
         return {
           searches,

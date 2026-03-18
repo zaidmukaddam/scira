@@ -1,31 +1,97 @@
 'use client';
 
+/* eslint-disable @next/next/no-img-element */
 import React, { useState, useMemo } from 'react';
-import Link from 'next/link';
-import { User2, YoutubeIcon, PlayIcon, Eye, ThumbsUp, Search, Clock, FileText, X, Calendar } from 'lucide-react';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { Spinner } from '@/components/ui/spinner';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { SearchLoadingState } from './tool-invocation-list-view';
 
-// Helper function to parse captions that might be JSON-encoded
-const parseCaptions = (captions: string | undefined): string | undefined => {
-  if (!captions) return undefined;
+// Transcript chunk type from Supadata
+interface TranscriptChunk {
+  text: string;
+  offset: number;
+  duration: number;
+  lang: string;
+}
 
-  try {
-    // Try to parse as JSON in case the API returns nested JSON
-    const parsed = JSON.parse(captions);
-    return parsed.captions || captions;
-  } catch {
-    // If parsing fails, return the raw text
-    return captions;
-  }
+// Custom Icons
+const Icons = {
+  YouTube: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+    </svg>
+  ),
+  Calendar: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  ),
+  Eye: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  ),
+  ThumbsUp: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+    </svg>
+  ),
+  Clock: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  ),
+  FileText: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <polyline points="14 2 14 8 20 8" />
+      <line x1="16" y1="13" x2="8" y2="13" />
+      <line x1="16" y1="17" x2="8" y2="17" />
+      <polyline points="10 9 9 9 8 9" />
+    </svg>
+  ),
+  Search: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
+  ),
+  ArrowUpRight: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M7 17L17 7M17 7H7M17 7v10" />
+    </svg>
+  ),
+  ExternalLink: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3" />
+    </svg>
+  ),
+  ChevronDown: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  ),
+  Play: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <polygon points="5 3 19 12 5 21 5 3" />
+    </svg>
+  ),
+  User: ({ className }: { className?: string }) => (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  ),
 };
 
-// Updated interfaces to match the optimized tool output
 interface VideoDetails {
   title?: string;
   author_name?: string;
@@ -49,6 +115,7 @@ interface VideoResult {
   url: string;
   details?: VideoDetails;
   captions?: string;
+  transcriptChunks?: TranscriptChunk[];
   timestamps?: string[];
   views?: number | string;
   likes?: number | string;
@@ -63,447 +130,331 @@ interface YouTubeSearchResponse {
   results: VideoResult[];
 }
 
-interface YouTubeCardProps {
-  video: VideoResult;
-  index: number;
-}
-
 interface YouTubeSearchResultsProps {
   results: YouTubeSearchResponse;
   isLoading?: boolean;
 }
 
-const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
+// Helper functions
+const formatDuration = (durationSeconds?: number): string | null => {
+  if (typeof durationSeconds !== 'number' || !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+    return null;
+  }
+  const hours = Math.floor(durationSeconds / 3600);
+  const minutes = Math.floor((durationSeconds % 3600) / 60);
+  const seconds = Math.floor(durationSeconds % 60);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${minutes}:${pad(seconds)}`;
+};
+
+const formatCount = (value?: string | number): string | null => {
+  const num = typeof value === 'number' ? value : typeof value === 'string' ? Number(value.replace(/[^0-9]/g, '')) : undefined;
+  if (num == null || !Number.isFinite(num)) return null;
+  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
+  return num.toLocaleString();
+};
+
+const formatTimestamp = (timestamp: string) => {
+  const match = timestamp.match(/^(\d+:\d+(?::\d+)?) - (.+)$/);
+  if (match) {
+    const [, time, description] = match;
+    return { time, description };
+  }
+  return { time: '', description: timestamp };
+};
+
+const timestampToSeconds = (time: string): number => {
+  const parts = time.split(':').map((part) => parseInt(part, 10));
+  if (parts.length === 2) return parts[0] * 60 + parts[1];
+  if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  return 0;
+};
+
+// Video Card Component
+const YouTubeVideoCard: React.FC<{
+  video: VideoResult;
+  onClick?: () => void;
+}> = ({ video, onClick }) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  const durationLabel = formatDuration(video.durationSeconds);
+  const viewCount = formatCount(video.stats?.views ?? video.views);
+  const likeCount = formatCount(video.stats?.likes ?? video.likes);
+
+  return (
+    <div
+      className={cn(
+        'group relative',
+        'px-3.5 py-2 transition-colors',
+        'hover:bg-muted/10',
+        onClick && 'cursor-pointer',
+      )}
+      onClick={onClick}
+    >
+      <div className="flex items-start gap-2.5">
+        {/* Thumbnail */}
+        <a
+          href={video.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="relative w-20 h-[45px] shrink-0 rounded-md overflow-hidden bg-muted/30"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {!imageLoaded && <div className="absolute inset-0 animate-pulse bg-muted/20" />}
+          {video.details?.thumbnail_url ? (
+            <img
+              src={video.details.thumbnail_url}
+              alt=""
+              className={cn('w-full h-full object-cover', !imageLoaded && 'opacity-0')}
+              onLoad={() => setImageLoaded(true)}
+              onError={(e) => {
+                setImageLoaded(true);
+                e.currentTarget.src = `https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`;
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Icons.YouTube className="h-4 w-4 text-red-500/40" />
+            </div>
+          )}
+          {durationLabel && (
+            <span className="absolute bottom-0.5 right-0.5 px-1 py-px rounded-sm bg-black/80 text-white text-[8px] font-medium tabular-nums">
+              {durationLabel}
+            </span>
+          )}
+        </a>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <a
+              href={video.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium text-foreground line-clamp-1 hover:text-red-600 transition-colors flex-1"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {video.details?.title || 'YouTube Video'}
+            </a>
+            <Icons.ArrowUpRight className="w-2.5 h-2.5 shrink-0 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+
+          <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground/60">
+            {video.details?.author_name && (
+              <span className="truncate max-w-[100px]">{video.details.author_name}</span>
+            )}
+            {video.details?.author_name && viewCount && <span className="text-muted-foreground/30">·</span>}
+            {viewCount && <span className="tabular-nums">{viewCount} views</span>}
+            {viewCount && likeCount && <span className="text-muted-foreground/30">·</span>}
+            {likeCount && <span className="tabular-nums">{likeCount}</span>}
+            {(viewCount || likeCount) && video.publishedDate && <span className="text-muted-foreground/30">·</span>}
+            {video.publishedDate && (
+              <span className="tabular-nums">
+                {new Date(video.publishedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-1.5 mt-1">
+            {video.timestamps && video.timestamps.length > 0 && (
+              <span className="font-pixel text-[8px] text-red-600 dark:text-red-400 uppercase tracking-wider bg-red-500/10 px-1.5 py-0.5 rounded">
+                {video.timestamps.length} chapters
+              </span>
+            )}
+            {video.captions && (
+              <span className="font-pixel text-[8px] text-muted-foreground/50 uppercase tracking-wider bg-muted/30 px-1.5 py-0.5 rounded">
+                Transcript
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Video Detail Sheet/Drawer Content
+const VideoDetailContent: React.FC<{
+  video: VideoResult;
+}> = ({ video }) => {
   const [transcriptSearch, setTranscriptSearch] = useState('');
   const [chapterSearch, setChapterSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<'chapters' | 'transcript'>('chapters');
 
-  // Format timestamp for accessibility and URL generation
-  const formatTimestamp = (timestamp: string) => {
-    console.log(`🕐 Parsing timestamp: "${timestamp}"`);
-    // Match the format: "0:06 - [Music]" or "0:10 - good morning gamers"
-    const match = timestamp.match(/^(\d+:\d+(?::\d+)?) - (.+)$/);
-    if (match) {
-      const [_, time, description] = match;
-      console.log(`✅ Parsed timestamp - time: "${time}", description: "${description}"`);
-      return { time, description };
-    }
-    console.warn(`⚠️ Failed to parse timestamp: "${timestamp}"`);
-    return { time: '', description: timestamp };
-  };
-
-  // Parse captions properly
-  const parsedCaptions = parseCaptions(video?.captions);
-
-  // Filter transcript based on search
   const filteredTranscript = useMemo(() => {
-    if (!parsedCaptions || !transcriptSearch.trim()) return parsedCaptions;
-
+    if (!video.captions || !transcriptSearch.trim()) return video.captions;
     const searchTerm = transcriptSearch.toLowerCase();
-    const lines = parsedCaptions.split('\n');
-
+    const lines = video.captions.split('\n');
     return lines.filter((line) => line.toLowerCase().includes(searchTerm)).join('\n');
-  }, [parsedCaptions, transcriptSearch]);
+  }, [video.captions, transcriptSearch]);
 
-  // Filter chapters based on search (both time and content)
   const filteredChapters = useMemo(() => {
-    if (!video?.timestamps || !chapterSearch.trim()) return video?.timestamps || [];
-
+    if (!video.timestamps || !chapterSearch.trim()) return video.timestamps || [];
     const searchTerm = chapterSearch.toLowerCase();
     return video.timestamps.filter((timestamp: string) => {
       const { time, description } = formatTimestamp(timestamp);
       return time.toLowerCase().includes(searchTerm) || description.toLowerCase().includes(searchTerm);
     });
-  }, [video?.timestamps, chapterSearch]);
+  }, [video.timestamps, chapterSearch]);
 
-  if (!video) return null;
-
-  // Convert timestamp to seconds for YouTube URL
-  const timestampToSeconds = (time: string): number => {
-    console.log(`⏱️ Converting time to seconds: "${time}"`);
-    const parts = time.split(':').map((part) => parseInt(part, 10));
-    let seconds = 0;
-
-    if (parts.length === 2) {
-      // MM:SS format (e.g., "0:06" or "10:30")
-      seconds = parts[0] * 60 + parts[1];
-    } else if (parts.length === 3) {
-      // HH:MM:SS format (e.g., "1:10:30")
-      seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
-    }
-
-    console.log(`📊 Time "${time}" converted to ${seconds} seconds`);
-    return seconds;
-  };
-
-  const parseCountValue = (value?: string | number): number | undefined => {
-    if (typeof value === 'number' && Number.isFinite(value)) {
-      return value;
-    }
-    if (typeof value === 'string') {
-      const sanitized = value.replace(/[^0-9]/g, '');
-      if (!sanitized) return undefined;
-      const parsed = Number(sanitized);
-      return Number.isFinite(parsed) ? parsed : undefined;
-    }
-    return undefined;
-  };
-
-  const formatDuration = (durationSeconds?: number): string | null => {
-    if (typeof durationSeconds !== 'number' || !Number.isFinite(durationSeconds) || durationSeconds <= 0) {
-      return null;
-    }
-    const hours = Math.floor(durationSeconds / 3600);
-    const minutes = Math.floor((durationSeconds % 3600) / 60);
-    const seconds = Math.floor(durationSeconds % 60);
-    const pad = (n: number) => n.toString().padStart(2, '0');
-    return hours > 0 ? `${hours}:${pad(minutes)}:${pad(seconds)}` : `${minutes}:${pad(seconds)}`;
-  };
-
-  // Format view count
-  const formatViewCount = (views?: string | number): string | null => {
-    const num = parseCountValue(views);
-    if (num == null) return null;
-    if (num >= 1_000_000) {
-      return `${(num / 1_000_000).toFixed(1)}M views`;
-    } else if (num >= 1_000) {
-      return `${(num / 1_000).toFixed(1)}K views`;
-    }
-    return `${num.toLocaleString()} views`;
-  };
-
-  // Format like count
-  const formatLikeCount = (likes?: string | number): string | null => {
-    const num = parseCountValue(likes);
-    if (num == null) return null;
-    if (num >= 1_000_000) {
-      return `${(num / 1_000_000).toFixed(1)}M likes`;
-    } else if (num >= 1_000) {
-      return `${(num / 1_000).toFixed(1)}K likes`;
-    }
-    return `${num.toLocaleString()} likes`;
-  };
-
-  const durationLabel = formatDuration(video.durationSeconds);
-  const viewCountLabel = formatViewCount(video.stats?.views ?? video.views);
-  const likeCountLabel = formatLikeCount(video.stats?.likes ?? video.likes);
+  const hasChapters = video.timestamps && video.timestamps.length > 0;
+  const hasTranscript = !!video.captions;
 
   return (
-    <div
-      className="w-[280px] h-[350px] rounded-lg border dark:border-neutral-800 border-neutral-200 overflow-hidden bg-white dark:bg-neutral-900 shadow-xs hover:shadow-md transition-shadow duration-200 relative mr-4"
-      onTouchStart={(e) => e.stopPropagation()}
-      onMouseDown={(e) => e.stopPropagation()}
-    >
-      {/* Video Thumbnail */}
-      <Link
-        href={video.url}
-        target="_blank"
-        className="relative aspect-video block bg-neutral-100 dark:bg-neutral-800 overflow-hidden"
-        aria-label={`Watch ${video.details?.title || 'YouTube video'}`}
-      >
-        {video.details?.thumbnail_url ? (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={video.details.thumbnail_url}
-            alt=""
-            aria-hidden="true"
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <YoutubeIcon className="h-8 w-8 text-red-500" />
+    <div className="flex flex-col h-full">
+      {/* Video Info Header */}
+      <div className="px-4 py-3 border-b border-border space-y-3">
+        <a
+          href={video.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block relative aspect-video w-full max-w-sm mx-auto rounded-lg overflow-hidden bg-muted"
+        >
+          {video.details?.thumbnail_url ? (
+            <img src={video.details.thumbnail_url} alt="" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Icons.YouTube className="h-12 w-12 text-red-500/50" />
+            </div>
+          )}
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20 hover:bg-black/30 transition-colors">
+            <div className="rounded-full bg-red-600 p-3">
+              <Icons.Play className="h-6 w-6 text-white" />
+            </div>
           </div>
-        )}
-        <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-          <div className="absolute bottom-2 left-2 right-2 text-white text-xs font-medium line-clamp-2">
-            {video.details?.title || 'YouTube Video'}
-          </div>
-          <div className="rounded-full bg-white/90 p-2">
-            <PlayIcon className="h-6 w-6 text-red-600" />
-          </div>
-        </div>
-        {durationLabel && (
-          <div className="absolute bottom-2 right-2 z-10 rounded bg-black/80 text-white text-[10px] font-semibold px-1.5 py-0.5">
-            {durationLabel}
-          </div>
-        )}
-      </Link>
+          {video.durationSeconds && (
+            <span className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded bg-black/80 text-white text-xs font-medium">
+              {formatDuration(video.durationSeconds)}
+            </span>
+          )}
+        </a>
 
-      {/* Video Info */}
-      <div className="p-3 pb-16">
         <div>
-          <Link
-            href={video.url}
-            target="_blank"
-            className="text-sm font-medium line-clamp-2 hover:text-red-500 transition-colors dark:text-neutral-100"
-          >
-            {video.details?.title || 'YouTube Video'}
-          </Link>
-
-          {/* Channel Info */}
+          <h3 className="font-semibold text-sm text-foreground line-clamp-2">{video.details?.title || 'YouTube Video'}</h3>
           {video.details?.author_name && (
-            <Link
-              href={video.details.author_url || video.url}
+            <a
+              href={video.details.author_url || '#'}
               target="_blank"
-              className="flex items-center gap-2 group mt-2 w-fit"
-              aria-label={`Channel: ${video.details.author_name}`}
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              <div className="h-5 w-5 rounded-full bg-red-50 dark:bg-red-950 flex items-center justify-center shrink-0 overflow-hidden border border-red-100/70 dark:border-red-900/40">
-                {video.details.author_avatar_url ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={video.details.author_avatar_url} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <User2 className="h-3 w-3 text-red-500" />
-                )}
-              </div>
-              <span className="text-xs text-neutral-600 dark:text-neutral-400 group-hover:text-red-500 transition-colors truncate">
-                {video.details.author_name}
-              </span>
-            </Link>
+              {video.details.author_name}
+            </a>
           )}
-
-          {/* Published Date */}
-          {video.publishedDate && (
-            <div className="flex items-center gap-1.5 mt-2">
-              <Calendar className="h-3 w-3 text-neutral-400" />
-              <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                {new Date(video.publishedDate).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </span>
-            </div>
-          )}
-
-          {/* Stats */}
-          {(viewCountLabel || likeCountLabel) && (
-            <div className="flex items-center gap-3 mt-2">
-              {viewCountLabel && (
-                <div className="flex items-center gap-1.5">
-                  <Eye className="h-3 w-3 text-neutral-400" />
-                  <span className="text-xs text-neutral-500 dark:text-neutral-400">{viewCountLabel}</span>
-                </div>
-              )}
-              {likeCountLabel && (
-                <div className="flex items-center gap-1.5">
-                  <ThumbsUp className="h-3 w-3 text-neutral-400" />
-                  <span className="text-xs text-neutral-500 dark:text-neutral-400">{likeCountLabel}</span>
-                </div>
-              )}
-            </div>
-          )}
-
         </div>
+      </div>
 
-        {/* Action Buttons */}
-        {((video.timestamps && video.timestamps?.length > 0) || parsedCaptions) && (
-          <div className="absolute bottom-3 left-3 right-3 flex gap-2">
-            {/* Timestamps Dialog */}
-            {video.timestamps && video.timestamps.length > 0 && (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 px-2 text-xs gap-1.5 border-neutral-200 dark:border-neutral-700 hover:border-red-300 dark:hover:border-red-600"
+      {/* Tabs */}
+      {(hasChapters || hasTranscript) && (
+        <div className="flex border-b border-border">
+          {hasChapters && (
+            <button
+              onClick={() => setActiveTab('chapters')}
+              className={cn(
+                'flex-1 px-4 py-2.5 text-xs font-medium transition-colors',
+                activeTab === 'chapters'
+                  ? 'text-red-600 border-b-2 border-red-600'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              Chapters ({video.timestamps?.length})
+            </button>
+          )}
+          {hasTranscript && (
+            <button
+              onClick={() => setActiveTab('transcript')}
+              className={cn(
+                'flex-1 px-4 py-2.5 text-xs font-medium transition-colors',
+                activeTab === 'transcript'
+                  ? 'text-red-600 border-b-2 border-red-600'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              Transcript
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        {activeTab === 'chapters' && hasChapters && (
+          <div className="p-3 space-y-2">
+            <div className="relative">
+              <Icons.Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                value={chapterSearch}
+                onChange={(e) => setChapterSearch(e.target.value)}
+                placeholder="Search chapters..."
+                className="pl-8 h-8 text-xs"
+              />
+            </div>
+            <div className="space-y-1">
+              {(chapterSearch.trim() ? filteredChapters : video.timestamps || []).map((timestamp: string, i: number) => {
+                const { time, description } = formatTimestamp(timestamp);
+                const seconds = timestampToSeconds(time);
+                if (!time || seconds === 0) return null;
+
+                return (
+                  <a
+                    key={i}
+                    href={`${video.url}&t=${seconds}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2.5 p-2 rounded-md hover:bg-accent transition-colors"
                   >
-                    <Clock className="h-3 w-3" />
-                    Chapters ({video.timestamps.length})
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[80vh]">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-lg">
-                      <Clock className="h-4 w-4 text-red-500" />
-                      Video Chapters
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="mt-4 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
-                        <Input
-                          value={chapterSearch}
-                          onChange={(e) => setChapterSearch(e.target.value)}
-                          placeholder="Search chapters by time or content..."
-                          className="pl-9 border-neutral-200 dark:border-neutral-700 focus:border-red-300 dark:focus:border-red-600"
-                        />
+                    <span className="shrink-0 w-12 text-center text-[11px] font-mono font-medium text-red-600 bg-red-50 dark:bg-red-900/20 rounded px-1.5 py-0.5">
+                      {time}
+                    </span>
+                    <span className="text-xs text-foreground line-clamp-1 flex-1">{description}</span>
+                  </a>
+                );
+              })}
+              {chapterSearch.trim() && filteredChapters.length === 0 && (
+                <p className="text-center text-xs text-muted-foreground py-4">No chapters found</p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'transcript' && hasTranscript && (
+          <div className="p-3 space-y-2">
+            <div className="relative">
+              <Icons.Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                value={transcriptSearch}
+                onChange={(e) => setTranscriptSearch(e.target.value)}
+                placeholder="Search transcript..."
+                className="pl-8 h-8 text-xs"
+              />
+            </div>
+            <div className="bg-muted/50 rounded-md p-3 text-xs leading-relaxed text-muted-foreground whitespace-pre-wrap max-h-80 overflow-y-auto">
+              {transcriptSearch.trim() ? (
+                filteredTranscript ? (
+                  filteredTranscript.split('\n').map((line, idx) => {
+                    if (!line.trim()) return null;
+                    const searchTerm = transcriptSearch.toLowerCase();
+                    const lowerLine = line.toLowerCase();
+                    const index = lowerLine.indexOf(searchTerm);
+                    if (index === -1) return null;
+
+                    return (
+                      <div key={idx} className="mb-2 p-1.5 bg-background rounded">
+                        <span>{line.substring(0, index)}</span>
+                        <mark className="bg-yellow-200 dark:bg-yellow-900/50 px-0.5 rounded">
+                          {line.substring(index, index + searchTerm.length)}
+                        </mark>
+                        <span>{line.substring(index + searchTerm.length)}</span>
                       </div>
-                      {chapterSearch && (
-                        <Button onClick={() => setChapterSearch('')} variant="outline" size="sm" className="px-3">
-                          Clear
-                        </Button>
-                      )}
-                    </div>
-
-                    <div className="text-sm text-neutral-600 dark:text-neutral-400">
-                      {chapterSearch.trim()
-                        ? `${filteredChapters.length} of ${video.timestamps?.length || 0} chapters found`
-                        : 'Search by time (e.g., "1:30") or content to find specific moments'}
-                    </div>
-
-                    <ScrollArea className="h-[400px] pr-4">
-                      <div className="space-y-2">
-                        {(chapterSearch.trim() ? filteredChapters : video.timestamps || [])
-                          .map((timestamp: string, i: number) => {
-                            const { time, description } = formatTimestamp(timestamp);
-                            const seconds = timestampToSeconds(time);
-
-                            if (!time || seconds === 0) return null;
-
-                            return (
-                              <Link
-                                key={i}
-                                href={`${video.url}&t=${seconds}`}
-                                target="_blank"
-                                className="group flex items-start gap-4 p-3 rounded-lg border border-neutral-200 dark:border-neutral-700 hover:border-red-300 dark:hover:border-red-600 hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-all duration-200"
-                              >
-                                <div className="flex items-center justify-center min-w-[60px] h-8 bg-neutral-100 dark:bg-neutral-800 rounded font-mono text-sm font-medium text-neutral-700 dark:text-neutral-300 group-hover:bg-red-50 dark:group-hover:bg-red-950/30 group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
-                                  {chapterSearch.trim() && time.toLowerCase().includes(chapterSearch.toLowerCase())
-                                    ? (() => {
-                                      const searchTerm = chapterSearch.toLowerCase();
-                                      const lowerTime = time.toLowerCase();
-                                      const index = lowerTime.indexOf(searchTerm);
-
-                                      if (index !== -1) {
-                                        return (
-                                          <>
-                                            {time.substring(0, index)}
-                                            <mark className="bg-yellow-200 dark:bg-yellow-900/50 px-1 py-0.5 rounded">
-                                              {time.substring(index, index + searchTerm.length)}
-                                            </mark>
-                                            {time.substring(index + searchTerm.length)}
-                                          </>
-                                        );
-                                      }
-                                      return time;
-                                    })()
-                                    : time}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm text-neutral-800 dark:text-neutral-200 leading-relaxed group-hover:text-neutral-900 dark:group-hover:text-neutral-100">
-                                    {chapterSearch.trim()
-                                      ? (() => {
-                                        const searchTerm = chapterSearch.toLowerCase();
-                                        const lowerDescription = description.toLowerCase();
-                                        const index = lowerDescription.indexOf(searchTerm);
-
-                                        if (index !== -1) {
-                                          return (
-                                            <>
-                                              {description.substring(0, index)}
-                                              <mark className="bg-yellow-200 dark:bg-yellow-900/50 px-1 py-0.5 rounded">
-                                                {description.substring(index, index + searchTerm.length)}
-                                              </mark>
-                                              {description.substring(index + searchTerm.length)}
-                                            </>
-                                          );
-                                        }
-                                        return description;
-                                      })()
-                                      : description}
-                                  </p>
-                                </div>
-                              </Link>
-                            );
-                          })
-                          .filter(Boolean)}
-                        {chapterSearch.trim() && filteredChapters.length === 0 && (
-                          <div className="text-center py-8 text-neutral-500">
-                            No chapters found for &quot;{chapterSearch}&quot;
-                          </div>
-                        )}
-                      </div>
-                    </ScrollArea>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
-
-            {/* Transcript Dialog */}
-            {parsedCaptions && (
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 px-2 text-xs gap-1.5 border-neutral-200 dark:border-neutral-700 hover:border-red-300 dark:hover:border-red-600"
-                  >
-                    <FileText className="h-3 w-3" />
-                    Transcript
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-3xl max-h-[80vh]">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2 text-lg">
-                      <FileText className="h-4 w-4 text-red-500" />
-                      Video Transcript
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="mt-4 space-y-4">
-                    <div className="flex items-center gap-3">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-neutral-400" />
-                        <Input
-                          value={transcriptSearch}
-                          onChange={(e) => setTranscriptSearch(e.target.value)}
-                          placeholder="Search transcript..."
-                          className="pl-9 border-neutral-200 dark:border-neutral-700 focus:border-red-300 dark:focus:border-red-600 focus:outline-0! focus:ring-0!"
-                        />
-                      </div>
-                      {transcriptSearch && (
-                        <Button onClick={() => setTranscriptSearch('')} variant="outline" size="sm" className="px-3">
-                          Clear
-                        </Button>
-                      )}
-                    </div>
-
-                    <ScrollArea className="h-[400px]">
-                      <div className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 text-sm leading-relaxed">
-                        {transcriptSearch.trim() ? (
-                          filteredTranscript ? (
-                            <div className="space-y-3">
-                              {filteredTranscript.split('\n').map((line, idx) => {
-                                if (!line.trim()) return null;
-                                const searchTerm = transcriptSearch.toLowerCase();
-                                const lowerLine = line.toLowerCase();
-                                const index = lowerLine.indexOf(searchTerm);
-
-                                if (index === -1) return null;
-
-                                return (
-                                  <div
-                                    key={idx}
-                                    className="p-2 bg-white dark:bg-neutral-800 rounded border dark:border-neutral-700"
-                                  >
-                                    <span className="text-neutral-600 dark:text-neutral-400">
-                                      {line.substring(0, index)}
-                                    </span>
-                                    <mark className="bg-yellow-200 dark:bg-yellow-900/50 px-1 py-0.5 rounded">
-                                      {line.substring(index, index + searchTerm.length)}
-                                    </mark>
-                                    <span className="text-neutral-600 dark:text-neutral-400">
-                                      {line.substring(index + searchTerm.length)}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          ) : (
-                            <div className="text-center py-8 text-neutral-500">
-                              No matches found for &quot;{transcriptSearch}&quot;
-                            </div>
-                          )
-                        ) : (
-                          <p className="whitespace-pre-wrap text-neutral-700 dark:text-neutral-300">{parsedCaptions}</p>
-                        )}
-                      </div>
-                    </ScrollArea>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
+                    );
+                  })
+                ) : (
+                  <p className="text-center py-4">No matches found</p>
+                )
+              ) : (
+                video.captions
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -511,160 +462,199 @@ const YouTubeCard: React.FC<YouTubeCardProps> = ({ video, index }) => {
   );
 };
 
-// Memoized YouTube Card for performance
-const MemoizedYouTubeCard = React.memo(YouTubeCard, (prevProps, nextProps) => {
+// Sources Sheet Component
+const YouTubeSourcesSheet: React.FC<{
+  videos: VideoResult[];
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}> = ({ videos, open, onOpenChange }) => {
+  const isMobile = useIsMobile();
+  const [selectedVideo, setSelectedVideo] = useState<VideoResult | null>(null);
+
+  const SheetWrapper = isMobile ? Drawer : Sheet;
+  const SheetContentWrapper = isMobile ? DrawerContent : SheetContent;
+
   return (
-    prevProps.video.videoId === nextProps.video.videoId &&
-    prevProps.index === nextProps.index &&
-    prevProps.video.url === nextProps.video.url &&
-    JSON.stringify(prevProps.video.details) === JSON.stringify(nextProps.video.details) &&
-    JSON.stringify(prevProps.video.stats) === JSON.stringify(nextProps.video.stats) &&
-    prevProps.video.durationSeconds === nextProps.video.durationSeconds &&
-    prevProps.video.views === nextProps.video.views &&
-    prevProps.video.likes === nextProps.video.likes
+    <SheetWrapper open={open} onOpenChange={onOpenChange}>
+      <SheetContentWrapper className={cn(isMobile ? 'h-[85vh]' : 'w-[580px] sm:max-w-[580px]', 'p-0')}>
+        {selectedVideo ? (
+          <div className="flex flex-col h-full">
+            <div className="px-4 py-3 border-b border-border flex items-center gap-2">
+              <button
+                onClick={() => setSelectedVideo(null)}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                ← Back
+              </button>
+            </div>
+            <VideoDetailContent video={selectedVideo} />
+          </div>
+        ) : (
+          <div className="flex flex-col h-full bg-background">
+            {/* Header */}
+            <div className="px-5 py-4 border-b border-border/40">
+              <div className="flex items-center gap-2 mb-0.5">
+                <Icons.YouTube className="h-3.5 w-3.5 text-red-500" />
+                <span className="font-pixel text-xs text-muted-foreground/80 uppercase tracking-wider">YouTube</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{videos.length} videos with content</p>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto divide-y divide-border/20">
+              {videos.map((video, index) => (
+                <YouTubeVideoCard key={video.videoId || index} video={video} onClick={() => setSelectedVideo(video)} />
+              ))}
+            </div>
+          </div>
+        )}
+      </SheetContentWrapper>
+    </SheetWrapper>
   );
-});
+};
 
-MemoizedYouTubeCard.displayName = 'MemoizedYouTubeCard';
+// Loading state component
+const YouTubeLoadingState: React.FC = () => {
+  const [isExpanded, setIsExpanded] = useState(true);
 
-// Loading component
+  return (
+    <div className="w-full my-3">
+      <div className="rounded-xl border border-border/60 overflow-hidden bg-card/30">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted/20 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Icons.YouTube className="h-3.5 w-3.5 text-red-500" />
+            <span className="font-pixel text-xs text-muted-foreground/80 uppercase tracking-wider">YouTube</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Spinner className="w-3 h-3 text-muted-foreground/40" />
+            <Icons.ChevronDown
+              className={cn('h-3 w-3 text-muted-foreground/60 transition-transform duration-200', isExpanded && 'rotate-180')}
+            />
+          </div>
+        </button>
 
-// Empty state component
-const YouTubeEmptyState: React.FC = () => (
-  <div className="rounded-xl overflow-hidden border dark:border-neutral-800 border-neutral-200 bg-white dark:bg-neutral-900 shadow-xs p-4 text-center">
-    <div className="flex flex-col items-center gap-3 py-6">
-      <div className="flex items-center justify-center h-12 w-12 rounded-full bg-red-50 dark:bg-red-950/30">
-        <YoutubeIcon className="h-6 w-6 text-red-600" />
-      </div>
-      <div className="text-center">
-        <h2 className="text-base font-medium text-neutral-900 dark:text-neutral-100 mb-1">No Content Available</h2>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          The videos found don&apos;t contain any timestamps, transcripts, or summaries.
-        </p>
+        {isExpanded && (
+          <div className="border-t border-border/40">
+            <div className="px-3.5 py-2 border-b border-border/30">
+              <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                <Spinner className="w-2.5 h-2.5" />
+                <span className="font-medium">Searching YouTube...</span>
+              </span>
+            </div>
+
+            <div className="divide-y divide-border/20">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="px-3.5 py-2 flex items-start gap-2.5">
+                  <div className="w-20 h-[45px] rounded-md bg-muted/20 animate-pulse shrink-0 flex items-center justify-center" style={{ animationDelay: `${i * 100}ms` }}>
+                    <Icons.YouTube className="h-3.5 w-3.5 text-red-500/15" />
+                  </div>
+                  <div className="flex-1 space-y-1">
+                    <div className="h-3 bg-muted/30 rounded animate-pulse w-3/4" style={{ animationDelay: `${i * 100 + 50}ms` }} />
+                    <div className="h-2 bg-muted/20 rounded animate-pulse w-1/2" style={{ animationDelay: `${i * 100 + 80}ms` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 // Main YouTube Search Results Component
 export const YouTubeSearchResults: React.FC<YouTubeSearchResultsProps> = ({ results, isLoading = false }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [sourcesSheetOpen, setSourcesSheetOpen] = useState(false);
+
   if (isLoading) {
-    return <SearchLoadingState icon={YoutubeIcon} text="Searching YouTube" color="red" />;
+    return <YouTubeLoadingState />;
   }
 
   if (!results || !results.results || !Array.isArray(results.results)) {
-    return <YouTubeEmptyState />;
+    return null;
   }
 
-  // Filter out videos with no meaningful content - using parseCaptions for proper filtering
+  // Filter videos with meaningful content
   const filteredVideos = results.results.filter((video) => {
     if (!video) return false;
-
     const hasTimestamps = video.timestamps && Array.isArray(video.timestamps) && video.timestamps.length > 0;
-    const hasCaptions =
-      video.captions &&
-      (typeof video.captions === 'string' ? video.captions.trim().length > 0 : !!parseCaptions(video.captions));
+    const hasCaptions = video.captions && typeof video.captions === 'string' && video.captions.trim().length > 0;
     const hasSummary = video.summary && typeof video.summary === 'string' && video.summary.trim().length > 0;
-
     return hasTimestamps || hasCaptions || hasSummary;
   });
 
-  console.log(`📊 YouTube Results Summary:`, {
-    totalResults: results.results.length,
-    filteredResults: filteredVideos.length,
-    videoIds: filteredVideos.map((v) => v.videoId),
-  });
-
-  // Debug each video's content
-  results.results.forEach((video, index) => {
-    if (!video) return;
-
-    const hasTimestamps = video.timestamps && Array.isArray(video.timestamps) && video.timestamps.length > 0;
-    const hasCaptions =
-      video.captions &&
-      (typeof video.captions === 'string' ? video.captions.trim().length > 0 : !!parseCaptions(video.captions));
-    const hasSummary = video.summary && typeof video.summary === 'string' && video.summary.trim().length > 0;
-
-    console.log(`🎥 Video ${index + 1} (${video.videoId}):`, {
-      title: video.details?.title?.substring(0, 50) + '...',
-      hasTimestamps,
-      timestampCount: Array.isArray(video.timestamps) ? video.timestamps.length : 0,
-      hasCaptions,
-      captionsLength:
-        typeof video.captions === 'string' ? video.captions.length : parseCaptions(video.captions)?.length || 0,
-      hasSummary,
-      durationSeconds: video.durationSeconds,
-      stats: video.stats,
-      viewStat: video.stats?.views ?? video.views,
-      likeStat: video.stats?.likes ?? video.likes,
-      captionsType: typeof video.captions,
-      timestampsType: typeof video.timestamps,
-      rawCaptions: video.captions
-        ? typeof video.captions === 'string'
-          ? video.captions.substring(0, 100) + '...'
-          : 'NOT STRING'
-        : 'NULL',
-      rawTimestamps: Array.isArray(video.timestamps) ? video.timestamps.slice(0, 2) : video.timestamps,
-      willShowInUI: hasTimestamps || hasCaptions || hasSummary,
-    });
-
-    if (hasTimestamps && video.timestamps) {
-      console.log(`📝 Sample timestamps for ${video.videoId}:`, video.timestamps.slice(0, 3));
-    }
-  });
-
   if (filteredVideos.length === 0) {
-    return <YouTubeEmptyState />;
+    return null;
   }
 
+  const totalResults = filteredVideos.length;
+
   return (
-    <div className="w-full my-4">
-      <Accordion type="single" collapsible defaultValue="videos">
-        <AccordionItem
-          value="videos"
-          className="border dark:border-neutral-800 rounded-xl bg-white dark:bg-neutral-900 shadow-xs"
+    <div className="w-full my-3">
+      <div className="rounded-xl border border-border/60 overflow-hidden bg-card/30">
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted/20 transition-colors"
         >
-          <AccordionTrigger className="px-4 py-3 hover:no-underline">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center justify-center h-9 w-9 rounded-full bg-red-50 dark:bg-red-950/30">
-                <YoutubeIcon className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <h2 className="text-base font-medium text-neutral-900 dark:text-neutral-100 text-left">
-                  YouTube Results
-                </h2>
-                <div className="flex items-center gap-2 mt-0.5">
-                  <Badge
-                    variant="secondary"
-                    className="px-2 py-0 h-5 text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400"
-                  >
-                    {filteredVideos.length} videos with content
-                  </Badge>
-                </div>
-              </div>
+          <div className="flex items-center gap-2">
+            <Icons.YouTube className="h-3.5 w-3.5 text-red-500" />
+            <span className="font-pixel text-xs text-muted-foreground/80 uppercase tracking-wider">YouTube</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground/60 tabular-nums">{totalResults}</span>
+            {totalResults > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSourcesSheetOpen(true);
+                }}
+                className="text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors px-1.5 py-0.5 hover:bg-muted/30 rounded flex items-center gap-1"
+              >
+                View all
+                <Icons.ArrowUpRight className="w-2.5 h-2.5" />
+              </button>
+            )}
+            <Icons.ChevronDown
+              className={cn('h-3 w-3 text-muted-foreground/60 transition-transform duration-200', isExpanded && 'rotate-180')}
+            />
+          </div>
+        </button>
+
+        {isExpanded && (
+          <div className="border-t border-border/40">
+            <div className="max-h-80 overflow-y-auto divide-y divide-border/20">
+              {filteredVideos.slice(0, 5).map((video, index) => (
+                <a
+                  key={video.videoId || index}
+                  href={video.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <YouTubeVideoCard video={video} />
+                </a>
+              ))}
+              {filteredVideos.length > 5 && (
+                <button
+                  onClick={() => setSourcesSheetOpen(true)}
+                  className="w-full py-2 text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted/10 transition-colors"
+                >
+                  View all {filteredVideos.length} videos
+                </button>
+              )}
             </div>
-          </AccordionTrigger>
-          <AccordionContent className='border-b rounded-2xl'>
-            <div className="relative">
-              <div className="w-full overflow-x-scroll">
-                <div className="flex pl-4">
-                  {filteredVideos.map((video, index) => (
-                    <div key={video.videoId} className="last:mr-12">
-                      <MemoizedYouTubeCard video={video} index={index} />
-                    </div>
-                  ))}
-                </div>
-                {filteredVideos.length > 3 && (
-                  <div className="absolute right-0 top-0 bottom-0 w-12 bg-linear-to-l from-white dark:from-neutral-900 to-transparent pointer-events-none" />
-                )}
-              </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+          </div>
+        )}
+      </div>
+
+      <YouTubeSourcesSheet videos={filteredVideos} open={sourcesSheetOpen} onOpenChange={setSourcesSheetOpen} />
     </div>
   );
 };
 
 // Export types for external use
-export type { VideoDetails, VideoResult, VideoStats, YouTubeSearchResponse, YouTubeSearchResultsProps };
+export type { VideoDetails, VideoResult, VideoStats, YouTubeSearchResponse, YouTubeSearchResultsProps, TranscriptChunk };

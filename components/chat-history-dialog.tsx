@@ -9,6 +9,7 @@ import {
   Trash,
   ArrowUpRight,
   History,
+  Plus,
   Globe,
   Lock,
   Search,
@@ -20,6 +21,8 @@ import {
   Trash2,
   CheckSquare,
   Square,
+  Pin,
+  PinOff,
 } from 'lucide-react';
 import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import { SearchList02Icon } from '@hugeicons/core-free-icons';
@@ -37,13 +40,15 @@ import {
   differenceInMonths,
   differenceInYears,
 } from 'date-fns';
-import { deleteChat, getUserChats, loadMoreChats, updateChatTitle } from '@/app/actions';
+import { deleteChat, getUserChats, loadMoreChats, updateChatPinned, updateChatTitle } from '@/app/actions';
 import { Button } from './ui/button';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { User } from '@/lib/db/schema';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { allSettled } from 'better-all';
+import { getBetterAllOptions } from '@/lib/better-all';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Spinner } from '@/components/ui/spinner';
 import { useChatPrefetch } from '@/hooks/use-chat-prefetch';
@@ -51,14 +56,15 @@ import { Kbd } from '@/components/ui/kbd';
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from '@/components/ui/empty';
 
 // Constants
-const SCROLL_THRESHOLD = 0.8;
-const INTERSECTION_ROOT_MARGIN = '100px';
+const SCROLL_THRESHOLD = 0.5; // Load more at 50% scrolled
 const FOCUS_DELAY = 100;
 
 interface Chat {
   id: string;
   title: string;
-  createdAt: Date;
+  createdAt: Date | string;
+  updatedAt?: Date | string;
+  isPinned?: boolean;
   userId: string;
   visibility: 'public' | 'private';
 }
@@ -77,6 +83,31 @@ function isValidChatId(id: string): boolean {
   return /^[a-zA-Z0-9_-]+$/.test(id) && id.length > 0;
 }
 
+function parseChatDate(value: Date | string | number): Date {
+  if (value instanceof Date) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const trimmedValue = value.trim();
+    const hasTimezone = /(?:Z|[+-]\d{2}:?\d{2})$/.test(trimmedValue);
+    const isPostgresTimestampWithoutTimezone =
+      /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(trimmedValue);
+
+    if (isPostgresTimestampWithoutTimezone && !hasTimezone) {
+      return new Date(`${trimmedValue.replace(' ', 'T')}Z`);
+    }
+
+    return new Date(trimmedValue);
+  }
+
+  return new Date(value);
+}
+
+function getChatActivityDate(chat: Chat): Date {
+  return parseChatDate(chat.updatedAt ?? chat.createdAt);
+}
+
 // Helper function to categorize chats by date
 function categorizeChatsByDate(chats: Chat[]) {
   const today: Chat[] = [];
@@ -89,7 +120,7 @@ function categorizeChatsByDate(chats: Chat[]) {
   const oneWeekAgo = subWeeks(new Date(), 1);
 
   chats.forEach((chat) => {
-    const chatDate = new Date(chat.createdAt);
+    const chatDate = getChatActivityDate(chat);
 
     if (isToday(chatDate)) {
       today.push(chat);
@@ -114,9 +145,10 @@ const formatCompactTime = (() => {
   const cache = new Map<string, { result: string; timestamp: number }>();
   const CACHE_DURATION = 30000; // 30 seconds cache duration
 
-  return function (date: Date): string {
+  return function (value: Date | string | number): string {
+    const date = parseChatDate(value);
     const now = new Date();
-    const dateKey = date.getTime().toString();
+    const dateKey = `${typeof value === 'string' ? value : date.getTime()}`;
     const cached = cache.get(dateKey);
 
     // Check if cache is valid (less than 30 seconds old)
@@ -124,33 +156,41 @@ const formatCompactTime = (() => {
       return cached.result;
     }
 
-    const seconds = differenceInSeconds(now, date);
+    if (Number.isNaN(date.getTime())) {
+      return 'just now';
+    }
+
+    // Some DB timestamps may be parsed a bit ahead due to timezone/clock skew.
+    // Use absolute value to avoid negative outputs while still showing useful recency.
+    const seconds = Math.abs(differenceInSeconds(now, date));
 
     let result: string;
-    if (seconds < 60) {
+    if (seconds < 5) {
+      result = 'just now';
+    } else if (seconds < 60) {
       result = `${seconds}s ago`;
     } else {
-      const minutes = differenceInMinutes(now, date);
+      const minutes = Math.floor(seconds / 60);
       if (minutes < 60) {
         result = `${minutes}m ago`;
       } else {
-        const hours = differenceInHours(now, date);
+        const hours = Math.floor(minutes / 60);
         if (hours < 24) {
           result = `${hours}h ago`;
         } else {
-          const days = differenceInDays(now, date);
+          const days = Math.floor(hours / 24);
           if (days < 7) {
             result = `${days}d ago`;
           } else {
-            const weeks = differenceInWeeks(now, date);
+            const weeks = Math.floor(days / 7);
             if (weeks < 4) {
               result = `${weeks}w ago`;
             } else {
-              const months = differenceInMonths(now, date);
+              const months = Math.floor(days / 30);
               if (months < 12) {
                 result = `${months}mo ago`;
               } else {
-                const years = differenceInYears(now, date);
+                const years = Math.floor(days / 365);
                 result = `${years}y ago`;
               }
             }
@@ -241,15 +281,15 @@ function advancedSearch(chat: Chat, query: string, mode: SearchMode): boolean {
   }
 
   if (query.startsWith('today:')) {
-    return isToday(new Date(chat.createdAt)) && fuzzySearch(query.slice(6), chat.title);
+    return isToday(getChatActivityDate(chat)) && fuzzySearch(query.slice(6), chat.title);
   }
 
   if (query.startsWith('week:')) {
-    return isThisWeek(new Date(chat.createdAt)) && fuzzySearch(query.slice(5), chat.title);
+    return isThisWeek(getChatActivityDate(chat)) && fuzzySearch(query.slice(5), chat.title);
   }
 
   if (query.startsWith('month:')) {
-    return isThisMonth(new Date(chat.createdAt)) && fuzzySearch(query.slice(6), chat.title);
+    return isThisMonth(getChatActivityDate(chat)) && fuzzySearch(query.slice(6), chat.title);
   }
 
   // Handle date: prefix with DD/MM/YY format
@@ -257,10 +297,10 @@ function advancedSearch(chat: Chat, query: string, mode: SearchMode): boolean {
     const dateQuery = query.slice(5).trim();
     const parsedDate = parseDateQuery(dateQuery);
     if (parsedDate) {
-      return isSameDay(new Date(chat.createdAt), parsedDate);
+      return isSameDay(getChatActivityDate(chat), parsedDate);
     }
     // If not a valid DD/MM/YY format, fall back to fuzzy search on the date query
-    return fuzzySearch(dateQuery, new Date(chat.createdAt).toLocaleDateString());
+    return fuzzySearch(dateQuery, getChatActivityDate(chat).toLocaleDateString());
   }
 
   // Regular search based on mode
@@ -271,10 +311,10 @@ function advancedSearch(chat: Chat, query: string, mode: SearchMode): boolean {
       // In date mode, first try to parse as DD/MM/YY format
       const parsedDate = parseDateQuery(query.trim());
       if (parsedDate) {
-        return isSameDay(new Date(chat.createdAt), parsedDate);
+        return isSameDay(getChatActivityDate(chat), parsedDate);
       }
       // If not DD/MM/YY format, fall back to fuzzy search on date string
-      const dateStr = new Date(chat.createdAt).toLocaleDateString();
+      const dateStr = getChatActivityDate(chat).toLocaleDateString();
       return fuzzySearch(query, dateStr);
     case 'visibility':
       return fuzzySearch(query, chat.visibility);
@@ -283,7 +323,7 @@ function advancedSearch(chat: Chat, query: string, mode: SearchMode): boolean {
       return (
         fuzzySearch(query, chat.title) ||
         fuzzySearch(query, chat.visibility) ||
-        fuzzySearch(query, new Date(chat.createdAt).toLocaleDateString())
+        fuzzySearch(query, getChatActivityDate(chat).toLocaleDateString())
       );
   }
 }
@@ -294,6 +334,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   const router = useRouter();
   const rawChatId = pathname?.startsWith('/search/') ? pathname.split('/')[2] : null;
   const currentChatId = rawChatId && isValidChatId(rawChatId) ? rawChatId : null;
+  const isMac = useMemo(() => navigator.platform.toUpperCase().includes('MAC'), []);
 
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
@@ -308,12 +349,11 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   const [deletingBulk, setDeletingBulk] = useState(false);
 
   // Use the new prefetching system
-  const { prefetchChats, prefetchOnHover, prefetchOnFocus, prefetchChatRoute } = useChatPrefetch();
+  const { prefetchOnHover, prefetchOnFocus, prefetchChatRoute } = useChatPrefetch();
 
   // Focus search input on dialog open
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const loadMoreTriggerRef = useRef<HTMLDivElement>(null);
   const focusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const updateTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -324,22 +364,28 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       if (!user?.id) return { chats: [], hasMore: false };
 
       if (pageParam) {
-        // Load more chats using the last chat ID as cursor
-        return await loadMoreChats(user.id, pageParam, 20);
+        // Load more chats using cursor — pass both ID and updatedAt to skip extra DB lookup
+        return await loadMoreChats(user.id, pageParam.id, 30, pageParam.cursorDate, pageParam.cursorIsPinned);
       } else {
-        // Initial load
-        return await getUserChats(user.id, 20);
+        // Initial load — fetch 30 to reduce need for early pagination
+        return await getUserChats(user.id, 30);
       }
     },
     getNextPageParam: (lastPage) => {
       if (!lastPage.hasMore || lastPage.chats.length === 0) return undefined;
-      return lastPage.chats[lastPage.chats.length - 1].id;
+      const lastChat = lastPage.chats[lastPage.chats.length - 1];
+      // Return both id and updatedAt so we can skip the extra cursor lookup query
+      return {
+        id: lastChat.id,
+        cursorDate: new Date(lastChat.updatedAt ?? lastChat.createdAt).toISOString(),
+        cursorIsPinned: Boolean(lastChat.isPinned),
+      };
     },
     enabled: !!user?.id && open, // Only fetch when dialog is open
     refetchOnWindowFocus: false, // Disable to prevent unnecessary refetches
     refetchOnMount: false, // Use cached data when available
     staleTime: 1000 * 60 * 5, // 5 minutes - chats don't change frequently
-    initialPageParam: undefined,
+    initialPageParam: undefined as { id: string; cursorDate: string; cursorIsPinned: boolean } | undefined,
     // Initialize with empty array when user is null
     initialData: user ? undefined : { pages: [{ chats: [], hasMore: false }], pageParams: [undefined] },
     // Keep in cache longer for better performance
@@ -350,14 +396,16 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   // Flatten all chats from all pages
   const allChats = data?.pages.flatMap((page) => page.chats) || [];
 
-  // Debug logging for loading state
+  // Debug logging for loading state (dev only)
   useEffect(() => {
-    console.log('📊 Loading state:', {
-      isFetchingNextPage,
-      hasNextPage,
-      allChatsCount: allChats.length,
-      isLoading,
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('📊 Loading state:', {
+        isFetchingNextPage,
+        hasNextPage,
+        allChatsCount: allChats.length,
+        isLoading,
+      });
+    }
   }, [isFetchingNextPage, hasNextPage, allChats.length, isLoading]);
 
   // Clear delete confirmation state when dialog closes
@@ -429,20 +477,35 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
 
   // Filter chats based on search query and mode with memoization
   const filteredChats = useMemo(() => {
-    return allChats.filter((chat) => advancedSearch(chat, searchQuery, searchMode));
+    const matchingChats = allChats.filter((chat) => advancedSearch(chat, searchQuery, searchMode));
+    return matchingChats.sort((a, b) => getChatActivityDate(b).getTime() - getChatActivityDate(a).getTime());
   }, [allChats, searchQuery, searchMode]);
+
+  const pinnedChats = useMemo(() => {
+    return filteredChats.filter((chat) => chat.isPinned);
+  }, [filteredChats]);
+
+  const unpinnedChats = useMemo(() => {
+    return filteredChats.filter((chat) => !chat.isPinned);
+  }, [filteredChats]);
 
   // Categorize filtered chats with memoization
   const categorizedChats = useMemo(() => {
-    return categorizeChatsByDate(filteredChats);
-  }, [filteredChats]);
+    return categorizeChatsByDate(unpinnedChats);
+  }, [unpinnedChats]);
 
-  // Explicitly refetch when dialog opens
+  // Only invalidate when dialog opens if data is likely stale
+  // Note: Don't call refetch() here — it bypasses staleTime and forces a network request every time.
+  // The useInfiniteQuery already handles staleness via staleTime (5 min).
+  // Instead, we invalidate only if there's no cached data at all.
   useEffect(() => {
     if (open && user?.id) {
-      refetch();
+      const cachedData = queryClient.getQueryData(['chats', user.id]);
+      if (!cachedData) {
+        refetch();
+      }
     }
-  }, [open, user?.id, refetch]);
+  }, [open, user?.id, refetch, queryClient]);
 
   // Listen for cache invalidation events
   useEffect(() => {
@@ -464,7 +527,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       await deleteChat(id);
     },
     onSuccess: (_, id) => {
-      toast.success('Chat deleted');
+      sileo.success({ title: 'Chat deleted' });
       // Update cache after successful deletion
       queryClient.setQueryData(['chats', user?.id], (oldData: any) => {
         if (!oldData) return oldData;
@@ -479,7 +542,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     },
     onError: (error) => {
       console.error('Failed to delete chat:', error);
-      toast.error('Failed to delete chat. Please try again.');
+      sileo.error({ title: 'Failed to delete chat. Please try again.' });
       queryClient.invalidateQueries({ queryKey: ['chats', user?.id] });
     },
   });
@@ -487,12 +550,16 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   // Bulk delete mutation
   const bulkDeleteMutation = useMutation({
     mutationFn: async (ids: string[]) => {
-      // Delete chats in parallel
-      await Promise.all(ids.map((id) => deleteChat(id)));
+      const tasks = Object.fromEntries(ids.map((id) => [`chat:${id}`, async () => deleteChat(id)]));
+      const settled = await allSettled(tasks, getBetterAllOptions());
+      const anyRejected = Object.values(settled).some((r) => r.status === 'rejected');
+      if (anyRejected) {
+        throw new Error('Failed to delete chats');
+      }
     },
     onSuccess: (_, ids) => {
       const count = ids.length;
-      toast.success(`${count} chat${count > 1 ? 's' : ''} deleted`);
+      sileo.success({ title: `${count} chat${count > 1 ? 's' : ''} deleted` });
       // Update cache after successful deletion
       queryClient.setQueryData(['chats', user?.id], (oldData: any) => {
         if (!oldData) return oldData;
@@ -511,7 +578,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     },
     onError: (error) => {
       console.error('Failed to delete chats:', error);
-      toast.error('Failed to delete chats. Please try again.');
+      sileo.error({ title: 'Failed to delete chats. Please try again.' });
       queryClient.invalidateQueries({ queryKey: ['chats', user?.id] });
       setDeletingBulk(false);
     },
@@ -523,7 +590,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     },
     onSuccess: (updatedChat, { id, title }) => {
       if (updatedChat) {
-        toast.success('Title updated');
+        sileo.success({ title: 'Title updated' });
         // Update cache after successful title update
         queryClient.setQueryData(['chats', user?.id], (oldData: any) => {
           if (!oldData) return oldData;
@@ -536,91 +603,115 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
           };
         });
       } else {
-        toast.error('Failed to update title. Please try again.');
+        sileo.error({ title: 'Failed to update title. Please try again.' });
       }
     },
     onError: (error) => {
       console.error('Failed to update chat title:', error);
-      toast.error('Failed to update title. Please try again.');
+      sileo.error({ title: 'Failed to update title. Please try again.' });
     },
   });
 
-  // Infinite scroll handler
+  const pinMutation = useMutation({
+    mutationFn: async ({ id, isPinned }: { id: string; isPinned: boolean }) => {
+      return await updateChatPinned(id, isPinned);
+    },
+    onSuccess: (updatedChat, { id, isPinned }) => {
+      if (updatedChat) {
+        queryClient.setQueryData(['chats', user?.id], (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            pages: oldData.pages.map((page: any) => ({
+              ...page,
+              chats: page.chats.map((chat: Chat) => (chat.id === id ? { ...chat, isPinned } : chat)),
+            })),
+          };
+        });
+      } else {
+        sileo.error({ title: 'Failed to update pinned state. Please try again.' });
+      }
+    },
+    onError: (error) => {
+      console.error('Failed to update chat pinned state:', error);
+      sileo.error({ title: 'Failed to update pinned state. Please try again.' });
+    },
+  });
+
+  // Synchronous guard — prevents duplicate fetchNextPage calls.
+  // React state updates are async, so without this the scroll handler
+  // can fire dozens of times before isFetchingNextPage flips to true.
+  const isFetchingGuardRef = useRef(false);
+
+  useEffect(() => {
+    if (!isFetchingNextPage) {
+      isFetchingGuardRef.current = false;
+    }
+  }, [isFetchingNextPage]);
+
+  // Scroll handler — the sole trigger for loading more pages.
+  // Simple, reliable, no IntersectionObserver timing issues.
   const handleScroll = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
-      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-      const scrolledPercentage = (scrollTop + clientHeight) / scrollHeight;
+      if (isFetchingGuardRef.current) return;
 
-      // Load more when user scrolls to threshold
-      if (scrolledPercentage > SCROLL_THRESHOLD && hasNextPage && !isFetchingNextPage && !isLoading) {
-        console.log('🔽 Scroll triggered fetchNextPage');
+      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+      // How far from the bottom (in px) should we trigger
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+
+      // Trigger when within 300px of the bottom OR past 50% scrolled
+      if (distanceFromBottom < 300 || (scrollTop + clientHeight) / scrollHeight > SCROLL_THRESHOLD) {
+        if (!hasNextPage || isFetchingNextPage || isLoading) return;
+        isFetchingGuardRef.current = true;
         fetchNextPage();
       }
     },
     [hasNextPage, isFetchingNextPage, isLoading, fetchNextPage],
   );
 
-  // Intersection Observer for more precise infinite scroll with proper cleanup
+  // Auto-load: if initial page doesn't fill the viewport, load more immediately
   useEffect(() => {
-    const currentTrigger = loadMoreTriggerRef.current;
-    const currentList = listRef.current;
+    if (isLoading || isFetchingNextPage || !hasNextPage || !open) return;
+    if (isFetchingGuardRef.current) return;
 
-    if (!currentTrigger || !currentList) return;
+    const list = listRef.current;
+    if (!list) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        console.log('👁️ Intersection Observer:', {
-          isIntersecting: entry.isIntersecting,
-          hasNextPage,
-          isFetchingNextPage,
-          isLoading,
-        });
-        if (entry.isIntersecting && hasNextPage && !isFetchingNextPage && !isLoading) {
-          console.log('🔽 Intersection Observer triggered fetchNextPage');
-          fetchNextPage();
-        }
-      },
-      {
-        root: currentList,
-        rootMargin: INTERSECTION_ROOT_MARGIN,
-        threshold: 0.1,
-      },
-    );
+    // If content is shorter than the container, there's no scrollbar — user can't scroll to trigger
+    if (list.scrollHeight <= list.clientHeight + 50) {
+      isFetchingGuardRef.current = true;
+      fetchNextPage();
+    }
+  }, [isLoading, isFetchingNextPage, hasNextPage, open, allChats.length, fetchNextPage]);
 
-    observer.observe(currentTrigger);
-
-    return () => {
-      observer.unobserve(currentTrigger);
-    };
-  }, [hasNextPage, isFetchingNextPage, isLoading, fetchNextPage]);
-
-  // Enhanced prefetching with data prefetching
+  // Deferred prefetching — wait for idle time before prefetching routes
+  // This avoids competing with the initial data load for network bandwidth
   useEffect(() => {
-    if (open && allChats.length > 0) {
-      // Prefetch the first 10 chats with high priority (visible ones)
-      const visibleChats = allChats.slice(0, 10);
+    if (!open || allChats.length === 0) return;
 
-      // Prefetch route and data for visible chats
+    // Use requestIdleCallback (or setTimeout fallback) to defer prefetching
+    const scheduleCallback = typeof requestIdleCallback !== 'undefined' ? requestIdleCallback : (cb: () => void) => setTimeout(cb, 200);
+
+    const idleId = scheduleCallback(() => {
+      // Only prefetch the first 5 visible chat routes (not 10+10)
+      const visibleChats = allChats.slice(0, 5);
       visibleChats.forEach((chat) => {
         prefetchChatRoute(chat.id);
       });
+    });
 
-      // Prefetch data for remaining chats with lower priority
-      if (allChats.length > 10) {
-        const remainingChats = allChats.slice(10, 20); // Next 10 chats
-        const remainingChatIds = remainingChats.map((chat) => chat.id);
-        prefetchChats(remainingChatIds);
+    return () => {
+      if (typeof cancelIdleCallback !== 'undefined' && typeof idleId === 'number') {
+        cancelIdleCallback(idleId);
       }
-    }
-  }, [open, allChats, prefetchChats, prefetchChatRoute]);
+    };
+  }, [open, allChats, prefetchChatRoute]);
 
   // Handle chat selection
 
   // Handle chat deletion with inline confirmation
   const handleDeleteChat = useCallback((e: React.MouseEvent | KeyboardEvent, id: string) => {
     e.stopPropagation();
-    console.log('SETTING DELETING CHAT ID:', id);
     setDeletingChatId(id);
   }, []);
 
@@ -641,7 +732,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       } catch (error) {
         // Error handling is done in mutation callbacks, but we should reset state
         console.error('Delete chat error:', error);
-        toast.error('Failed to delete chat. Please try again.');
+        sileo.error({ title: 'Failed to delete chat. Please try again.' });
       }
     },
     [deleteMutation, currentChatId],
@@ -650,7 +741,6 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
   // Cancel deletion
   const cancelDeleteChat = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    console.log('CANCELING DELETION');
     setDeletingChatId(null);
   }, []);
 
@@ -677,12 +767,12 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
       e.stopPropagation();
 
       if (!editingTitle.trim()) {
-        toast.error('Title cannot be empty');
+        sileo.error({ title: 'Title cannot be empty' });
         return;
       }
 
       if (editingTitle.trim().length > 100) {
-        toast.error('Title is too long (max 100 characters)');
+        sileo.error({ title: 'Title is too long (max 100 characters)' });
         return;
       }
 
@@ -773,11 +863,17 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
 
   const handleBulkDelete = useCallback(() => {
     if (selectedChatIds.size === 0) {
-      toast.error('No chats selected');
+      sileo.error({ title: 'No chats selected' });
       return;
     }
     setDeletingBulk(true);
   }, [selectedChatIds]);
+
+  const togglePinnedChat = useCallback((chatId: string) => {
+    const selectedChat = allChats.find((chat) => chat.id === chatId);
+    if (!selectedChat) return;
+    pinMutation.mutate({ id: chatId, isPinned: !selectedChat.isPinned });
+  }, [allChats, pinMutation]);
 
   const confirmBulkDelete = useCallback(async () => {
     const idsToDelete = Array.from(selectedChatIds);
@@ -805,6 +901,7 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
     const isDeleting = deletingChatId === chat.id;
     const isEditing = editingChatId === chat.id;
     const isSelected = selectedChatIds.has(chat.id);
+    const isPinned = Boolean(chat.isPinned);
     const displayTitle = chat.title || 'Untitled Conversation';
 
     // Prefetch on hover
@@ -986,10 +1083,41 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                   <>
                     {/* Timestamp - more compact */}
                     <span className="text-xs text-muted-foreground whitespace-nowrap w-16 text-right">
-                      {formatCompactTime(new Date(chat.createdAt))}
+                      {formatCompactTime(chat.updatedAt ?? chat.createdAt)}
                     </span>
 
                     {/* Actions - contextual based on states */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={cn(
+                        'transition-colors h-7 w-7 shrink-0',
+                        isPinned
+                          ? 'text-primary hover:text-primary hover:bg-primary/10'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+                        (deleteMutation.isPending ||
+                          pinMutation.isPending ||
+                          updateTitleMutation.isPending ||
+                          !!deletingChatId ||
+                          !!editingChatId) &&
+                        'opacity-50 pointer-events-none',
+                      )}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePinnedChat(chat.id);
+                      }}
+                      aria-label={isPinned ? `Unpin ${displayTitle}` : `Pin ${displayTitle}`}
+                      disabled={
+                        navigating === chat.id ||
+                        deleteMutation.isPending ||
+                        pinMutation.isPending ||
+                        updateTitleMutation.isPending ||
+                        !!deletingChatId ||
+                        !!editingChatId
+                      }
+                    >
+                      {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -1233,6 +1361,36 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
             role="listbox"
             aria-label="Chat history"
           >
+            <CommandGroup heading="Actions" className="**:[[cmdk-group-heading]]:py-0.5! py-1! mb-0!">
+              <CommandItem
+                value="new-chat"
+                onSelect={() => {
+                  onOpenChange(false);
+                  router.push('/new');
+                }}
+                className="flex items-center py-2.5 px-3 mx-1 my-0.5 rounded-lg transition-all duration-200 ease-in-out cursor-pointer hover:bg-accent/50 border border-transparent"
+              >
+                <div className="flex items-center w-full gap-2">
+                  <Plus className="h-4 w-4 shrink-0" />
+                  <span className="text-sm">New Session</span>
+                  <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Kbd className="rounded font-mono">{isMac ? '⌘' : 'Ctrl'}</Kbd>
+                      <Kbd className="rounded font-mono">Shift</Kbd>
+                      <Kbd className="rounded font-mono">O</Kbd>
+                    </div>
+                    {isMac && (
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground/60">or</span>
+                        <Kbd className="rounded font-mono">⌘</Kbd>
+                        <Kbd className="rounded font-mono">Shift</Kbd>
+                        <Kbd className="rounded font-mono">U</Kbd>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CommandItem>
+            </CommandGroup>
             {isLoading ? (
               <div>
                 <CommandGroup heading="Recent Conversations">
@@ -1261,6 +1419,11 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
               <>
                 {filteredChats.length > 0 ? (
                   <>
+                    {pinnedChats.length > 0 && (
+                      <CommandGroup heading="Pinned" className="**:[[cmdk-group-heading]]:py-0.5! py-1! mb-0!">
+                        {pinnedChats.map((chat) => renderChatItem(chat))}
+                      </CommandGroup>
+                    )}
                     {[
                       { key: 'today', heading: 'Today' },
                       { key: 'yesterday', heading: 'Yesterday' },
@@ -1333,18 +1496,14 @@ export function ChatHistoryDialog({ open, onOpenChange, user }: ChatHistoryDialo
                   </CommandEmpty>
                 )}
 
-                {/* Intersection observer trigger and loading indicator */}
-                {(hasNextPage || isFetchingNextPage) && (
-                  <div ref={loadMoreTriggerRef} className="flex items-center justify-center py-4 min-h-[60px]">
-                    {isFetchingNextPage ? (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Spinner className="h-4 w-4" />
-                        <span>Loading more chats...</span>
-                      </div>
-                    ) : null}
-                  </div>
-                )}
               </>
+            )}
+            {/* Loading indicator for next page */}
+            {isFetchingNextPage && (
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground py-4">
+                <Spinner className="h-4 w-4" />
+                <span>Loading more chats...</span>
+              </div>
             )}
           </CommandList>
 

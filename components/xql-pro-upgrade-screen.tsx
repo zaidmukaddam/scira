@@ -1,92 +1,76 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { HugeiconsIcon } from '@/components/ui/hugeicons';
-import { Crown02Icon, DatabaseIcon, Search01Icon } from '@hugeicons/core-free-icons';
-import { XLogoIcon, CodeIcon } from '@phosphor-icons/react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-interface XQLProUpgradeScreenProps {}
+import { useRouter } from "next/navigation";
+import { Search, Code, Database } from "lucide-react";
+import { SciraLogo } from "@/components/logos/scira-logo";
 
-export function XQLProUpgradeScreen({}: XQLProUpgradeScreenProps) {
+const FEATURES = [
+  { icon: Search, label: "Natural language X post queries" },
+  { icon: Code, label: "SQL-like query generation" },
+  { icon: Database, label: "Advanced filtering and search" },
+];
+
+export function XQLProUpgradeScreen() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-center gap-2 sm:gap-3 mb-8 text-3xl sm:text-5xl font-be-vietnam-pro pt-12 sm:pt-14">
-        <span className="text-foreground">Scira</span>
-        <div className="flex items-center relative">
-          <XLogoIcon className="size-8 sm:size-12 text-foreground -mr-1 sm:-mr-2" />
-          <h1 className="text-foreground">QL</h1>
-          {/* Beta badge as superscript */}
-          <div className="absolute -top-2 -right-6 sm:-top-3 sm:-right-8">
-            <div className="bg-primary text-primary-foreground px-1 py-0.5 rounded-sm text-xs font-semibold text-[8px] sm:text-xs">
-              BETA
-            </div>
-          </div>
+    <div className="flex flex-1 flex-col min-h-screen bg-background">
+      {/* Header matching XQL page */}
+      {/* <div className="flex items-center gap-2 px-4 sm:px-6 pt-12 sm:pt-14 pb-2">
+        <SciraLogo className="size-6 shrink-0" />
+        <span className="text-foreground font-semibold text-lg tracking-tight">XQL</span>
+        <div className="ml-0.5 -mt-3">
+          <span className="bg-primary text-primary-foreground px-1 py-0.5 rounded-sm text-[9px] font-semibold uppercase tracking-wide">
+            Beta
+          </span>
         </div>
-      </div>
+      </div> */}
 
-      {/* Pro upgrade prompt */}
-      <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
-        <Card className="max-w-md w-full text-center shadow-none">
-          <CardHeader className="pb-4">
-            <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center mx-auto mb-4">
-              <HugeiconsIcon
-                icon={Crown02Icon}
-                size={32}
-                color="currentColor"
-                strokeWidth={1.5}
-                className="text-primary-foreground"
-              />
-            </div>
-            <CardTitle className="text-xl">Pro Feature</CardTitle>
-            <CardDescription>
-              XQL (X Query Language) is available for Pro users only. Query X (Twitter) posts using natural language and
-              get structured results.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <HugeiconsIcon
-                  icon={Search01Icon}
-                  size={16}
-                  color="currentColor"
-                  strokeWidth={1.5}
-                  className="text-primary"
-                />
-                <span>Natural language X post queries</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <CodeIcon className="h-4 w-4 text-primary" />
-                <span>SQL-like query generation</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm">
-                <HugeiconsIcon
-                  icon={DatabaseIcon}
-                  size={16}
-                  color="currentColor"
-                  strokeWidth={1.5}
-                  className="text-primary"
-                />
-                <span>Advanced filtering and search</span>
-              </div>
-            </div>
+      <div className="flex flex-1 items-center justify-center px-4 py-16">
+        <div className="w-full max-w-sm flex flex-col gap-5">
 
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button variant="outline" className="flex-1" onClick={() => router.push('/new')}>
-                Back to Search
-              </Button>
-              <Button className="flex-1" onClick={() => router.push('/pricing')}>
-                <HugeiconsIcon icon={Crown02Icon} size={16} color="currentColor" strokeWidth={1.5} className="mr-2" />
-                Upgrade to Pro
-              </Button>
+          {/* Title block */}
+          <div className="flex flex-col gap-1.5">
+            <div className="inline-flex items-center gap-1.5 w-fit rounded-full border border-border/50 bg-muted/40 px-2.5 py-1">
+              <span className="font-pixel text-[9px] text-muted-foreground/70 tracking-wider uppercase">Pro feature</span>
             </div>
-          </CardContent>
-        </Card>
+            <h1 className="text-lg font-semibold tracking-tight text-foreground">Unlock XQL</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Query X (Twitter) posts using natural language and get structured results. Available for Pro users only.
+            </p>
+          </div>
+
+          {/* Features */}
+          <div className="rounded-xl border border-border/50 bg-card/30 divide-y divide-border/40">
+            {FEATURES.map(({ icon: Icon, label }) => (
+              <div key={label} className="flex items-center gap-3 px-4 py-3">
+                <div className="flex items-center justify-center size-7 rounded-md bg-primary/10 border border-primary/20 shrink-0">
+                  <Icon className="size-3.5 text-primary" aria-hidden />
+                </div>
+                <p className="text-sm text-foreground/80">{label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* CTAs */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => router.push("/new")}
+              className="flex-1 h-9 rounded-lg border border-border/50 bg-transparent text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+            >
+              Back to search
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/pricing")}
+              className="flex-1 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+            >
+              Upgrade to Pro
+            </button>
+          </div>
+
+        </div>
       </div>
     </div>
   );

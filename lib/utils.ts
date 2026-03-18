@@ -14,10 +14,28 @@ import {
   AppleStocksIcon,
   ConnectIcon,
   CodeCircleIcon,
+  Github01Icon,
+  SpotifyIcon,
+  Chart03Icon,
+  CanvasIcon,
 } from '@hugeicons/core-free-icons';
+import { AppsIcon } from '@/components/icons/apps-icon';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+export function normalizeError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err ?? '');
+  if (/websocket|ws connection|connection (closed|failed|lost)|1006|1011|1012/i.test(msg))
+    return 'Connection lost. Please check your internet and try again.';
+  if (/oauth|authoriz|token|forbidden|403/i.test(msg))
+    return 'Authorization failed. The app may have rejected the request.';
+  if (/timeout|timed? ?out/i.test(msg))
+    return 'This took too long. Please try again.';
+  if (/network|fetch failed|ECONNREFUSED|ENOTFOUND/i.test(msg))
+    return 'Could not connect. Please check your internet and try again.';
+  return 'Something went wrong. Please try again.';
 }
 
 export type SearchGroupId =
@@ -25,14 +43,19 @@ export type SearchGroupId =
   | 'x'
   | 'academic'
   | 'youtube'
+  | 'spotify'
   | 'reddit'
+  | 'github'
   | 'stocks'
   | 'chat'
   | 'extreme'
   | 'memory'
   | 'crypto'
   | 'code'
-  | 'connectors';
+  | 'connectors'
+  | 'mcp'
+  | 'prediction'
+  | 'canvas';
 
 // Search provider information for dynamic descriptions
 export const searchProviderInfo = {
@@ -91,6 +114,15 @@ export function getSearchGroups(searchProvider: SearchProvider = 'exa') {
       requirePro: true,
     },
     {
+      id: 'mcp' as const,
+      name: 'Apps',
+      description: 'Use tools from your connected apps',
+      icon: AppsIcon,
+      show: process.env.NEXT_PUBLIC_MCP_ENABLED === 'true',
+      requireAuth: true,
+      requirePro: true,
+    },
+    {
       id: 'code' as const,
       name: 'Code',
       description: 'Get context about languages and frameworks',
@@ -128,10 +160,24 @@ export function getSearchGroups(searchProvider: SearchProvider = 'exa') {
       show: true,
     },
     {
+      id: 'github' as const,
+      name: 'GitHub',
+      description: 'Search GitHub repositories, code, and discussions',
+      icon: Github01Icon,
+      show: true,
+    },
+    {
       id: 'crypto' as const,
       name: 'Crypto',
       description: 'Cryptocurrency research powered by CoinGecko',
       icon: Bitcoin02Icon,
+      show: true,
+    },
+    {
+      id: 'prediction' as const,
+      name: 'Prediction',
+      description: 'Search prediction markets from Polymarket and Kalshi',
+      icon: Chart03Icon,
       show: true,
     },
     {
@@ -140,6 +186,22 @@ export function getSearchGroups(searchProvider: SearchProvider = 'exa') {
       description: 'Search content inside YouTube videos, channels and playlists',
       icon: YoutubeIcon,
       show: true,
+    },
+    {
+      id: 'spotify' as const,
+      name: 'Spotify',
+      description: 'Search songs, artists, and albums on Spotify',
+      icon: SpotifyIcon,
+      show: true,
+    },
+    {
+      id: 'canvas' as const,
+      name: 'Canvas',
+      description: 'Research and generate interactive dashboards and visual reports',
+      icon: CanvasIcon,
+      show: true,
+      requireAuth: true,
+      requirePro: true,
     },
   ] as const;
 }

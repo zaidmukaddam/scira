@@ -47,8 +47,28 @@ export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcut
           context: 'Global',
         },
         {
+          keys: ['Ctrl', 'Shift', 'O'],
+          description: 'New chat',
+          context: 'Global (Windows/Linux)',
+        },
+        {
+          keys: ['⌘', 'Shift', 'U'],
+          description: 'New chat',
+          context: 'Global (Mac)',
+        },
+        {
           keys: ['⌘', 'B'],
           description: 'Toggle sidebar',
+          context: 'Global',
+        },
+        {
+          keys: ['⌘', 'U'],
+          description: 'Toggle Uploads',
+          context: 'Global',
+        },
+        {
+          keys: ['⌘', 'M'],
+          description: 'Toggle model switcher',
           context: 'Global',
         },
       ],
@@ -94,25 +114,24 @@ export function KeyboardShortcutsDialog({ open, onOpenChange }: KeyboardShortcut
           context: 'Chat Input',
         },
         {
+          keys: ['/'],
+          description: 'Switch search mode (Extreme agent, Apps, Canvas…)',
+          context: 'Chat Input',
+        },
+        {
+          keys: ['@'],
+          description: 'Search a specific source (Reddit, YouTube, X…)',
+          context: 'Chat Input',
+        },
+        {
+          keys: ['⌘', '⇧', 'J'],
+          description: 'Toggle unsaved chat (messages won\'t be saved)',
+          context: 'Chat Input',
+        },
+        {
           keys: ['Esc'],
           description: 'Close text selection popup',
           context: 'Text Selection',
-        },
-      ],
-    },
-    {
-      title: 'Promo Dialog Actions',
-      icon: <Globe className="h-4 w-4" />,
-      shortcuts: [
-        {
-          keys: ['⌘', '⏎'],
-          description: 'Go to Lookout',
-          context: 'Promo Dialog (when open)',
-        },
-        {
-          keys: ['⌘', 'B'],
-          description: 'Go to Blog',
-          context: 'Promo Dialog (when open)',
         },
       ],
     },

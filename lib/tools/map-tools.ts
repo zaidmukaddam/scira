@@ -1,6 +1,8 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { serverEnv } from '@/env/server';
+import { all } from 'better-all';
+import { getBetterAllOptions } from '@/lib/better-all';
 
 interface GoogleResult {
   place_id: string;
@@ -194,8 +196,8 @@ export const nearbyPlacesSearchTool = tool({
         };
       }
 
-      const detailedPlaces = await Promise.all(
-        data.results.slice(0, 20).map(async (place: any) => {
+      const placesSlice = data.results.slice(0, 20);
+      const placePromises: Array<Promise<any>> = placesSlice.map(async (place: any) => {
           try {
             const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${place.place_id}&fields=name,formatted_address,formatted_phone_number,website,rating,reviews,opening_hours,photos,price_level,types&key=${googleApiKey}`;
             const detailsResponse = await fetch(detailsUrl);
@@ -309,10 +311,14 @@ export const nearbyPlacesSearchTool = tool({
               source: 'google_places',
             };
           }
-        }),
+        });
+      const placeMap = await all(
+        Object.fromEntries(placePromises.map((promise: Promise<any>, index: number) => [`p:${index}`, async () => promise])),
+        getBetterAllOptions(),
       );
+      const detailedPlaces = placesSlice.map((_: any, index: number) => placeMap[`p:${index}`]);
 
-      const sortedPlaces = detailedPlaces.sort((a, b) => (a.distance || 0) - (b.distance || 0));
+      const sortedPlaces = detailedPlaces.sort((a: any, b: any) => (a.distance || 0) - (b.distance || 0));
 
       return {
         success: true,

@@ -2,36 +2,83 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getUserPreferences, saveUserPreferences } from '@/app/actions';
 import { useUser } from '@/contexts/user-context';
 
 type PreferenceKey =
   | 'scira-search-provider'
-  | 'scira-extreme-search-provider'
+  | 'scira-extreme-search-model'
   | 'scira-group-order'
   | 'scira-model-order-global'
   | 'scira-blur-personal-info'
   | 'scira-custom-instructions-enabled'
-  | 'scira-location-metadata-enabled';
+  | 'scira-scroll-to-latest-on-open'
+  | 'scira-location-metadata-enabled'
+  | 'scira-auto-router-enabled'
+  | 'scira-auto-router-config'
+  | 'scira-preferred-models'
+  | 'scira-visible-modes';
 
-type PreferenceValue = string | string[] | boolean | undefined;
+type AutoRouterConfig = {
+  routes: Array<{
+    name: string;
+    description: string;
+    model: string;
+  }>;
+};
+
+type PreferenceValue = string | string[] | boolean | AutoRouterConfig | undefined;
 
 const DEBOUNCE_MS = 300; // Debounce DB writes by 300ms
 const MIGRATION_KEY_PREFIX = 'scira-prefs-migrated-';
+
+interface UserPreferencesRecord {
+  preferences?: Partial<Record<PreferenceKey, PreferenceValue>>;
+}
+
+async function fetchUserPreferences(): Promise<UserPreferencesRecord | null> {
+  const response = await fetch('/api/preferences', {
+    method: 'GET',
+    cache: 'no-store',
+    credentials: 'include',
+  });
+
+  if (response.status === 401) return null;
+  if (!response.ok) throw new Error('Failed to fetch user preferences');
+
+  return response.json();
+}
+
+async function persistUserPreferences(
+  preferences: Partial<Record<PreferenceKey, PreferenceValue>>,
+): Promise<void> {
+  const response = await fetch('/api/preferences', {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ preferences }),
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    throw new Error(payload?.error || 'Failed to save user preferences');
+  }
+}
 
 // Get the initial value from localStorage synchronously
 function getStoredValue<T>(key: string, defaultValue: T): T {
   if (typeof window === 'undefined') return defaultValue;
 
+  const item = localStorage.getItem(key);
+  if (!item) return defaultValue;
+
+  if (item === 'undefined') return defaultValue;
+
   try {
-    const item = localStorage.getItem(key);
-    if (!item) return defaultValue;
-
-    if (item === 'undefined') return defaultValue;
-
     return JSON.parse(item);
   } catch {
-    return defaultValue;
+    return item as unknown as T;
   }
 }
 
@@ -55,12 +102,17 @@ function collectLocalStoragePreferences(): Partial<Record<PreferenceKey, Prefere
 
   const keys: PreferenceKey[] = [
     'scira-search-provider',
-    'scira-extreme-search-provider',
+    'scira-extreme-search-model',
     'scira-group-order',
     'scira-model-order-global',
     'scira-blur-personal-info',
     'scira-custom-instructions-enabled',
+    'scira-scroll-to-latest-on-open',
     'scira-location-metadata-enabled',
+    'scira-auto-router-enabled',
+    'scira-auto-router-config',
+    'scira-preferred-models',
+    'scira-visible-modes',
   ];
 
   keys.forEach((key) => {
@@ -94,10 +146,11 @@ export function useSyncedPreferences<T extends PreferenceValue>(
   // Fetch preferences from DB
   const { data: dbPreferences } = useQuery({
     queryKey: ['userPreferences', user?.id],
-    queryFn: () => getUserPreferences(user),
+    queryFn: fetchUserPreferences,
     enabled: !!user,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   // Migrate localStorage to DB on first load
@@ -111,7 +164,7 @@ export function useSyncedPreferences<T extends PreferenceValue>(
     }
 
     // Migrate to DB
-    saveUserPreferences(localPrefs as any)
+    persistUserPreferences(localPrefs)
       .then(() => {
         markPreferencesMigrated(user.id);
         queryClient.invalidateQueries({ queryKey: ['userPreferences', user.id] });
@@ -219,7 +272,7 @@ export function useSyncedPreferences<T extends PreferenceValue>(
         }
 
         // Send only the changes - the server will handle merging
-        saveUserPreferences(toSave as any)
+        persistUserPreferences(toSave)
           .then(() => {
             // Clear pending save flag after successful save
             pendingSaveRef.current = false;

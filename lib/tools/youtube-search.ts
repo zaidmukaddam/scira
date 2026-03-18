@@ -1,8 +1,9 @@
-import { Supadata } from '@supadata/js';
+import { Supadata, type TranscriptChunk } from '@supadata/js';
 import { tool } from 'ai';
 import { z } from 'zod';
 import { serverEnv } from '@/env/server';
-import { getSubtitles, getVideoDetails } from 'youtube-caption-extractor';
+import { allSettled } from 'better-all';
+import { getBetterAllOptions } from '@/lib/better-all';
 
 interface VideoDetails {
   title?: string;
@@ -27,6 +28,7 @@ interface VideoResult {
   url: string;
   details?: VideoDetails;
   captions?: string;
+  transcriptChunks?: TranscriptChunk[];
   timestamps?: string[];
   views?: number | string;
   likes?: number | string;
@@ -35,12 +37,6 @@ interface VideoResult {
   durationSeconds?: number;
   stats?: VideoStats;
   tags?: string[];
-}
-
-interface SubtitleFragment {
-  start: string; // seconds as string from API
-  dur: string; // seconds as string from API
-  text: string;
 }
 
 type TimeRange = 'day' | 'week' | 'month' | 'year' | 'anytime';
@@ -66,7 +62,6 @@ interface SupadataYouTubeVideo {
   url?: string;
 }
 
-const BATCH_SIZE = 4;
 const SEARCH_LIMIT = 12;
 const YOUTUBE_BASE_URL = 'https://www.youtube.com/watch?v=';
 const searchModeEnum = z.enum(['general', 'channel', 'playlist']);
@@ -82,14 +77,6 @@ const timeRangeToUploadDate: Record<Exclude<TimeRange, 'anytime'>, 'hour' | 'tod
 };
 
 const chapterRegex = /^\s*((?:\d+:)?\d{1,2}:\d{2})\s*[-–—]?\s*(.+)$/i;
-
-function chunkArray<T>(items: T[], chunkSize: number): T[][] {
-  const chunks: T[][] = [];
-  for (let i = 0; i < items.length; i += chunkSize) {
-    chunks.push(items.slice(i, i + chunkSize));
-  }
-  return chunks;
-}
 
 function dedupeVideos(videos: SupadataYouTubeVideo[]) {
   const seen = new Set<string>();
@@ -118,19 +105,16 @@ function extractChaptersFromDescription(description?: string): string[] | undefi
   return chapters.length > 0 ? chapters : undefined;
 }
 
-function generateChaptersFromSubtitles(
-  subs: SubtitleFragment[] | undefined,
+function generateChaptersFromTranscriptChunks(
+  chunks: TranscriptChunk[] | undefined,
   targetCount: number = 30,
 ): string[] | undefined {
-  if (!subs || subs.length === 0) return undefined;
+  if (!chunks || chunks.length === 0) return undefined;
 
-  const parseSeconds = (s: string) => {
-    const n = Number(s);
-    return Number.isFinite(n) ? n : 0;
-  };
-
-  const last = subs[subs.length - 1];
-  const totalDurationSec = Math.max(0, parseSeconds(last.start) + parseSeconds(last.dur));
+  const last = chunks[chunks.length - 1];
+  // Supadata returns offset/duration in milliseconds
+  const totalDurationMs = Math.max(0, last.offset + last.duration);
+  const totalDurationSec = totalDurationMs / 1000;
   if (totalDurationSec <= 1) return undefined;
 
   const interval = Math.max(10, Math.floor(totalDurationSec / targetCount));
@@ -147,11 +131,13 @@ function generateChaptersFromSubtitles(
   const chapters: string[] = [];
   const usedTimes = new Set<number>();
   for (let t = interval; t < totalDurationSec; t += interval) {
-    const idx = subs.findIndex((sf) => parseSeconds(sf.start) >= t);
-    const chosen = idx >= 0 ? subs[idx] : subs[subs.length - 1];
+    // Convert target time to milliseconds for comparison
+    const targetMs = t * 1000;
+    const idx = chunks.findIndex((chunk) => chunk.offset >= targetMs);
+    const chosen = idx >= 0 ? chunks[idx] : chunks[chunks.length - 1];
     const text = chosen.text?.replace(/\s+/g, ' ').trim();
     if (!text) continue;
-    const key = Math.floor(parseSeconds(chosen.start));
+    const key = Math.floor(chosen.offset / 1000);
     if (usedTimes.has(key)) continue;
     usedTimes.add(key);
     chapters.push(`${formatTime(key)} - ${text}`);
@@ -161,35 +147,107 @@ function generateChaptersFromSubtitles(
   return chapters.length > 0 ? chapters : undefined;
 }
 
-async function buildTranscriptArtifacts(videoId: string, fallbackDescription?: string) {
-  const details = await getVideoDetails({ videoID: videoId, lang: 'en' }).catch((error: unknown) => {
-    console.warn(`⚠️ getVideoDetails failed for ${videoId}:`, error);
-    return null;
-  });
+async function buildTranscriptArtifacts(supadata: Supadata, videoUrl: string, fallbackDescription?: string) {
+  // Check for chapters in description first - skip transcript if we have them
+  const timestampsFromDescription = extractChaptersFromDescription(fallbackDescription);
 
-  let subtitleSource: SubtitleFragment[] | undefined =
-    Array.isArray(details?.subtitles) && details!.subtitles.length > 0
-      ? (details!.subtitles as SubtitleFragment[])
-      : undefined;
+  const maxRetries = 2;
+  const retryDelay = 1000; // 1 second
 
-  if (!subtitleSource) {
-    subtitleSource = (await getSubtitles({ videoID: videoId, lang: 'en' }).catch((error: unknown) => {
-      console.warn(`⚠️ getSubtitles failed for ${videoId}:`, error);
-      return null;
-    })) as SubtitleFragment[] | undefined;
+  for (let retry = 0; retry < maxRetries; retry++) {
+    try {
+      // Use 'native' mode - faster, only fetches existing transcripts (no AI generation)
+      const transcriptResult = await supadata.transcript({
+        url: videoUrl,
+        lang: 'en',
+        text: false, // Get timestamped chunks
+        mode: 'native', // Only fetch existing transcripts - fast
+      });
+
+      // Check if we got a jobId (async processing) vs immediate result
+      if ('jobId' in transcriptResult) {
+        // For async jobs, poll with shorter intervals
+        let attempts = 0;
+        const maxAttempts = 5;
+        const pollInterval = 1500; // 1.5 seconds
+
+        while (attempts < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, pollInterval));
+          const jobResult = await supadata.transcript.getJobStatus(transcriptResult.jobId);
+
+          if (jobResult.status === 'completed' && jobResult.result) {
+            const content = jobResult.result.content;
+            const chunks = Array.isArray(content) ? content : undefined;
+            const transcriptText = chunks ? chunks.map((c) => c.text).join('\n') : typeof content === 'string' ? content : undefined;
+
+            return {
+              transcriptText,
+              timestamps: timestampsFromDescription ?? generateChaptersFromTranscriptChunks(chunks),
+              description: fallbackDescription,
+              transcriptChunks: chunks,
+            };
+          } else if (jobResult.status === 'failed') {
+            break; // Don't retry failed jobs
+          }
+          attempts++;
+        }
+
+        // Job didn't complete in time - return with description chapters only
+        return {
+          transcriptText: undefined,
+          timestamps: timestampsFromDescription,
+          description: fallbackDescription,
+          transcriptChunks: undefined,
+        };
+      }
+
+      // Immediate result
+      const content = transcriptResult.content;
+      const chunks = Array.isArray(content) ? content : undefined;
+      const transcriptText = chunks ? chunks.map((c) => c.text).join('\n') : typeof content === 'string' ? content : undefined;
+
+      return {
+        transcriptText,
+        timestamps: timestampsFromDescription ?? generateChaptersFromTranscriptChunks(chunks),
+        description: fallbackDescription,
+        transcriptChunks: chunks,
+      };
+    } catch (error) {
+      // Only retry on network errors, not on "transcript unavailable"
+      const isRetryable = error instanceof Error && !error.message.includes('unavailable');
+      if (isRetryable && retry < maxRetries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        continue;
+      }
+    }
   }
 
-  const transcriptText = subtitleSource?.map((s) => s.text).join('\n');
-
-  const timestampsFromDescription = extractChaptersFromDescription(details?.description ?? fallbackDescription);
-  const timestamps = timestampsFromDescription ?? generateChaptersFromSubtitles(subtitleSource);
-
+  // Return with description chapters only
   return {
-    transcriptText,
-    timestamps,
-    description: details?.description ?? fallbackDescription,
-    subtitles: subtitleSource,
+    transcriptText: undefined,
+    timestamps: timestampsFromDescription,
+    description: fallbackDescription,
+    transcriptChunks: undefined,
   };
+}
+
+async function fetchMetadataWithRetry(supadata: Supadata, videoUrl: string, videoId: string) {
+  const maxRetries = 2;
+  const retryDelay = 1000; // 1 second
+
+  for (let retry = 0; retry < maxRetries; retry++) {
+    try {
+      const metadata = await supadata.metadata({ url: videoUrl });
+      return metadata;
+    } catch (error) {
+      if (retry < maxRetries - 1) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelay));
+        continue;
+      }
+      console.warn(`⚠️ Supadata metadata failed for ${videoId}:`, error);
+    }
+  }
+  return null;
 }
 
 function mapTimeRangeToSupadata(timeRange: TimeRange) {
@@ -354,23 +412,23 @@ async function getVideosForMode({
   const normalizedIds =
     mode === 'channel'
       ? await (async () => {
-          // First, try to resolve the channel identifier from the query
-          const resolvedId = await resolveChannelIdFromQuery(supadata, query);
-          const channelIdentifier = resolvedId || query;
+        // First, try to resolve the channel identifier from the query
+        const resolvedId = await resolveChannelIdFromQuery(supadata, query);
+        const channelIdentifier = resolvedId || query;
 
-          // Now fetch videos using the resolved identifier
-          const ids = await fetchChannelVideos(channelIdentifier);
-          return ids;
-        })()
+        // Now fetch videos using the resolved identifier
+        const ids = await fetchChannelVideos(channelIdentifier);
+        return ids;
+      })()
       : await (async () => {
-          const preExtractedId = extractPlaylistId(query);
-          const directIds = await fetchPlaylistVideos(preExtractedId ?? query);
-          if (directIds.length > 0) return directIds;
+        const preExtractedId = extractPlaylistId(query);
+        const directIds = await fetchPlaylistVideos(preExtractedId ?? query);
+        if (directIds.length > 0) return directIds;
 
-          const resolvedId = await resolvePlaylistIdFromQuery(supadata, query);
-          if (!resolvedId) return directIds;
-          return fetchPlaylistVideos(resolvedId);
-        })();
+        const resolvedId = await resolvePlaylistIdFromQuery(supadata, query);
+        if (!resolvedId) return directIds;
+        return fetchPlaylistVideos(resolvedId);
+      })();
 
   if (normalizedIds.length === 0) {
     console.warn(`⚠️ No video IDs resolved for mode="${mode}". Falling back to general search.`);
@@ -383,6 +441,62 @@ async function getVideosForMode({
   }
 
   const uniqueIds = Array.from(new Set(normalizedIds)).slice(0, SEARCH_LIMIT);
+
+  // Fetch video metadata in parallel for channel/playlist videos
+  try {
+    const metadataResults = await allSettled(
+      Object.fromEntries(
+        uniqueIds.map((id) => [
+          id,
+          async () => {
+            const url = `${YOUTUBE_BASE_URL}${id}`;
+            const metadata = await supadata.metadata({ url });
+            return { id, metadata };
+          },
+        ]),
+      ),
+      getBetterAllOptions(),
+    );
+
+    const videosWithMetadata = Object.values(metadataResults)
+      .filter((r) => r.status === 'fulfilled' && r.value?.metadata)
+      .map((r) => {
+        const { id, metadata } = (r as PromiseFulfilledResult<{ id: string; metadata: any }>).value;
+        const media = metadata.media as { duration?: number; thumbnailUrl?: string } | undefined;
+        return {
+          id,
+          type: 'video' as const,
+          title: metadata.title ?? undefined,
+          description: metadata.description ?? undefined,
+          thumbnail: media?.thumbnailUrl,
+          duration: media?.duration,
+          viewCount: metadata.stats?.views ?? undefined,
+          uploadDate: metadata.createdAt,
+          channel: metadata.author ? {
+            id: metadata.author.username,
+            name: metadata.author.displayName,
+            thumbnail: metadata.author.avatarUrl,
+          } : undefined,
+          tags: metadata.tags,
+          url: `${YOUTUBE_BASE_URL}${id}`,
+        } as SupadataYouTubeVideo;
+      })
+      // Sort by date (newest first)
+      .sort((a, b) => {
+        if (!a.uploadDate && !b.uploadDate) return 0;
+        if (!a.uploadDate) return 1;
+        if (!b.uploadDate) return -1;
+        return new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime();
+      });
+
+    if (videosWithMetadata.length > 0) {
+      return videosWithMetadata;
+    }
+  } catch (error) {
+    console.warn('⚠️ Parallel metadata fetch error, falling back to IDs only:', error);
+  }
+
+  // Fallback: return minimal video objects
   return uniqueIds.map((id) => ({
     id,
     type: 'video',
@@ -431,103 +545,114 @@ export const youtubeSearchTool = tool({
 
       console.log(`🎥 Resolved ${videoResults.length} video candidates for mode="${mode}"`);
 
-      const batches = chunkArray(videoResults, BATCH_SIZE);
-      const processedResults: VideoResult[] = [];
+      // Process all videos in parallel
+      const taskMap = await allSettled(
+        Object.fromEntries(
+          videoResults.map((video) => {
+            // Cast to access optional properties from SupadataYouTubeVideo
+            const v = video as SupadataYouTubeVideo;
+            return [
+              `v:${video.id}`,
+              async () => {
+                const videoId = video.id;
+                if (!videoId) {
+                  console.warn('⚠️ Video missing ID from Supadata result, skipping');
+                  return null;
+                }
 
-      for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-        const batch = batches[batchIndex];
-        try {
-          const batchResults = await Promise.allSettled(
-            batch.map(async (video): Promise<VideoResult | null> => {
-              const videoId = video.id;
-              if (!videoId) {
-                console.warn('⚠️ Video missing ID from Supadata result, skipping');
-                return null;
-              }
+                const videoUrl = `${YOUTUBE_BASE_URL}${videoId}`;
 
-              const videoUrl = `${YOUTUBE_BASE_URL}${videoId}`;
+                // Check if we have enough data from search results to skip metadata
+                const hasBasicData = v.title && v.thumbnail;
 
-              const baseResult: VideoResult = {
-                videoId,
-                url: video.url ?? videoUrl,
-                publishedDate: video.uploadDate,
-              };
+                try {
+                  // Only fetch transcript - metadata is often redundant with search data
+                  const transcripts = await buildTranscriptArtifacts(supadata, video.url ?? videoUrl, v.description);
 
-              try {
-                const [transcripts, metadata] = await Promise.all([
-                  buildTranscriptArtifacts(videoId, video.description),
-                  supadata.metadata({ url: video.url ?? videoUrl }).catch((error: unknown) => {
-                    console.warn(`⚠️ Supadata metadata failed for ${videoId}:`, error);
-                    return null;
-                  }),
-                ]);
+                  // Only fetch metadata if we don't have basic data from search
+                  const metadata = hasBasicData ? null : await fetchMetadataWithRetry(supadata, video.url ?? videoUrl, videoId);
 
-                const metadataAuthor = metadata?.author;
-                const metadataStats = metadata?.stats;
-                const metadataMedia = metadata?.media as { duration?: number; thumbnailUrl?: string } | undefined;
+                  const metadataAuthor = metadata?.author;
+                  const metadataStats = metadata?.stats;
+                  const metadataMedia = metadata?.media as { duration?: number; thumbnailUrl?: string } | undefined;
 
-                const stats: VideoStats | undefined =
-                  metadataStats != null || video.viewCount != null
-                    ? {
-                        views: resolveNumber(metadataStats?.views ?? video.viewCount),
+                  const stats: VideoStats | undefined =
+                    metadataStats != null || v.viewCount != null
+                      ? {
+                        views: resolveNumber(metadataStats?.views ?? v.viewCount),
                         likes: resolveNumber(metadataStats?.likes),
                         comments: resolveNumber(metadataStats?.comments),
                         shares: resolveNumber(metadataStats?.shares),
                       }
-                    : undefined;
+                      : undefined;
 
-                const processedVideo: VideoResult = {
-                  ...baseResult,
-                  details: {
-                    title: metadata?.title ?? video.title,
-                    author_name: metadataAuthor?.displayName ?? video.channel?.name,
-                    author_url:
-                      metadataAuthor?.username
-                        ? `https://www.youtube.com/@${metadataAuthor.username}`
-                        : video.channel?.id
-                          ? `https://www.youtube.com/channel/${video.channel.id}`
-                          : video.channel?.url,
-                    thumbnail_url:
-                      metadataMedia?.thumbnailUrl ??
-                      video.thumbnail ??
-                      `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
-                    provider_name: 'YouTube',
-                    provider_url: 'https://www.youtube.com',
-                    author_avatar_url: metadataAuthor?.avatarUrl ?? video.channel?.thumbnail,
-                  },
-                  captions: transcripts.transcriptText,
-                  timestamps: transcripts.timestamps,
-                  summary: metadata?.description ?? video.description,
-                  publishedDate: metadata?.createdAt ?? video.uploadDate,
-                  durationSeconds: metadataMedia?.duration ?? video.duration,
-                  stats,
-                  tags: metadata?.tags ?? video.tags,
-                };
+                  const processedVideo: VideoResult = {
+                    videoId,
+                    url: video.url ?? videoUrl,
+                    details: {
+                      title: v.title ?? metadata?.title ?? undefined,
+                      author_name: v.channel?.name ?? metadataAuthor?.displayName,
+                      author_url: v.channel?.id
+                        ? `https://www.youtube.com/channel/${v.channel.id}`
+                        : v.channel?.url ?? (metadataAuthor?.username ? `https://www.youtube.com/@${metadataAuthor.username}` : undefined),
+                      thumbnail_url: v.thumbnail ?? metadataMedia?.thumbnailUrl ?? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+                      provider_name: 'YouTube',
+                      provider_url: 'https://www.youtube.com',
+                      author_avatar_url: v.channel?.thumbnail ?? metadataAuthor?.avatarUrl,
+                    },
+                    captions: transcripts.transcriptText,
+                    transcriptChunks: transcripts.transcriptChunks,
+                    timestamps: transcripts.timestamps,
+                    summary: v.description ?? metadata?.description ?? undefined,
+                    publishedDate: v.uploadDate ?? metadata?.createdAt,
+                    durationSeconds: v.duration ?? metadataMedia?.duration,
+                    stats,
+                    tags: v.tags ?? metadata?.tags,
+                  };
 
-                if (processedVideo.stats?.views != null) {
-                  processedVideo.views = processedVideo.stats.views;
+                  if (processedVideo.stats?.views != null) {
+                    processedVideo.views = processedVideo.stats.views;
+                  }
+                  if (processedVideo.stats?.likes != null) {
+                    processedVideo.likes = processedVideo.stats.likes;
+                  }
+
+                  return processedVideo;
+                } catch (error) {
+                  console.warn(`⚠️ Error processing video ${videoId}:`, error);
+                  // Return basic result with available data
+                  return {
+                    videoId,
+                    url: video.url ?? videoUrl,
+                    details: {
+                      title: v.title,
+                      author_name: v.channel?.name,
+                      thumbnail_url: v.thumbnail ?? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+                      provider_name: 'YouTube',
+                      provider_url: 'https://www.youtube.com',
+                    },
+                    publishedDate: v.uploadDate,
+                    durationSeconds: v.duration,
+                    stats: v.viewCount ? { views: v.viewCount } : undefined,
+                  } as VideoResult;
                 }
-                if (processedVideo.stats?.likes != null) {
-                  processedVideo.likes = processedVideo.stats.likes;
-                }
+              },
+            ];
+          }),
+        ),
+        getBetterAllOptions(),
+      );
 
-                return processedVideo;
-              } catch (error) {
-                console.warn(`⚠️ Error processing video ${videoId}:`, error);
-                return baseResult;
-              }
-            }),
-          );
-
-          const validBatchResults = batchResults
-            .filter((result) => result.status === 'fulfilled' && result.value !== null)
-            .map((result) => (result as PromiseFulfilledResult<VideoResult>).value);
-
-          processedResults.push(...validBatchResults);
-        } catch (batchError) {
-          console.error(`💥 Batch ${batchIndex + 1} failed:`, batchError);
-        }
-      }
+      const processedResults = Object.values(taskMap)
+        .filter((result) => result.status === 'fulfilled' && result.value !== null)
+        .map((result) => (result as PromiseFulfilledResult<VideoResult>).value)
+        // Sort by date (newest first) - important for channel/playlist mode
+        .sort((a, b) => {
+          if (!a.publishedDate && !b.publishedDate) return 0;
+          if (!a.publishedDate) return 1;
+          if (!b.publishedDate) return -1;
+          return new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime();
+        });
 
       console.log(`🏁 Supadata processing completed with ${processedResults.length} enriched videos`);
 

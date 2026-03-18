@@ -7,7 +7,6 @@ import { Spinner } from '@/components/ui/spinner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { RedditLogoIcon } from '@phosphor-icons/react';
-import Image from 'next/image';
 import { CustomUIDataTypes, DataQueryCompletionPart } from '@/lib/types';
 import type { DataUIPart } from 'ai';
 
@@ -54,8 +53,8 @@ const Icons = {
 };
 
 type RedditResult = {
-  url: string;
-  title: string;
+  url: string | undefined;
+  title: string | undefined;
   content: string;
   published_date?: string;
   subreddit: string;
@@ -78,12 +77,11 @@ type RedditSearchArgs = {
   maxResults?: (number | undefined)[] | number | null;
 };
 
-// Reddit Source Card Component - Minimal Premium Design
+// Reddit Source Card Component
 const RedditSourceCard: React.FC<{
   result: RedditResult;
   onClick?: () => void;
 }> = ({ result, onClick }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
   const formatSubreddit = (subreddit: string) => {
     return subreddit.replace(/^r\//, '').toLowerCase();
   };
@@ -95,67 +93,38 @@ const RedditSourceCard: React.FC<{
     <div
       className={cn(
         'group relative',
-        'border-b border-border',
-        'py-2.5 px-3 transition-all duration-150',
-        'hover:bg-accent/50',
+        'px-3.5 py-2 transition-colors',
+        'hover:bg-muted/10',
         onClick && 'cursor-pointer',
       )}
       onClick={onClick}
     >
-      <div className="flex items-start gap-2.5">
-        {/* Reddit Icon */}
-        <div className="relative w-4 h-4 mt-0.5 flex items-center justify-center shrink-0 rounded-full overflow-hidden bg-orange-50 dark:bg-orange-900/20">
-          {!imageLoaded && <div className="absolute inset-0 animate-pulse" />}
-          <Image
-            src={`https://www.reddit.com/favicon.ico`}
-            alt=""
-            width={16}
-            height={16}
-            className={cn('object-contain opacity-60', !imageLoaded && 'opacity-0')}
-            onLoad={() => setImageLoaded(true)}
-            onError={(e) => {
-              setImageLoaded(true);
-              e.currentTarget.src =
-                "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23FF4500'%3E%3Cpath d='M10 0C4.478 0 0 4.478 0 10c0 5.523 4.478 10 10 10 5.523 0 10-4.477 10-10 0-5.522-4.477-10-10-10zm5.7 11.1c.1.1.1.1.1.2s0 .1-.1.2c-.599.901-1.899 1.4-3.6 1.4-1.3 0-2.5-.3-3.4-.9-.1-.1-.3-.1-.5-.2-.1 0-.1 0-.1-.1s-.1-.1-.1-.1c-.1-.1-.1-.1-.1-.2s0-.1.1-.2c.1-.1.2-.1.3-.1h.1c.9.5 2 .8 3.2.8 1.3 0 2.4-.3 3.3-.9h.1c.102-.1.202-.1.302-.1.099 0 .198 0 .298.1zm-9.6-2.3c0-.9.7-1.6 1.6-1.6.9 0 1.6.7 1.6 1.6 0 .9-.7 1.6-1.6 1.6-.9 0-1.6-.7-1.6-1.6zm6.8 0c0-.9.7-1.6 1.6-1.6.9 0 1.6.7 1.6 1.6 0 .9-.7 1.6-1.6 1.6-.9 0-1.6-.7-1.6-1.6z'/%3E%3C/svg%3E";
-            }}
-          />
-        </div>
+      <div className="flex items-center gap-2.5">
+        <RedditLogoIcon className="w-3.5 h-3.5 text-orange-500/70 shrink-0" />
 
-        <div className="flex-1 min-w-0 space-y-1">
-          {/* Title and Subreddit */}
-          <div className="flex items-baseline gap-1.5">
-            <h3 className="font-medium text-[13px] text-foreground line-clamp-1 flex-1">{result.title}</h3>
-            <Icons.ExternalLink className="w-3 h-3 shrink-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="text-xs font-medium text-foreground line-clamp-1 flex-1">{result.title}</h3>
+            <Icons.ArrowUpRight className="w-2.5 h-2.5 shrink-0 text-muted-foreground/40 opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
-
-          {/* Metadata */}
-          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <span className="px-1.5 py-0.5 rounded-sm bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 font-medium">
-              r/{subreddit}
-            </span>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="font-pixel text-[8px] text-orange-600 dark:text-orange-400 uppercase tracking-wider">r/{subreddit}</span>
             {result.score !== undefined && (
               <>
-                <span>·</span>
-                <Icons.ThumbsUp className="w-2.5 h-2.5" />
-                <span>{formattedScore}</span>
+                <span className="text-muted-foreground/30 text-[10px]">·</span>
+                <span className="text-[10px] text-muted-foreground/60 tabular-nums">{formattedScore}</span>
               </>
             )}
             {result.published_date && (
               <>
-                <span>·</span>
-                <Icons.Calendar className="w-2.5 h-2.5" />
-                <span>
-                  {new Date(result.published_date).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                  })}
+                <span className="text-muted-foreground/30 text-[10px]">·</span>
+                <span className="text-[10px] text-muted-foreground/50 tabular-nums">
+                  {new Date(result.published_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </span>
               </>
             )}
           </div>
-
-          {/* Content */}
-          <p className="text-[12px] text-muted-foreground line-clamp-2 leading-relaxed">
+          <p className="text-[10px] text-muted-foreground/50 line-clamp-1 mt-0.5 leading-relaxed">
             {result.content.length > 150 ? result.content.substring(0, 150) + '...' : result.content}
           </p>
         </div>
@@ -181,12 +150,10 @@ const RedditSourcesSheet: React.FC<{
       <SheetContentWrapper className={cn(isMobile ? 'h-[85vh]' : 'w-[580px] sm:max-w-[580px]', 'p-0')}>
         <div className="flex flex-col h-full bg-background">
           {/* Header */}
-          <div className="px-5 py-4 border-b border-border">
+          <div className="px-5 py-4 border-b border-border/40">
             <div className="flex items-center gap-2 mb-0.5">
-              <div className="p-1.5 rounded-md bg-orange-50 dark:bg-orange-900/20">
-                <RedditLogoIcon className="h-3.5 w-3.5 text-orange-500" />
-              </div>
-              <h2 className="text-base font-semibold text-foreground">Reddit Results</h2>
+              <RedditLogoIcon className="h-3.5 w-3.5 text-orange-500" />
+              <span className="font-pixel text-xs text-muted-foreground/80 uppercase tracking-wider">Reddit</span>
             </div>
             <p className="text-xs text-muted-foreground">
               {totalResults} from {searches.length} {searches.length === 1 ? 'query' : 'queries'}
@@ -196,22 +163,22 @@ const RedditSourcesSheet: React.FC<{
           {/* Content */}
           <div className="flex-1 overflow-y-auto">
             {searches.map((search, searchIndex) => (
-              <div key={searchIndex} className="border-b border-border last:border-0">
-                <div className="px-5 py-2.5 bg-muted/40 border-b border-border/60">
-                  <div className="flex items-center gap-2">
+              <div key={searchIndex} className="border-b border-border/30 last:border-0">
+                <div className="px-5 py-2 bg-muted/20 border-b border-border/30">
+                  <div className="flex items-center justify-between">
                     <span className="text-xs font-medium text-foreground">{search.query}</span>
-                    <span className="text-[10px] text-muted-foreground">{search.results.length}</span>
+                    <span className="text-[10px] text-muted-foreground/60 tabular-nums">{search.results.length}</span>
                   </div>
                 </div>
 
-                <div>
+                <div className="divide-y divide-border/20">
                   {search.results.map((result, resultIndex) => (
                     <a
                       key={resultIndex}
                       href={result.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block last:border-0"
+                      className="block"
                     >
                       <RedditSourceCard result={result} />
                     </a>
@@ -254,34 +221,31 @@ const SearchLoadingState: React.FC<{ queries: string[]; annotations: DataUIPart<
 
   return (
     <div className="w-full my-3">
-      <div className="border border-border rounded-lg overflow-hidden bg-card">
-        {/* Header */}
+      <div className="rounded-xl border border-border/60 overflow-hidden bg-card/30">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-accent/50 transition-colors"
+          className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted/20 transition-colors"
         >
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-md bg-orange-50 dark:bg-orange-900/20">
-              <RedditLogoIcon className="h-3.5 w-3.5 text-orange-500" />
-            </div>
-            <span className="text-sm font-medium text-foreground">Reddit</span>
-            <span className="text-[11px] text-muted-foreground">{totalResults || 0} posts</span>
+          <div className="flex items-center gap-2">
+            <RedditLogoIcon className="h-3.5 w-3.5 text-orange-500" />
+            <span className="font-pixel text-xs text-muted-foreground/80 uppercase tracking-wider">Reddit</span>
           </div>
-          <Icons.ChevronDown
-            className={cn(
-              'h-3.5 w-3.5 text-muted-foreground transition-transform duration-200',
-              isExpanded && 'rotate-180',
-            )}
-          />
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground/60 tabular-nums">{totalResults || 0}</span>
+            <Icons.ChevronDown
+              className={cn(
+                'h-3 w-3 text-muted-foreground/60 transition-transform duration-200',
+                isExpanded && 'rotate-180',
+              )}
+            />
+          </div>
         </button>
 
-        {/* Loading Content */}
         {isExpanded && (
-          <div className="px-3 pb-3 space-y-2.5 border-t border-border">
-            {/* Query badges */}
+          <div className="border-t border-border/40">
             <div
               ref={loadingQueryTagsRef}
-              className="flex gap-1.5 overflow-x-auto no-scrollbar pt-2.5"
+              className="px-3.5 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-border/30"
               onWheel={handleWheelScroll}
             >
               {queries.length ? (
@@ -290,48 +254,29 @@ const SearchLoadingState: React.FC<{ queries: string[]; annotations: DataUIPart<
                   const annotation = annotations.find((a) => a.data.query === query);
                   const resultsCount = annotation?.data.resultsCount || 0;
                   return (
-                    <span
-                      key={i}
-                      className={cn(
-                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] shrink-0 border',
-                        isCompleted
-                          ? 'bg-muted border-border text-foreground'
-                          : 'bg-card border-border/60 text-muted-foreground',
-                      )}
-                    >
-                      {isCompleted ? (
-                        <Icons.Check className="w-2.5 h-2.5" />
-                      ) : (
-                        <Spinner className="w-2.5 h-2.5" />
-                      )}
-                      <span className="font-medium">{query}</span>
-                      {resultsCount > 0 && (
-                        <span className="text-[10px] opacity-70">({resultsCount})</span>
-                      )}
+                    <span key={i} className="inline-flex items-center gap-1.5 text-[10px] shrink-0">
+                      {isCompleted ? <Icons.Check className="w-2.5 h-2.5 text-muted-foreground" /> : <Spinner className="w-2.5 h-2.5" />}
+                      <span className={cn('font-medium', isCompleted ? 'text-foreground' : 'text-muted-foreground')}>{query}</span>
+                      {resultsCount > 0 && <span className="text-[9px] text-muted-foreground/50 tabular-nums">({resultsCount})</span>}
+                      {i < queries.length - 1 && <span className="text-muted-foreground/30 ml-1">/</span>}
                     </span>
                   );
                 })
               ) : (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] shrink-0 border border-border bg-card text-muted-foreground">
+                <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
                   <Spinner className="w-2.5 h-2.5" />
                   <span className="font-medium">Searching Reddit...</span>
                 </span>
               )}
             </div>
 
-            {/* Skeleton items */}
-            <div className="space-y-px">
+            <div className="divide-y divide-border/20">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="py-2.5 px-3 border-b border-border last:border-0">
-                  <div className="flex items-start gap-2.5">
-                    <div className="w-4 h-4 mt-0.5 rounded-full bg-orange-50 dark:bg-orange-900/20 animate-pulse flex items-center justify-center">
-                      <RedditLogoIcon className="h-2.5 w-2.5 text-orange-500/30" />
-                    </div>
-                    <div className="flex-1 space-y-1.5">
-                      <div className="h-3 bg-muted rounded animate-pulse w-3/4" />
-                      <div className="h-2.5 bg-muted rounded animate-pulse w-1/2" />
-                      <div className="h-2.5 bg-muted rounded animate-pulse w-full" />
-                    </div>
+                <div key={i} className="px-3.5 py-2 flex items-center gap-2.5">
+                  <RedditLogoIcon className="h-3.5 w-3.5 text-orange-500/20 shrink-0 animate-pulse" />
+                  <div className="flex-1 space-y-1">
+                    <div className="h-3 bg-muted/30 rounded animate-pulse w-3/4" style={{ animationDelay: `${i * 100}ms` }} />
+                    <div className="h-2 bg-muted/20 rounded animate-pulse w-1/2" style={{ animationDelay: `${i * 100 + 50}ms` }} />
                   </div>
                 </div>
               ))}
@@ -343,7 +288,7 @@ const SearchLoadingState: React.FC<{ queries: string[]; annotations: DataUIPart<
   );
 };
 
-// Main component - Minimal Premium Design
+// Main component
 const RedditSearch: React.FC<{
   result: RedditSearchResponse | null;
   args: RedditSearchArgs;
@@ -366,70 +311,52 @@ const RedditSearch: React.FC<{
 
   return (
     <div className="w-full my-3">
-      <div className="border border-border rounded-lg overflow-hidden bg-card">
-        {/* Header */}
+      <div className="rounded-xl border border-border/60 overflow-hidden bg-card/30">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-accent/50 transition-colors"
+          className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-muted/20 transition-colors"
         >
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-md bg-orange-50 dark:bg-orange-900/20">
-              <RedditLogoIcon className="h-3.5 w-3.5 text-orange-500" />
-            </div>
-            <span className="text-sm font-medium text-foreground">Reddit</span>
-            <span className="text-[11px] text-muted-foreground">
-              {totalResults} {totalResults === 1 ? 'post' : 'posts'}
-            </span>
+          <div className="flex items-center gap-2">
+            <RedditLogoIcon className="h-3.5 w-3.5 text-orange-500" />
+            <span className="font-pixel text-xs text-muted-foreground/80 uppercase tracking-wider">Reddit</span>
           </div>
           <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground/60 tabular-nums">{totalResults}</span>
             {totalResults > 0 && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   setSourcesSheetOpen(true);
                 }}
-                className="text-[11px] font-medium text-muted-foreground hover:text-foreground transition-colors px-2 py-1 hover:bg-accent rounded-md flex items-center gap-1"
+                className="text-[10px] font-medium text-muted-foreground hover:text-foreground transition-colors px-1.5 py-0.5 hover:bg-muted/30 rounded flex items-center gap-1"
               >
                 View all
-                <Icons.ArrowUpRight className="w-3 h-3" />
+                <Icons.ArrowUpRight className="w-2.5 h-2.5" />
               </button>
             )}
             <Icons.ChevronDown
               className={cn(
-                'h-3.5 w-3.5 text-muted-foreground transition-transform duration-200',
+                'h-3 w-3 text-muted-foreground/60 transition-transform duration-200',
                 isExpanded && 'rotate-180',
               )}
             />
           </div>
         </button>
 
-        {/* Content */}
         {isExpanded && (
-          <div className="border-t border-border">
-            {/* Query tags */}
-            <div className="px-3 pt-2.5 pb-2 flex gap-1.5 overflow-x-auto no-scrollbar border-b border-border">
-              {result.searches.map((search, i) => {
-                return (
-                  <span
-                    key={i}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] shrink-0 border bg-muted border-border text-foreground font-medium"
-                  >
-                    <span>{search.query}</span>
-                  </span>
-                );
-              })}
+          <div className="border-t border-border/40">
+            <div className="px-3.5 py-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar border-b border-border/30">
+              {result.searches.map((search, i) => (
+                <span key={i} className="inline-flex items-center gap-1 text-[10px] shrink-0">
+                  <span className="font-medium text-foreground/80">{search.query}</span>
+                  {i < result.searches.length - 1 && <span className="text-muted-foreground/30 ml-1">/</span>}
+                </span>
+              ))}
             </div>
 
-            {/* Results list */}
-            <div className="max-h-80 overflow-y-auto">
+            <div className="max-h-80 overflow-y-auto divide-y divide-border/20">
               {allResults.map((post, index) => (
-                <a
-                  key={index}
-                  href={post.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block last:border-0"
-                >
+                <a key={index} href={post.url} target="_blank" rel="noopener noreferrer" className="block">
                   <RedditSourceCard result={post} />
                 </a>
               ))}
@@ -438,7 +365,6 @@ const RedditSearch: React.FC<{
         )}
       </div>
 
-      {/* Sources Sheet */}
       <RedditSourcesSheet searches={result.searches} open={sourcesSheetOpen} onOpenChange={setSourcesSheetOpen} />
     </div>
   );

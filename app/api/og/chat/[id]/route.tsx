@@ -1,30 +1,102 @@
 /* eslint-disable @next/next/no-img-element */
 import { ImageResponse } from 'next/og';
-import { getChatWithUserById } from '@/lib/db/queries';
-import { format } from 'date-fns';
+import { getChatWithUserById, getMessagesByChatId } from '@/lib/db/queries';
 import fs from 'fs';
 import path from 'path';
 import { SciraLogo } from '@/components/logos/scira-logo';
 
+interface TextPart {
+  type: 'text';
+  text: string;
+}
+
+interface MessagePart {
+  type: string;
+  text?: string;
+}
+
+// Extract text content from message parts
+function getTextFromParts(parts: unknown): string {
+  if (!Array.isArray(parts)) return '';
+  const textPart = parts.find((p: MessagePart) => p.type === 'text') as TextPart | undefined;
+  return textPart?.text || '';
+}
+
+// Strip markdown formatting for plain text display
+function stripMarkdown(text: string): string {
+  return text
+    // Remove code blocks
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/`([^`]+)`/g, '$1')
+    // Remove headers
+    .replace(/^#{1,6}\s+/gm, '')
+    // Remove bold/italic
+    .replace(/\*\*\*(.+?)\*\*\*/g, '$1')
+    .replace(/\*\*(.+?)\*\*/g, '$1')
+    .replace(/\*(.+?)\*/g, '$1')
+    .replace(/___(.+?)___/g, '$1')
+    .replace(/__(.+?)__/g, '$1')
+    .replace(/_(.+?)_/g, '$1')
+    // Remove links but keep text
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    // Remove images
+    .replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+    // Remove blockquotes
+    .replace(/^>\s+/gm, '')
+    // Remove horizontal rules
+    .replace(/^[-*_]{3,}\s*$/gm, '')
+    // Remove list markers
+    .replace(/^[\s]*[-*+]\s+/gm, '')
+    .replace(/^[\s]*\d+\.\s+/gm, '')
+    // Remove file references (e.g., filename.pdf, document.docx)
+    .replace(/\s*\S+\.(pdf|docx?|xlsx?|csv|txt|png|jpg|jpeg|gif)\b/gi, '')
+    // Remove citation-like patterns
+    .replace(/\[\d+\]/g, '')
+    .replace(/\(\d+\)/g, '')
+    // Clean up extra whitespace
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\n{2,}/g, ' ')
+    .trim();
+}
+
+// Truncate text with ellipsis
+function truncateText(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+  return text.slice(0, maxLength).trim() + '...';
+}
+
+// Theme colors (from globals.css dark theme)
+// --background: oklch(0.1776 0 0) → #141414
+// --foreground: oklch(0.9491 0 0) → #f0f0f0
+// --accent: oklch(0.285 0 0) → #2a2a2a (user message bubble uses bg-accent/80)
+// --muted-foreground: oklch(0.7699 0 0) → #b5b5b5
+const colors = {
+  background: '#141414',
+  foreground: '#f0f0f0',
+  mutedForeground: '#b5b5b5',
+  accent: '#2a2a2a', // user message bubble
+};
+
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // Get chat data with user information
     const id = (await params).id;
     const chatWithUser = await getChatWithUserById({ id });
 
-    // Read the background image
-    const bgImagePath = path.join(process.cwd(), 'public', 'og-bg.png');
-    const bgImageData = await fs.promises.readFile(bgImagePath);
-    const bgImageBase64 = `data:image/png;base64,${bgImageData.toString('base64')}`;
-
-    // Load custom fonts
+    // Load fonts
+    const geistFontPath = path.join(process.cwd(), 'app/api/og/chat/[id]/fonts', 'Geist-Regular.ttf');
     const interFontPath = path.join(process.cwd(), 'app/api/og/chat/[id]/fonts', 'Inter-Regular.ttf');
     const beVietnamProFontPath = path.join(process.cwd(), 'app/api/og/chat/[id]/fonts', 'BeVietnamPro-Medium.ttf');
-
+    const geistFontData = await fs.promises.readFile(geistFontPath);
     const interFontData = await fs.promises.readFile(interFontPath);
     const beVietnamProFontData = await fs.promises.readFile(beVietnamProFontPath);
 
-    // If chat doesn't exist or isn't public, return a default OG image
+    const fonts = [
+      { name: 'Geist', data: geistFontData, style: 'normal' as const },
+      { name: 'Inter', data: interFontData, style: 'normal' as const },
+      { name: 'BeVietnamPro', data: beVietnamProFontData, style: 'normal' as const },
+    ];
+
+    // Default OG image for non-public or missing chats
     if (!chatWithUser || chatWithUser.visibility !== 'public') {
       return new ImageResponse(
         (
@@ -36,239 +108,149 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
               alignItems: 'center',
               width: '100%',
               height: '100%',
-              backgroundImage: `url(${bgImageBase64})`,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-              position: 'relative',
-              fontFamily: 'Inter',
+              backgroundColor: colors.background,
+              fontFamily: 'Geist',
             }}
           >
-            {/* Clean overlay */}
+            <SciraLogo width={72} height={72} color={colors.foreground} />
             <div
               style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                background: 'rgba(0,0,0,0.35)',
-                zIndex: 1,
-              }}
-            />
-            <div
-              style={{
-                position: 'relative',
-                zIndex: 2,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                textAlign: 'center',
+                fontSize: 48,
+                color: colors.foreground,
+                letterSpacing: '-0.02em',
+                fontFamily: 'BeVietnamPro',
+                fontWeight: 600,
+                marginTop: 24,
               }}
             >
-              <SciraLogo width={120} height={120} color="#ffffff" />
-              <div
-                style={{
-                  fontSize: 56,
-                  color: '#ffffff',
-                  letterSpacing: '-0.03em',
-                  fontFamily: 'BeVietnamPro',
-                  fontWeight: 900,
-                  marginBottom: 16,
-                  textShadow: '0 3px 10px rgba(0,0,0,0.45)',
-                }}
-              >
-                Scira AI
-              </div>
-              <div
-                style={{
-                  fontSize: 26,
-                  color: '#e5e7eb',
-                  fontFamily: 'Inter',
-                  fontWeight: 600,
-                  textShadow: '0 2px 8px rgba(0,0,0,0.35)',
-                }}
-              >
-                Minimalistic AI Search engine
-              </div>
+              Scira
+            </div>
+            <div
+              style={{
+                fontSize: 22,
+                color: colors.mutedForeground,
+                fontFamily: 'Inter',
+                fontWeight: 400,
+                marginTop: 12,
+              }}
+            >
+              Minimalistic AI Search Engine
             </div>
           </div>
         ),
-        {
-          width: 1200,
-          height: 630,
-          fonts: [
-            {
-              name: 'Inter',
-              data: interFontData,
-              style: 'normal',
-            },
-            {
-              name: 'BeVietnamPro',
-              data: beVietnamProFontData,
-              style: 'normal',
-            },
-          ],
-        },
+        { width: 1200, height: 630, fonts },
       );
     }
 
-    // Format the creation date
-    const formattedDate = format(new Date(chatWithUser.createdAt), 'MMMM d, yyyy');
-    const authorInitial = (chatWithUser.userName || 'S').slice(0, 1).toUpperCase();
+    // Fetch messages for the chat preview
+    const messages = await getMessagesByChatId({ id, limit: 10 });
+    const userMessage = messages.find((m) => m.role === 'user');
+    const assistantMessage = messages.find((m) => m.role === 'assistant');
 
-    // Generate the image
+    const userText = truncateText(getTextFromParts(userMessage?.parts), 120);
+    const rawAssistantText = getTextFromParts(assistantMessage?.parts);
+    const assistantText = truncateText(stripMarkdown(rawAssistantText), 700);
+
     return new ImageResponse(
       (
         <div
           style={{
             display: 'flex',
+            flexDirection: 'column',
             width: '100%',
             height: '100%',
-            backgroundImage: `url(${bgImageBase64})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            position: 'relative',
+            backgroundColor: colors.background,
             fontFamily: 'Inter',
+            padding: '40px 56px',
+            position: 'relative',
           }}
         >
-          {/* Dark overlay with gradient */}
+          {/* Logo */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <SciraLogo width={56} height={56} color={colors.foreground} />
+            <div
+              style={{
+                fontSize: 40,
+                color: colors.foreground,
+                fontFamily: 'BeVietnamPro',
+                fontWeight: 600,
+              }}
+            >
+              Scira AI
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+              marginTop: 24,
+              justifyContent: 'center',
+              gap: 48,
+            }}
+          >
+            {/* User message */}
+            {userText && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    padding: '18px 28px',
+                    borderRadius: 24,
+                    backgroundColor: colors.accent,
+                    fontSize: 28,
+                    color: colors.foreground,
+                    fontFamily: 'Geist',
+                    fontWeight: 400,
+                    lineHeight: 1.4,
+                    maxWidth: '90%',
+                  }}
+                >
+                  {userText}
+                </div>
+              </div>
+            )}
+
+            {/* Assistant message */}
+            {assistantText && (
+              <div
+                style={{
+                  display: 'flex',
+                  fontSize: 24,
+                  color: colors.foreground,
+                  fontFamily: 'Geist',
+                  fontWeight: 400,
+                  lineHeight: 1.7,
+                  letterSpacing: '-0.01em',
+                  maxWidth: '100%',
+                  textWrap: 'balance',
+                }}
+              >
+                {assistantText}
+              </div>
+            )}
+          </div>
+
+          {/* Bottom blur/fade effect */}
           <div
             style={{
               position: 'absolute',
-              top: 0,
+              bottom: 0,
               left: 0,
               right: 0,
-              bottom: 0,
-              background: 'rgba(0,0,0,0.45)',
-              zIndex: 1,
+              height: 200,
+              background: `linear-gradient(180deg, rgba(12, 12, 12, 0) 0%, rgba(12, 12, 12, 0.12) 20%, rgba(12, 12, 12, 0.35) 45%, rgba(12, 12, 12, 0.7) 70%, rgba(12, 12, 12, 0.92) 88%, rgba(12, 12, 12, 1) 100%)`,
+              filter: 'blur(16px)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+              transform: 'translateY(6px)',
             }}
           />
-
-          {/* Main content */}
-          <div
-            style={{
-              position: 'relative',
-              zIndex: 3,
-              display: 'flex',
-              flexDirection: 'column',
-              width: '100%',
-              height: '100%',
-              padding: '56px 72px',
-            }}
-          >
-            {/* Main title section - left aligned, vertically centered */}
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                maxWidth: 900,
-                flex: 1,
-                justifyContent: 'center',
-              }}
-            >
-              {/* Large title with creative typography */}
-              <div
-                style={{
-                  fontSize: 72,
-                  fontWeight: 900,
-                  color: '#fafafa',
-                  lineHeight: 0.95,
-                  letterSpacing: '-0.04em',
-                  fontFamily: 'BeVietnamPro',
-                  marginBottom: 24,
-                  textShadow: '0 6px 24px rgba(0,0,0,0.45)',
-                }}
-              >
-                {chatWithUser.title}
-              </div>
-            </div>
-
-            {/* Bottom bar: brand + tagline (left) and author + date (right) */}
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginTop: 48,
-              }}
-            >
-              {/* Left: brand and tagline */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <SciraLogo width={28} height={28} color="#ffffff" />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{ fontSize: 18, color: '#ffffff', fontFamily: 'BeVietnamPro', fontWeight: 800 }}>
-                    Scira AI
-                  </div>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.5)' }} />
-                  <div style={{ fontSize: 16, color: '#e5e7eb', fontFamily: 'Inter', fontWeight: 600 }}>
-                    Minimalistic AI Search engine
-                  </div>
-                </div>
-              </div>
-
-              {/* Right: author and date */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {chatWithUser.userImage ? (
-                  <img
-                    src={chatWithUser.userImage}
-                    width={36}
-                    height={36}
-                    alt={chatWithUser.userName || 'User'}
-                    style={{
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      border: '1px solid rgba(255,255,255,0.35)',
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: '50%',
-                      backgroundColor: 'rgba(255,255,255,0.15)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#ffffff',
-                      fontWeight: 800,
-                      fontFamily: 'BeVietnamPro',
-                      fontSize: 16,
-                      border: '1px solid rgba(255,255,255,0.25)',
-                    }}
-                  >
-                    {authorInitial}
-                  </div>
-                )}
-                <div style={{ fontSize: 16, color: '#e4e4e7', fontFamily: 'Inter', fontWeight: 600 }}>
-                  {chatWithUser.userName}
-                </div>
-                <div style={{ width: 4, height: 4, borderRadius: '50%', backgroundColor: 'rgba(255,255,255,0.45)' }} />
-                <div style={{ fontSize: 16, color: '#a1a1aa', fontFamily: 'Inter', fontWeight: 500 }}>
-                  {formattedDate}
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       ),
-      {
-        width: 1200,
-        height: 630,
-        fonts: [
-          {
-            name: 'Inter',
-            data: interFontData,
-            style: 'normal',
-          },
-          {
-            name: 'BeVietnamPro',
-            data: beVietnamProFontData,
-            style: 'normal',
-          },
-        ],
-      },
+      { width: 1200, height: 630, fonts },
     );
   } catch (error) {
     console.error('Error generating OG image:', error);

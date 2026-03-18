@@ -1,6 +1,5 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
 import { Plane, Clock, AlertCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -59,7 +58,7 @@ export function FlightTracker({ data }: FlightTrackerProps) {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 60000); // Update every minute
+    }, 60000);
 
     return () => clearInterval(timer);
   }, []);
@@ -67,12 +66,12 @@ export function FlightTracker({ data }: FlightTrackerProps) {
   if (data?.error) {
     return (
       <div className="w-full max-w-2xl mx-auto px-4">
-        <div className="border border-destructive/20 rounded-lg p-4 bg-destructive/5 dark:bg-destructive/10">
+        <div className="rounded-xl border border-destructive/20 p-4 bg-destructive/5 dark:bg-destructive/10">
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+            <AlertCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
             <div>
-              <p className="text-sm font-medium text-destructive">Unable to track flight</p>
-              <p className="text-sm text-destructive/80 mt-1">{data.error}</p>
+              <p className="text-xs font-medium text-destructive">Unable to track flight</p>
+              <p className="text-[10px] text-destructive/70 mt-1">{data.error}</p>
             </div>
           </div>
         </div>
@@ -137,11 +136,11 @@ export function FlightTracker({ data }: FlightTrackerProps) {
     const normalized = (status ?? '').toLowerCase();
 
     if (!normalized) {
-      return { label: 'Status Unknown', variant: 'secondary' as const };
+      return { label: 'Unknown', color: 'text-muted-foreground' };
     }
 
     if (normalized.includes('landed') || normalized.includes('arrived')) {
-      return { label: 'Landed', variant: 'default' as const };
+      return { label: 'Landed', color: 'text-emerald-600 dark:text-emerald-400' };
     }
 
     if (
@@ -155,26 +154,26 @@ export function FlightTracker({ data }: FlightTrackerProps) {
       normalized.includes('transit') ||
       normalized.includes('enplane')
     ) {
-      return { label: 'In Flight', variant: 'default' as const };
+      return { label: 'In Flight', color: 'text-blue-600 dark:text-blue-400' };
     }
 
     if (normalized.includes('delayed') || normalized.includes('delay')) {
-      return { label: 'Delayed', variant: 'outline' as const };
+      return { label: 'Delayed', color: 'text-amber-600 dark:text-amber-400' };
     }
 
     if (normalized.includes('cancel')) {
-      return { label: 'Cancelled', variant: 'destructive' as const };
+      return { label: 'Cancelled', color: 'text-red-600 dark:text-red-400' };
     }
 
     if (normalized.includes('divert')) {
-      return { label: 'Diverted', variant: 'destructive' as const };
+      return { label: 'Diverted', color: 'text-red-600 dark:text-red-400' };
     }
 
     if (normalized.includes('scheduled') || normalized.includes('on time') || normalized.includes('expected')) {
-      return { label: 'Scheduled', variant: 'secondary' as const };
+      return { label: 'Scheduled', color: 'text-muted-foreground' };
     }
 
-    return { label: status || 'Status Unknown', variant: 'secondary' as const };
+    return { label: status || 'Unknown', color: 'text-muted-foreground' };
   };
 
   return (
@@ -195,73 +194,71 @@ export function FlightTracker({ data }: FlightTrackerProps) {
         const duration = formatDuration(flight.flight.duration);
 
         return (
-          <div key={index} className="border rounded-md bg-card overflow-hidden shadow-2xs">
-            {/* Compact Header */}
-            <div className="px-4 py-2 border-b bg-muted/40">
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-medium text-sm text-foreground truncate">{flightNumber}</span>
-                  <span className="text-muted-foreground text-xs truncate">{flight.airline.name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {timeUntil && <span className="text-xs text-muted-foreground whitespace-nowrap">{timeUntil}</span>}
-                  <Badge variant={statusInfo.variant} className="text-[10px] h-5 px-1.5">
-                    {statusInfo.label}
-                  </Badge>
-                </div>
+          <div key={index} className="rounded-xl border border-border/60 bg-card/30 overflow-hidden">
+            {/* Header */}
+            <div className="px-4 py-2.5 border-b border-border/40 flex items-center justify-between">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Plane className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                <span className="font-pixel text-xs text-muted-foreground/80 uppercase tracking-wider">{flightNumber}</span>
+                <span className="text-[10px] text-muted-foreground/50 truncate">{flight.airline.name}</span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {timeUntil && <span className="text-[10px] text-muted-foreground/60 tabular-nums">{timeUntil}</span>}
+                <span className={`font-pixel text-[10px] uppercase tracking-wider ${statusInfo.color}`}>
+                  {statusInfo.label}
+                </span>
               </div>
             </div>
 
-            {/* Compact Body */}
-            <div className="px-4 py-3">
+            {/* Body */}
+            <div className="px-4 py-3.5">
               <div className="flex items-center justify-between gap-3">
-                {/* Left */}
+                {/* Departure */}
                 <div className="min-w-0 flex-1">
-                  <div className="text-primary text-xl font-semibold leading-none">{departureTime}</div>
-                  <div className="text-foreground text-lg font-mono font-bold mt-1 leading-none">{originCode}</div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{flight.departure.airport}</div>
-                  <div className="text-[10px] text-muted-foreground/70 mt-0.5">{departureDate}</div>
+                  <div className="text-lg font-semibold text-foreground leading-none tabular-nums">{departureTime}</div>
+                  <div className="text-base font-pixel uppercase tracking-wider text-foreground/80 mt-1.5 leading-none">{originCode}</div>
+                  <div className="text-[10px] text-muted-foreground/60 mt-1 truncate">{flight.departure.airport}</div>
+                  <div className="text-[9px] text-muted-foreground/40 mt-0.5">{departureDate}</div>
                 </div>
 
-                {/* Middle */}
-                <div className="flex flex-col items-center justify-center w-28 shrink-0">
-                  <div className="flex items-center gap-2 w-full">
-                    <div className="flex-1 h-px bg-border"></div>
-                    <Plane className="h-3.5 w-3.5 text-primary" />
-                    <div className="flex-1 h-px bg-border"></div>
+                {/* Flight path */}
+                <div className="flex flex-col items-center justify-center w-24 shrink-0">
+                  <div className="flex items-center gap-1.5 w-full">
+                    <div className="flex-1 h-px bg-border/60"></div>
+                    <Plane className="h-3 w-3 text-muted-foreground/40" />
+                    <div className="flex-1 h-px bg-border/60"></div>
                   </div>
                   {duration && (
-                    <div className="flex items-center gap-1 text-[11px] text-muted-foreground mt-1">
-                      <Clock className="h-3 w-3" />
+                    <div className="flex items-center gap-1 text-[10px] text-muted-foreground/50 mt-1 tabular-nums">
+                      <Clock className="h-2.5 w-2.5" />
                       {duration}
                     </div>
                   )}
                 </div>
 
-                {/* Right */}
+                {/* Arrival */}
                 <div className="text-right min-w-0 flex-1">
-                  <div className="text-primary text-xl font-semibold leading-none">{arrivalTime}</div>
-                  <div className="text-foreground text-lg font-mono font-bold mt-1 leading-none">{destCode}</div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5 truncate">{flight.arrival.airport}</div>
-                  <div className="text-[10px] text-muted-foreground/70 mt-0.5">{arrivalDate}</div>
+                  <div className="text-lg font-semibold text-foreground leading-none tabular-nums">{arrivalTime}</div>
+                  <div className="text-base font-pixel uppercase tracking-wider text-foreground/80 mt-1.5 leading-none">{destCode}</div>
+                  <div className="text-[10px] text-muted-foreground/60 mt-1 truncate">{flight.arrival.airport}</div>
+                  <div className="text-[9px] text-muted-foreground/40 mt-0.5">{arrivalDate}</div>
                 </div>
               </div>
 
-              {/* Inline meta */}
-              <div className="mt-3 pt-2 border-t text-[11px] text-muted-foreground flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span>Terminal {flight.departure.terminal ?? '-'}</span>
+              {/* Terminal/Gate info */}
+              <div className="mt-3 pt-2.5 border-t border-border/30 flex items-center justify-between">
+                <div className="flex items-center gap-3 text-[10px] text-muted-foreground/50">
+                  <span>T{flight.departure.terminal ?? '-'}</span>
                   <span>Gate {flight.departure.gate ?? '-'}</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span>Terminal {flight.arrival.terminal ?? '-'}</span>
+                <div className="flex items-center gap-3 text-[10px] text-muted-foreground/50">
+                  <span>T{flight.arrival.terminal ?? '-'}</span>
                   <span>Gate {flight.arrival.gate ?? '-'}</span>
                 </div>
               </div>
 
-              {/* Operated by */}
               {flight.amadeus_data?.operating_flight && (
-                <div className="mt-2 text-[11px] text-muted-foreground">
+                <div className="mt-2 text-[10px] text-muted-foreground/40">
                   Operated by {flight.amadeus_data.operating_flight.carrierCode}
                   {flight.amadeus_data.operating_flight.flightNumber}
                 </div>

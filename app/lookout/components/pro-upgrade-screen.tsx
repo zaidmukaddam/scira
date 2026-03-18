@@ -1,86 +1,91 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { HugeiconsIcon } from '@/components/ui/hugeicons';
-import { Crown02Icon, AlarmClockIcon, Clock01Icon } from '@hugeicons/core-free-icons';
-import { LightningIcon } from '@phosphor-icons/react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useRouter } from "next/navigation";
+import { AlarmClock, Clock, Zap } from "lucide-react";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 interface ProUpgradeScreenProps {
-  user: any;
+  user: unknown;
   isProUser: boolean;
   isProStatusLoading: boolean;
 }
 
-export function ProUpgradeScreen({ user, isProUser, isProStatusLoading }: ProUpgradeScreenProps) {
+const FEATURES = [
+  {
+    icon: AlarmClock,
+    label: "Scheduled runs",
+    description: "Daily, weekly, monthly",
+  },
+  {
+    icon: Clock,
+    label: "Custom frequency",
+    description: "Timezone-aware scheduling",
+  },
+  {
+    icon: Zap,
+    label: "10 active lookouts",
+    description: "Multiple search modes",
+  },
+];
+
+export function ProUpgradeScreen(_props: ProUpgradeScreenProps) {
   const router = useRouter();
 
   return (
-    <>
-      {/* Pro upgrade prompt */}
-      <div className="flex-1 flex flex-col">
-        <div className="w-full min-h-svh flex items-center justify-center px-6 py-16">
-          <Card className="mx-auto w-full max-w-2xl text-center border border-border/80">
-            <CardHeader className="pb-0">
-              <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border bg-background px-3 py-1 text-xs text-muted-foreground">
-                <HugeiconsIcon icon={Crown02Icon} size={14} color="currentColor" strokeWidth={1.5} />
-                <span>Pro feature</span>
-              </div>
-              <CardTitle className="mt-4 text-3xl tracking-tight">Unlock Lookouts</CardTitle>
-              <CardDescription className="mt-2 leading-relaxed">
-                Automate searches and get notified when results are ready. Stay ahead with flexible schedules and
-                timezone-aware notifications.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="mt-6 space-y-6">
-              <div className="grid grid-cols-1 gap-3 text-left sm:grid-cols-3">
-                <div className="rounded-lg border border-border/80 bg-card p-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <HugeiconsIcon
-                      icon={AlarmClockIcon}
-                      size={16}
-                      color="currentColor"
-                      strokeWidth={1.5}
-                      className="text-primary"
-                    />
-                    <span>Scheduled runs</span>
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border/80 bg-card p-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <HugeiconsIcon
-                      icon={Clock01Icon}
-                      size={16}
-                      color="currentColor"
-                      strokeWidth={1.5}
-                      className="text-primary"
-                    />
-                    <span>Custom frequency</span>
-                  </div>
-                </div>
-                <div className="rounded-lg border border-border/80 bg-card p-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <LightningIcon className="h-4 w-4 text-primary" />
-                    <span>10 active lookouts</span>
-                  </div>
-                </div>
-              </div>
+    <div className="flex flex-1 flex-col min-h-screen">
+      <div className="md:hidden fixed top-4 left-4 z-10">
+        <SidebarTrigger />
+      </div>
 
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button variant="outline" className="sm:flex-1" onClick={() => router.push('/new')}>
-                  Back to Search
-                </Button>
-                <Button className="sm:flex-1" onClick={() => router.push('/pricing')}>
-                  <HugeiconsIcon icon={Crown02Icon} size={16} color="currentColor" strokeWidth={1.5} className="mr-2" />
-                  Upgrade to Pro
-                </Button>
+      <div className="flex flex-1 items-center justify-center px-4 py-16">
+        <div className="w-full max-w-sm flex flex-col gap-5">
+
+          {/* Title block */}
+          <div className="flex flex-col gap-1.5">
+            <div className="inline-flex items-center gap-1.5 w-fit rounded-full border border-border/50 bg-muted/40 px-2.5 py-1">
+              <span className="font-pixel text-[9px] text-muted-foreground/70 tracking-wider uppercase">Pro feature</span>
+            </div>
+            <h1 className="text-lg font-semibold tracking-tight text-foreground">Unlock Lookouts</h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Automate searches on a schedule and get notified when results are ready.
+            </p>
+          </div>
+
+          {/* Features */}
+          <div className="rounded-xl border border-border/50 bg-card/30 divide-y divide-border/40">
+            {FEATURES.map(({ icon: Icon, label, description }) => (
+              <div key={label} className="flex items-center gap-3 px-4 py-3">
+                <div className="flex items-center justify-center size-7 rounded-md bg-primary/10 border border-primary/20 shrink-0">
+                  <Icon className="size-3.5 text-primary" aria-hidden />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">{label}</p>
+                  <p className="font-pixel text-[9px] text-muted-foreground/50 uppercase tracking-wider mt-0.5">{description}</p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            ))}
+          </div>
+
+          {/* CTAs */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => router.push("/new")}
+              className="flex-1 h-9 rounded-lg border border-border/50 bg-transparent text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+            >
+              Back to search
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/pricing")}
+              className="flex-1 h-9 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+            >
+              Upgrade to Pro
+            </button>
+          </div>
+
         </div>
       </div>
-    </>
+    </div>
   );
 }

@@ -1,6 +1,8 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { serverEnv } from '@/env/server';
+import { all } from 'better-all';
+import { getBetterAllOptions } from '@/lib/better-all';
 
 export const mcpSearchTool = tool({
   description: `Search for mcp servers and get the information about them. VERY IMPORTANT: DO NOT USE THIS TOOL FOR GENERAL WEB SEARCHES, ONLY USE IT FOR MCP SERVER SEARCHES.`,
@@ -22,31 +24,35 @@ export const mcpSearchTool = tool({
 
       const data = await response.json();
 
-      const detailedServers = await Promise.all(
-        data.servers.map(async (server: any) => {
-          const detailResponse = await fetch(
-            `https://registry.smithery.ai/servers/${encodeURIComponent(server.qualifiedName)}`,
-            {
-              headers: {
-                Authorization: `Bearer ${serverEnv.SMITHERY_API_KEY}`,
-                'Content-Type': 'application/json',
-              },
+      const serverPromises = data.servers.map(async (server: any) => {
+        const detailResponse = await fetch(
+          `https://registry.smithery.ai/servers/${encodeURIComponent(server.qualifiedName)}`,
+          {
+            headers: {
+              Authorization: `Bearer ${serverEnv.SMITHERY_API_KEY}`,
+              'Content-Type': 'application/json',
             },
-          );
+          },
+        );
 
-          if (!detailResponse.ok) {
-            console.warn(`Failed to fetch details for ${server.qualifiedName}`);
-            return server;
-          }
+        if (!detailResponse.ok) {
+          console.warn(`Failed to fetch details for ${server.qualifiedName}`);
+          return server;
+        }
 
-          const details = await detailResponse.json();
-          return {
-            ...server,
-            deploymentUrl: details.deploymentUrl,
-            connections: details.connections,
-          };
-        }),
+        const details = await detailResponse.json();
+        return {
+          ...server,
+          deploymentUrl: details.deploymentUrl,
+          connections: details.connections,
+        };
+      });
+
+      const serverMap = await all(
+        Object.fromEntries(serverPromises.map((promise: any, index: number) => [`s:${index}`, async () => promise])),
+        getBetterAllOptions(),
       );
+      const detailedServers = data.servers.map((_: any, index: number) => serverMap[`s:${index}`]);
 
       return {
         servers: detailedServers,

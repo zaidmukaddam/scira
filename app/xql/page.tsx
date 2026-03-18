@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Play, Loader2, Copy, Check, X } from 'lucide-react';
 import { CodeIcon, XLogoIcon } from '@phosphor-icons/react';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { Tweet } from 'react-tweet';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/contexts/user-context';
@@ -37,7 +37,8 @@ function XQLPageContent() {
     }),
     generateId: () => uuidv7(),
     onError: (error) => {
-      toast.error('Query failed', {
+      sileo.error({
+        title: 'Query failed',
         description: error.message,
       });
     },
@@ -66,10 +67,10 @@ function XQLPageContent() {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedResult(true);
-      toast.success('Copied to clipboard');
+      sileo.success({ title: 'Copied to clipboard' });
       setTimeout(() => setCopiedResult(false), 2000);
     } catch (err) {
-      toast.error('Failed to copy');
+      sileo.error({ title: 'Failed to copy' });
     }
   }, []);
 
@@ -107,10 +108,10 @@ function XQLPageContent() {
           <div className="flex items-center relative">
             <XLogoIcon className="size-6 sm:size-8 md:size-12 text-foreground -mr-1 sm:-mr-2 font-medium" />
             <h1 className="text-foreground">QL</h1>
-            <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 md:-top-3 md:-right-4">
-              <div className="bg-primary text-primary-foreground px-1 sm:px-1.5 pt-0.5 pb-0.5 sm:pb-0.75 rounded-sm text-[8px] sm:text-xs font-semibold">
-                β
-              </div>
+            <div className="absolute -top-4 -right-8">
+              <span className="font-pixel text-[10px] bg-primary text-primary-foreground px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
+                Beta
+              </span>
             </div>
           </div>
         </div>
@@ -180,8 +181,8 @@ function XQLPageContent() {
         {messages.length === 0 && status === 'ready' && !isProStatusLoading && (
           <div className="mt-8 space-y-4">
             <div className="text-center">
-              <p className="text-sm text-muted-foreground mb-2">Try these XQL queries:</p>
-              <p className="text-xs text-muted-foreground/70">Search X posts with natural language</p>
+              <p className="text-sm text-muted-foreground mb-1">Try these queries</p>
+              <p className="font-pixel text-[11px] text-muted-foreground uppercase tracking-wider">Search X posts with natural language</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
               {[
@@ -225,26 +226,15 @@ function XQLPageContent() {
                       </div>
                     </div>
                     <p className="text-sm text-foreground mb-1 font-medium leading-tight">{example.query}</p>
-                    <p className="text-xs text-muted-foreground leading-tight">{example.description}</p>
+                    <p className="font-pixel text-[9px] text-muted-foreground/50 uppercase tracking-wider leading-tight">{example.description}</p>
                   </CardContent>
                 </Card>
               ))}
             </div>
 
-            <div className="mt-6 p-3 sm:p-4 bg-accent rounded-lg border border-muted/30">
-              <div className="flex items-start gap-2 sm:gap-3">
-                <CodeIcon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-                <div className="text-xs sm:text-sm text-muted-foreground">
-                  <p className="font-medium mb-1 sm:mb-2">XQL supports advanced filtering:</p>
-                  <ul className="space-y-0.5 sm:space-y-1 text-xs sm:text-sm">
-                    <li>• Date ranges (ISO format: YYYY-MM-DD or natural language)</li>
-                    <li>• User handles (include up to 10 or exclude up to 10, not both)</li>
-                    <li>• Engagement thresholds (minimum likes/views required)</li>
-                    <li>• Topic and keyword combinations</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+            <p className="mt-6 text-center font-pixel text-[10px] text-muted-foreground/80 uppercase tracking-wider">
+              Dates · Handles · Engagement · Keywords
+            </p>
           </div>
         )}
 
@@ -326,17 +316,17 @@ function XQLPageContent() {
                   };
 
                   return (
-                    <Card key={index} className="bg-muted/20 p-0 shadow-none">
+                    <Card key={index} className="rounded-xl border-border/60 p-0 shadow-none">
                       <CardContent className="p-3 sm:p-4">
                         <div className="flex items-start gap-3">
                           <div className="grow min-w-0">
-                            <div className="flex items-center gap-2 sm:gap-3 mb-3">
-                              <CodeIcon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
-                              <p className="text-sm font-medium text-muted-foreground">XQL Code</p>
+                            <div className="flex items-center gap-2 mb-2.5">
+                              <CodeIcon className="h-4 w-4 text-muted-foreground shrink-0" />
+                              <p className="font-pixel text-[12px] uppercase tracking-wider">Generated XQL</p>
                             </div>
                             <div className="relative">
-                              <pre className="text-xs sm:text-sm bg-muted/30 p-2 sm:p-3 rounded-lg border font-mono leading-relaxed overflow-x-auto w-full max-w-full">
-                                <code dangerouslySetInnerHTML={{ __html: highlight(buildSQLQuery()) }} />
+                              <pre className="text-xs sm:text-sm bg-muted/30 p-2 sm:p-3 rounded-lg border leading-relaxed overflow-x-auto w-full max-w-full">
+                                <code className="font-mono!" dangerouslySetInnerHTML={{ __html: highlight(buildSQLQuery()) }} />
                               </pre>
                             </div>
                           </div>
@@ -413,9 +403,9 @@ function XQLPageContent() {
                       <CardContent className="p-0">
                         <div className="flex flex-wrap items-center justify-between gap-2 p-3 sm:p-4">
                           <div className="flex items-center gap-2 min-w-0">
-                            <SciraLogo className="size-6 text-foreground shrink-0" />
-                            <span className="font-semibold text-foreground text-sm sm:text-base">
-                              Scira found {citations.length} Posts
+                            <SciraLogo className="size-5 text-foreground shrink-0" />
+                            <span className="text-sm font-semibold text-foreground">
+                              {citations.length} Posts
                             </span>
                           </div>
 
@@ -476,9 +466,12 @@ function XQLPageContent() {
                               })}
                             </div>
                           ) : (
-                            <div className="text-center py-6 sm:py-8 text-muted-foreground">
-                              <XLogoIcon className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-2 sm:mb-3 opacity-50" />
-                              <p className="text-sm sm:text-base">No X citations found for this query</p>
+                            <div className="text-center py-8 text-muted-foreground">
+                              <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-3">
+                                <XLogoIcon className="h-5 w-5 opacity-50" />
+                              </div>
+                              <p className="text-sm mb-1">No posts found</p>
+                              <p className="font-pixel text-[10px] text-muted-foreground/50 uppercase tracking-wider">Try a different query</p>
                             </div>
                           )}
                         </div>

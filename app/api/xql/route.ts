@@ -17,13 +17,7 @@ import { markdownJoinerTransform } from '@/lib/parser';
 import { scira } from '@/ai/providers';
 
 import { z } from 'zod';
-import { GroqProviderOptions } from '@ai-sdk/groq';
-import { createXai } from '@ai-sdk/xai';
-
-const xai = createXai({
-  apiKey: process.env.XAI_API_KEY,
-  baseURL: 'https://eu-west-1.api.x.ai/v1',
-});
+import { xai } from '@ai-sdk/xai';
 
 const xqlTool = tool({
   description:
@@ -99,10 +93,10 @@ const xqlTool = tool({
     }
 
     const result = await generateText({
-      model: xai.responses('grok-4-fast'),
+      model: xai.responses('grok-4-1-fast-non-reasoning'),
       prompt: query,
-      maxOutputTokens: 10,
       stopWhen: stepCountIs(1),
+      maxOutputTokens: 10,
       tools: {
         x_search: xai.tools.xSearch(xSearchToolConfig),
       },
@@ -111,6 +105,9 @@ const xqlTool = tool({
     const citations =
       result.sources?.map((source) => (source.sourceType === 'url' ? source.url : null)).filter((url) => url !== null) ||
       [];
+
+    console.log('XQL Result: ', result);
+    console.log('XQL Sources: ', result.sources);
 
     return citations;
   },
@@ -131,15 +128,11 @@ export async function POST(req: Request) {
   const user = await getCurrentUser();
 
   if (!user) {
-    console.log('User not found');
+    return new ChatSDKError('unauthorized:auth', 'Authentication required to use this feature').toResponse();
   }
 
-  if (user) {
-    const isProUser = user.isProUser;
-
-    if (!isProUser) {
-      return new ChatSDKError('upgrade_required:auth', 'This feature requires a Pro subscription').toResponse();
-    }
+  if (!user.isProUser) {
+    return new ChatSDKError('upgrade_required:auth', 'This feature requires a Pro subscription').toResponse();
   }
 
   const result = streamText({
@@ -156,14 +149,6 @@ export async function POST(req: Request) {
           activeTools: ['xql'],
         };
       }
-    },
-    providerOptions: {
-      groq: {
-        reasoningEffort: 'none',
-        parallelToolCalls: false,
-        structuredOutputs: true,
-        serviceTier: 'auto',
-      } satisfies GroqProviderOptions,
     },
     maxRetries: 10,
     experimental_transform: markdownJoinerTransform(),

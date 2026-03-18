@@ -17,8 +17,13 @@ export { coinDataTool, coinDataByContractTool, coinOhlcTool } from './crypto-too
 export { datetimeTool } from './datetime';
 // export { mcpSearchTool } from './mcp-search';
 export { redditSearchTool } from './reddit-search';
+export { githubSearchTool } from './github-search';
 export { extremeSearchTool } from './extreme-search';
 export { greetingTool } from './greeting';
 export { createConnectorsSearchTool } from './connectors-search';
 export { createMemoryTools, type SearchMemoryTool, type AddMemoryTool } from './supermemory';
 export { codeContextTool } from './code-context';
+export { fileQuerySearchTool, createFileQuerySearchTool } from './file-query-search';
+export { spotifySearchTool } from './spotify-search';
+export { predictionSearchTool } from './prediction-search';
+export { createBuildTools } from './build-tools';

@@ -30,7 +30,13 @@ export function Providers({ children }: { children: ReactNode }) {
     <QueryClientProvider client={queryClient}>
       <UserProvider>
         <DataStreamProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+            themes={["light", "dark", "colourful", "t3chat", "claudedark", "claudelight", "neutrallight", "neutraldark"]}
+          >
             {children}
           </ThemeProvider>
         </DataStreamProvider>

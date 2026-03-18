@@ -3,12 +3,23 @@
 import React from 'react';
 import Link from 'next/link';
 import { HugeiconsIcon } from '@/components/ui/hugeicons';
-import { BinocularsIcon } from '@hugeicons/core-free-icons';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { BinocularsIcon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BorderTrail } from '@/components/core/border-trail';
 import { StatusBadge } from './status-badge';
+import { RunStatusBadge, type LookoutRunStatus } from './run-status-badge';
 import { ActionButtons } from './action-buttons';
 import { formatNextRun } from '../utils/time-utils';
+
+interface LookoutRun {
+  runAt: string;
+  chatId: string;
+  status: LookoutRunStatus;
+  error?: string;
+  duration?: number;
+  tokensUsed?: number;
+  searchesPerformed?: number;
+}
 
 interface Lookout {
   id: string;
@@ -20,6 +31,7 @@ interface Lookout {
   status: 'active' | 'paused' | 'archived' | 'running';
   lastRunAt?: Date | null;
   lastRunChatId?: string | null;
+  runHistory?: LookoutRun[];
   createdAt: Date;
   cronSchedule?: string;
 }
@@ -43,6 +55,12 @@ export function LookoutCard({
   onOpenDetails,
   showActions = true,
 }: LookoutCardProps) {
+  const lastRunStatus = React.useMemo(() => {
+    const history = lookout.runHistory ?? [];
+    if (!history.length) return null;
+    return history[history.length - 1]?.status ?? null;
+  }, [lookout.runHistory]);
+
   const handleCardClick = () => {
     onOpenDetails(lookout);
   };
@@ -53,9 +71,9 @@ export function LookoutCard({
 
   return (
     <Card
-      className={`shadow-none border border-primary/50 cursor-pointer relative overflow-hidden hover:border-primary/40 ${
-        lookout.status === 'running' ? 'border-primary/30' : ''
-      } ${lookout.status === 'archived' ? 'opacity-75' : ''}`}
+      className={`shadow-none cursor-pointer relative overflow-hidden group transition-all duration-200 border border-border/60 hover:border-primary/30 h-full flex flex-col rounded-xl ${
+        lookout.status === 'running' ? 'border-primary/40' : ''
+      } ${lookout.status === 'archived' ? 'opacity-60' : ''}`}
       onClick={handleCardClick}
     >
       {/* Border trail for running lookouts */}
@@ -71,64 +89,65 @@ export function LookoutCard({
         />
       )}
 
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-base font-medium hover:text-primary transition-colors">
-              {lookout.title}
-            </CardTitle>
-            <CardDescription className="text-sm">
-              <StatusBadge status={lookout.status} />
-            </CardDescription>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm font-medium group-hover:text-primary transition-colors line-clamp-2">
+          {lookout.title}
+        </CardTitle>
+        {showActions && (
+          <div onClick={handleActionClick} className="mt-2">
+            <ActionButtons
+              lookoutId={lookout.id}
+              status={lookout.status}
+              isMutating={isMutating}
+              onStatusChange={onStatusChange}
+              onDelete={onDelete}
+              onTest={onTest}
+            />
           </div>
-
-          {showActions && (
-            <div onClick={handleActionClick}>
-              <ActionButtons
-                lookoutId={lookout.id}
-                status={lookout.status}
-                isMutating={isMutating}
-                onStatusChange={onStatusChange}
-                onDelete={onDelete}
-                onTest={onTest}
-              />
-            </div>
-          )}
-        </div>
+        )}
       </CardHeader>
 
-      <CardContent className="pt-0">
-        <div className="space-y-1">
-          {/* Next run information */}
-          {lookout.nextRunAt && lookout.status === 'active' && (
-            <p className="text-xs text-muted-foreground">
-              Next Run: {formatNextRun(lookout.nextRunAt, lookout.timezone)}
-            </p>
-          )}
+      <CardContent className="pt-0 flex-1 flex flex-col">
+        {/* Prompt preview */}
+        <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+          {lookout.prompt.slice(0, 100)}{lookout.prompt.length > 100 ? '...' : ''}
+        </p>
 
-          {/* Last run information */}
-          {lookout.lastRunAt && (
-            <div className="flex items-center gap-2">
-              <p className="text-xs text-muted-foreground">
-                Last Run: {formatNextRun(lookout.lastRunAt, lookout.timezone)}
-              </p>
-              {lookout.lastRunChatId && (
-                <Link
-                  href={`/search/${lookout.lastRunChatId}`}
-                  className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <HugeiconsIcon icon={BinocularsIcon} size={12} color="currentColor" strokeWidth={1.5} />
-                  View Results
-                </Link>
-              )}
-            </div>
-          )}
+        {/* Status and run info footer */}
+        <div className="mt-auto space-y-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <StatusBadge status={lookout.status} />
+            {lastRunStatus && lookout.lastRunAt && <RunStatusBadge status={lastRunStatus} />}
+          </div>
 
-          {/* Completed state for once frequency */}
-          {!lookout.lastRunAt && lookout.frequency === 'once' && lookout.status === 'paused' && (
-            <p className="text-xs text-muted-foreground">Completed</p>
-          )}
+          <div className="font-pixel text-[9px] text-muted-foreground/50 uppercase tracking-wider space-y-0.5">
+            {/* Next run information */}
+            {lookout.nextRunAt && lookout.status === 'active' && (
+              <p>Next: {formatNextRun(lookout.nextRunAt, lookout.timezone)}</p>
+            )}
+
+            {/* Last run information */}
+            {lookout.lastRunAt && (
+              <div className="flex items-center justify-between gap-2">
+                <p>Last: {formatNextRun(lookout.lastRunAt, lookout.timezone)}</p>
+                {lookout.lastRunChatId && (
+                  <Link
+                    href={`/search/${lookout.lastRunChatId}`}
+                    className="inline-flex items-center gap-0.5 text-primary hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    View
+                    <HugeiconsIcon icon={ArrowRight01Icon} size={10} color="currentColor" strokeWidth={2} />
+                  </Link>
+                )}
+              </div>
+            )}
+
+            {/* Completed state for once frequency */}
+            {!lookout.lastRunAt && lookout.frequency === 'once' && lookout.status === 'paused' && (
+              <p>Completed</p>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

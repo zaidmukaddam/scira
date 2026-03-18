@@ -2,14 +2,41 @@
 'use client';
 
 import { Sheet, SheetContent } from '@/components/ui/sheet';
-import { Drawer, DrawerContent } from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useOptimizedScroll } from '@/hooks/use-optimized-scroll';
 import type { extremeSearchTool, Research } from '@/lib/tools/extreme-search';
 import type { UIToolInvocation } from 'ai';
-import React, { useEffect, useState, memo, useMemo, useRef } from 'react';
+import React, { useEffect, useState, memo, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronRight, Search, Target, Zap, FlaskConical } from 'lucide-react';
+import { ChevronDown, ChevronRight, Search, Target, Code2, FlaskConical, Lightbulb, Download, Loader2, X, MoreVertical, ExternalLink, Globe } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Cambio } from 'cambio';
+import { DashLoading } from 'respinner';
+
+import { TextShimmer } from '@/components/core/text-shimmer';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
+import { DataExtremeSearchPart } from '@/lib/types';
+import { Tabs as KumoTabs } from '@cloudflare/kumo';
+import { XLogoIcon } from '@phosphor-icons/react/dist/ssr';
+import dynamic from 'next/dynamic';
+import { Spinner } from '@/components/ui/spinner';
+
+const Tweet = dynamic(() => import('react-tweet').then(mod => ({ default: mod.Tweet })), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[200px] rounded-lg border border-border bg-muted/30 animate-pulse flex items-center justify-center">
+      <Spinner className="w-4 h-4" />
+    </div>
+  ),
+});
 
 // Custom minimal icons
 const Icons = {
@@ -30,754 +57,117 @@ const Icons = {
     </svg>
   ),
 };
-import { TextShimmer } from '@/components/core/text-shimmer';
-import { Skeleton } from '@/components/ui/skeleton';
-import ReactECharts, { EChartsOption } from 'echarts-for-react';
-import { useTheme } from 'next-themes';
-import { cn } from '@/lib/utils';
-import { DataExtremeSearchPart } from '@/lib/types';
-import XSearch from '@/components/x-search';
-import { XLogoIcon } from '@phosphor-icons/react/dist/ssr';
 
-// Minimal color palette for charts with better contrast
-const CHART_COLORS = {
-  primary: ['#3b82f6', '#60a5fa'],
-  success: ['#22c55e', '#4ade80'],
-  warning: ['#f59e0b', '#fbbf24'],
-  purple: ['#8b5cf6', '#a78bfa'],
-  pink: ['#ec4899', '#f472b6'],
-  red: ['#ef4444', '#f87171'],
-};
-
-// Update the ExtremeChart component to be more standalone without the card wrapper
-const ExtremeChart = memo(({ chart }: { chart: any }) => {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === 'dark';
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const mobileMediaQuery = window.matchMedia('(max-width: 640px)');
-    setIsMobile(mobileMediaQuery.matches);
-    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mobileMediaQuery.addEventListener('change', handler);
-    return () => mobileMediaQuery.removeEventListener('change', handler);
-  }, []);
-
-  // Memoize chartOptions
-  const chartOptions = useMemo(() => {
-    // Handle composite charts separately (no options needed, handled in render)
-    if (chart.type === 'composite_chart') {
-      return {};
-    }
-
-    // Helper function to format large numbers compactly
-    const formatNumber = (value: number): string => {
-      // Don't format years (4-digit numbers like 2017, 2018)
-      if (value >= 1900 && value <= 2100 && value % 1 === 0) {
-        return value.toString();
-      }
-
-      const abs = Math.abs(value);
-      const sign = value < 0 ? '-' : '';
-
-      if (abs >= 1e12) {
-        const formatted = abs / 1e12;
-        return sign + (formatted % 1 === 0 ? formatted.toFixed(0) : formatted.toFixed(1)) + 'T';
-      } else if (abs >= 1e9) {
-        const formatted = abs / 1e9;
-        return sign + (formatted % 1 === 0 ? formatted.toFixed(0) : formatted.toFixed(1)) + 'B';
-      } else if (abs >= 1e6) {
-        const formatted = abs / 1e6;
-        return sign + (formatted % 1 === 0 ? formatted.toFixed(0) : formatted.toFixed(1)) + 'M';
-      } else if (abs >= 1e4) {
-        const formatted = abs / 1e3;
-        return sign + (formatted % 1 === 0 ? formatted.toFixed(0) : formatted.toFixed(1)) + 'K';
-      }
-
-      return value.toString();
-    };
-
-    const baseOption: EChartsOption = {
-      backgroundColor: 'transparent',
-      grid: {
-        top: isMobile ? 55 : 70,
-        right: isMobile ? 15 : 20,
-        bottom: isMobile ? 55 : 65,
-        left: isMobile ? 20 : 30,
-        containLabel: true,
-      },
-      title: {
-        text: chart.title,
-        left: 'center',
-        top: isMobile ? 6 : 8,
-        textStyle: {
-          color: isDark ? '#ffffff' : '#171717',
-          fontSize: isMobile ? 11 : 12,
-          fontWeight: 600,
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        },
-      },
-      tooltip: {
-        backgroundColor: isDark ? '#1f1f1f' : '#ffffff',
-        borderWidth: 1,
-        borderColor: isDark ? '#404040' : '#e5e5e5',
-        textStyle: {
-          color: isDark ? '#ffffff' : '#000000',
-          fontSize: isMobile ? 10 : 11,
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        },
-        padding: [8, 12],
-        extraCssText: `
-          box-shadow: 0 4px 12px rgba(0, 0, 0, ${isDark ? '0.4' : '0.1'});
-          border-radius: 6px;
-          z-index: 1000;
-        `,
-        confine: true,
-        enterable: false,
-        hideDelay: 100,
-        triggerOn: 'mousemove',
-        position: function (
-          pos: [number, number],
-          params: any,
-          dom: HTMLElement,
-          rect: { x: number; y: number; width: number; height: number },
-          size: { contentSize: [number, number]; viewSize: [number, number] },
-        ) {
-          // Ensure tooltip doesn't overlap with axis labels
-          const tooltipWidth = dom.offsetWidth;
-          const tooltipHeight = dom.offsetHeight;
-          const chartWidth = size.viewSize[0];
-          const chartHeight = size.viewSize[1];
-
-          let x = pos[0];
-          let y = pos[1];
-
-          // Keep tooltip within chart bounds and away from edges
-          if (x + tooltipWidth > chartWidth - 20) {
-            x = chartWidth - tooltipWidth - 20;
-          }
-          if (x < 20) {
-            x = 20;
-          }
-
-          // Keep tooltip above the bottom 60px to avoid axis labels
-          if (y + tooltipHeight > chartHeight - 60) {
-            y = pos[1] - tooltipHeight - 20;
-          }
-          if (y < 20) {
-            y = 20;
-          }
-
-          return [x, y];
-        },
-      },
-      legend: {
-        show: true,
-        type: 'scroll',
-        top: isMobile ? 26 : 32,
-        left: 'center',
-        orient: 'horizontal',
-        textStyle: {
-          color: isDark ? '#d4d4d4' : '#525252',
-          fontSize: isMobile ? 9 : 10,
-          fontFamily: 'system-ui, -apple-system, sans-serif',
-        },
-        icon: 'circle',
-        itemWidth: isMobile ? 6 : 8,
-        itemHeight: isMobile ? 6 : 8,
-        itemGap: isMobile ? 8 : 12,
-        pageIconSize: isMobile ? 8 : 10,
-        pageTextStyle: {
-          fontSize: isMobile ? 9 : 10,
-          color: isDark ? '#d4d4d4' : '#525252',
-        },
-      },
-      animation: true,
-      animationDuration: 400,
-      animationEasing: 'cubicOut',
-    };
-
-    const axisStyle = {
-      axisLine: {
-        show: true,
-        lineStyle: {
-          color: isDark ? '#404040' : '#e5e5e5',
-          width: 1,
-        },
-      },
-      axisTick: {
-        show: true,
-        lineStyle: {
-          color: isDark ? '#404040' : '#e5e5e5',
-        },
-        length: 4,
-      },
-      axisLabel: {
-        color: isDark ? '#d4d4d4' : '#525252',
-        fontSize: isMobile ? 9 : 10,
-        fontFamily: 'system-ui, -apple-system, sans-serif',
-        margin: isMobile ? 8 : 10,
-        hideOverlap: true,
-      },
-      splitLine: {
-        show: false,
-      },
-    };
-
-    // Handle different chart types
-    if (chart.type === 'pie') {
-      const colorPalette = Object.values(CHART_COLORS);
-      return {
-        ...baseOption,
-        tooltip: {
-          ...baseOption.tooltip,
-          trigger: 'item',
-          backgroundColor: isDark ? '#1c1c1c' : '#ffffff',
-          borderWidth: 0,
-          shadowBlur: 16,
-          shadowColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.1)',
-          textStyle: {
-            color: isDark ? '#ffffff' : '#1a1a1a',
-            fontSize: isMobile ? 11 : 12,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            fontWeight: 500,
-          },
-          padding: [12, 16],
-          borderRadius: 8,
-          formatter: function (params: any) {
-            const percentage = params.percent % 1 === 0 ? params.percent.toFixed(0) : params.percent.toFixed(1);
-            const value = typeof params.value === 'number' ? params.value.toLocaleString() : params.value;
-            let result = `<div style="display: flex; align-items: center; margin-bottom: 8px;">`;
-            result += `<span style="display: inline-block; width: 12px; height: 12px; background-color: ${params.color}; border-radius: 3px; margin-right: 8px; flex-shrink: 0;"></span>`;
-            result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '12px' : '13px'};">${params.name}</span>`;
-            result += `</div>`;
-            result += `<div style="display: flex; justify-content: space-between; align-items: center;">`;
-            result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; font-size: ${isMobile ? '10px' : '11px'};">Value:</span>`;
-            result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${value}</span>`;
-            result += `</div>`;
-            result += `<div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">`;
-            result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; font-size: ${isMobile ? '10px' : '11px'};">Percentage:</span>`;
-            result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${percentage}%</span>`;
-            result += `</div>`;
-            return result;
-          },
-        },
-        legend: {
-          ...baseOption.legend,
-          show: !isMobile,
-        },
-        series: [
-          {
-            type: 'pie',
-            radius: isMobile ? '65%' : '70%',
-            center: ['50%', '55%'],
-            data: chart.elements.map((item: any, index: number) => {
-              const colorSet = colorPalette[index % colorPalette.length];
-              return {
-                name: item.label,
-                value: item.angle,
-                itemStyle: {
-                  color: colorSet[0],
-                  borderRadius: 3,
-                  borderColor: isDark ? '#262626' : '#ffffff',
-                  borderWidth: 1,
-                },
-                emphasis: {
-                  itemStyle: {
-                    color: colorSet[1],
-                    shadowBlur: 10,
-                    shadowColor: `rgba(0, 0, 0, ${isDark ? '0.4' : '0.2'})`,
-                  },
-                },
-              };
-            }),
-            label: {
-              show: !isMobile,
-              position: 'outer',
-              alignTo: 'labelLine',
-              color: isDark ? '#d4d4d4' : '#525252',
-              fontSize: 9,
-              fontWeight: 500,
-            },
-            labelLine: {
-              show: !isMobile,
-              length: 6,
-              length2: 8,
-            },
-          },
-        ],
-      };
-    }
-
-    // Handle line charts with points data
-    if (chart.type === 'line') {
-      const colorPalette = Object.values(CHART_COLORS);
-
-      return {
-        ...baseOption,
-        tooltip: {
-          ...baseOption.tooltip,
-          trigger: 'axis',
-          backgroundColor: isDark ? '#1c1c1c' : '#ffffff',
-          borderWidth: 0,
-          shadowBlur: 16,
-          shadowColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.1)',
-          textStyle: {
-            color: isDark ? '#ffffff' : '#1a1a1a',
-            fontSize: isMobile ? 11 : 12,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            fontWeight: 500,
-          },
-          padding: [12, 16],
-          borderRadius: 8,
-          formatter: function (params: any) {
-            let axisValue = params[0].axisValueLabel;
-            // Format X-axis value (remove unnecessary .0 from whole numbers like "2017.0" -> "2017")
-            if (axisValue && typeof axisValue === 'string') {
-              axisValue = axisValue.replace(/\.0+$/, '');
-            } else if (typeof axisValue === 'number' && axisValue % 1 === 0) {
-              axisValue = Math.round(axisValue).toString();
-            }
-            let result = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '12px' : '13px'};">${axisValue}</div>`;
-
-            params.forEach((param: any) => {
-              // For line charts, param.value is [x, y] array - we want the y value
-              let displayValue;
-              if (Array.isArray(param.value) && param.value.length >= 2) {
-                displayValue = typeof param.value[1] === 'number' ? param.value[1].toLocaleString() : param.value[1];
-              } else {
-                displayValue = typeof param.value === 'number' ? param.value.toLocaleString() : param.value;
-              }
-
-              result += `<div style="display: flex; align-items: center; margin-bottom: 4px;">`;
-              result += `<span style="display: inline-block; width: 8px; height: 8px; background-color: ${param.color}; border-radius: 50%; margin-right: 8px; flex-shrink: 0;"></span>`;
-              result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; margin-right: 8px; font-size: ${isMobile ? '10px' : '11px'};">${param.seriesName}:</span>`;
-              result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${displayValue}</span>`;
-              result += `</div>`;
-            });
-
-            return result;
-          },
-        },
-        xAxis: {
-          type: 'value',
-          name: chart.x_label || '',
-          nameLocation: 'middle',
-          nameGap: isMobile ? 25 : 30,
-          nameTextStyle: {
-            color: isDark ? '#d4d4d4' : '#525252',
-            fontSize: isMobile ? 9 : 10,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-          },
-          // Smart axis scaling - start from nearby values, not zero
-          scale: true,
-          ...axisStyle,
-          // Prevent label overlapping
-          axisLabel: {
-            ...axisStyle.axisLabel,
-            interval: 'auto',
-            rotate: isMobile ? 45 : 0,
-            formatter: formatNumber,
-          },
-        },
-        yAxis: {
-          type: 'value',
-          name: chart.y_label || '',
-          nameLocation: 'middle',
-          nameGap: isMobile ? 35 : 40,
-          nameRotate: 90,
-          nameTextStyle: {
-            color: isDark ? '#d4d4d4' : '#525252',
-            fontSize: isMobile ? 9 : 10,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-          },
-          // Smart axis scaling - start from nearby values, not zero
-          scale: true,
-          ...axisStyle,
-          // Prevent label overlapping
-          axisLabel: {
-            ...axisStyle.axisLabel,
-            formatter: formatNumber,
-          },
-        },
-        series:
-          chart.elements?.map((element: any, index: number) => {
-            const colorSet = colorPalette[index % colorPalette.length];
-            return {
-              name: element.label,
-              type: 'line',
-              data: element.points || [],
-              smooth: false,
-              symbol: 'circle',
-              symbolSize: isMobile ? 4 : 6,
-              lineStyle: {
-                width: isMobile ? 2 : 3,
-                color: colorSet[0],
-              },
-              itemStyle: {
-                color: colorSet[0],
-                borderColor: isDark ? '#262626' : '#ffffff',
-                borderWidth: 1,
-              },
-              emphasis: {
-                itemStyle: {
-                  color: colorSet[1],
-                  shadowBlur: 8,
-                  shadowColor: `rgba(0, 0, 0, ${isDark ? '0.4' : '0.2'})`,
-                },
-              },
-            };
-          }) || [],
-      };
-    }
-
-    // Handle bar charts
-    if (chart.type === 'bar') {
-      const colorPalette = Object.values(CHART_COLORS);
-
-      return {
-        ...baseOption,
-        tooltip: {
-          ...baseOption.tooltip,
-          trigger: 'axis',
-          backgroundColor: isDark ? '#1c1c1c' : '#ffffff',
-          borderWidth: 0,
-          shadowBlur: 16,
-          shadowColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.1)',
-          textStyle: {
-            color: isDark ? '#ffffff' : '#1a1a1a',
-            fontSize: isMobile ? 11 : 12,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            fontWeight: 500,
-          },
-          padding: [12, 16],
-          borderRadius: 8,
-          formatter: function (params: any) {
-            let result = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '12px' : '13px'};">${params[0].name}</div>`;
-
-            params.forEach((param: any) => {
-              const value = typeof param.value === 'number' ? param.value.toLocaleString() : param.value;
-              result += `<div style="display: flex; align-items: center; margin-bottom: 4px;">`;
-              result += `<span style="display: inline-block; width: 8px; height: 8px; background-color: ${param.color}; border-radius: 2px; margin-right: 8px; flex-shrink: 0;"></span>`;
-              result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; margin-right: 8px; font-size: ${isMobile ? '10px' : '11px'};">${param.seriesName}:</span>`;
-              result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${value}</span>`;
-              result += `</div>`;
-            });
-
-            return result;
-          },
-        },
-        xAxis: {
-          type: 'category',
-          name: chart.x_label || '',
-          nameLocation: 'middle',
-          nameGap: isMobile ? 25 : 30,
-          nameTextStyle: {
-            color: isDark ? '#d4d4d4' : '#525252',
-            fontSize: isMobile ? 9 : 10,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-          },
-          data: chart.x_tick_labels || chart.elements?.map((el: any) => el.label) || [],
-          ...axisStyle,
-        },
-        yAxis: {
-          type: 'value',
-          name: chart.y_label || '',
-          nameLocation: 'middle',
-          nameGap: isMobile ? 35 : 40,
-          nameRotate: 90,
-          nameTextStyle: {
-            color: isDark ? '#d4d4d4' : '#525252',
-            fontSize: isMobile ? 9 : 10,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-          },
-          // Smart axis scaling - start from nearby values, not zero
-          scale: true,
-          ...axisStyle,
-          // Prevent label overlapping
-          axisLabel: {
-            ...axisStyle.axisLabel,
-            formatter: formatNumber,
-          },
-        },
-        series: [
-          {
-            name: chart.title || 'Data',
-            type: 'bar',
-            data: chart.elements?.map((element: any) => element.value) || [],
-            itemStyle: {
-              color: colorPalette[0][0],
-              borderRadius: [4, 4, 0, 0],
-            },
-            emphasis: {
-              itemStyle: {
-                color: colorPalette[0][1],
-                shadowBlur: 8,
-                shadowColor: `rgba(0, 0, 0, ${isDark ? '0.4' : '0.2'})`,
-              },
-            },
-            barWidth: isMobile ? '60%' : '50%',
-          },
-        ],
-      };
-    }
-
-    // Handle scatter charts
-    if (chart.type === 'scatter') {
-      const colorPalette = Object.values(CHART_COLORS);
-
-      return {
-        ...baseOption,
-        tooltip: {
-          ...baseOption.tooltip,
-          trigger: 'item',
-          backgroundColor: isDark ? '#1c1c1c' : '#ffffff',
-          borderWidth: 0,
-          shadowBlur: 16,
-          shadowColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.1)',
-          textStyle: {
-            color: isDark ? '#ffffff' : '#1a1a1a',
-            fontSize: isMobile ? 11 : 12,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            fontWeight: 500,
-          },
-          padding: [12, 16],
-          borderRadius: 8,
-          formatter: function (params: any) {
-            let result = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '12px' : '13px'};">${params.seriesName}</div>`;
-
-            const xValue = Array.isArray(params.value) ? params.value[0] : params.value;
-            const yValue = Array.isArray(params.value) ? params.value[1] : params.value;
-
-            result += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">`;
-            result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; font-size: ${isMobile ? '10px' : '11px'};">X:</span>`;
-            result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${typeof xValue === 'number' ? xValue.toLocaleString() : xValue}</span>`;
-            result += `</div>`;
-            result += `<div style="display: flex; justify-content: space-between; align-items: center;">`;
-            result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; font-size: ${isMobile ? '10px' : '11px'};">Y:</span>`;
-            result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${typeof yValue === 'number' ? yValue.toLocaleString() : yValue}</span>`;
-            result += `</div>`;
-
-            return result;
-          },
-        },
-        xAxis: {
-          type: 'value',
-          name: chart.x_label || '',
-          nameLocation: 'middle',
-          nameGap: isMobile ? 25 : 30,
-          nameTextStyle: {
-            color: isDark ? '#d4d4d4' : '#525252',
-            fontSize: isMobile ? 9 : 10,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-          },
-          scale: true,
-          ...axisStyle,
-          axisLabel: {
-            ...axisStyle.axisLabel,
-            formatter: formatNumber,
-          },
-        },
-        yAxis: {
-          type: 'value',
-          name: chart.y_label || '',
-          nameLocation: 'middle',
-          nameGap: isMobile ? 35 : 40,
-          nameRotate: 90,
-          nameTextStyle: {
-            color: isDark ? '#d4d4d4' : '#525252',
-            fontSize: isMobile ? 9 : 10,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-          },
-          scale: true,
-          ...axisStyle,
-          axisLabel: {
-            ...axisStyle.axisLabel,
-            formatter: formatNumber,
-          },
-        },
-        series:
-          chart.elements?.map((element: any, index: number) => {
-            const colorSet = colorPalette[index % colorPalette.length];
-            return {
-              name: element.label || `Series ${index + 1}`,
-              type: 'scatter',
-              data: element.points || element.data || [],
-              symbolSize: isMobile ? 6 : 8,
-              itemStyle: {
-                color: colorSet[0],
-                borderColor: isDark ? '#262626' : '#ffffff',
-                borderWidth: 1,
-              },
-              emphasis: {
-                itemStyle: {
-                  color: colorSet[1],
-                  shadowBlur: 10,
-                  shadowColor: `rgba(0, 0, 0, ${isDark ? '0.4' : '0.2'})`,
-                },
-              },
-            };
-          }) || [],
-      };
-    }
-
-    // Handle box and whisker charts
-    if (chart.type === 'box_and_whisker') {
-      const colorPalette = Object.values(CHART_COLORS);
-
-      return {
-        ...baseOption,
-        tooltip: {
-          ...baseOption.tooltip,
-          trigger: 'item',
-          backgroundColor: isDark ? '#1c1c1c' : '#ffffff',
-          borderWidth: 0,
-          shadowBlur: 16,
-          shadowColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.1)',
-          textStyle: {
-            color: isDark ? '#ffffff' : '#1a1a1a',
-            fontSize: isMobile ? 11 : 12,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-            fontWeight: 500,
-          },
-          padding: [12, 16],
-          borderRadius: 8,
-          formatter: function (params: any) {
-            let result = `<div style="font-weight: 600; margin-bottom: 8px; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '12px' : '13px'};">${params.name}</div>`;
-
-            if (Array.isArray(params.value) && params.value.length >= 5) {
-              const [min, q1, median, q3, max] = params.value;
-              const stats = [
-                ['Min', min],
-                ['Q1', q1],
-                ['Median', median],
-                ['Q3', q3],
-                ['Max', max],
-              ];
-
-              stats.forEach(([label, value]) => {
-                result += `<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">`;
-                result += `<span style="color: ${isDark ? '#d1d5db' : '#6b7280'}; font-size: ${isMobile ? '10px' : '11px'};">${label}:</span>`;
-                result += `<span style="font-weight: 600; color: ${isDark ? '#ffffff' : '#1a1a1a'}; font-size: ${isMobile ? '11px' : '12px'};">${typeof value === 'number' ? value.toLocaleString() : value}</span>`;
-                result += `</div>`;
-              });
-            }
-
-            return result;
-          },
-        },
-        xAxis: {
-          type: 'category',
-          name: chart.x_label || '',
-          nameLocation: 'middle',
-          nameGap: isMobile ? 25 : 30,
-          nameTextStyle: {
-            color: isDark ? '#d4d4d4' : '#525252',
-            fontSize: isMobile ? 9 : 10,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-          },
-          data: chart.x_tick_labels || chart.elements?.map((el: any) => el.label) || [],
-          ...axisStyle,
-        },
-        yAxis: {
-          type: 'value',
-          name: chart.y_label || '',
-          nameLocation: 'middle',
-          nameGap: isMobile ? 35 : 40,
-          nameRotate: 90,
-          nameTextStyle: {
-            color: isDark ? '#d4d4d4' : '#525252',
-            fontSize: isMobile ? 9 : 10,
-            fontFamily: 'system-ui, -apple-system, sans-serif',
-          },
-          scale: true,
-          ...axisStyle,
-          axisLabel: {
-            ...axisStyle.axisLabel,
-            formatter: formatNumber,
-          },
-        },
-        series: [
-          {
-            name: chart.title || 'Box Plot',
-            type: 'boxplot',
-            data:
-              chart.elements?.map((element: any) => {
-                // Handle different data formats for box plots
-                if (element.boxplot_data) {
-                  return element.boxplot_data; // [min, q1, median, q3, max]
-                } else if (element.values) {
-                  return element.values; // Raw values that ECharts will process
-                } else if (element.data) {
-                  return element.data;
-                }
-                return element.value || [];
-              }) || [],
-            itemStyle: {
-              color: colorPalette[0][0],
-              borderColor: colorPalette[0][0],
-              borderWidth: 2,
-            },
-            emphasis: {
-              itemStyle: {
-                shadowBlur: 10,
-                shadowColor: `rgba(0, 0, 0, ${isDark ? '0.4' : '0.2'})`,
-              },
-            },
-          },
-        ],
-      };
-    }
-
-    // Default case - just return base options
-    return {
-      ...baseOption,
-      tooltip: {
-        ...baseOption.tooltip,
-        trigger: 'axis',
-      },
-    };
-  }, [chart, isDark, isMobile]);
-
-  // Handle composite charts (multiple charts in one container)
-  if (chart.type === 'composite_chart') {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="grid grid-cols-1 md:grid-cols-2 gap-4"
-      >
-        {(chart.elements || chart.data || []).map((subChart: any, index: number) => (
-          <div key={index} className="w-full">
-            <ExtremeChart chart={subChart} />
-          </div>
-        ))}
-      </motion.div>
-    );
+// Fetch image as blob and trigger a real download. Tries direct URL first; on CORS failure uses our proxy.
+async function downloadImageBlob(url: string, filename: string): Promise<void> {
+  let res: Response;
+  try {
+    res = await fetch(url, { mode: 'cors' });
+  } catch {
+    // CORS or network — fetch via same-origin proxy
+    res = await fetch(`/api/proxy-image?url=${encodeURIComponent(url)}`);
   }
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const blob = await res.blob();
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(blobUrl);
+}
 
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="bg-card border border-border rounded-lg shadow-none overflow-hidden h-full"
-      >
-        <div className="w-full p-4 h-80 sm:h-96 lg:h-[500px]">
-          <ReactECharts
-            option={chartOptions}
-            style={{ height: '100%', width: '100%' }}
-            theme={isDark ? 'dark' : ''}
-            opts={{ renderer: 'canvas', locale: 'en' }}
-            notMerge={true}
-          />
-        </div>
-      </motion.div>
-    );
-});
+// Chart wrapper component with Cambio expand and 3-dot dropdown for actions
+const ChartWithFullView = memo(({ chart, index }: { chart: any; index: number }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
-ExtremeChart.displayName = 'ExtremeChart';
+  const chartTitle = chart.title || `Chart ${index + 1}`;
+  const sanitizedTitle = chartTitle.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+  const imageUrl = chart.url;
+
+  const handleDownload = useCallback(async () => {
+    if (!imageUrl) return;
+    const filename = `${sanitizedTitle}.png`;
+
+    setIsDownloading(true);
+    try {
+      await downloadImageBlob(imageUrl, filename);
+    } catch {
+      // CORS or network error — fall back to opening in new tab
+      window.open(imageUrl, '_blank');
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [imageUrl, sanitizedTitle]);
+
+  const handleOpenInNewTab = useCallback(() => {
+    if (imageUrl) window.open(imageUrl, '_blank');
+  }, [imageUrl]);
+
+  if (!imageUrl) return null;
+
+  return (
+    <div className="relative group h-full">
+      <Cambio.Root motion="smooth">
+        <Cambio.Trigger className="w-full h-full rounded-lg border border-border overflow-hidden cursor-zoom-in block bg-card shadow-none">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="h-full"
+          >
+            <img src={imageUrl} alt={chartTitle} className="w-full h-full object-cover" draggable={false} loading="lazy" />
+          </motion.div>
+        </Cambio.Trigger>
+        <Cambio.Portal>
+          <Cambio.Backdrop className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm" />
+          <Cambio.Popup className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="relative">
+              <img
+                src={imageUrl}
+                alt={chartTitle}
+                className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
+                draggable={false}
+              />
+              <Cambio.Close className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white backdrop-blur-sm hover:bg-black/70 transition-colors cursor-pointer">
+                <X className="h-3.5 w-3.5" />
+              </Cambio.Close>
+            </div>
+          </Cambio.Popup>
+        </Cambio.Portal>
+      </Cambio.Root>
+      {/* 3-dot dropdown menu */}
+      <div className={cn(
+        "absolute top-3 right-3 transition-all duration-200 rotate-90",
+        dropdownOpen ? "opacity-100 translate-y-0" : "opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0"
+      )}>
+        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon-sm" className="h-7 w-7 rounded-lg bg-background/95 backdrop-blur-md border border-border/50 shadow-none hover:bg-accent">
+              <MoreVertical className="h-3.5 w-3.5" />
+              <span className="sr-only">Chart options</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" sideOffset={4}>
+            <DropdownMenuItem onClick={handleDownload} disabled={isDownloading}>
+              {isDownloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+              {isDownloading ? 'Downloading...' : 'Download as PNG'}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleOpenInNewTab}>
+              <ExternalLink className="h-3.5 w-3.5" />
+              Open in new tab
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
+  );
+}, (prev, next) => prev.chart?.url === next.chart?.url && prev.chart?.title === next.chart?.title && prev.index === next.index);
+
+ChartWithFullView.displayName = 'ChartWithFullView';
 
 // Types for Extreme Search
 interface ExtremeSearchSource {
@@ -912,6 +302,8 @@ const ExtremeSourcesSheet: React.FC<{
 interface SearchQuery {
   id: string;
   query: string;
+  index?: number;
+  total?: number;
   status: 'started' | 'reading_content' | 'completed' | 'error';
   sources: ExtremeSearchSource[];
   content: Array<{ title: string; url: string; text: string; favicon?: string }>;
@@ -926,9 +318,22 @@ interface CodeExecution {
   charts?: any[];
 }
 
+interface ThinkingExecution {
+  id: string;
+  thought: string;
+  nextStep?: string;
+}
+
+interface DoneExecution {
+  id: string;
+  summary: string;
+}
+
 interface XSearchExecution {
   id: string;
   query: string;
+  index?: number;
+  total?: number;
   startDate: string;
   endDate: string;
   handles?: string[];
@@ -942,6 +347,34 @@ interface XSearchExecution {
   };
 }
 
+interface FileQueryExecution {
+  id: string;
+  query: string;
+  index?: number;
+  total?: number;
+  status: 'started' | 'completed' | 'error';
+  results?: Array<{
+    fileName: string;
+    content: string;
+    score: number;
+  }>;
+}
+
+interface BrowsePageExecution {
+  id: string;
+  urls: string[];
+  index?: number;
+  total?: number;
+  status: 'started' | 'browsing' | 'completed' | 'error';
+  results?: Array<{
+    url: string;
+    title: string;
+    content: string;
+    favicon?: string;
+    error?: string;
+  }>;
+}
+
 const ExtremeSearchComponent = ({
   toolInvocation,
   annotations,
@@ -952,14 +385,35 @@ const ExtremeSearchComponent = ({
   const { state } = toolInvocation;
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
   const [userExpandedItems, setUserExpandedItems] = useState<Record<string, boolean>>({});
-  const [researchProcessOpen, setResearchProcessOpen] = useState(false);
-  const [sourcesAccordionOpen, setSourcesAccordionOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState<string>('process');
+  const [resultsOpen, setResultsOpen] = useState(true);
   const [sourcesSheetOpen, setSourcesSheetOpen] = useState(false);
-  const [visualizationsOpen, setVisualizationsOpen] = useState(true);
 
   // Timeline container ref for auto-scroll
   const timelineRef = useRef<HTMLDivElement>(null);
-  const { scrollToBottom, markManualScroll, resetManualScroll } = useOptimizedScroll(timelineRef);
+  const timelineBottomRef = useRef<HTMLDivElement>(null);
+  const { scrollToBottom, markManualScroll, resetManualScroll } = useOptimizedScroll(timelineBottomRef);
+  const sourcesListRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const citationsListRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const fileResultsListRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const codeResultRefs = useRef<Record<string, HTMLDivElement | null>>({});
+
+  const handleTimelineScroll = useCallback(
+    function handleTimelineScroll() {
+      const container = timelineRef.current;
+      if (!container) return;
+
+      const remaining = container.scrollHeight - container.scrollTop - container.clientHeight;
+      const isNearBottom = remaining < 24;
+      if (isNearBottom) {
+        resetManualScroll();
+        return;
+      }
+
+      markManualScroll();
+    },
+    [markManualScroll, resetManualScroll],
+  );
 
   // Check if we're in final result state
   const isCompleted = useMemo(() => {
@@ -970,6 +424,14 @@ const ExtremeSearchComponent = ({
 
     // Also check if annotations indicate completion
     if (annotations?.length) {
+      // Check for done annotation
+      const doneAnnotation = annotations.find(
+        (ann) => ann.type === 'data-extreme_search' && ann.data.kind === 'done',
+      );
+      if (doneAnnotation) {
+        return true;
+      }
+
       const planAnnotations = annotations.filter(
         (ann) => ann.type === 'data-extreme_search' && ann.data.kind === 'plan',
       );
@@ -1000,82 +462,82 @@ const ExtremeSearchComponent = ({
       };
     }
 
+    // Check for done annotation (wrapping up state)
+    const doneAnnotation = annotations.find(
+      (ann) => ann.type === 'data-extreme_search' && ann.data.kind === 'done',
+    );
+    if (doneAnnotation) {
+      return { currentStatus: 'Wrapping up research...', planData: null };
+    }
+
     // Get the latest plan annotation for plan data
     const planAnnotations = annotations.filter((ann) => ann.type === 'data-extreme_search' && ann.data.kind === 'plan');
-
     const latestPlan = planAnnotations[planAnnotations.length - 1];
     const plan = latestPlan?.data.kind === 'plan' && 'plan' in latestPlan.data ? latestPlan.data.plan : null;
+    const hasPlan = plan !== null;
 
-    // Derive dynamic status from current tool states (query, x_search, code)
-    const toolAnnotations = annotations.filter(
-      (ann) =>
-        ann.type === 'data-extreme_search' &&
-        (ann.data.kind === 'query' || ann.data.kind === 'x_search' || ann.data.kind === 'code'),
-    );
+    // Get tool annotations for state tracking
+    const queryAnnotations = annotations.filter((ann) => ann.type === 'data-extreme_search' && ann.data.kind === 'query');
+    const xSearchAnnotations = annotations.filter((ann) => ann.type === 'data-extreme_search' && ann.data.kind === 'x_search');
+    const codeAnnotations = annotations.filter((ann) => ann.type === 'data-extreme_search' && ann.data.kind === 'code');
+    const thinkingAnnotations = annotations.filter((ann) => ann.type === 'data-extreme_search' && ann.data.kind === 'thinking');
+    const fileQueryAnnotations = annotations.filter((ann) => ann.type === 'data-extreme_search' && ann.data.kind === 'file_query');
+    const browsePageAnnotations = annotations.filter((ann) => ann.type === 'data-extreme_search' && ann.data.kind === 'browse_page');
 
-    let dynamicStatus = 'Processing research...';
+    const hasSearches = queryAnnotations.length > 0 || xSearchAnnotations.length > 0 || fileQueryAnnotations.length > 0 || browsePageAnnotations.length > 0;
+    const hasThinking = thinkingAnnotations.length > 0;
 
-    if (toolAnnotations.length > 0) {
-      // Get the latest tool annotation
-      const latestTool = toolAnnotations[toolAnnotations.length - 1];
-      const data = latestTool.data;
+    // Get latest states
+    const latestQuery = queryAnnotations[queryAnnotations.length - 1];
+    const latestXSearch = xSearchAnnotations[xSearchAnnotations.length - 1];
+    const latestFileQuery = fileQueryAnnotations[fileQueryAnnotations.length - 1];
+    const latestBrowsePage = browsePageAnnotations[browsePageAnnotations.length - 1];
+    const latestCode = codeAnnotations[codeAnnotations.length - 1];
+    const latestThinking = thinkingAnnotations[thinkingAnnotations.length - 1];
+    const latestNextStep = latestThinking?.data?.kind === 'thinking' ? latestThinking.data.nextStep : undefined;
 
-      if (data.kind === 'query') {
-        const queryStatus = data.status;
-        const queryText = data.query;
+    // Determine current status based on natural flow
+    let dynamicStatus = 'Researching...';
 
-        switch (queryStatus) {
-          case 'started':
-            dynamicStatus = `Searching: "${queryText}"`;
-            break;
-          case 'reading_content':
-            dynamicStatus = `Reading content for: "${queryText}"`;
-            break;
-          case 'completed':
-            dynamicStatus = 'Analyzing results...';
-            break;
-          default:
-            dynamicStatus = 'Processing research...';
-        }
-      } else if (data.kind === 'x_search') {
-        const xSearchStatus = data.status;
-        const queryText = data.query;
+    // Phase 1: Planning
+    if (!hasPlan) {
+      dynamicStatus = 'Planning research...';
+    }
+    // Phase 2: Research agent starting (plan ready but no searches yet)
+    else if (hasPlan && !hasSearches && !hasThinking) {
+      dynamicStatus = 'Planning completed, starting up research agent...';
+    }
+    // Phase 3: Active research
+    else {
+      // Check if we're in a thinking state (latest annotation is thinking)
+      const latestAnnotation = annotations[annotations.length - 1];
+      const isCurrentlyThinking = latestAnnotation?.data?.kind === 'thinking';
 
-        switch (xSearchStatus) {
-          case 'started':
-            dynamicStatus = `Searching X posts: "${queryText}"`;
-            break;
-          case 'completed':
-            dynamicStatus = 'Analyzing X search results...';
-            break;
-          case 'error':
-            dynamicStatus = 'X search encountered an error';
-            break;
-          default:
-            dynamicStatus = 'Processing X search...';
-        }
-      } else if (data.kind === 'code') {
-        const codeStatus = data.status;
-        const title = data.title;
+      // Check if searches/code are actively running
+      const isSearching = latestQuery?.data?.kind === 'query' && latestQuery.data.status === 'started';
+      const isReadingContent = latestQuery?.data?.kind === 'query' && latestQuery.data.status === 'reading_content';
+      const isXSearching = latestXSearch?.data?.kind === 'x_search' && latestXSearch.data.status === 'started';
+      const isFileQuerying = latestFileQuery?.data?.kind === 'file_query' && latestFileQuery.data.status === 'started';
+      const isBrowsing = latestBrowsePage?.data?.kind === 'browse_page' && (latestBrowsePage.data.status === 'started' || latestBrowsePage.data.status === 'browsing');
+      const isRunningCode = latestCode?.data?.kind === 'code' && latestCode.data.status === 'running';
 
-        switch (codeStatus) {
-          case 'running':
-            dynamicStatus = `Executing: "${title}"`;
-            break;
-          case 'completed':
-            dynamicStatus = 'Code execution completed';
-            break;
-          case 'error':
-            dynamicStatus = 'Code execution encountered an error';
-            break;
-          default:
-            dynamicStatus = 'Processing code execution...';
-        }
+      if (isCurrentlyThinking) {
+        dynamicStatus = 'Thinking...';
+      } else if (isRunningCode) {
+        dynamicStatus = 'Running analysis...';
+      } else if (isFileQuerying) {
+        dynamicStatus = latestNextStep || 'Searching files...';
+      } else if (isBrowsing) {
+        dynamicStatus = latestNextStep || 'Browsing pages...';
+      } else if (isSearching || isXSearching) {
+        // Use nextStep from thinking if available during search
+        dynamicStatus = latestNextStep || 'Searching...';
+      } else if (isReadingContent) {
+        dynamicStatus = 'Reading sources...';
+      } else if (hasSearches) {
+        // Between steps - analyzing
+        dynamicStatus = 'Analyzing results...';
       }
-    } else {
-      // Fallback to plan status if no tool annotations yet
-      const planStatus = latestPlan?.data?.kind === 'plan' && latestPlan.data.status?.title;
-      dynamicStatus = planStatus || 'Processing research...';
     }
 
     return {
@@ -1094,26 +556,61 @@ const ExtremeSearchComponent = ({
       if (researchData?.research?.toolResults) {
         const webSearchResults = researchData.research.toolResults.filter((result) => result.toolName === 'webSearch');
 
-        return webSearchResults.map((result, index) => {
-          const query = result.args?.query || result.input?.query || `Query ${index + 1}`;
+        return webSearchResults.flatMap((result, index) => {
+          const resultData = result.result || result.output || {};
 
-          const sources = (result.result || result.output || []).map((source: any) => ({
-            title: source.title || '',
-            url: source.url || '',
-            content: source.content || '', // 🔧 FIX: Include content from tool results
-            publishedDate: source.publishedDate || '',
-            favicon:
-              source.favicon ||
-              `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(source.url || 'example.com').hostname)}`,
-          }));
+          if (Array.isArray(resultData)) {
+            const query = result.args?.query || result.input?.query || `Query ${index + 1}`;
+            const sources = resultData.map((source: any) => ({
+              title: source.title || '',
+              url: source.url || '',
+              content: source.content || '',
+              publishedDate: source.publishedDate || '',
+              favicon:
+                source.favicon ||
+                `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(source.url || 'example.com').hostname)}`,
+            }));
 
-          return {
-            id: result.toolCallId || `query-${index}`,
-            query,
-            status: 'completed' as const,
-            sources,
-            content: [],
-          };
+            return [
+              {
+                id: result.toolCallId || `query-${index}`,
+                query,
+                status: 'completed' as const,
+                sources,
+                content: [],
+              },
+            ];
+          }
+
+          const searches = Array.isArray(resultData.searches) ? resultData.searches : [];
+          const total = searches.length || 0;
+
+          return searches.map((search: any, searchIndex: number) => {
+            const query =
+              search.query ||
+              result.args?.queries?.[searchIndex] ||
+              result.input?.queries?.[searchIndex] ||
+              `Query ${searchIndex + 1}`;
+            const sources = (search.results || []).map((source: any) => ({
+              title: source.title || '',
+              url: source.url || '',
+              content: source.content || '',
+              publishedDate: source.publishedDate || '',
+              favicon:
+                source.favicon ||
+                `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(source.url || 'example.com').hostname)}`,
+            }));
+
+            return {
+              id: `${result.toolCallId || `query-${index}`}-${searchIndex}`,
+              query,
+              index: searchIndex,
+              total: total || undefined,
+              status: 'completed' as const,
+              sources,
+              content: [],
+            };
+          });
         });
       }
     }
@@ -1133,11 +630,15 @@ const ExtremeSearchComponent = ({
           if (existingQuery) {
             // Update existing query status
             existingQuery.status = data.status;
+            existingQuery.index = data.index;
+            existingQuery.total = data.total;
           } else {
             // Create new query
             queryMap.set(data.queryId, {
               id: data.queryId,
               query: data.query,
+              index: data.index,
+              total: data.total,
               status: data.status,
               sources: [],
               content: [],
@@ -1198,22 +699,45 @@ const ExtremeSearchComponent = ({
       if (researchData?.research?.toolResults) {
         const xSearchResults = researchData.research.toolResults.filter((result) => result.toolName === 'xSearch');
 
-        return xSearchResults.map((result, index) => {
-          const query = result.args?.query || result.input?.query || `X Search ${index + 1}`;
+        return xSearchResults.flatMap((result, index) => {
           const startDate = result.args?.startDate || result.input?.startDate || '';
           const endDate = result.args?.endDate || result.input?.endDate || '';
-          const handles = result.args?.xHandles || result.input?.xHandles || [];
-          const resultData = result.result || result.output || null;
+          const resultData = result.result || result.output || {};
+          const handles =
+            resultData.handles ||
+            result.args?.includeXHandles ||
+            result.args?.excludeXHandles ||
+            result.input?.includeXHandles ||
+            result.input?.excludeXHandles ||
+            [];
 
-          return {
-            id: result.toolCallId || `x-search-${index}`,
-            query,
-            startDate,
-            endDate,
-            handles,
-            status: 'completed' as const,
-            result: resultData,
-          };
+          if (resultData && Array.isArray(resultData.searches)) {
+            const total = resultData.searches.length || 0;
+            return resultData.searches.map((search: any, searchIndex: number) => ({
+              id: `${result.toolCallId || `x-search-${index}`}-${searchIndex}`,
+              query: search.query || `X Search ${searchIndex + 1}`,
+              index: searchIndex,
+              total: total || undefined,
+              startDate,
+              endDate,
+              handles,
+              status: 'completed' as const,
+              result: search.result || search,
+            }));
+          }
+
+          const query = result.args?.query || result.input?.query || `X Search ${index + 1}`;
+          return [
+            {
+              id: result.toolCallId || `x-search-${index}`,
+              query,
+              startDate,
+              endDate,
+              handles,
+              status: 'completed' as const,
+              result: resultData,
+            },
+          ];
         });
       }
     }
@@ -1229,6 +753,8 @@ const ExtremeSearchComponent = ({
         xSearchMap.set(data.xSearchId, {
           id: data.xSearchId,
           query: data.query,
+          index: data.index,
+          total: data.total,
           startDate: data.startDate,
           endDate: data.endDate,
           handles: data.handles,
@@ -1238,6 +764,46 @@ const ExtremeSearchComponent = ({
       });
 
       return Array.from(xSearchMap.values());
+    }
+
+    return [];
+  }, [toolInvocation, annotations]);
+
+  const thinkingExecutions = useMemo(() => {
+    if ('output' in toolInvocation) {
+      const { output } = toolInvocation;
+      const researchData = output as { research?: Research } | null;
+
+      if (researchData?.research?.toolResults) {
+        const thinkingResults = researchData.research.toolResults.filter((result) => result.toolName === 'thinking');
+        return thinkingResults.map((result, index) => {
+          const resultData = result.result || result.output || {};
+          const thought = resultData.thought || result.args?.thought || result.input?.thought || '';
+          const nextStep =
+            resultData.nextStep || result.args?.nextStep || result.input?.nextStep || result.args?.next_step;
+          return {
+            id: result.toolCallId || `thinking-${index}`,
+            thought,
+            nextStep,
+          };
+        });
+      }
+    }
+
+    if (annotations?.length) {
+      const thinkingMap = new Map<string, ThinkingExecution>();
+
+      annotations.forEach((ann) => {
+        if (ann.type !== 'data-extreme_search' || ann.data.kind !== 'thinking') return;
+
+        thinkingMap.set(ann.data.thinkingId, {
+          id: ann.data.thinkingId,
+          thought: ann.data.thought,
+          nextStep: ann.data.nextStep,
+        });
+      });
+
+      return Array.from(thinkingMap.values());
     }
 
     return [];
@@ -1294,11 +860,155 @@ const ExtremeSearchComponent = ({
     return [];
   }, [toolInvocation, annotations]);
 
+  // Extract file query executions
+  const fileQueryExecutions = useMemo(() => {
+    if ('output' in toolInvocation) {
+      const { output } = toolInvocation;
+      const researchData = output as { research?: Research } | null;
+
+      if (researchData?.research?.toolResults) {
+        const fileQueryResults = researchData.research.toolResults.filter((result) => result.toolName === 'fileQuery');
+        return fileQueryResults.flatMap((result) => {
+          const resultData = result.result || result.output || {};
+          const searches = Array.isArray(resultData.searches) ? resultData.searches : [];
+
+          return searches.map((search: any, index: number) => ({
+            id: `${result.toolCallId || 'fq'}-${index}`,
+            query: search.query || '',
+            index,
+            total: searches.length,
+            status: 'completed' as const,
+            results: search.results || [],
+          }));
+        });
+      }
+    }
+
+    if (annotations?.length) {
+      const fileQueryMap = new Map<string, FileQueryExecution>();
+
+      annotations.forEach((ann) => {
+        if (ann.type !== 'data-extreme_search' || ann.data.kind !== 'file_query') return;
+
+        const { data } = ann;
+        fileQueryMap.set(data.fileQueryId, {
+          id: data.fileQueryId,
+          query: data.query,
+          index: data.index,
+          total: data.total,
+          status: data.status,
+          results: data.results,
+        });
+      });
+
+      return Array.from(fileQueryMap.values());
+    }
+
+    return [];
+  }, [toolInvocation, annotations]);
+
+  const browsePageExecutions = useMemo(() => {
+    if ('output' in toolInvocation) {
+      const { output } = toolInvocation;
+      const researchData = output as { research?: Research } | null;
+
+      if (researchData?.research?.toolResults) {
+        const browseResults = researchData.research.toolResults.filter((result) => result.toolName === 'browsePage');
+        return browseResults.map((result, index) => {
+          const resultData = result.result || result.output || {};
+          return {
+            id: result.toolCallId || `bp-${index}`,
+            urls: result.args?.urls || result.input?.urls || resultData.urls || [],
+            status: 'completed' as const,
+            results: resultData.results || [],
+          };
+        });
+      }
+    }
+
+    if (annotations?.length) {
+      const browseMap = new Map<string, BrowsePageExecution>();
+
+      annotations.forEach((ann) => {
+        if (ann.type !== 'data-extreme_search' || ann.data.kind !== 'browse_page') return;
+
+        const { data } = ann;
+        const existing = browseMap.get(data.browseId);
+        browseMap.set(data.browseId, {
+          id: data.browseId,
+          urls: data.urls,
+          index: data.index,
+          total: data.total,
+          status: data.status,
+          results: data.results ?? existing?.results,
+        });
+      });
+
+      return Array.from(browseMap.values());
+    }
+
+    return [];
+  }, [toolInvocation, annotations]);
+
+  // Extract done executions
+  const doneExecutions = useMemo(() => {
+    if ('output' in toolInvocation) {
+      const { output } = toolInvocation;
+      const researchData = output as { research?: Research } | null;
+
+      if (researchData?.research?.toolResults) {
+        const doneResults = researchData.research.toolResults.filter((result) => result.toolName === 'done');
+        return doneResults.map((result, index) => {
+          const resultData = result.result || result.output || {};
+          const summary = resultData.summary || result.args?.summary || result.input?.summary || 'Research completed';
+          return {
+            id: result.toolCallId || `done-${index}`,
+            summary,
+          };
+        });
+      }
+    }
+
+    if (annotations?.length) {
+      const doneAnnotation = annotations.find(
+        (ann) => ann.type === 'data-extreme_search' && ann.data.kind === 'done',
+      );
+
+      if (doneAnnotation && doneAnnotation.data.kind === 'done') {
+        return [{
+          id: 'done-0',
+          summary: doneAnnotation.data.summary,
+        }];
+      }
+    }
+
+    return [];
+  }, [toolInvocation, annotations]);
+
   // Build a single chronological list for the timeline
+  type QueryGroup = {
+    id: string;
+    queries: SearchQuery[];
+  };
+
+  type XSearchGroup = {
+    id: string;
+    searches: XSearchExecution[];
+  };
+
+  type FileQueryGroup = {
+    id: string;
+    queries: FileQueryExecution[];
+  };
+
   type TimelineItem =
-    | { kind: 'query'; item: SearchQuery }
-    | { kind: 'x_search'; item: XSearchExecution }
-    | { kind: 'code'; item: CodeExecution };
+    | { kind: 'query_group'; item: QueryGroup }
+    | { kind: 'x_search_group'; item: XSearchGroup }
+    | { kind: 'file_query_group'; item: FileQueryGroup }
+    | { kind: 'browse_page_group'; item: { id: string; executions: BrowsePageExecution[] } }
+    | { kind: 'code'; item: CodeExecution }
+    | { kind: 'thinking'; item: ThinkingExecution }
+    | { kind: 'done'; item: DoneExecution };
 
   const combinedTimelineItems = useMemo<TimelineItem[]>(() => {
     // Completed state: preserve order from toolResults
@@ -1308,37 +1018,97 @@ const ExtremeSearchComponent = ({
       const toolResults = researchData?.research?.toolResults || [];
 
       return toolResults
-        .map((tr: any): TimelineItem | null => {
+        .flatMap((tr: any): TimelineItem[] => {
           if (tr.toolName === 'webSearch') {
-            const sources = (tr.result || tr.output || []).map((source: any) => ({
-              title: source.title || '',
-              url: source.url || '',
-              content: source.content || '',
-              publishedDate: source.publishedDate || '',
-              favicon:
-                source.favicon ||
-                `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(source.url || 'example.com').hostname)}`,
-            }));
-            const query: SearchQuery = {
-              id: tr.toolCallId || `query-${Math.random().toString(36).slice(2)}`,
-              query: tr.args?.query || tr.input?.query || 'Search',
-              status: 'completed',
-              sources,
-              content: [],
-            };
-            return { kind: 'query', item: query };
+            const resultData = tr.result || tr.output || {};
+            const searches = Array.isArray(resultData.searches) ? resultData.searches : [];
+
+            if (searches.length === 0 && Array.isArray(resultData)) {
+              const sources = resultData.map((source: any) => ({
+                title: source.title || '',
+                url: source.url || '',
+                content: source.content || '',
+                publishedDate: source.publishedDate || '',
+                favicon:
+                  source.favicon ||
+                  `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(source.url || 'example.com').hostname)}`,
+              }));
+              const query: SearchQuery = {
+                id: tr.toolCallId || `query-${Math.random().toString(36).slice(2)}`,
+                query: tr.args?.query || tr.input?.query || 'Search',
+                status: 'completed',
+                sources,
+                content: [],
+              };
+              return [{ kind: 'query_group', item: { id: query.id, queries: [query] } }];
+            }
+
+            const groupedQueries = searches.map((search: any, index: number) => {
+              const sources = (search.results || []).map((source: any) => ({
+                title: source.title || '',
+                url: source.url || '',
+                content: source.content || '',
+                publishedDate: source.publishedDate || '',
+                favicon:
+                  source.favicon ||
+                  `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(source.url || 'example.com').hostname)}`,
+              }));
+              const query: SearchQuery = {
+                id: `${tr.toolCallId || `query-${Math.random().toString(36).slice(2)}`}-${index}`,
+                query: search.query || tr.args?.queries?.[index] || tr.input?.queries?.[index] || 'Search',
+                index,
+                total: searches.length,
+                status: 'completed',
+                sources,
+                content: [],
+              };
+              return query;
+            });
+            const groupId = tr.toolCallId || `query-${Math.random().toString(36).slice(2)}`;
+            return [{ kind: 'query_group', item: { id: groupId, queries: groupedQueries } }];
           }
           if (tr.toolName === 'xSearch') {
-            const xItem: XSearchExecution = {
-              id: tr.toolCallId || `x-${Math.random().toString(36).slice(2)}`,
-              query: tr.args?.query || tr.input?.query || 'X search',
-              startDate: tr.args?.startDate || tr.input?.startDate || '',
-              endDate: tr.args?.endDate || tr.input?.endDate || '',
-              handles: tr.args?.xHandles || tr.input?.xHandles || [],
-              status: 'completed',
-              result: tr.result || tr.output || undefined,
-            };
-            return { kind: 'x_search', item: xItem };
+            const resultData = tr.result || tr.output || {};
+            const searches = Array.isArray(resultData.searches) ? resultData.searches : [];
+            const startDate = tr.args?.startDate || tr.input?.startDate || '';
+            const endDate = tr.args?.endDate || tr.input?.endDate || '';
+            const handles =
+              resultData.handles ||
+              tr.args?.includeXHandles ||
+              tr.args?.excludeXHandles ||
+              tr.input?.includeXHandles ||
+              tr.input?.excludeXHandles ||
+              [];
+
+            if (searches.length === 0) {
+              const xItem: XSearchExecution = {
+                id: tr.toolCallId || `x-${Math.random().toString(36).slice(2)}`,
+                query: tr.args?.query || tr.input?.query || 'X search',
+                startDate,
+                endDate,
+                handles,
+                status: 'completed',
+                result: resultData,
+              };
+              return [{ kind: 'x_search_group', item: { id: xItem.id, searches: [xItem] } }];
+            }
+
+            const groupedSearches = searches.map((search: any, index: number) => {
+              const xItem: XSearchExecution = {
+                id: `${tr.toolCallId || `x-${Math.random().toString(36).slice(2)}`}-${index}`,
+                query: search.query || tr.args?.queries?.[index] || tr.input?.queries?.[index] || 'X search',
+                index,
+                total: searches.length,
+                startDate,
+                endDate,
+                handles,
+                status: 'completed',
+                result: search.result || search,
+              };
+              return xItem;
+            });
+            const groupId = tr.toolCallId || `x-${Math.random().toString(36).slice(2)}`;
+            return [{ kind: 'x_search_group', item: { id: groupId, searches: groupedSearches } }];
           }
           if (tr.toolName === 'codeRunner') {
             const codeItem: CodeExecution = {
@@ -1349,11 +1119,51 @@ const ExtremeSearchComponent = ({
               result: (tr.result || tr.output || {}).result || '',
               charts: (tr.result || tr.output || {}).charts || [],
             };
-            return { kind: 'code', item: codeItem };
+            return [{ kind: 'code', item: codeItem }];
           }
-          return null;
+          if (tr.toolName === 'thinking') {
+            const resultData = tr.result || tr.output || {};
+            const thought = resultData.thought || tr.args?.thought || tr.input?.thought || '';
+            const nextStep =
+              resultData.nextStep || tr.args?.nextStep || tr.input?.nextStep || tr.args?.next_step;
+            const thinkingItem: ThinkingExecution = {
+              id: tr.toolCallId || `thinking-${Math.random().toString(36).slice(2)}`,
+              thought,
+              nextStep,
+            };
+            return [{ kind: 'thinking', item: thinkingItem }];
+          }
+          if (tr.toolName === 'fileQuery') {
+            const resultData = tr.result || tr.output || {};
+            const searches = Array.isArray(resultData.searches) ? resultData.searches : [];
+
+            const groupedQueries = searches.map((search: any, index: number) => {
+              const fqItem: FileQueryExecution = {
+                id: `${tr.toolCallId || `fq-${Math.random().toString(36).slice(2)}`}-${index}`,
+                query: search.query || tr.args?.queries?.[index] || tr.input?.queries?.[index] || 'File search',
+                index,
+                total: searches.length,
+                status: 'completed',
+                results: search.results || [],
+              };
+              return fqItem;
+            });
+            const groupId = tr.toolCallId || `fq-${Math.random().toString(36).slice(2)}`;
+            return [{ kind: 'file_query_group', item: { id: groupId, queries: groupedQueries } }];
+          }
+          if (tr.toolName === 'browsePage') {
+            const resultData = tr.result || tr.output || {};
+            const bpItem: BrowsePageExecution = {
+              id: tr.toolCallId || `bp-${Math.random().toString(36).slice(2)}`,
+              urls: tr.args?.urls || tr.input?.urls || resultData.urls || [],
+              status: 'completed',
+              results: resultData.results || [],
+            };
+            return [{ kind: 'browse_page_group', item: { id: bpItem.id, executions: [bpItem] } }];
+          }
+          return [];
         })
-        .filter(Boolean) as TimelineItem[];
+        .filter((item) => item !== null) as TimelineItem[];
     }
 
     // In-progress: order by annotations arrival
@@ -1364,16 +1174,28 @@ const ExtremeSearchComponent = ({
         if (ann.type !== 'data-extreme_search') continue;
         const d = ann.data as any;
         if (d.kind === 'query') {
-          const q = searchQueries.find((sq) => sq.id === d.queryId);
-          if (q && !seen[`q:${q.id}`]) {
-            items.push({ kind: 'query', item: q });
-            seen[`q:${q.id}`] = true;
+          const baseId = d.queryId.includes('-') ? d.queryId.split('-').slice(0, -1).join('-') : d.queryId;
+          if (!seen[`q:${baseId}`]) {
+            const groupedQueries = searchQueries.filter((sq) => {
+              const sqBaseId = sq.id.includes('-') ? sq.id.split('-').slice(0, -1).join('-') : sq.id;
+              return sqBaseId === baseId;
+            });
+            if (groupedQueries.length > 0) {
+              items.push({ kind: 'query_group', item: { id: baseId, queries: groupedQueries } });
+              seen[`q:${baseId}`] = true;
+            }
           }
         } else if (d.kind === 'x_search') {
-          const x = xSearchExecutions.find((xe) => xe.id === d.xSearchId);
-          if (x && !seen[`x:${x.id}`]) {
-            items.push({ kind: 'x_search', item: x });
-            seen[`x:${x.id}`] = true;
+          const baseId = d.xSearchId.includes('-') ? d.xSearchId.split('-').slice(0, -1).join('-') : d.xSearchId;
+          if (!seen[`x:${baseId}`]) {
+            const groupedSearches = xSearchExecutions.filter((xe) => {
+              const xeBaseId = xe.id.includes('-') ? xe.id.split('-').slice(0, -1).join('-') : xe.id;
+              return xeBaseId === baseId;
+            });
+            if (groupedSearches.length > 0) {
+              items.push({ kind: 'x_search_group', item: { id: baseId, searches: groupedSearches } });
+              seen[`x:${baseId}`] = true;
+            }
           }
         } else if (d.kind === 'code') {
           const c = codeExecutions.find((ce) => ce.id === d.codeId);
@@ -1381,39 +1203,300 @@ const ExtremeSearchComponent = ({
             items.push({ kind: 'code', item: c });
             seen[`c:${c.id}`] = true;
           }
+        } else if (d.kind === 'thinking') {
+          const t = thinkingExecutions.find((te) => te.id === d.thinkingId);
+          if (t && !seen[`t:${t.id}`]) {
+            items.push({ kind: 'thinking', item: t });
+            seen[`t:${t.id}`] = true;
+          }
+        } else if (d.kind === 'file_query') {
+          const baseId = d.fileQueryId.includes('-') ? d.fileQueryId.split('-').slice(0, -1).join('-') : d.fileQueryId;
+          if (!seen[`fq:${baseId}`]) {
+            const groupedQueries = fileQueryExecutions.filter((fq) => {
+              const fqBaseId = fq.id.includes('-') ? fq.id.split('-').slice(0, -1).join('-') : fq.id;
+              return fqBaseId === baseId;
+            });
+            if (groupedQueries.length > 0) {
+              items.push({ kind: 'file_query_group', item: { id: baseId, queries: groupedQueries } });
+              seen[`fq:${baseId}`] = true;
+            }
+          }
+        } else if (d.kind === 'browse_page') {
+          if (!seen[`bp:${d.browseId}`]) {
+            const execution = browsePageExecutions.find((bp) => bp.id === d.browseId);
+            if (execution) {
+              items.push({ kind: 'browse_page_group', item: { id: d.browseId, executions: [execution] } });
+              seen[`bp:${d.browseId}`] = true;
+            }
+          }
+        } else if (d.kind === 'done') {
+          const done = doneExecutions[0];
+          if (done && !seen[`d:${done.id}`]) {
+            items.push({ kind: 'done', item: done });
+            seen[`d:${done.id}`] = true;
+          }
         }
       }
       if (items.length === 0) {
-        return [
-          ...searchQueries.map((q) => ({ kind: 'query', item: q }) as TimelineItem),
-          ...xSearchExecutions.map((x) => ({ kind: 'x_search', item: x }) as TimelineItem),
+        const fallbackItems = [
+          ...Object.values(
+            searchQueries.reduce<Record<string, QueryGroup>>((acc, query) => {
+              const baseId = query.id.includes('-') ? query.id.split('-').slice(0, -1).join('-') : query.id;
+              if (!acc[baseId]) acc[baseId] = { id: baseId, queries: [] };
+              acc[baseId].queries.push(query);
+              return acc;
+            }, {}),
+          ).map((group) => ({ kind: 'query_group', item: group }) as TimelineItem),
+          ...Object.values(
+            xSearchExecutions.reduce<Record<string, XSearchGroup>>((acc, search) => {
+              const baseId = search.id.includes('-') ? search.id.split('-').slice(0, -1).join('-') : search.id;
+              if (!acc[baseId]) acc[baseId] = { id: baseId, searches: [] };
+              acc[baseId].searches.push(search);
+              return acc;
+            }, {}),
+          ).map((group) => ({ kind: 'x_search_group', item: group }) as TimelineItem),
           ...codeExecutions.map((c) => ({ kind: 'code', item: c }) as TimelineItem),
+          ...thinkingExecutions.map((t) => ({ kind: 'thinking', item: t }) as TimelineItem),
+          ...Object.values(
+            fileQueryExecutions.reduce<Record<string, FileQueryGroup>>((acc, fq) => {
+              const baseId = fq.id.includes('-') ? fq.id.split('-').slice(0, -1).join('-') : fq.id;
+              if (!acc[baseId]) acc[baseId] = { id: baseId, queries: [] };
+              acc[baseId].queries.push(fq);
+              return acc;
+            }, {}),
+          ).map((group) => ({ kind: 'file_query_group', item: group }) as TimelineItem),
+          ...browsePageExecutions.map((bp) => ({ kind: 'browse_page_group', item: { id: bp.id, executions: [bp] } }) as TimelineItem),
+          ...doneExecutions.map((d) => ({ kind: 'done', item: d }) as TimelineItem),
         ];
+
+        if (fallbackItems.length > 0) {
+          return fallbackItems;
+        }
+
+        const hasThinkingAnnotation = annotations.some(
+          (ann) => ann.type === 'data-extreme_search' && ann.data.kind === 'thinking',
+        );
+
+        return hasThinkingAnnotation ? [{
+          kind: 'thinking',
+          item: {
+            id: 'thinking-pending',
+            thought: '',
+          },
+        }] : [];
       }
       return items;
     }
 
     return [
-      ...searchQueries.map((q) => ({ kind: 'query', item: q }) as TimelineItem),
-      ...xSearchExecutions.map((x) => ({ kind: 'x_search', item: x }) as TimelineItem),
+      ...Object.values(
+        searchQueries.reduce<Record<string, QueryGroup>>((acc, query) => {
+          const baseId = query.id.includes('-') ? query.id.split('-').slice(0, -1).join('-') : query.id;
+          if (!acc[baseId]) acc[baseId] = { id: baseId, queries: [] };
+          acc[baseId].queries.push(query);
+          return acc;
+        }, {}),
+      ).map((group) => ({ kind: 'query_group', item: group }) as TimelineItem),
+      ...Object.values(
+        xSearchExecutions.reduce<Record<string, XSearchGroup>>((acc, search) => {
+          const baseId = search.id.includes('-') ? search.id.split('-').slice(0, -1).join('-') : search.id;
+          if (!acc[baseId]) acc[baseId] = { id: baseId, searches: [] };
+          acc[baseId].searches.push(search);
+          return acc;
+        }, {}),
+      ).map((group) => ({ kind: 'x_search_group', item: group }) as TimelineItem),
       ...codeExecutions.map((c) => ({ kind: 'code', item: c }) as TimelineItem),
+      ...thinkingExecutions.map((t) => ({ kind: 'thinking', item: t }) as TimelineItem),
+      ...Object.values(
+        fileQueryExecutions.reduce<Record<string, FileQueryGroup>>((acc, fq) => {
+          const baseId = fq.id.includes('-') ? fq.id.split('-').slice(0, -1).join('-') : fq.id;
+          if (!acc[baseId]) acc[baseId] = { id: baseId, queries: [] };
+          acc[baseId].queries.push(fq);
+          return acc;
+        }, {}),
+      ).map((group) => ({ kind: 'file_query_group', item: group }) as TimelineItem),
+      ...browsePageExecutions.map((bp) => ({ kind: 'browse_page_group', item: { id: bp.id, executions: [bp] } }) as TimelineItem),
+      ...doneExecutions.map((d) => ({ kind: 'done', item: d }) as TimelineItem),
     ];
-  }, [isCompleted, toolInvocation, annotations, searchQueries, xSearchExecutions, codeExecutions]);
+  }, [isCompleted, toolInvocation, annotations, searchQueries, xSearchExecutions, codeExecutions, thinkingExecutions, fileQueryExecutions, browsePageExecutions, doneExecutions]);
+
+  const hasActiveTimelineItems = useMemo(() => {
+    return combinedTimelineItems.some((timelineItem, index) => {
+      if (timelineItem.kind === 'query_group') {
+        const group = timelineItem.item as QueryGroup;
+        return group.queries.some((q) => q.status === 'started' || q.status === 'reading_content');
+      }
+
+      if (timelineItem.kind === 'x_search_group') {
+        const group = timelineItem.item as XSearchGroup;
+        return group.searches.some((s) => s.status === 'started');
+      }
+
+      if (timelineItem.kind === 'file_query_group') {
+        const group = timelineItem.item as FileQueryGroup;
+        return group.queries.some((q) => q.status === 'started');
+      }
+
+      if (timelineItem.kind === 'browse_page_group') {
+        return timelineItem.item.executions.some((bp) => bp.status === 'started' || bp.status === 'browsing');
+      }
+
+      if (timelineItem.kind === 'code') {
+        return timelineItem.item.status === 'running';
+      }
+
+      if (timelineItem.kind === 'thinking') {
+        return index === combinedTimelineItems.length - 1;
+      }
+
+      return false;
+    });
+  }, [combinedTimelineItems]);
 
   // Auto-scroll effects
   useEffect(() => {
-    // Reset manual scroll when new search starts
-    if (state === 'input-streaming' || state === 'input-available') {
+    if (hasActiveTimelineItems) {
       resetManualScroll();
     }
-  }, [state, resetManualScroll]);
+  }, [hasActiveTimelineItems, resetManualScroll]);
 
   useEffect(() => {
-    // Auto-scroll when timeline content changes during streaming
-    if (combinedTimelineItems.length > 0 && (state === 'input-streaming' || state === 'input-available')) {
+    if (combinedTimelineItems.length > 0 && hasActiveTimelineItems) {
       scrollToBottom();
     }
-  }, [combinedTimelineItems, state, scrollToBottom, annotations]);
+  }, [combinedTimelineItems, hasActiveTimelineItems, scrollToBottom, annotations]);
+
+  useEffect(() => {
+    if (!hasActiveTimelineItems) return;
+
+    const container = timelineRef.current;
+    if (!container) return;
+
+    const observer = new ResizeObserver(() => {
+      scrollToBottom();
+    });
+
+    observer.observe(container);
+    scrollToBottom();
+
+    return () => observer.disconnect();
+  }, [hasActiveTimelineItems, scrollToBottom]);
+
+  useEffect(() => {
+    if (!hasActiveTimelineItems) return;
+
+    const raf = requestAnimationFrame(() => {
+      combinedTimelineItems.forEach((timelineItem: TimelineItem) => {
+        if (timelineItem.kind === 'query_group') {
+          const group = timelineItem.item as QueryGroup;
+          const isActive = group.queries.some((q) => q.status === 'started' || q.status === 'reading_content');
+          if (!isActive) return;
+
+          const container = sourcesListRefs.current[group.id];
+          if (container) container.scrollTop = container.scrollHeight;
+          return;
+        }
+
+        if (timelineItem.kind === 'x_search_group') {
+          const group = timelineItem.item as XSearchGroup;
+          const isActive = group.searches.some((s) => s.status === 'started');
+          if (!isActive) return;
+
+          const container = citationsListRefs.current[group.id];
+          if (container) container.scrollTop = container.scrollHeight;
+          return;
+        }
+
+        if (timelineItem.kind === 'file_query_group') {
+          const group = timelineItem.item as FileQueryGroup;
+          const isActive = group.queries.some((q) => q.status === 'started');
+          if (!isActive) return;
+
+          const container = fileResultsListRefs.current[group.id];
+          if (container) container.scrollTop = container.scrollHeight;
+          return;
+        }
+
+        if (timelineItem.kind === 'code') {
+          const code = timelineItem.item as CodeExecution;
+          if (code.status !== 'running') return;
+
+          const codeContainer = codeResultRefs.current[`${code.id}-code`];
+          if (codeContainer) codeContainer.scrollTop = codeContainer.scrollHeight;
+          const resultContainer = codeResultRefs.current[`${code.id}-result`];
+          if (resultContainer) resultContainer.scrollTop = resultContainer.scrollHeight;
+        }
+      });
+    });
+
+    return () => cancelAnimationFrame(raf);
+  }, [combinedTimelineItems, hasActiveTimelineItems]);
+
+  useEffect(() => {
+    if (!hasActiveTimelineItems) return;
+
+    const activeQueryGroupIds = new Set<string>();
+    const activeXSearchGroupIds = new Set<string>();
+    const activeFileQueryGroupIds = new Set<string>();
+    const activeCodeIds = new Set<string>();
+
+    combinedTimelineItems.forEach((timelineItem: TimelineItem) => {
+      if (timelineItem.kind === 'query_group') {
+        const group = timelineItem.item as QueryGroup;
+        const isActive = group.queries.some((q) => q.status === 'started' || q.status === 'reading_content');
+        if (isActive) activeQueryGroupIds.add(group.id);
+      }
+
+      if (timelineItem.kind === 'x_search_group') {
+        const group = timelineItem.item as XSearchGroup;
+        const isActive = group.searches.some((s) => s.status === 'started');
+        if (isActive) activeXSearchGroupIds.add(group.id);
+      }
+
+      if (timelineItem.kind === 'file_query_group') {
+        const group = timelineItem.item as FileQueryGroup;
+        const isActive = group.queries.some((q) => q.status === 'started');
+        if (isActive) activeFileQueryGroupIds.add(group.id);
+      }
+
+      if (timelineItem.kind === 'code') {
+        const code = timelineItem.item as CodeExecution;
+        if (code.status === 'running') activeCodeIds.add(code.id);
+      }
+    });
+
+    const observers: ResizeObserver[] = [];
+
+    const attachObserver = (node: HTMLDivElement | null, isActive: boolean) => {
+      if (!node || !isActive) return;
+      node.scrollTop = node.scrollHeight;
+      const observer = new ResizeObserver(() => {
+        node.scrollTop = node.scrollHeight;
+      });
+      observer.observe(node);
+      observers.push(observer);
+    };
+
+    Object.entries(sourcesListRefs.current).forEach(([id, node]) => {
+      attachObserver(node, activeQueryGroupIds.has(id));
+    });
+
+    Object.entries(citationsListRefs.current).forEach(([id, node]) => {
+      attachObserver(node, activeXSearchGroupIds.has(id));
+    });
+
+    Object.entries(fileResultsListRefs.current).forEach(([id, node]) => {
+      attachObserver(node, activeFileQueryGroupIds.has(id));
+    });
+
+    Object.entries(codeResultRefs.current).forEach(([compositeId, node]) => {
+      // compositeId is "${code.id}-code" or "${code.id}-result"
+      const codeId = compositeId.replace(/-code$/, '').replace(/-result$/, '');
+      attachObserver(node, activeCodeIds.has(codeId));
+    });
+
+    return () => observers.forEach((observer) => observer.disconnect());
+  }, [combinedTimelineItems, hasActiveTimelineItems]);
 
   // Get all sources for final result view
   const allSources = useMemo(() => {
@@ -1435,17 +1518,33 @@ const ExtremeSearchComponent = ({
       if (research?.toolResults) {
         return research.toolResults
           .filter((result) => result.toolName === 'webSearch')
-          .flatMap((result) =>
-            (result.result || result.output || []).map((source: any) => ({
-              title: source.title || '',
-              url: source.url || '',
-              content: source.content || '',
-              publishedDate: source.publishedDate || '',
-              favicon:
-                source.favicon ||
-                `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(source.url || 'example.com').hostname)}`,
-            })),
-          );
+          .flatMap((result) => {
+            const resultData = result.result || result.output || {};
+            if (Array.isArray(resultData)) {
+              return resultData.map((source: any) => ({
+                title: source.title || '',
+                url: source.url || '',
+                content: source.content || '',
+                publishedDate: source.publishedDate || '',
+                favicon:
+                  source.favicon ||
+                  `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(source.url || 'example.com').hostname)}`,
+              }));
+            }
+
+            const searches = Array.isArray(resultData.searches) ? resultData.searches : [];
+            return searches.flatMap((search: any) =>
+              (search.results || []).map((source: any) => ({
+                title: source.title || '',
+                url: source.url || '',
+                content: source.content || '',
+                publishedDate: source.publishedDate || '',
+                favicon:
+                  source.favicon ||
+                  `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(new URL(source.url || 'example.com').hostname)}`,
+              })),
+            );
+          });
       }
     }
 
@@ -1478,7 +1577,7 @@ const ExtremeSearchComponent = ({
     setUserExpandedItems((prev) => ({ ...prev, [itemId]: true }));
   };
 
-  // Simple auto-expand logic - only expand currently active items
+  // Auto-expand logic - expand active groups, collapse completed ones
   useEffect(() => {
     // Skip auto-logic in completed state - full manual control
     if (isCompleted) {
@@ -1489,72 +1588,102 @@ const ExtremeSearchComponent = ({
       const newExpanded = { ...prevExpanded };
       let shouldUpdate = false;
 
-      // Only auto-expand currently active items (not user-controlled)
-      searchQueries.forEach((query) => {
-        const isActive = query.status === 'started' || query.status === 'reading_content';
-        const wasUserControlled = userExpandedItems[query.id];
+      const lastItemIndex = combinedTimelineItems.length - 1;
 
-        // Auto-expand active items (unless user manually controlled)
-        if (isActive && !prevExpanded[query.id] && !wasUserControlled) {
-          newExpanded[query.id] = true;
+      combinedTimelineItems.forEach((timelineItem: TimelineItem, index: number) => {
+        const itemId =
+          timelineItem.kind === 'query_group' ? timelineItem.item.id :
+            timelineItem.kind === 'x_search_group' ? timelineItem.item.id :
+              timelineItem.kind === 'file_query_group' ? timelineItem.item.id :
+                timelineItem.kind === 'browse_page_group' ? timelineItem.item.id :
+                  timelineItem.kind === 'code' ? timelineItem.item.id :
+                    timelineItem.kind === 'thinking' ? timelineItem.item.id :
+                      timelineItem.kind === 'done' ? timelineItem.item.id : null;
+
+        if (!itemId) return;
+
+        const wasUserControlled = userExpandedItems[itemId];
+        if (wasUserControlled) return; // Respect user's manual control
+
+        let isActive = false;
+        let isItemCompleted = false;
+
+        if (timelineItem.kind === 'query_group') {
+          const group = timelineItem.item;
+          isActive = group.queries.some((q) => q.status === 'started' || q.status === 'reading_content');
+          isItemCompleted = group.queries.every((q) => q.status === 'completed');
+        } else if (timelineItem.kind === 'x_search_group') {
+          const group = timelineItem.item;
+          isActive = group.searches.some((s) => s.status === 'started');
+          isItemCompleted = group.searches.every((s) => s.status === 'completed');
+        } else if (timelineItem.kind === 'file_query_group') {
+          const group = timelineItem.item;
+          isActive = group.queries.some((q) => q.status === 'started');
+          isItemCompleted = group.queries.every((q) => q.status === 'completed' || q.status === 'error');
+        } else if (timelineItem.kind === 'browse_page_group') {
+          isActive = timelineItem.item.executions.some((bp) => bp.status === 'started' || bp.status === 'browsing');
+          isItemCompleted = timelineItem.item.executions.every((bp) => bp.status === 'completed' || bp.status === 'error');
+        } else if (timelineItem.kind === 'code') {
+          isActive = timelineItem.item.status === 'running';
+          isItemCompleted = timelineItem.item.status === 'completed';
+        } else if (timelineItem.kind === 'thinking') {
+          // Thinking is "active" when it's the last item, "completed" when something comes after
+          const isLastItem = index === lastItemIndex;
+          isActive = isLastItem;
+          isItemCompleted = !isLastItem;
+        } else if (timelineItem.kind === 'done') {
+          // Done items don't need auto-expand
+          return;
+        }
+
+        // Auto-expand active items
+        if (isActive && !prevExpanded[itemId]) {
+          newExpanded[itemId] = true;
           shouldUpdate = true;
         }
 
-        // Auto-collapse completed items that were auto-expanded (not user-controlled)
-        if (query.status === 'completed' && prevExpanded[query.id] && !wasUserControlled) {
-          newExpanded[query.id] = false;
-          shouldUpdate = true;
-        }
-      });
-
-      codeExecutions.forEach((code) => {
-        const isActive = code.status === 'running';
-        const wasUserControlled = userExpandedItems[code.id];
-
-        // Auto-expand active code executions (unless user manually controlled)
-        if (isActive && !prevExpanded[code.id] && !wasUserControlled) {
-          newExpanded[code.id] = true;
-          shouldUpdate = true;
-        }
-
-        // Auto-collapse completed code that was auto-expanded (not user-controlled)
-        if (code.status === 'completed' && prevExpanded[code.id] && !wasUserControlled) {
-          newExpanded[code.id] = false;
-          shouldUpdate = true;
-        }
-      });
-
-      xSearchExecutions.forEach((xSearch) => {
-        const isActive = xSearch.status === 'started';
-        const wasUserControlled = userExpandedItems[xSearch.id];
-
-        // Auto-expand active X search executions (unless user manually controlled)
-        if (isActive && !prevExpanded[xSearch.id] && !wasUserControlled) {
-          newExpanded[xSearch.id] = true;
-          shouldUpdate = true;
-        }
-
-        // Auto-collapse completed X search that was auto-expanded (not user-controlled)
-        if (xSearch.status === 'completed' && prevExpanded[xSearch.id] && !wasUserControlled) {
-          newExpanded[xSearch.id] = false;
+        // Auto-collapse completed items that were auto-expanded
+        if (isItemCompleted && prevExpanded[itemId]) {
+          newExpanded[itemId] = false;
           shouldUpdate = true;
         }
       });
 
       return shouldUpdate ? newExpanded : prevExpanded;
     });
-  }, [searchQueries, codeExecutions, xSearchExecutions, userExpandedItems, isCompleted]);
+  }, [combinedTimelineItems, userExpandedItems, isCompleted]);
+
+  // Auto-switch to visualizations tab when research completes with charts
+  useEffect(() => {
+    if (isCompleted && allCharts.length > 0) {
+      setActiveTab('visualizations');
+    }
+  }, [isCompleted, allCharts.length]);
 
   const renderTimeline = () => (
     <div className="space-y-0 relative ml-4 mb-1">
       <AnimatePresence>
-        {combinedTimelineItems.map((timelineItem, itemIndex) => {
-          if (timelineItem.kind === 'query') {
-            const query = timelineItem.item as SearchQuery;
-            const isActive = state === 'input-streaming' || state === 'input-available';
-            const isLoading = query.status === 'started' || query.status === 'reading_content';
-            const hasResults = query.sources.length > 0;
-            const isReadingContent = query.status === 'reading_content';
+        {combinedTimelineItems.map((timelineItem: TimelineItem, itemIndex: number) => {
+          if (timelineItem.kind === 'query_group') {
+            const group = timelineItem.item as QueryGroup;
+            const activeQuery = group.queries.find(
+              (query) => query.status === 'reading_content' || query.status === 'started',
+            );
+            const primaryQuery = activeQuery || group.queries[0];
+            const isLoading = group.queries.some(
+              (query) => query.status === 'started' || query.status === 'reading_content',
+            );
+            const hasResults = group.queries.some((query) => query.sources.length > 0);
+            const isReadingContent = group.queries.some((query) => query.status === 'reading_content');
+            const unifiedGroupSources = Array.from(
+              new Map(group.queries.flatMap((query) => query.sources).map((source) => [source.url, source])).values(),
+            );
+
+            // Check if previous item was a thinking step with nextStep
+            const prevItem = itemIndex > 0 ? combinedTimelineItems[itemIndex - 1] : null;
+            const prevThinkingNextStep =
+              prevItem?.kind === 'thinking' ? (prevItem.item as ThinkingExecution).nextStep : undefined;
+            const displayTitle = prevThinkingNextStep || primaryQuery?.query || 'Searching';
 
             const bulletColor = isLoading
               ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!'
@@ -1564,7 +1693,7 @@ const ExtremeSearchComponent = ({
 
             return (
               <motion.div
-                key={query.id}
+                key={group.id}
                 className="space-y-0 relative"
                 initial={{ opacity: 0, y: 2 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1579,7 +1708,7 @@ const ExtremeSearchComponent = ({
                 <div
                   className={`absolute rounded-full ${bulletColor} transition-colors duration-300 z-10`}
                   style={{ left: '-0.6rem', top: '5px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
-                  title={`Status: ${query.status}`}
+                  title={`Status: ${activeQuery?.status || 'completed'}`}
                 />
 
                 {itemIndex > 0 && (
@@ -1601,7 +1730,7 @@ const ExtremeSearchComponent = ({
                     left: '-0.6rem',
                     top: '13px',
                     width: '2px',
-                    height: expandedItems[query.id]
+                    height: expandedItems[group.id]
                       ? itemIndex === combinedTimelineItems.length - 1
                         ? 'calc(100% - 13px)'
                         : 'calc(100% - 13px)'
@@ -1614,19 +1743,24 @@ const ExtremeSearchComponent = ({
 
                 <div
                   className="flex items-start gap-1.5 cursor-pointer py-1 px-1.5 hover:bg-accent/50 rounded-md transition-colors duration-150 relative"
-                  onClick={() => toggleItemExpansion(query.id)}
+                  onClick={() => toggleItemExpansion(group.id)}
                 >
                   <Search className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
                   <span className="text-foreground text-[11px] min-w-0 flex-1 wrap-break-word leading-snug">
                     {isLoading && !isCompleted ? (
                       <TextShimmer className="w-full" duration={1.5}>
-                        {query.query}
+                        {displayTitle}
                       </TextShimmer>
                     ) : (
-                      query.query
+                      displayTitle
                     )}
                   </span>
-                  {expandedItems[query.id] ? (
+                  {group.queries.length > 1 && (
+                    <span className="text-[8.5px] text-muted-foreground px-1 py-0.25 rounded-full bg-muted border border-border/50 shrink-0">
+                      {group.queries.length} queries
+                    </span>
+                  )}
+                  {expandedItems[group.id] ? (
                     <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
                   ) : (
                     <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
@@ -1634,7 +1768,7 @@ const ExtremeSearchComponent = ({
                 </div>
 
                 <AnimatePresence>
-                  {expandedItems[query.id] && (
+                  {expandedItems[group.id] && (
                     <motion.div
                       key="content"
                       initial={{ height: 0, opacity: 0 }}
@@ -1643,47 +1777,71 @@ const ExtremeSearchComponent = ({
                       transition={{ height: { duration: 0.2, ease: 'easeOut' }, opacity: { duration: 0.15 } }}
                       className="overflow-hidden"
                     >
-                  <div className="pl-0.5 py-0.5">
-                        {query.sources.length > 0 && (
+                      <div className="pl-0.5 py-0.5 space-y-1">
+                        <div className="flex flex-wrap gap-1">
+                          {group.queries.map((query, index) => (
+                            <span
+                              key={`${query.id}-${index}`}
+                              className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted px-2 py-0.5 text-[10px] text-foreground"
+                            >
+                              <Search className="h-2.5 w-2.5 text-muted-foreground" />
+                              <span className="truncate max-w-[180px]">{query.query}</span>
+                            </span>
+                          ))}
+                        </div>
+
+                        {unifiedGroupSources.length > 0 && (
                           <motion.div
-                            className="flex flex-wrap gap-0.5 py-0.5"
+                            className="rounded-lg bg-card! border border-border/50! p-2 max-h-[180px] overflow-y-auto mt-1.5"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.15 }}
+                            ref={(node) => {
+                              if (node) {
+                                sourcesListRefs.current[group.id] = node;
+                                return;
+                              }
+                              delete sourcesListRefs.current[group.id];
+                            }}
                           >
-                            {query.sources.map((source, index) => (
-                              <motion.a
-                                key={index}
-                                href={source.url}
-                                target="_blank"
-                                className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded-full text-[10px] hover:bg-accent transition-colors duration-150 border border-border/50"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 0.15, delay: index * 0.02 }}
-                              >
-                                <img
-                                  src={source.favicon}
-                                  alt=""
-                                  className="w-3 h-3 rounded-full"
-                                  onError={(e) => {
-                                    (e.currentTarget as HTMLImageElement).src =
-                                      'https://www.google.com/s2/favicons?sz=128&domain=example.com';
-                                    (e.currentTarget as HTMLImageElement).style.filter = 'grayscale(100%)';
-                                  }}
-                                />
-                                <span
-                                  className="text-muted-foreground truncate max-w-[80px]"
-                                  title={source.title || 'source'}
+                            {unifiedGroupSources.map((source, index) => {
+                              let hostname = '';
+                              try {
+                                hostname = new URL(source.url).hostname.replace('www.', '');
+                              } catch {
+                                hostname = source.url;
+                              }
+                              return (
+                                <a
+                                  key={index}
+                                  href={source.url}
+                                  target="_blank"
+                                  className="flex items-center gap-2.5 px-2 py-1.5 text-[12px] hover:bg-accent/50 rounded-sm transition-colors"
                                 >
-                                  {source.title || 'source'}
-                                </span>
-                              </motion.a>
-                            ))}
+                                  <img
+                                    src={source.favicon || `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(hostname)}`}
+                                    alt=""
+                                    className="h-4 w-4 rounded shrink-0"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src =
+                                        'https://www.google.com/s2/favicons?sz=128&domain=example.com';
+                                      (e.currentTarget as HTMLImageElement).style.filter = 'grayscale(100%)';
+                                    }}
+                                  />
+                                  <div className="flex-1 min-w-0 text-foreground truncate">
+                                    {source.title || hostname}
+                                  </div>
+                                  <div className="text-[11px] text-muted-foreground shrink-0">
+                                    {hostname}
+                                  </div>
+                                </a>
+                              );
+                            })}
                           </motion.div>
                         )}
 
                         {(() => {
-                          if (isReadingContent && query.sources.length > 0 && !isCompleted) {
+                          if (isReadingContent && unifiedGroupSources.length > 0 && !isCompleted) {
                             return (
                               <TextShimmer className="text-xs py-0.5" duration={2.5}>
                                 Reading content...
@@ -1695,10 +1853,10 @@ const ExtremeSearchComponent = ({
                                 Searching sources...
                               </TextShimmer>
                             );
-                          } else if (query.sources.length === 0 && !isLoading) {
+                          } else if (unifiedGroupSources.length === 0 && !isLoading) {
                             return (
                               <p className="text-[11px] text-muted-foreground py-0.5 mt-0.5">
-                                No sources found for this query.
+                                No sources found for this search.
                               </p>
                             );
                           }
@@ -1712,11 +1870,32 @@ const ExtremeSearchComponent = ({
             );
           }
 
-          if (timelineItem.kind === 'x_search') {
-            const xSearch = timelineItem.item as XSearchExecution;
-            const isActive = state === 'input-streaming' || state === 'input-available';
-            const isLoading = xSearch.status === 'started';
-            const hasResults = xSearch.result && xSearch.result.citations.length > 0;
+          if (timelineItem.kind === 'x_search_group') {
+            const group = timelineItem.item as XSearchGroup;
+            const activeSearch = group.searches.find((search) => search.status === 'started');
+            const primarySearch = activeSearch || group.searches[0];
+            const isLoading = group.searches.some((search) => search.status === 'started');
+            const hasResults = group.searches.some((search) => (search.result?.citations || []).length > 0);
+            const startDate = activeSearch?.startDate || group.searches[0]?.startDate;
+            const endDate = activeSearch?.endDate || group.searches[0]?.endDate;
+            const handles = group.searches[0]?.handles || [];
+
+            const unifiedCitations = Array.from(
+              new Map(
+                group.searches
+                  .flatMap((search) => search.result?.citations || [])
+                  .map((citation: any) => {
+                    const url = typeof citation === 'string' ? citation : citation.url;
+                    return [url || Math.random().toString(36), citation];
+                  }),
+              ).values(),
+            );
+
+            // Check if previous item was a thinking step with nextStep
+            const prevItem = itemIndex > 0 ? combinedTimelineItems[itemIndex - 1] : null;
+            const prevThinkingNextStep =
+              prevItem?.kind === 'thinking' ? (prevItem.item as ThinkingExecution).nextStep : undefined;
+            const displayTitle = prevThinkingNextStep || `X search: ${primarySearch?.query || 'Searching'}`;
 
             const bulletColor = isLoading
               ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!'
@@ -1726,7 +1905,7 @@ const ExtremeSearchComponent = ({
 
             return (
               <motion.div
-                key={xSearch.id}
+                key={group.id}
                 className="space-y-0 relative"
                 initial={{ opacity: 0, y: 2 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1741,7 +1920,7 @@ const ExtremeSearchComponent = ({
                 <div
                   className={`absolute rounded-full ${bulletColor} transition-colors duration-300 z-10`}
                   style={{ left: '-0.6rem', top: '5px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
-                  title={`Status: ${xSearch.status}`}
+                  title={`Status: ${activeSearch?.status || 'completed'}`}
                 />
 
                 {itemIndex > 0 && (
@@ -1763,7 +1942,7 @@ const ExtremeSearchComponent = ({
                     left: '-0.6rem',
                     top: '13px',
                     width: '2px',
-                    height: expandedItems[xSearch.id]
+                    height: expandedItems[group.id]
                       ? itemIndex === combinedTimelineItems.length - 1
                         ? 'calc(100% - 13px)'
                         : 'calc(100% - 13px)'
@@ -1776,24 +1955,31 @@ const ExtremeSearchComponent = ({
 
                 <div
                   className="flex items-start gap-1.5 cursor-pointer py-1 px-1.5 hover:bg-accent/50 rounded-md transition-colors duration-150 relative"
-                  onClick={() => toggleItemExpansion(xSearch.id)}
+                  onClick={() => toggleItemExpansion(group.id)}
                 >
                   <div className="p-0.5 rounded bg-foreground shrink-0 mt-0.5">
                     <XLogoIcon className="size-2.5 text-background" />
                   </div>
                   <span className="text-foreground text-[11px] min-w-0 flex-1 wrap-break-word leading-snug">
                     {isLoading && !isCompleted ? (
-                      <TextShimmer className="w-full" duration={1.5}>{`X search: ${xSearch.query}`}</TextShimmer>
+                      <TextShimmer className="w-full" duration={1.5}>
+                        {displayTitle}
+                      </TextShimmer>
                     ) : (
-                      `X search: ${xSearch.query}`
+                      displayTitle
                     )}
                   </span>
-                  {xSearch.handles && xSearch.handles.length > 0 && (
-                    <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded-full bg-muted border border-border/50 shrink-0">
-                      {xSearch.handles.length} handles
+                  {group.searches.length > 1 && (
+                    <span className="text-[8.5px] text-muted-foreground px-1 py-0.25 rounded-full bg-muted border border-border/50 shrink-0">
+                      {group.searches.length} queries
                     </span>
                   )}
-                  {expandedItems[xSearch.id] ? (
+                  {handles.length > 0 && (
+                    <span className="text-[8.5px] text-muted-foreground px-1.5 py-0.25 rounded-full bg-muted border border-border/50 shrink-0">
+                      {handles.length} handles
+                    </span>
+                  )}
+                  {expandedItems[group.id] ? (
                     <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
                   ) : (
                     <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
@@ -1801,7 +1987,7 @@ const ExtremeSearchComponent = ({
                 </div>
 
                 <AnimatePresence>
-                  {expandedItems[xSearch.id] && (
+                  {expandedItems[group.id] && (
                     <motion.div
                       key="content"
                       initial={{ height: 0, opacity: 0 }}
@@ -1810,43 +1996,76 @@ const ExtremeSearchComponent = ({
                       transition={{ height: { duration: 0.2, ease: 'easeOut' }, opacity: { duration: 0.15 } }}
                       className="overflow-hidden"
                     >
-                      <div className="pl-0.5 py-0.5">
+                      <div className="pl-0.5 py-0.5 space-y-1">
                         <div className="text-[10px] text-muted-foreground mb-0.5">
-                          {xSearch.startDate} to {xSearch.endDate}
+                          {startDate} to {endDate}
                         </div>
-                        {xSearch.result && xSearch.result.citations.length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {group.searches.map((search, index) => (
+                            <span
+                              key={`${search.id}-${index}`}
+                              className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted px-2 py-0.5 text-[10px] text-foreground"
+                            >
+                              <div className="p-0.5 rounded bg-foreground">
+                                <XLogoIcon className="size-2 text-background" />
+                              </div>
+                              <span className="truncate max-w-[180px]">{search.query}</span>
+                            </span>
+                          ))}
+                        </div>
+
+                        {unifiedCitations.length > 0 && (
                           <motion.div
-                            className="flex flex-wrap gap-0.5 py-0.5"
+                            className="rounded-lg bg-card! border border-border/50! p-2 max-h-[160px] overflow-y-auto mt-1.5"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             transition={{ duration: 0.15 }}
+                            ref={(node) => {
+                              if (node) {
+                                citationsListRefs.current[group.id] = node;
+                                return;
+                              }
+                              delete citationsListRefs.current[group.id];
+                            }}
                           >
-                            {xSearch.result.citations.map((citation: any, index: number) => {
+                            {unifiedCitations.map((citation: any, index: number) => {
                               const url = typeof citation === 'string' ? citation : citation.url;
                               let title = typeof citation === 'object' ? citation.title : '';
-                              if (!title && xSearch.result?.sources) {
-                                const matchingSource = xSearch.result.sources.find(
-                                  (source: any) => source.link === url,
-                                );
-                                title = matchingSource?.title || 'X post';
+                              if (!title) title = 'X post';
+                              let hostname = '';
+                              try {
+                                hostname = new URL(url || '').hostname.replace('www.', '');
+                              } catch {
+                                hostname = url || '';
                               }
                               return (
-                                <motion.a
+                                <a
                                   key={index}
                                   href={url}
                                   target="_blank"
-                                  className="flex items-center gap-1 bg-muted px-1.5 py-0.5 rounded-full text-[10px] hover:bg-accent transition-colors duration-150 border border-border/50"
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  transition={{ duration: 0.15, delay: index * 0.02 }}
+                                  className="flex items-center gap-2.5 px-2 py-1.5 text-[12px] hover:bg-accent/50 rounded-sm transition-colors"
                                 >
-                                  <div className="p-0.5 rounded bg-foreground shrink-0">
-                                    <XLogoIcon className="size-2.5 text-background" />
-                                  </div>
-                                  <span className="text-muted-foreground truncate max-w-[120px]" title={title}>
+                                  <img
+                                    src={
+                                      hostname
+                                        ? `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(hostname)}`
+                                        : 'https://www.google.com/s2/favicons?sz=128&domain=example.com'
+                                    }
+                                    alt=""
+                                    className="h-4 w-4 rounded shrink-0"
+                                    onError={(e) => {
+                                      (e.currentTarget as HTMLImageElement).src =
+                                        'https://www.google.com/s2/favicons?sz=128&domain=example.com';
+                                      (e.currentTarget as HTMLImageElement).style.filter = 'grayscale(100%)';
+                                    }}
+                                  />
+                                  <div className="flex-1 min-w-0 text-foreground truncate">
                                     {title}
-                                  </span>
-                                </motion.a>
+                                  </div>
+                                  <div className="text-[11px] text-muted-foreground shrink-0">
+                                    {hostname}
+                                  </div>
+                                </a>
                               );
                             })}
                           </motion.div>
@@ -1858,12 +2077,11 @@ const ExtremeSearchComponent = ({
                           </TextShimmer>
                         )}
 
-                        {xSearch.status === 'completed' &&
-                          (!xSearch.result || xSearch.result.citations.length === 0) && (
-                            <p className="text-[11px] text-muted-foreground py-0.5 mt-0.5">
-                              No X posts found for this query.
-                            </p>
-                          )}
+                        {!isLoading && unifiedCitations.length === 0 && (
+                          <p className="text-[11px] text-muted-foreground py-0.5 mt-0.5">
+                            No X posts found for this search.
+                          </p>
+                        )}
                       </div>
                     </motion.div>
                   )}
@@ -1872,120 +2090,757 @@ const ExtremeSearchComponent = ({
             );
           }
 
-          // code
-          const code = timelineItem.item as CodeExecution;
-          const isLoading = code.status === 'running';
-          const bulletColor = isLoading ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!' : 'bg-primary';
+          if (timelineItem.kind === 'thinking') {
+            const thinking = timelineItem.item as ThinkingExecution;
+            const hasThought = thinking.thought && thinking.thought.trim().length > 0;
+            const nextSearchTitle = combinedTimelineItems
+              .slice(itemIndex + 1)
+              .find((item) => item.kind === 'query_group');
+            const nextSearchQuery =
+              nextSearchTitle && nextSearchTitle.kind === 'query_group'
+                ? nextSearchTitle.item.queries[0]?.query
+                : undefined;
 
-          return (
-            <motion.div
-              key={code.id}
-              className="space-y-0 relative"
-              initial={{ opacity: 0, y: 2 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.1, delay: itemIndex * 0.01 }}
-            >
-              <div
-                className="absolute rounded-full bg-background z-5"
-                style={{ left: '-0.6rem', top: '4px', width: '10px', height: '10px', transform: 'translateX(-50%)' }}
-              />
+            return (
+              <motion.div
+                key={thinking.id}
+                className="space-y-0 relative"
+                initial={{ opacity: 0, y: 2 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.1, delay: itemIndex * 0.01 }}
+              >
+                <div
+                  className="absolute rounded-full bg-background z-5"
+                  style={{ left: '-0.6rem', top: '4px', width: '10px', height: '10px', transform: 'translateX(-50%)' }}
+                />
 
-              <div
-                className={`absolute rounded-full ${bulletColor} transition-colors duration-300 z-10`}
-                style={{ left: '-0.6rem', top: '5px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
-                title={`Status: ${code.status}`}
-              />
+                <div
+                  className="absolute rounded-full bg-primary transition-colors duration-300 z-10"
+                  style={{ left: '-0.6rem', top: '5px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
+                />
 
-              {itemIndex > 0 && (
+                {itemIndex > 0 && (
+                  <div
+                    className="absolute bg-secondary"
+                    style={{
+                      left: '-0.6rem',
+                      top: '0',
+                      width: '2px',
+                      height: '5px',
+                      transform: 'translateX(-50%)',
+                    }}
+                  />
+                )}
+
                 <div
                   className="absolute bg-secondary"
-                  style={{ left: '-0.6rem', top: '0', width: '2px', height: '5px', transform: 'translateX(-50%)' }}
+                  style={{
+                    left: '-0.6rem',
+                    top: '13px',
+                    width: '2px',
+                    height: expandedItems[thinking.id]
+                      ? itemIndex === combinedTimelineItems.length - 1
+                        ? 'calc(100% - 13px)'
+                        : 'calc(100% - 13px)'
+                      : itemIndex === combinedTimelineItems.length - 1
+                        ? '0'
+                        : 'calc(100% - 9px)',
+                    transform: 'translateX(-50%)',
+                  }}
                 />
-              )}
 
-              <div
-                className="absolute bg-secondary"
-                style={{
-                  left: '-0.6rem',
-                  top: '13px',
-                  width: '2px',
-                  height: expandedItems[code.id]
-                    ? itemIndex === combinedTimelineItems.length - 1
-                      ? 'calc(100% - 13px)'
-                      : 'calc(100% - 13px)'
-                    : itemIndex === combinedTimelineItems.length - 1
-                      ? '0'
-                      : 'calc(100% - 9px)',
-                  transform: 'translateX(-50%)',
-                }}
-              />
-
-              <div
-                className="flex items-start gap-1.5 cursor-pointer py-1 px-1.5 hover:bg-accent/50 rounded-md transition-colors duration-150 relative"
-                onClick={() => toggleItemExpansion(code.id)}
-              >
-                <Zap className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-                <span className="text-foreground text-[11px] min-w-0 flex-1 wrap-break-word leading-snug">
-                  {isLoading && !isCompleted ? (
-                    <TextShimmer className="w-full" duration={1.5}>
-                      {code.title}
-                    </TextShimmer>
+                <div
+                  className="flex items-start gap-1.5 cursor-pointer py-1 px-1.5 hover:bg-accent/50 rounded-md transition-colors duration-150 relative"
+                  onClick={() => toggleItemExpansion(thinking.id)}
+                >
+                  <Lightbulb className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+                  <span className="text-foreground text-[11px] min-w-0 flex-1 wrap-break-word leading-snug">
+                    Thinking
+                  </span>
+                  {expandedItems[thinking.id] ? (
+                    <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
                   ) : (
-                    code.title
+                    <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
                   )}
-                </span>
-                {expandedItems[code.id] ? (
-                  <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
-                ) : (
-                  <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
-                )}
-              </div>
+                </div>
 
-              <AnimatePresence>
-                {expandedItems[code.id] && (
-                  <motion.div
-                    key="content"
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ height: { duration: 0.2, ease: 'easeOut' }, opacity: { duration: 0.15 } }}
-                    className="overflow-hidden"
-                  >
-                    <div className="pl-0.5 py-0.5">
-                    <div className="bg-muted/50 border border-border p-2 rounded-lg my-1.5 overflow-auto max-h-[120px] text-[11px] font-mono">
-                        <pre className="whitespace-pre-wrap wrap-break-word text-foreground">{code.code}</pre>
+                <AnimatePresence>
+                  {expandedItems[thinking.id] && (
+                    <motion.div
+                      key="content"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ height: { duration: 0.2, ease: 'easeOut' }, opacity: { duration: 0.15 } }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pl-0.5 py-0.5">
+                        {hasThought ? (
+                          <p className="text-[11px] text-muted-foreground leading-snug">{thinking.thought}</p>
+                        ) : (
+                          <p className="text-[11px] text-muted-foreground py-0.5 mt-0.5">
+                            No thought captured.
+                          </p>
+                        )}
                       </div>
-                      {code.result && (
-                        <div className="mt-3">
-                          <div className="text-[11px] text-muted-foreground font-medium mb-1">Result:</div>
-                          <div className="bg-muted/50 border border-border p-2 rounded-lg overflow-auto max-h-[90px] text-[11px] font-mono">
-                            <pre className="whitespace-pre-wrap wrap-break-word text-foreground">{code.result}</pre>
-                          </div>
-                        </div>
-                      )}
-                      {code.charts && code.charts.length > 0 && (
-                        <div className="mt-3 mb-1 space-y-4">
-                          {code.charts.map((chart: any, chartIndex: number) => (
-                            <div key={chartIndex} className="w-full">
-                              <ExtremeChart chart={chart} />
-                            </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          }
+
+          if (timelineItem.kind === 'file_query_group') {
+            const group = timelineItem.item as FileQueryGroup;
+            const activeQuery = group.queries.find((q) => q.status === 'started');
+            const primaryQuery = activeQuery || group.queries[0];
+            const isLoading = group.queries.some((q) => q.status === 'started');
+            const hasResults = group.queries.some((q) => (q.results?.length || 0) > 0);
+
+            const unifiedResults = Array.from(
+              new Map(
+                group.queries
+                  .flatMap((q) => q.results || [])
+                  .map((result) => [`${result.fileName}-${result.content.slice(0, 50)}`, result]),
+              ).values(),
+            );
+
+            // Check if previous item was a thinking step with nextStep
+            const prevItem = itemIndex > 0 ? combinedTimelineItems[itemIndex - 1] : null;
+            const prevThinkingNextStep =
+              prevItem?.kind === 'thinking' ? (prevItem.item as ThinkingExecution).nextStep : undefined;
+            const displayTitle = prevThinkingNextStep || primaryQuery?.query || 'Searching files';
+
+            const bulletColor = isLoading
+              ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!'
+              : hasResults
+                ? 'bg-primary'
+                : 'bg-muted-foreground/50';
+
+            return (
+              <motion.div
+                key={group.id}
+                className="space-y-0 relative"
+                initial={{ opacity: 0, y: 2 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.1, delay: itemIndex * 0.01 }}
+              >
+                <div
+                  className="absolute rounded-full bg-background z-5"
+                  style={{ left: '-0.6rem', top: '4px', width: '10px', height: '10px', transform: 'translateX(-50%)' }}
+                />
+
+                <div
+                  className={`absolute rounded-full ${bulletColor} transition-colors duration-300 z-10`}
+                  style={{ left: '-0.6rem', top: '5px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
+                  title={`Status: ${activeQuery?.status || 'completed'}`}
+                />
+
+                {itemIndex > 0 && (
+                  <div
+                    className="absolute bg-secondary"
+                    style={{
+                      left: '-0.6rem',
+                      top: '0',
+                      width: '2px',
+                      height: '5px',
+                      transform: 'translateX(-50%)',
+                    }}
+                  />
+                )}
+
+                <div
+                  className="absolute bg-secondary"
+                  style={{
+                    left: '-0.6rem',
+                    top: '13px',
+                    width: '2px',
+                    height: expandedItems[group.id]
+                      ? itemIndex === combinedTimelineItems.length - 1
+                        ? 'calc(100% - 13px)'
+                        : 'calc(100% - 13px)'
+                      : itemIndex === combinedTimelineItems.length - 1
+                        ? '0'
+                        : 'calc(100% - 9px)',
+                    transform: 'translateX(-50%)',
+                  }}
+                />
+
+                <div
+                  className="flex items-start gap-1.5 cursor-pointer py-1 px-1.5 hover:bg-accent/50 rounded-md transition-colors duration-150 relative"
+                  onClick={() => toggleItemExpansion(group.id)}
+                >
+                  <svg className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                  </svg>
+                  <span className="text-foreground text-[11px] min-w-0 flex-1 wrap-break-word leading-snug">
+                    {isLoading && !isCompleted ? (
+                      <TextShimmer className="w-full" duration={1.5}>
+                        {displayTitle}
+                      </TextShimmer>
+                    ) : (
+                      displayTitle
+                    )}
+                  </span>
+                  {group.queries.length > 1 && (
+                    <span className="text-[8.5px] text-muted-foreground px-1 py-0.25 rounded-full bg-muted border border-border/50 shrink-0">
+                      {group.queries.length} queries
+                    </span>
+                  )}
+                  {expandedItems[group.id] ? (
+                    <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+                  ) : (
+                    <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+                  )}
+                </div>
+
+                <AnimatePresence>
+                  {expandedItems[group.id] && (
+                    <motion.div
+                      key="content"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ height: { duration: 0.2, ease: 'easeOut' }, opacity: { duration: 0.15 } }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pl-0.5 py-0.5 space-y-1">
+                        <div className="flex flex-wrap gap-1">
+                          {group.queries.map((query, index) => (
+                            <span
+                              key={`${query.id}-${index}`}
+                              className="inline-flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-0.5 text-[10px] text-foreground"
+                            >
+                              <svg className="h-2.5 w-2.5 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                              </svg>
+                              <span className="truncate max-w-[180px]">{query.query}</span>
+                            </span>
                           ))}
                         </div>
-                      )}
-                      {code.status === 'running' && !isCompleted && (
-                        <TextShimmer className="text-xs py-0.5 mt-1" duration={2.5}>
-                          Executing code...
-                        </TextShimmer>
-                      )}
-                    </div>
-                  </motion.div>
+
+                        {unifiedResults.length > 0 && (
+                          <motion.div
+                            className="rounded-lg bg-card border border-border/50 p-2 max-h-[180px] overflow-y-auto mt-1.5"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.15 }}
+                            ref={(node) => {
+                              if (node) {
+                                fileResultsListRefs.current[group.id] = node;
+                                return;
+                              }
+                              delete fileResultsListRefs.current[group.id];
+                            }}
+                          >
+                            {unifiedResults.map((result, index) => (
+                              <div
+                                key={index}
+                                className="flex items-start gap-2.5 px-2 py-1.5 text-[11px] rounded transition-colors"
+                              >
+                                <svg className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                  <polyline points="14 2 14 8 20 8" />
+                                </svg>
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-foreground font-medium truncate">{result.fileName}</div>
+                                  <div className="text-muted-foreground line-clamp-2 mt-0.5">{result.content.slice(0, 150)}...</div>
+                                </div>
+                                <div className="text-[10px] text-muted-foreground shrink-0">
+                                  {Math.round(result.score * 100)}%
+                                </div>
+                              </div>
+                            ))}
+                          </motion.div>
+                        )}
+
+                        {isLoading && !isCompleted && (
+                          <TextShimmer className="text-xs py-0.5" duration={2.5}>
+                            Searching files...
+                          </TextShimmer>
+                        )}
+
+                        {!isLoading && unifiedResults.length === 0 && (
+                          <p className="text-[11px] text-muted-foreground py-0.5 mt-0.5">
+                            No results found in files.
+                          </p>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          }
+
+          if (timelineItem.kind === 'browse_page_group') {
+            const { executions } = timelineItem.item;
+            const primaryExecution = executions[0];
+            if (!primaryExecution) return null;
+
+            const isLoading = executions.some((bp) => bp.status === 'started' || bp.status === 'browsing');
+            const hasResults = executions.some((bp) => (bp.results?.length || 0) > 0);
+            const allResults = executions.flatMap((bp) => bp.results || []);
+            const allUrls = executions.flatMap((bp) => bp.urls);
+
+            const prevItem = itemIndex > 0 ? combinedTimelineItems[itemIndex - 1] : null;
+            const prevThinkingNextStep =
+              prevItem?.kind === 'thinking' ? (prevItem.item as ThinkingExecution).nextStep : undefined;
+            const displayTitle = prevThinkingNextStep || `Browsing ${allUrls.length} page${allUrls.length !== 1 ? 's' : ''}`;
+
+            const bulletColor = isLoading
+              ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!'
+              : hasResults
+                ? 'bg-primary'
+                : 'bg-muted-foreground/50';
+
+            return (
+              <motion.div
+                key={timelineItem.item.id}
+                className="space-y-0 relative"
+                initial={{ opacity: 0, y: 2 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.1, delay: itemIndex * 0.01 }}
+              >
+                <div
+                  className="absolute rounded-full bg-background z-5"
+                  style={{ left: '-0.6rem', top: '4px', width: '10px', height: '10px', transform: 'translateX(-50%)' }}
+                />
+                <div
+                  className={`absolute rounded-full ${bulletColor} transition-colors duration-300 z-10`}
+                  style={{ left: '-0.6rem', top: '5px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
+                  title={`Status: ${primaryExecution.status}`}
+                />
+                {itemIndex > 0 && (
+                  <div
+                    className="absolute bg-secondary"
+                    style={{ left: '-0.6rem', top: '0', width: '2px', height: '5px', transform: 'translateX(-50%)' }}
+                  />
                 )}
-              </AnimatePresence>
-            </motion.div>
-          );
+                <div
+                  className="absolute bg-secondary"
+                  style={{
+                    left: '-0.6rem',
+                    top: '13px',
+                    width: '2px',
+                    height: expandedItems[timelineItem.item.id]
+                      ? itemIndex === combinedTimelineItems.length - 1
+                        ? 'calc(100% - 13px)'
+                        : 'calc(100% - 13px)'
+                      : itemIndex === combinedTimelineItems.length - 1
+                        ? '0'
+                        : 'calc(100% - 9px)',
+                    transform: 'translateX(-50%)',
+                  }}
+                />
+
+                <div
+                  className="flex items-start gap-1.5 cursor-pointer py-1 px-1.5 hover:bg-accent/50 rounded-md transition-colors duration-150 relative"
+                  onClick={() => toggleItemExpansion(timelineItem.item.id)}
+                >
+                  <Globe className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+                  <span className="text-foreground text-[11px] min-w-0 flex-1 wrap-break-word leading-snug">
+                    {isLoading && !isCompleted ? (
+                      <TextShimmer className="w-full" duration={1.5}>
+                        {displayTitle}
+                      </TextShimmer>
+                    ) : (
+                      displayTitle
+                    )}
+                  </span>
+                  {allUrls.length > 1 && (
+                    <span className="text-[8.5px] text-muted-foreground px-1 py-0.25 rounded-full bg-muted border border-border/50 shrink-0">
+                      {allUrls.length} pages
+                    </span>
+                  )}
+                  {expandedItems[timelineItem.item.id] ? (
+                    <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+                  ) : (
+                    <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+                  )}
+                </div>
+
+                <AnimatePresence>
+                  {expandedItems[timelineItem.item.id] && (
+                    <motion.div
+                      key="content"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ height: { duration: 0.2, ease: 'easeOut' }, opacity: { duration: 0.15 } }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pl-0.5 py-0.5 space-y-1">
+                        <div className="flex flex-wrap gap-1">
+                          {allUrls.map((url, index) => {
+                            const hostname = (() => { try { return new URL(url).hostname; } catch { return url; } })();
+                            return (
+                              <span
+                                key={`${url}-${index}`}
+                                className="inline-flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-0.5 text-[10px] text-foreground"
+                              >
+                                <img
+                                  src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=16`}
+                                  alt=""
+                                  className="h-2.5 w-2.5 rounded-sm object-contain"
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                />
+                                <span className="truncate max-w-[160px]">{hostname}</span>
+                              </span>
+                            );
+                          })}
+                        </div>
+
+                        {hasResults && (
+                          <motion.div
+                            className="rounded-lg bg-card border border-border/50 p-2 max-h-[200px] overflow-y-auto mt-1.5 space-y-2"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.15 }}
+                          >
+                            {allResults.map((result, index) => {
+                              const hostname = (() => { try { return new URL(result.url).hostname; } catch { return result.url; } })();
+                              return (
+                                <div key={index} className="flex items-start gap-2 text-[11px]">
+                                  <img
+                                    src={result.favicon || `https://www.google.com/s2/favicons?domain=${hostname}&sz=16`}
+                                    alt=""
+                                    className="h-3.5 w-3.5 rounded-sm object-contain shrink-0 mt-0.5"
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-1 min-w-0">
+                                      <span className="font-medium text-foreground truncate">{result.title || hostname}</span>
+                                      {result.error && (
+                                        <span className="text-[9px] text-destructive shrink-0">(error)</span>
+                                      )}
+                                    </div>
+                                    {result.content && !result.error && (
+                                      <p className="text-muted-foreground line-clamp-2 mt-0.5">
+                                        {result.content.slice(0, 200)}
+                                      </p>
+                                    )}
+                                    {result.error && (
+                                      <p className="text-muted-foreground line-clamp-1 mt-0.5 text-[10px]">
+                                        {result.error}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </motion.div>
+                        )}
+
+                        {isLoading && !isCompleted && (
+                          <TextShimmer className="text-xs py-0.5" duration={2.5}>
+                            Browsing pages...
+                          </TextShimmer>
+                        )}
+
+                        {!isLoading && allResults.length === 0 && (
+                          <p className="text-[11px] text-muted-foreground py-0.5 mt-0.5">
+                            No content retrieved.
+                          </p>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          }
+
+          if (timelineItem.kind === 'code') {
+            const code = timelineItem.item as CodeExecution;
+            const isLoading = code.status === 'running';
+            const bulletColor = isLoading ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]!' : 'bg-primary';
+
+            return (
+              <motion.div
+                key={code.id}
+                className="space-y-0 relative"
+                initial={{ opacity: 0, y: 2 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.1, delay: itemIndex * 0.01 }}
+              >
+                <div
+                  className="absolute rounded-full bg-background z-5"
+                  style={{ left: '-0.6rem', top: '4px', width: '10px', height: '10px', transform: 'translateX(-50%)' }}
+                />
+
+                <div
+                  className={`absolute rounded-full ${bulletColor} transition-colors duration-300 z-10`}
+                  style={{ left: '-0.6rem', top: '5px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
+                  title={`Status: ${code.status}`}
+                />
+
+                {itemIndex > 0 && (
+                  <div
+                    className="absolute bg-secondary"
+                    style={{ left: '-0.6rem', top: '0', width: '2px', height: '5px', transform: 'translateX(-50%)' }}
+                  />
+                )}
+
+                <div
+                  className="absolute bg-secondary"
+                  style={{
+                    left: '-0.6rem',
+                    top: '13px',
+                    width: '2px',
+                    height: expandedItems[code.id]
+                      ? itemIndex === combinedTimelineItems.length - 1
+                        ? 'calc(100% - 13px)'
+                        : 'calc(100% - 13px)'
+                      : itemIndex === combinedTimelineItems.length - 1
+                        ? '0'
+                        : 'calc(100% - 9px)',
+                    transform: 'translateX(-50%)',
+                  }}
+                />
+
+                <div
+                  className="flex items-start gap-1.5 cursor-pointer py-1 px-1.5 hover:bg-accent/50 rounded-md transition-colors duration-150 relative"
+                  onClick={() => toggleItemExpansion(code.id)}
+                >
+                  <Code2 className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                  <span className="text-foreground text-[11px] min-w-0 flex-1 wrap-break-word leading-snug">
+                    {isLoading && !isCompleted ? (
+                      <TextShimmer className="w-full" duration={1.5}>
+                        {code.title}
+                      </TextShimmer>
+                    ) : (
+                      code.title
+                    )}
+                  </span>
+                  {expandedItems[code.id] ? (
+                    <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+                  ) : (
+                    <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+                  )}
+                </div>
+
+                <AnimatePresence>
+                  {expandedItems[code.id] && (
+                    <motion.div
+                      key="content"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ height: { duration: 0.2, ease: 'easeOut' }, opacity: { duration: 0.15 } }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pl-0.5 py-0.5">
+                        <div
+                          className="bg-muted/50 border border-border p-2 rounded-lg my-1.5 overflow-auto max-h-[120px] text-[11px] font-mono"
+                          ref={(node) => {
+                            if (node) {
+                              codeResultRefs.current[`${code.id}-code`] = node;
+                              return;
+                            }
+                            delete codeResultRefs.current[`${code.id}-code`];
+                          }}
+                        >
+                          <pre className="whitespace-pre-wrap wrap-break-word text-foreground">{code.code}</pre>
+                        </div>
+                        {code.result && (
+                          <div className="mt-3">
+                            <div className="text-[11px] text-muted-foreground font-medium mb-1">Result:</div>
+                            <div
+                              className="bg-muted/50 border border-border p-2 rounded-lg overflow-auto max-h-[90px] text-[11px] font-mono"
+                              ref={(node) => {
+                                if (node) {
+                                  codeResultRefs.current[`${code.id}-result`] = node;
+                                  return;
+                                }
+                                delete codeResultRefs.current[`${code.id}-result`];
+                              }}
+                            >
+                              <pre className="whitespace-pre-wrap wrap-break-word text-foreground">{code.result}</pre>
+                            </div>
+                          </div>
+                        )}
+                        {code.charts && code.charts.length > 0 && (
+                          <div className="mt-3 mb-1 space-y-4">
+                            {code.charts.map((chart: any, chartIndex: number) => (
+                              <div key={chartIndex} className="w-full">
+                                <ChartWithFullView chart={chart} index={chartIndex} />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {code.status === 'running' && !isCompleted && (
+                          <TextShimmer className="text-xs py-0.5 mt-1" duration={2.5}>
+                            Executing code...
+                          </TextShimmer>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          }
+
+          if (timelineItem.kind === 'done') {
+            const done = timelineItem.item as DoneExecution;
+
+            return (
+              <motion.div
+                key={done.id}
+                className="space-y-0 relative"
+                initial={{ opacity: 0, y: 2 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.1, delay: itemIndex * 0.01 }}
+              >
+                <div
+                  className="absolute rounded-full bg-background z-5"
+                  style={{ left: '-0.6rem', top: '4px', width: '10px', height: '10px', transform: 'translateX(-50%)' }}
+                />
+
+                <div
+                  className="absolute rounded-full bg-primary transition-colors duration-300 z-10"
+                  style={{ left: '-0.6rem', top: '5px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
+                  title="Research completed"
+                />
+
+                {itemIndex > 0 && (
+                  <div
+                    className="absolute bg-secondary"
+                    style={{
+                      left: '-0.6rem',
+                      top: '0',
+                      width: '2px',
+                      height: '5px',
+                      transform: 'translateX(-50%)',
+                    }}
+                  />
+                )}
+
+                <div
+                  className="absolute bg-secondary"
+                  style={{
+                    left: '-0.6rem',
+                    top: '13px',
+                    width: '2px',
+                    height: expandedItems[done.id]
+                      ? itemIndex === combinedTimelineItems.length - 1
+                        ? 'calc(100% - 13px)'
+                        : 'calc(100% - 13px)'
+                      : itemIndex === combinedTimelineItems.length - 1
+                        ? '0'
+                        : 'calc(100% - 9px)',
+                    transform: 'translateX(-50%)',
+                  }}
+                />
+
+                <div
+                  className="flex items-start gap-1.5 cursor-pointer py-1 px-1.5 hover:bg-accent/50 rounded-md transition-colors duration-150 relative"
+                  onClick={() => toggleItemExpansion(done.id)}
+                >
+                  <svg className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span className="text-foreground text-[11px] min-w-0 flex-1 wrap-break-word leading-snug">
+                    Done
+                  </span>
+                  {expandedItems[done.id] ? (
+                    <ChevronDown className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+                  ) : (
+                    <ChevronRight className="w-3 h-3 text-muted-foreground shrink-0 mt-0.5" />
+                  )}
+                </div>
+
+                <AnimatePresence>
+                  {expandedItems[done.id] && (
+                    <motion.div
+                      key="content"
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ height: { duration: 0.2, ease: 'easeOut' }, opacity: { duration: 0.15 } }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pl-0.5 py-0.5">
+                        <p className="text-[11px] text-muted-foreground leading-snug">{done.summary}</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          }
+
+          return null;
         })}
       </AnimatePresence>
+
+      {/* Waiting indicator - shows when last item is completed and waiting for next step */}
+      {!isCompleted && combinedTimelineItems.length > 0 && (() => {
+        const lastItem = combinedTimelineItems[combinedTimelineItems.length - 1];
+
+        // Don't show while the last visible step is still a thinking placeholder
+        if (lastItem?.kind === 'done' || lastItem?.kind === 'thinking') return null;
+
+        // Check if last item is still loading
+        let isLastItemLoading = false;
+        if (lastItem?.kind === 'query_group') {
+          isLastItemLoading = lastItem.item.queries.some((q) => q.status === 'started' || q.status === 'reading_content');
+        } else if (lastItem?.kind === 'x_search_group') {
+          isLastItemLoading = lastItem.item.searches.some((s) => s.status === 'started');
+        } else if (lastItem?.kind === 'file_query_group') {
+          isLastItemLoading = lastItem.item.queries.some((q) => q.status === 'started');
+        } else if (lastItem?.kind === 'browse_page_group') {
+          isLastItemLoading = lastItem.item.executions.some((bp) => bp.status === 'started' || bp.status === 'browsing');
+        } else if (lastItem?.kind === 'code') {
+          isLastItemLoading = lastItem.item.status === 'running';
+        }
+
+        // Only show if last item is NOT loading (completed, waiting for next)
+        if (isLastItemLoading) return null;
+
+        return (
+          <motion.div
+            key="waiting"
+            className="relative"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+          >
+            {/* Background circle */}
+            <div
+              className="absolute rounded-full bg-background z-5"
+              style={{ left: '-0.6rem', top: '4px', width: '10px', height: '10px', transform: 'translateX(-50%)' }}
+            />
+            {/* Pulsing dot - matches timeline color */}
+            <div
+              className="absolute rounded-full bg-primary/60 animate-pulse z-10"
+              style={{ left: '-0.6rem', top: '5px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
+            />
+            {/* Line connecting to previous item - extends up to fill gap */}
+            <div
+              className="absolute bg-secondary"
+              style={{ left: '-0.6rem', top: '-12px', width: '2px', height: '17px', transform: 'translateX(-50%)' }}
+            />
+            {/* Content aligned with other items */}
+            <div className="flex items-start gap-1.5 py-1 px-1.5">
+              <DashLoading size={14} color="currentColor" strokeWidth={1.5} />
+              <span className="text-[11px] text-muted-foreground/60 leading-snug">
+                Waiting for agent...
+              </span>
+            </div>
+          </motion.div>
+        );
+      })()}
     </div>
   );
 
@@ -2020,373 +2875,690 @@ const ExtremeSearchComponent = ({
     }
   };
 
-  // Render sources section (minimal design)
-  const renderSources = (sources: ExtremeSearchSource[]) => {
-    console.log('[ExtremeSearch] renderSources called with:', sources.length, 'sources');
-    console.log('[ExtremeSearch] Sources data:', sources);
-
+  // Render sources list (used inside tabs)
+  const renderSourcesList = (sources: ExtremeSearchSource[]) => {
     return (
-      <div className="w-full border border-border rounded-lg overflow-hidden bg-card shadow-none">
-        <button
-          onClick={() => setSourcesAccordionOpen(!sourcesAccordionOpen)}
-          className="w-full px-5 py-3 flex items-center justify-between hover:bg-accent/50 transition-colors duration-200"
-        >
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-md bg-muted border border-border/50">
-              <Icons.Globe className="h-3.5 w-3.5 text-muted-foreground" />
+      <div className="bg-background">
+        <div className="divide-y divide-border max-h-[400px] overflow-y-auto">
+          {sources.length > 0 ? (
+            sources.map((source, index) => (
+              <a key={index} href={source.url} target="_blank" className="block">
+                <ExtremeSourceCard source={source} />
+              </a>
+            ))
+          ) : (
+            <div className="p-6 text-center">
+              <p className="text-muted-foreground text-sm">No sources found</p>
             </div>
-            <h2 className="font-semibold text-sm text-foreground">Sources</h2>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{sources.length} sources</span>
-            {sources.length > 0 && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSourcesSheetOpen(true);
-                }}
-                className="flex items-center gap-1.5 text-xs text-foreground hover:text-foreground/80 px-2.5 py-1.5 rounded-md hover:bg-accent/50 transition-colors duration-150"
-              >
-                View all
-                <Icons.ArrowUpRight className="w-3 h-3" />
-              </button>
-            )}
-            <ChevronDown
-              className={cn(
-                'h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200',
-                sourcesAccordionOpen ? 'rotate-180' : '',
-              )}
-            />
-          </div>
-        </button>
-
-        {sourcesAccordionOpen && (
-          <div className="border-t border-border bg-background">
-            <div className="divide-y divide-border max-h-[400px] overflow-y-auto">
-              {sources.length > 0 ? (
-                sources.map((source, index) => (
-                  <a key={index} href={source.url} target="_blank" className="block">
-                    <ExtremeSourceCard source={source} />
-                  </a>
-                ))
-              ) : (
-                <div className="p-6 text-center">
-                  <p className="text-muted-foreground text-sm">No sources found</p>
-                </div>
-              )}
-            </div>
+          )}
+        </div>
+        {sources.length > 0 && (
+          <div className="border-t border-border px-4 py-2">
+            <button
+              onClick={() => setSourcesSheetOpen(true)}
+              className="w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground py-1.5 rounded-md hover:bg-accent/50 transition-colors duration-150"
+            >
+              View all {sources.length} sources
+              <Icons.ArrowUpRight className="w-3 h-3" />
+            </button>
           </div>
         )}
       </div>
     );
   };
 
+
   // Final result view
   if (isCompleted) {
-    console.log('[ExtremeSearch] 🎯 RENDERING COMPLETED STATE');
-    console.log('[ExtremeSearch] allSources length:', allSources.length);
-    console.log('[ExtremeSearch] allCharts length:', allCharts.length);
+    const stepCount = combinedTimelineItems.filter((item) => item.kind !== 'done').length;
+
+    // Pre-compute X Search data
+    const completedXSearches = xSearchExecutions.filter((x) => x.status === 'completed' && x.result);
+    const xSearchData = completedXSearches.length > 0 ? (() => {
+      const handles = Array.from(
+        new Set(
+          completedXSearches
+            .flatMap((x) => x.handles || [])
+            .filter((handle): handle is string => typeof handle === 'string' && handle.length > 0),
+        ),
+      );
+      const combinedSearch = {
+        content: completedXSearches.map((x) => x.result!.content).join('\n\n'),
+        citations: completedXSearches.flatMap((x) => x.result!.citations || []),
+        sources: completedXSearches.flatMap((x) => x.result!.sources || []),
+        query: completedXSearches.map((x) => x.query).filter(Boolean).join(' | '),
+        dateRange: `${completedXSearches[0].startDate || ''} to ${completedXSearches[completedXSearches.length - 1].endDate || ''}`,
+        handles,
+      };
+      return {
+        result: { searches: [combinedSearch], dateRange: combinedSearch.dateRange, handles },
+        args: {
+          queries: completedXSearches.map((x) => x.query).filter((q): q is string => typeof q === 'string' && q.length > 0),
+          startDate: completedXSearches[0].startDate,
+          endDate: completedXSearches[completedXSearches.length - 1].endDate,
+          includeXHandles: handles,
+        },
+      };
+    })() : null;
+
+    // Pre-compute File Query data
+    const completedFileQueries = fileQueryExecutions.filter(
+      (fq) => fq.status === 'completed' && fq.results && fq.results.length > 0
+    );
+    const fileQueryData = completedFileQueries.length > 0 ? (() => {
+      const allFileResults = Array.from(
+        new Map(
+          completedFileQueries
+            .flatMap((fq) => fq.results || [])
+            .map((result) => [`${result.fileName}-${result.content.slice(0, 50)}`, result])
+        ).values()
+      );
+      if (allFileResults.length === 0) return null;
+      const queries = completedFileQueries.map((fq) => fq.query).filter(Boolean);
+      return { results: allFileResults, queries };
+    })() : null;
 
     return (
-      <div className="space-y-2">
-        {/* Research Process */}
-        <div className="border border-border rounded-lg overflow-hidden bg-card shadow-none">
+      <>
+        <div className="border border-border rounded-xl overflow-hidden shadow-none">
+          {/* Collapsible header */}
           <button
-            onClick={() => setResearchProcessOpen(!researchProcessOpen)}
-            className="w-full px-5 py-3 flex items-center justify-between hover:bg-accent/50 transition-colors duration-200"
+            onClick={() => setResultsOpen(!resultsOpen)}
+            className="w-full px-4 py-2.5 flex items-center justify-between hover:bg-accent/10 transition-colors duration-200 bg-background"
           >
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 rounded-md bg-muted border border-border/50">
-                <FlaskConical className="h-3.5 w-3.5 text-muted-foreground" />
-              </div>
-              <h3 className="font-semibold text-sm text-foreground">Research Process</h3>
+            <div className="flex items-center gap-2 flex-wrap min-w-0">
+              <FlaskConical className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span className="text-sm font-medium text-foreground shrink-0">Research Complete</span>
+              <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full">
+                {stepCount} {stepCount === 1 ? 'step' : 'steps'}
+                {allSources.length > 0 && ` · ${allSources.length} sources`}
+                {allCharts.length > 0 && ` · ${allCharts.length} ${allCharts.length === 1 ? 'chart' : 'charts'}`}
+                {xSearchData && ` · ${xSearchData.result.searches[0]?.citations?.length || 0} posts`}
+                {fileQueryData && ` · ${fileQueryData.results.length} ${fileQueryData.results.length === 1 ? 'file' : 'files'}`}
+              </span>
             </div>
             <ChevronDown
               className={cn(
                 'h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200',
-                researchProcessOpen ? 'rotate-180' : '',
+                resultsOpen ? 'rotate-180' : '',
               )}
             />
           </button>
 
-          {researchProcessOpen && (
-            <div className="border-t border-border bg-background">
-              <div className="p-4 max-h-[300px] overflow-y-auto">{renderTimeline()}</div>
+          {resultsOpen && (
+            <div>
+              <div className="px-2.5 py-2 border-t border-b border-border bg-background overflow-x-auto no-scrollbar">
+                <KumoTabs
+                  variant="segmented"
+                  value={activeTab}
+                  onValueChange={setActiveTab}
+                  className="w-full [--color-kumo-tint:var(--muted)] [--text-color-kumo-strong:var(--muted-foreground)] [--text-color-kumo-default:var(--foreground)] [--color-kumo-overlay:var(--background)] [--color-kumo-fill-hover:var(--border)]"
+                  listClassName="w-full [&>button]:flex-1 [&>button]:justify-center"
+                  tabs={[
+                    {
+                      value: 'process',
+                      label: (
+                        <span className="inline-flex items-center gap-1.5 leading-none">
+                          <FlaskConical className="h-3 w-3 shrink-0" />
+                          <span className="hidden sm:inline">Research Process</span>
+                          <span className="sm:hidden">Process</span>
+                          <span className="text-[10px] opacity-60 translate-y-px tabular-nums">{stepCount}</span>
+                        </span>
+                      ),
+                    },
+                    ...(allCharts.length > 0 ? [{
+                      value: 'visualizations',
+                      label: (
+                        <span className="inline-flex items-center gap-1.5 leading-none">
+                          <svg className="h-3 w-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          </svg>
+                          <span>Visualizations</span>
+                          <span className="text-[10px] opacity-60 translate-y-px tabular-nums">{allCharts.length}</span>
+                        </span>
+                      ),
+                    }] : []),
+                    ...(xSearchData ? [{
+                      value: 'xsearch',
+                      label: (
+                        <span className="inline-flex items-center gap-1.5 leading-none">
+                          <XLogoIcon className="h-3 w-3 shrink-0" />
+                          <span className="hidden sm:inline">X Search</span>
+                          <span className="sm:hidden">X</span>
+                          <span className="text-[10px] opacity-60 translate-y-px tabular-nums">{xSearchData.result.searches[0]?.citations?.length || 0}</span>
+                        </span>
+                      ),
+                    }] : []),
+                    ...(fileQueryData ? [{
+                      value: 'files',
+                      label: (
+                        <span className="inline-flex items-center gap-1.5 leading-none">
+                          <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                          </svg>
+                          <span>Files</span>
+                          <span className="text-[10px] opacity-60 translate-y-px tabular-nums">{fileQueryData.results.length}</span>
+                        </span>
+                      ),
+                    }] : []),
+                    ...(allSources.length > 0 ? [{
+                      value: 'sources',
+                      label: (
+                        <span className="inline-flex items-center gap-1.5 leading-none">
+                          <Icons.Globe className="h-3 w-3 shrink-0" />
+                          <span>Sources</span>
+                          <span className="text-[10px] opacity-60 translate-y-px tabular-nums">{allSources.length}</span>
+                        </span>
+                      ),
+                    }] : []),
+                  ]}
+                />
+              </div>
+
+              {/* Research Process Tab */}
+              {activeTab === 'process' && (
+                <div className="max-h-[500px] sm:max-h-[450px] overflow-y-auto">
+                  <div className="p-4">{renderTimeline()}</div>
+                </div>
+              )}
+
+              {/* X Search Tab */}
+              {activeTab === 'xsearch' && xSearchData && (
+                <div>
+                  {/* Sticky header with post count, date range, queries */}
+                  <div className="px-4 py-2.5 border-b border-border bg-background sticky top-0 z-10">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>{xSearchData.result.searches[0]?.citations?.length || 0} posts</span>
+                      {xSearchData.result.dateRange && (
+                        <>
+                          <span className="text-border">·</span>
+                          <span>{xSearchData.result.dateRange}</span>
+                        </>
+                      )}
+                      {xSearchData.args.queries.length > 0 && (
+                        <span className="text-border">·</span>
+                      )}
+                      {xSearchData.args.queries.length > 0 && (
+                        <span>{xSearchData.args.queries.length} {xSearchData.args.queries.length === 1 ? 'query' : 'queries'}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Tweet previews - horizontal scroll */}
+                  {(() => {
+                    const citations = xSearchData.result.searches[0]?.citations || [];
+                    const tweetsWithIds = citations.filter((c) => c.tweet_id);
+                    if (tweetsWithIds.length === 0) return null;
+
+                    return (
+                      <div className="px-3 pt-3">
+                        <div className="flex gap-2.5 overflow-x-auto no-scrollbar">
+                          {tweetsWithIds.map((citation, index) => (
+                            <div
+                              key={citation.tweet_id || index}
+                              className="shrink-0 w-[260px] sm:w-[300px]"
+                            >
+                              <div className="tweet-wrapper">
+                                <Tweet id={citation.tweet_id!} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
+
+              {/* File Query Tab */}
+              {activeTab === 'files' && fileQueryData && (
+                <div className="max-h-[400px] overflow-y-auto">
+                  {fileQueryData.queries.length > 0 && (
+                    <div className="px-5 py-3 border-b border-border sticky top-0 z-10 bg-background">
+                      <div className="flex flex-wrap gap-1.5">
+                        {fileQueryData.queries.map((query, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-0.5 text-[11px] text-foreground"
+                          >
+                            <Search className="h-2.5 w-2.5 text-muted-foreground" />
+                            <span className="truncate max-w-[200px]">{query}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="divide-y divide-border">
+                    {fileQueryData.results.map((result, index) => (
+                      <div key={index} className="px-5 py-3 hover:bg-accent/30 transition-colors">
+                        <div className="flex items-start gap-3">
+                          <svg className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                          </svg>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-sm font-medium text-foreground truncate">{result.fileName}</span>
+                              <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded bg-muted border border-border/50">
+                                {Math.round(result.score * 100)}% match
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground line-clamp-3">{result.content}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Visualizations Tab */}
+              {activeTab === 'visualizations' && allCharts.length > 0 && (
+                <div className="max-h-[450px] overflow-y-auto">
+                  <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-3 auto-rows-[200px]">
+                    {allCharts.map((chart, index) => (
+                      <ChartWithFullView key={index} chart={chart} index={index} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Sources Tab */}
+              {activeTab === 'sources' && allSources.length > 0 && (
+                <div>
+                  {renderSourcesList(allSources)}
+                </div>
+              )}
             </div>
           )}
         </div>
-
-        {/* Charts */}
-        {allCharts.length > 0 && (
-          <div className="border border-border rounded-lg overflow-hidden bg-card shadow-none">
-            <button
-              onClick={() => setVisualizationsOpen(!visualizationsOpen)}
-              className="w-full px-5 py-3 flex items-center justify-between hover:bg-accent/50 transition-colors duration-200"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="p-1.5 rounded-md bg-muted border border-border/50">
-                  <svg
-                    className="h-3.5 w-3.5 text-muted-foreground"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="font-semibold text-sm text-foreground">Visualizations</h3>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  {allCharts.length} {allCharts.length === 1 ? 'chart' : 'charts'}
-                </span>
-                <ChevronDown
-                  className={cn(
-                    'h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200',
-                    visualizationsOpen ? 'rotate-180' : '',
-                  )}
-                />
-              </div>
-            </button>
-
-            {visualizationsOpen && (
-              <div className="border-t border-border bg-background">
-                <div className="p-5 sm:p-6 space-y-6">
-                  {allCharts.map((chart, index) => (
-                    <ExtremeChart key={index} chart={chart} />
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* X Search Results (combined) */}
-        {(() => {
-          const completedX = xSearchExecutions.filter((x) => x.status === 'completed' && x.result);
-          if (completedX.length === 0) return null;
-
-          const handles = Array.from(
-            new Set(
-              completedX
-                .flatMap((x) => x.handles || [])
-                .filter((handle): handle is string => typeof handle === 'string' && handle.length > 0),
-            ),
-          );
-
-          const combinedSearch = {
-            content: completedX.map((x) => x.result!.content).join('\n\n'),
-            citations: completedX.flatMap((x) => x.result!.citations || []),
-            sources: completedX.flatMap((x) => x.result!.sources || []),
-            query: completedX
-              .map((x) => x.query)
-              .filter(Boolean)
-              .join(' | '),
-            dateRange: `${completedX[0].startDate || ''} to ${completedX[completedX.length - 1].endDate || ''}`,
-            handles,
-          };
-
-          const combinedResult = {
-            searches: [combinedSearch],
-            dateRange: combinedSearch.dateRange,
-            handles,
-          };
-
-          const combinedArgs = {
-            queries: completedX
-              .map((x) => x.query)
-              .filter((query): query is string => typeof query === 'string' && query.length > 0),
-            startDate: completedX[0].startDate,
-            endDate: completedX[completedX.length - 1].endDate,
-            includeXHandles: handles,
-          };
-
-          return (
-            <div className="space-y-3">
-              <XSearch result={combinedResult} args={combinedArgs} />
-            </div>
-          );
-        })()}
-
-        {/* Sources */}
-        {allSources.length > 0 && renderSources(allSources)}
 
         {allSources.length > 0 && (
           <ExtremeSourcesSheet sources={allSources} open={sourcesSheetOpen} onOpenChange={setSourcesSheetOpen} />
         )}
-      </div>
+      </>
     );
   }
 
   // In-progress view
+  const hasTimelineItems = combinedTimelineItems.length > 0;
+  const inProgressStepCount = combinedTimelineItems.filter((item) => item.kind !== 'done').length;
+
+  // In-progress X Search data
+  const inProgressCompletedX = xSearchExecutions.filter((x) => x.status === 'completed' && x.result);
+  const inProgressXSearchData = inProgressCompletedX.length > 0 ? (() => {
+    const handles = Array.from(
+      new Set(
+        inProgressCompletedX
+          .flatMap((x) => x.handles || [])
+          .filter((handle): handle is string => typeof handle === 'string' && handle.length > 0),
+      ),
+    );
+    const combinedSearch = {
+      content: inProgressCompletedX.map((x) => x.result!.content).join('\n\n'),
+      citations: inProgressCompletedX.flatMap((x) => x.result!.citations || []),
+      sources: inProgressCompletedX.flatMap((x) => x.result!.sources || []),
+      query: inProgressCompletedX.map((x) => x.query).filter(Boolean).join(' | '),
+      dateRange: `${inProgressCompletedX[0].startDate || ''} to ${inProgressCompletedX[inProgressCompletedX.length - 1].endDate || ''}`,
+      handles,
+    };
+    return {
+      result: { searches: [combinedSearch], dateRange: combinedSearch.dateRange, handles },
+      args: {
+        queries: inProgressCompletedX.map((x) => x.query).filter((q): q is string => typeof q === 'string' && q.length > 0),
+      },
+    };
+  })() : null;
+
+  // In-progress File Query data
+  const inProgressFileQueries = fileQueryExecutions.filter(
+    (fq) => fq.status === 'completed' && fq.results && fq.results.length > 0
+  );
+  const inProgressFileData = inProgressFileQueries.length > 0 ? (() => {
+    const results = Array.from(
+      new Map(
+        inProgressFileQueries
+          .flatMap((fq) => fq.results || [])
+          .map((result) => [`${result.fileName}-${result.content.slice(0, 50)}`, result])
+      ).values()
+    );
+    if (results.length === 0) return null;
+    const queries = inProgressFileQueries.map((fq) => fq.query).filter(Boolean);
+    return { results, queries };
+  })() : null;
+
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-card shadow-none">
-      <div className="py-2.5 px-4 border-b border-border bg-muted/30">
-        <div className="text-sm font-medium text-foreground">
-          {state === 'input-streaming' || state === 'input-available' ? (
-            <TextShimmer duration={2}>{currentStatus}</TextShimmer>
-          ) : (
-            currentStatus
-          )}
+    <div className="border border-border rounded-xl overflow-hidden shadow-none">
+      <div>
+        <div className="px-2.5 py-2 border-b border-border bg-background overflow-x-auto no-scrollbar">
+          <KumoTabs
+            variant="segmented"
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full [--color-kumo-tint:var(--muted)] [--text-color-kumo-strong:var(--muted-foreground)] [--text-color-kumo-default:var(--foreground)] [--color-kumo-overlay:var(--background)] [--color-kumo-fill-hover:var(--border)]"
+            listClassName="w-full [&>button]:flex-1 [&>button]:justify-center"
+            tabs={[
+              {
+                value: 'process',
+                label: (
+                  <span className="inline-flex items-center gap-1.5 leading-none">
+                    <FlaskConical className="h-3 w-3 shrink-0" />
+                    <span className="hidden sm:inline">Research Process</span>
+                    <span className="sm:hidden">Process</span>
+                    {inProgressStepCount > 0 && (
+                      <span className="text-[10px] opacity-60 translate-y-px tabular-nums">{inProgressStepCount}</span>
+                    )}
+                  </span>
+                ),
+              },
+              ...(allCharts.length > 0 ? [{
+                value: 'visualizations',
+                label: (
+                  <span className="inline-flex items-center gap-1.5 leading-none">
+                    <svg className="h-3 w-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span>Visualizations</span>
+                    <span className="text-[10px] opacity-60 translate-y-px tabular-nums">{allCharts.length}</span>
+                  </span>
+                ),
+              }] : []),
+              ...(inProgressXSearchData ? [{
+                value: 'xsearch',
+                label: (
+                  <span className="inline-flex items-center gap-1.5 leading-none">
+                    <XLogoIcon className="h-3 w-3 shrink-0" />
+                    <span className="hidden sm:inline">X Search</span>
+                    <span className="sm:hidden">X</span>
+                    <span className="text-[10px] opacity-60 translate-y-px tabular-nums">{inProgressXSearchData.result.searches[0]?.citations?.length || 0}</span>
+                  </span>
+                ),
+              }] : []),
+              ...(inProgressFileData ? [{
+                value: 'files',
+                label: (
+                  <span className="inline-flex items-center gap-1.5 leading-none">
+                    <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    <span>Files</span>
+                    <span className="text-[10px] opacity-60 translate-y-px tabular-nums">{inProgressFileData.results.length}</span>
+                  </span>
+                ),
+              }] : []),
+              ...(allSources.length > 0 ? [{
+                value: 'sources',
+                label: (
+                  <span className="inline-flex items-center gap-1.5 leading-none">
+                    <Icons.Globe className="h-3 w-3 shrink-0" />
+                    <span>Sources</span>
+                    <span className="text-[10px] opacity-60 translate-y-px tabular-nums">{allSources.length}</span>
+                  </span>
+                ),
+              }] : []),
+            ]}
+          />
         </div>
-      </div>
 
-      <div className="p-4">
-        {/* Show plan if available and no timeline items yet */}
-        {planData && searchQueries.length === 0 && codeExecutions.length === 0 && xSearchExecutions.length === 0 && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-2.5">
-            <div className="flex items-center gap-1.5 mb-2">
-              <Target className="w-4 h-4 text-primary" />
-              <h4 className="text-[13px] font-semibold text-foreground">Research Strategy</h4>
+        {/* Research Process Tab */}
+        {activeTab === 'process' && (
+        <div>
+          {/* Status inside the process tab */}
+          <div className="py-2 px-4 border-b border-border bg-background">
+            <div className="text-sm font-medium text-foreground">
+              {state === 'input-streaming' || state === 'input-available' ? (
+                <TextShimmer duration={2}>{currentStatus}</TextShimmer>
+              ) : (
+                currentStatus
+              )}
             </div>
+          </div>
+          <div className="p-4">
+            {/* Show plan if available and no timeline items yet */}
+            {planData && !hasTimelineItems && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-2.5">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Target className="w-4 h-4 text-primary" />
+                  <h4 className="text-[13px] font-semibold text-foreground">Research Strategy</h4>
+                </div>
 
-            <div className="space-y-0.5 relative ml-3">
-              {planData.map((item: any, index: number) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 2 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="space-y-0 relative"
-                >
-                  {/* Background circle to prevent line showing through */}
-                  <div
-                    className="absolute rounded-full bg-card z-5"
-                    style={{
-                      left: '-0.6rem',
-                      top: '4px',
-                      width: '10px',
-                      height: '10px',
-                      transform: 'translateX(-50%)',
-                    }}
-                  />
+                <div className="space-y-0.5 relative ml-3">
+                  {planData.map((item: any, index: number) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 2 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="space-y-0 relative"
+                    >
+                      <div
+                        className="absolute rounded-full bg-card z-5"
+                        style={{
+                          left: '-0.6rem',
+                          top: '4px',
+                          width: '10px',
+                          height: '10px',
+                          transform: 'translateX(-50%)',
+                        }}
+                      />
+                      <div
+                        className="absolute rounded-full bg-primary transition-colors duration-300 z-10"
+                        style={{
+                          left: '-0.6rem',
+                          top: '5px',
+                          width: '8px',
+                          height: '8px',
+                          transform: 'translateX(-50%)',
+                        }}
+                      />
+                      {index > 0 && (
+                        <div
+                          className="absolute bg-secondary"
+                          style={{
+                            left: '-0.6rem',
+                            top: '0',
+                            width: '2px',
+                            height: '5px',
+                            transform: 'translateX(-50%)',
+                          }}
+                        />
+                      )}
+                      {index < planData.length - 1 && (
+                        <div
+                          className="absolute bg-secondary"
+                          style={{
+                            left: '-0.6rem',
+                            top: '13px',
+                            width: '2px',
+                            height: 'calc(100% - 9px)',
+                            transform: 'translateX(-50%)',
+                          }}
+                        />
+                      )}
+                      <div className="flex items-start gap-1.5 py-1 px-1.5 rounded-md relative">
+                        <span className="text-foreground text-[11px] min-w-0 flex-1 font-medium wrap-break-word leading-snug">
+                          {item.title}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground shrink-0 bg-muted px-1.5 py-0.5 rounded-full">
+                          {item.todos?.length || 0} tasks
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
-                  {/* Timeline bullet */}
-                  <div
-                    className="absolute rounded-full bg-primary transition-colors duration-300 z-10"
-                    style={{
-                      left: '-0.6rem',
-                      top: '5px',
-                      width: '8px',
-                      height: '8px',
-                      transform: 'translateX(-50%)',
-                    }}
-                  />
+            {/* Show loading skeletons when no plan and no items */}
+            {!planData && !hasTimelineItems && (
+              <div className="mb-2.5">
+                <div className="flex items-center gap-1.5 mb-2">
+                  <Target className="w-4 h-4 text-primary/50" />
+                  <h4 className="text-[13px] font-semibold text-foreground">Preparing Research Strategy</h4>
+                </div>
 
-                  {/* Vertical line above bullet */}
-                  {index > 0 && (
-                    <div
-                      className="absolute bg-secondary"
-                      style={{
-                        left: '-0.6rem',
-                        top: '0',
-                        width: '2px',
-                        height: '5px',
-                        transform: 'translateX(-50%)',
-                      }}
-                    />
-                  )}
+                <div className="space-y-0.5 relative ml-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="space-y-0 relative">
+                      <div
+                        className="absolute rounded-full bg-card z-5"
+                        style={{
+                          left: '-0.6rem',
+                          top: '4px',
+                          width: '10px',
+                          height: '10px',
+                          transform: 'translateX(-50%)',
+                        }}
+                      />
+                      <Skeleton
+                        className="absolute rounded-full z-10"
+                        style={{
+                          left: '-0.6rem',
+                          top: '5px',
+                          width: '8px',
+                          height: '8px',
+                          transform: 'translateX(-50%)',
+                        }}
+                      />
+                      {i > 1 && (
+                        <div
+                          className="absolute bg-secondary"
+                          style={{
+                            left: '-0.6rem',
+                            top: '0',
+                            width: '2px',
+                            height: '5px',
+                            transform: 'translateX(-50%)',
+                          }}
+                        />
+                      )}
+                      {i < 3 && (
+                        <div
+                          className="absolute bg-secondary"
+                          style={{
+                            left: '-0.6rem',
+                            top: '13px',
+                            width: '2px',
+                            height: 'calc(100% - 9px)',
+                            transform: 'translateX(-50%)',
+                          }}
+                        />
+                      )}
+                      <div className="flex items-start gap-1.5 py-1 px-1.5 rounded-md relative">
+                        <Skeleton className="w-3 h-3 rounded-full shrink-0 mt-0.5" />
+                        <Skeleton className="h-3 flex-1" />
+                        <Skeleton className="h-3 w-12 shrink-0 rounded-full" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-                  {/* Vertical line below bullet */}
-                  {index < planData.length - 1 && (
-                    <div
-                      className="absolute bg-secondary"
-                      style={{
-                        left: '-0.6rem',
-                        top: '13px',
-                        width: '2px',
-                        height: 'calc(100% - 9px)',
-                        transform: 'translateX(-50%)',
-                      }}
-                    />
-                  )}
-
-                  <div className="flex items-start gap-1.5 py-1 px-1.5 rounded-md relative">
-                    <span className="text-foreground text-[11px] min-w-0 flex-1 font-medium wrap-break-word leading-snug">
-                      {item.title}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground shrink-0 bg-muted px-1.5 py-0.5 rounded-full">
-                      {item.todos?.length || 0} tasks
-                    </span>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+            {/* Show timeline when items are available */}
+            {hasTimelineItems && (
+              <div
+                ref={timelineRef}
+                className="max-h-[500px] sm:max-h-[400px] overflow-y-auto pr-2"
+                onScroll={handleTimelineScroll}
+              >
+                {renderTimeline()}
+                <div ref={timelineBottomRef} />
+              </div>
+            )}
+          </div>
+        </div>
         )}
 
-        {/* Show loading skeletons when no plan and no items */}
-        {!planData && searchQueries.length === 0 && codeExecutions.length === 0 && xSearchExecutions.length === 0 && (
-          <div className="mb-2.5">
-            <div className="flex items-center gap-1.5 mb-2">
-              <Target className="w-4 h-4 text-primary/50" />
-              <h4 className="text-[13px] font-semibold text-foreground">Preparing Research Strategy</h4>
+        {/* Visualizations Tab (in-progress) */}
+        {activeTab === 'visualizations' && allCharts.length > 0 && (
+          <div className="max-h-[450px] overflow-y-auto">
+            <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-3 auto-rows-[200px]">
+              {allCharts.map((chart, index) => (
+                <ChartWithFullView key={index} chart={chart} index={index} />
+              ))}
             </div>
+          </div>
+        )}
 
-            <div className="space-y-0.5 relative ml-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="space-y-0 relative">
-                  {/* Background circle skeleton */}
-                  <div
-                    className="absolute rounded-full bg-card z-5"
-                    style={{
-                      left: '-0.6rem',
-                      top: '4px',
-                      width: '10px',
-                      height: '10px',
-                      transform: 'translateX(-50%)',
-                    }}
-                  />
+        {/* X Search Tab (in-progress) */}
+        {activeTab === 'xsearch' && inProgressXSearchData && (
+          <div>
+            <div className="px-4 py-2.5 border-b border-border bg-background sticky top-0 z-10">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{inProgressXSearchData.result.searches[0]?.citations?.length || 0} posts</span>
+                {inProgressXSearchData.result.dateRange && (
+                  <>
+                    <span className="text-border">·</span>
+                    <span>{inProgressXSearchData.result.dateRange}</span>
+                  </>
+                )}
+                {inProgressXSearchData.args.queries.length > 0 && (
+                  <span className="text-border">·</span>
+                )}
+                {inProgressXSearchData.args.queries.length > 0 && (
+                  <span>{inProgressXSearchData.args.queries.length} {inProgressXSearchData.args.queries.length === 1 ? 'query' : 'queries'}</span>
+                )}
+              </div>
+            </div>
+            {(() => {
+              const citations = inProgressXSearchData.result.searches[0]?.citations || [];
+              const tweetsWithIds = citations.filter((c) => c.tweet_id);
+              if (tweetsWithIds.length === 0) return null;
+              return (
+                <div className="px-3 pt-3">
+                  <div className="flex gap-2.5 overflow-x-auto no-scrollbar">
+                    {tweetsWithIds.map((citation, index) => (
+                      <div key={citation.tweet_id || index} className="shrink-0 w-[260px] sm:w-[300px]">
+                        <div className="tweet-wrapper">
+                          <Tweet id={citation.tweet_id!} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
 
-                  {/* Timeline bullet skeleton */}
-                  <Skeleton
-                    className="absolute rounded-full z-10"
-                    style={{
-                      left: '-0.6rem',
-                      top: '5px',
-                      width: '8px',
-                      height: '8px',
-                      transform: 'translateX(-50%)',
-                    }}
-                  />
-
-                  {/* Vertical line above bullet */}
-                  {i > 1 && (
-                    <div
-                      className="absolute bg-secondary"
-                      style={{
-                        left: '-0.6rem',
-                        top: '0',
-                        width: '2px',
-                        height: '5px',
-                        transform: 'translateX(-50%)',
-                      }}
-                    />
-                  )}
-
-                  {/* Vertical line below bullet */}
-                  {i < 3 && (
-                    <div
-                      className="absolute bg-secondary"
-                      style={{
-                        left: '-0.6rem',
-                        top: '13px',
-                        width: '2px',
-                        height: 'calc(100% - 9px)',
-                        transform: 'translateX(-50%)',
-                      }}
-                    />
-                  )}
-
-                  <div className="flex items-start gap-1.5 py-1 px-1.5 rounded-md relative">
-                    <Skeleton className="w-3 h-3 rounded-full shrink-0 mt-0.5" />
-                    <Skeleton className="h-3 flex-1" />
-                    <Skeleton className="h-3 w-12 shrink-0 rounded-full" />
+        {/* File Query Tab (in-progress) */}
+        {activeTab === 'files' && inProgressFileData && (
+          <div className="max-h-[400px] overflow-y-auto">
+            {inProgressFileData.queries.length > 0 && (
+              <div className="px-5 py-3 border-b border-border sticky top-0 z-10 bg-background">
+                <div className="flex flex-wrap gap-1.5">
+                  {inProgressFileData.queries.map((query, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-0.5 text-[11px] text-foreground"
+                    >
+                      <Search className="h-2.5 w-2.5 text-muted-foreground" />
+                      <span className="truncate max-w-[200px]">{query}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="divide-y divide-border">
+              {inProgressFileData.results.map((result, index) => (
+                <div key={index} className="px-5 py-3 hover:bg-accent/30 transition-colors">
+                  <div className="flex items-start gap-3">
+                    <svg className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-medium text-foreground truncate">{result.fileName}</span>
+                        <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 rounded bg-muted border border-border/50">
+                          {Math.round(result.score * 100)}% match
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground line-clamp-3">{result.content}</p>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -2394,10 +3566,10 @@ const ExtremeSearchComponent = ({
           </div>
         )}
 
-        {/* Show timeline when items are available */}
-        {(searchQueries.length > 0 || codeExecutions.length > 0 || xSearchExecutions.length > 0) && (
-          <div ref={timelineRef} className="max-h-[300px] overflow-y-auto pr-2" onScroll={markManualScroll}>
-            {renderTimeline()}
+        {/* Sources Tab (in-progress) */}
+        {activeTab === 'sources' && allSources.length > 0 && (
+          <div>
+            {renderSourcesList(allSources)}
           </div>
         )}
       </div>

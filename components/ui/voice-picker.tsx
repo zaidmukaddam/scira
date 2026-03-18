@@ -51,36 +51,46 @@ function useOrbColors(): [string, string] {
 }
 
 function resolveColors(): [string, string] {
-  const isDark = document.documentElement.classList.contains("dark");
+  const html = document.documentElement;
   
-  // Light mode: use fixed colors
-  if (!isDark) {
-    return ["#6B5B4F", "#8B7355"];
+  // Check for specific themes
+  if (html.classList.contains("colourful")) {
+    // Warm amber/tan tones matching colourful theme
+    return ["#D4A574", "#C49A6C"];
   }
   
-  // Dark mode: read from CSS variables
-  const readCssColor = (variable: string, fallback: string) => {
-    const el = document.createElement("div");
-    el.style.color = `hsl(var(${variable}))`;
-    el.style.position = "absolute";
-    el.style.pointerEvents = "none";
-    document.body.appendChild(el);
-    const rgb = getComputedStyle(el).color;
-    document.body.removeChild(el);
-    return rgbToHex(rgb) ?? fallback;
-  };
+  if (html.classList.contains("t3chat")) {
+    // Pink/magenta tones matching t3chat theme
+    return ["#E8B4C8", "#D49AAE"];
+  }
+  
+  if (html.classList.contains("claudelight")) {
+    // Warm terracotta matching claude light theme
+    return ["#C4907A", "#A67860"];
+  }
+  
+  if (html.classList.contains("claudedark")) {
+    // Warm cream/beige matching claude dark theme  
+    return ["#E8D5C4", "#D4BFA8"];
+  }
 
-  return [
-    readCssColor("--primary", "#6B5B4F"),
-    readCssColor("--secondary-foreground", "#8B7355"),
-  ];
-}
+  if (html.classList.contains("neutrallight")) {
+    // Soft amber tones matching neutral light theme
+    return ["#BF6E35", "#A65F2E"];
+  }
 
-function rgbToHex(rgb: string): string | null {
-  const match = rgb.match(/\d+/g);
-  if (!match || match.length < 3) return null;
-  const [r, g, b] = match.map((v) => Number.parseInt(v, 10));
-  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+  if (html.classList.contains("neutraldark")) {
+    // Muted sand tones matching neutral dark theme
+    return ["#D7B28D", "#B88F68"];
+  }
+  
+  if (html.classList.contains("dark")) {
+    // Bright warm cream/gold tones for default dark mode
+    return ["#F5E6D3", "#E8C9A0"];
+  }
+  
+  // Default light mode - earthy browns
+  return ["#6B5B4F", "#8B7355"];
 }
 
 interface VoicePickerProps {

@@ -1,0 +1,12 @@
+.codex
+.codex
+.cursor
+.opencode
+.claude
+.vscode
+add_dodo_indexes.sql
+reindex_tables.sql
+create_indexes.sql
+sandbox.py
+vercel_old.json
+creds.ts

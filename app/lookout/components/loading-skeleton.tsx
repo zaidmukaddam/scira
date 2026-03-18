@@ -11,27 +11,28 @@ interface LoadingSkeletonProps {
 
 export function LookoutSkeleton({ showActions = true }: { showActions?: boolean }) {
   return (
-    <Card className="shadow-none">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="space-y-2">
-            <Skeleton className="h-5 w-48" />
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-5 w-20" />
-              <Skeleton className="h-5 w-32" />
-            </div>
-          </div>
-          {showActions && (
-            <div className="flex items-center gap-1">
-              <Skeleton className="h-8 w-8 rounded-md" />
-              <Skeleton className="h-8 w-8 rounded-md" />
-              <Skeleton className="h-8 w-8 rounded-md" />
-            </div>
-          )}
+    <Card className="shadow-none h-full flex flex-col">
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-2">
+          <Skeleton className="h-4 w-3/4" />
+          {showActions && <Skeleton className="h-6 w-6 rounded-md shrink-0" />}
         </div>
       </CardHeader>
-      <CardContent className="pt-0">
-        <Skeleton className="h-4 w-full" />
+      <CardContent className="pt-0 flex-1 flex flex-col">
+        {/* Prompt preview skeleton */}
+        <div className="space-y-1.5 mb-3">
+          <Skeleton className="h-3 w-full" />
+          <Skeleton className="h-3 w-2/3" />
+        </div>
+        
+        {/* Status and run info footer */}
+        <div className="mt-auto space-y-2">
+          <div className="flex items-center gap-1.5">
+            <Skeleton className="h-5 w-16 rounded-full" />
+            <Skeleton className="h-5 w-14 rounded-full" />
+          </div>
+          <Skeleton className="h-3 w-1/2" />
+        </div>
       </CardContent>
     </Card>
   );
@@ -46,7 +47,7 @@ export function LoadingSkeletons({ count = 3, showActions = true }: LoadingSkele
   }
 
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {Array.from({ length: validCount }).map((_, index) => (
         <LookoutSkeleton key={index} showActions={showActions} />
       ))}

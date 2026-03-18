@@ -154,7 +154,7 @@ export const VoiceButton = React.forwardRef<
           size === "icon" && "relative",
           className
         )}
-        aria-label={"Voice Button"}
+        aria-label={typeof label === "string" ? label : "Voice Button"}
         {...props}
       >
         {size !== "icon" && displayLabel && (

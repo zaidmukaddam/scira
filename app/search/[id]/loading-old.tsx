@@ -28,7 +28,7 @@ export default function Loading() {
         <div className="w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300">
           {/* Messages skeleton */}
           <div className="space-y-0 mb-32 flex flex-col">
-            <div className="flex-grow">
+            <div className="grow">
               {/* User message skeleton */}
               <div className="mb-2">
                 <div className="flex justify-start">

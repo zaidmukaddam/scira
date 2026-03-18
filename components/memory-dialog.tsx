@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { deleteMemory, getAllMemories, MemoryItem, searchMemories } from '@/lib/memory-actions';
 import { Loader2, Search, Trash2, CalendarIcon } from 'lucide-react';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { MemoryIcon } from '@phosphor-icons/react';
 import { cn } from '@/lib/utils';
 
@@ -50,11 +50,11 @@ export function MemoryDialog() {
     mutationFn: deleteMemory,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['memories'] });
-      toast.success('MemoryIcon successfully deleted');
+      sileo.success({ title: 'MemoryIcon successfully deleted' });
     },
     onError: (error) => {
       console.error('Delete memory error:', error);
-      toast.error('Failed to delete memory');
+      sileo.error({ title: 'Failed to delete memory' });
     },
   });
 

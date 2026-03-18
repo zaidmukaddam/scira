@@ -10,10 +10,11 @@ interface ReasoningPartViewProps {
   part: ReasoningUIPart;
   sectionKey: string;
   parallelTool: string | null;
-  isExpanded: boolean;
+  isComplete: boolean;
+  expandedOverride?: boolean;
   isFullscreen: boolean;
   setIsFullscreen: (v: boolean) => void;
-  setIsExpanded: (v: boolean) => void;
+  setIsExpanded: (v: boolean) => void; // user override setter
 }
 
 // Type definition for table flags
@@ -179,32 +180,96 @@ const isEmptyContent = (content: string): boolean => {
 };
 
 export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
-  ({ part, sectionKey, parallelTool, isExpanded, isFullscreen, setIsFullscreen, setIsExpanded }) => {
+  ({ part, sectionKey, parallelTool, isComplete, expandedOverride, isFullscreen, setIsFullscreen, setIsExpanded }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
-    const isComplete = part.state === 'done';
+    const [autoExpanded, setAutoExpanded] = React.useState(true);
+    const collapseTimerRef = useRef<number | null>(null);
+
+    // isThinking drives the header spinner and label. For token-by-token models
+    // (e.g. Minimax) isComplete flickers true/false between every token because
+    // each token part gets state:'done' the moment it's emitted. A 150 ms debounce
+    // on the false→true transition for isThinking absorbs those sub-token gaps so
+    // the header never flickers "Thinking ↔ Reasoning" mid-stream.
+    const [isThinking, setIsThinking] = React.useState(!isComplete);
+    const thinkingTimerRef = useRef<number | null>(null);
+
+    useEffect(() => {
+      if (!isComplete) {
+        // Immediately back to thinking whenever a new token arrives.
+        if (thinkingTimerRef.current != null) {
+          window.clearTimeout(thinkingTimerRef.current);
+          thinkingTimerRef.current = null;
+        }
+        setIsThinking(true);
+      } else {
+        // Debounce: only leave thinking mode if isComplete stays true for 150 ms.
+        if (thinkingTimerRef.current == null) {
+          thinkingTimerRef.current = window.setTimeout(() => {
+            setIsThinking(false);
+            thinkingTimerRef.current = null;
+          }, 150);
+        }
+      }
+      return () => {
+        if (thinkingTimerRef.current != null) {
+          window.clearTimeout(thinkingTimerRef.current);
+          thinkingTimerRef.current = null;
+        }
+      };
+    }, [isComplete, part.text]);
 
     // Auto-scroll to bottom when new content is added during reasoning
     useEffect(() => {
-      if (!isComplete && scrollRef.current) {
+      if (isThinking && scrollRef.current) {
         scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
       }
-    }, [isComplete, part.text]);
+    }, [isThinking, part.text]);
 
-    // Also scroll when details change, even if isComplete doesn't change
+    // Also scroll when details change, even if isThinking doesn't change
     useEffect(() => {
-      if (!isComplete && scrollRef.current && part.text && part.text.length > 0) {
+      if (isThinking && scrollRef.current && part.text && part.text.length > 0) {
         setTimeout(() => {
           if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
           }
         }, 10);
       }
-    }, [part.text, isComplete]);
+    }, [part.text, isThinking]);
 
     const hasNonEmptyReasoning = part.text && !isEmptyContent(part.text);
+    const isExpanded = expandedOverride ?? autoExpanded;
 
-    // If all content is empty, don't render the reasoning section
-    if (!hasNonEmptyReasoning) {
+    // Avoid "close then open" flicker when providers emit back-to-back reasoning parts.
+    // We only auto-collapse after reasoning stays complete for a moment.
+    useEffect(() => {
+      if (collapseTimerRef.current != null) {
+        window.clearTimeout(collapseTimerRef.current);
+        collapseTimerRef.current = null;
+      }
+
+      // Manual toggle always wins
+      if (expandedOverride !== undefined) return;
+
+      if (isThinking) {
+        setAutoExpanded(true);
+        return;
+      }
+
+      collapseTimerRef.current = window.setTimeout(() => {
+        setAutoExpanded(false);
+        collapseTimerRef.current = null;
+      }, 900);
+
+      return () => {
+        if (collapseTimerRef.current != null) {
+          window.clearTimeout(collapseTimerRef.current);
+          collapseTimerRef.current = null;
+        }
+      };
+    }, [expandedOverride, isThinking, part.text]);
+
+    // Hide empty reasoning only once we're done thinking; during streaming we still want the "Thinking" UI.
+    if (!hasNonEmptyReasoning && !isThinking) {
       return null;
     }
 
@@ -213,15 +278,15 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
         <div className={cn('bg-accent', 'border border-border/80 rounded-lg overflow-hidden')}>
           {/* Header - Always visible */}
           <div
-            onClick={() => isComplete && setIsExpanded(!isExpanded)}
+            onClick={() => !isThinking && setIsExpanded(!isExpanded)}
             className={cn(
               'flex items-center justify-between py-2 px-2.5',
-              isComplete && 'cursor-pointer hover:bg-muted/50 transition-colors',
+              !isThinking && 'cursor-pointer hover:bg-muted/50 transition-colors',
               'bg-background/80',
             )}
           >
             <div className="flex items-center gap-2">
-              {!isComplete ? (
+              {isThinking ? (
                 <div className="flex items-center gap-2">
                   <div
                     className={cn(
@@ -249,13 +314,13 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
             </div>
 
             <div className="flex items-center gap-2">
-              {isComplete && (
+              {!isThinking && (
                 <div className="text-muted-foreground">
                   {isExpanded ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
                 </div>
               )}
 
-              {(!isComplete || isExpanded) && (
+              {(isThinking || isExpanded) && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -276,7 +341,7 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
 
           {/* Content - Shown when in progress or when expanded */}
           <AnimatePresence initial={false}>
-            {(!isComplete || isExpanded) && (
+            {(isThinking || isExpanded) && (
               <motion.div
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: 'auto', opacity: 1 }}
@@ -300,7 +365,15 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                   >
                     <div className="px-2.5 py-2 text-xs leading-relaxed">
                       <div className="text-muted-foreground prose prose-sm max-w-none">
-                        <MarkdownRenderer content={remend(part.text)} />
+                        {hasNonEmptyReasoning ? (
+                          !isThinking ? (
+                            <MarkdownRenderer content={remend(part.text)} />
+                          ) : (
+                            <p className="text-muted-foreground whitespace-pre-wrap wrap-break-words">{part.text}</p>
+                          )
+                        ) : (
+                          <div className="text-xs text-muted-foreground/70">Thinking…</div>
+                        )}
                       </div>
                     </div>
                   </div>

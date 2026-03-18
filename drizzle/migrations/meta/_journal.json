@@ -71,6 +71,48 @@
       "when": 1763819938268,
       "tag": "0009_free_maelstrom",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1767504861697,
+      "tag": "0010_dear_starfox",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1770281222036,
+      "tag": "0011_lucky_energizer",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1772056500000,
+      "tag": "0012_byo_mcp_server",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1772400000000,
+      "tag": "0013_mcp_oauth_auth",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1772450000000,
+      "tag": "0014_chat_pins",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1772550000000,
+      "tag": "0015_mcp_disabled_tools",
+      "breakpoints": true
     }
   ]
 }

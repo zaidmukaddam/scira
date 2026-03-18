@@ -90,16 +90,109 @@ function wrapText(text: string, widthFn: (s: string) => number, maxWidth: number
   return lines;
 }
 
+function measureTextWidth(font: any, text: string, size: number, fallbackMultiplier = 0.5) {
+  try {
+    return font.widthOfTextAtSize(text, size);
+  } catch {
+    return text.length * size * fallbackMultiplier;
+  }
+}
+
+function extractMathSvg(markup: string) {
+  const match = markup.match(/<svg[^>]*>[\s\S]*?<\/svg>/);
+  if (!match) throw new Error('No SVG element found in MathJax output');
+  return match[0];
+}
+
+function cleanMathSvg(
+  svg: string,
+  options: {
+    removeRectElements?: boolean;
+    removeLineElements?: boolean;
+    removeRectStrokes?: boolean;
+    removeLineStrokes?: boolean;
+  },
+) {
+  let out = svg;
+  out = out.replace(/stroke="[^"]*"/g, '');
+  out = out.replace(/stroke-width="[^"]*"/g, '');
+  out = out.replace(/stroke-opacity="[^"]*"/g, '');
+  out = out.replace(/stroke-dasharray="[^"]*"/g, '');
+  out = out.replace(/stroke-linecap="[^"]*"/g, '');
+  out = out.replace(/stroke-linejoin="[^"]*"/g, '');
+  out = out.replace(/outline="[^"]*"/g, '');
+  out = out.replace(/border="[^"]*"/g, '');
+  out = out.replace(/fill-opacity="[^"]*"/g, '');
+  out = out.replace(/opacity="[^"]*"/g, '');
+  out = out.replace(/style="([^"]*)"/g, (_match, styles) => {
+    const cleaned = String(styles)
+      .replace(/stroke[^;]*;?/g, '')
+      .replace(/border[^;]*;?/g, '')
+      .replace(/outline[^;]*;?/g, '')
+      .replace(/;;+/g, ';')
+      .replace(/^;|;$/g, '');
+    return cleaned ? `style="${cleaned}"` : '';
+  });
+  if (options.removeRectElements) {
+    out = out.replace(/<rect\b[^>]*\/>/g, '');
+    out = out.replace(/<rect\b[^>]*>[\s\S]*?<\/rect>/g, '');
+  }
+  if (options.removeLineElements) {
+    out = out.replace(/<line\b[^>]*\/>/g, '');
+    out = out.replace(/<line\b[^>]*>[\s\S]*?<\/line>/g, '');
+  }
+  if (options.removeRectStrokes) out = out.replace(/<rect[^>]*stroke[^>]*>/g, '');
+  if (options.removeLineStrokes) out = out.replace(/<line[^>]*stroke[^>]*>/g, '');
+  return out;
+}
+
+interface PdfExportMeta {
+  modelLabel?: string;
+  createdAt?: string | number | Date;
+}
+
+interface PdfExportBody {
+  title?: string | null;
+  content: string;
+  meta?: PdfExportMeta;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === 'string';
+}
+
+function parsePdfExportBody(value: unknown): PdfExportBody | null {
+  if (!isRecord(value) || !isString(value.content) || !value.content.trim()) return null;
+
+  const title = isString(value.title) ? value.title : value.title === null ? null : undefined;
+  const meta = isRecord(value.meta) ? value.meta : undefined;
+
+  return {
+    title,
+    content: value.content,
+    meta: {
+      modelLabel: isString(meta?.modelLabel) ? meta?.modelLabel : undefined,
+      createdAt:
+        typeof meta?.createdAt === 'string' || typeof meta?.createdAt === 'number' || meta?.createdAt instanceof Date
+          ? meta?.createdAt
+          : undefined,
+    },
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const title: string | null = body?.title ?? null;
-    const rawContent: string = body?.content ?? '';
-    const meta: any = body?.meta ?? {};
-
-    if (!rawContent || typeof rawContent !== 'string') {
+    const body = parsePdfExportBody(await req.json());
+    if (!body) {
       return NextResponse.json({ error: 'Invalid content' }, { status: 400 });
     }
+    const title = body.title ?? null;
+    const rawContent = body.content;
+    const meta = body.meta ?? {};
 
     // Utility: preprocess markdown for citations and math markers
     function preprocessMarkdownForCitationsAndMath(md: string): string {
@@ -154,7 +247,7 @@ export async function POST(req: NextRequest) {
           .trim();
         return `(${norm})`;
       });
-      // Append Notes and Citations sections
+      // Append Notes section only (References are added later with proper formatting and links)
       let appendix = '';
       if (footnoteOrder.length) {
         appendix += `\n\n## Notes`;
@@ -163,12 +256,7 @@ export async function POST(req: NextRequest) {
           appendix += `\n- [${i + 1}] ${text}`;
         });
       }
-      if (citationOrder.length) {
-        appendix += `\n\n## Citations`;
-        citationOrder.forEach((key, i) => {
-          appendix += `\n- [${i + 1}] ${key}`;
-        });
-      }
+      // Citations are handled separately in the References section with clickable links
       return md + appendix;
     }
 
@@ -275,10 +363,51 @@ export async function POST(req: NextRequest) {
     const SPACE_AFTER_CODE = 24;
     const KEEP_WITH_NEXT_MIN_SPACE_TABLE = 140;
     const KEEP_WITH_NEXT_MIN_SPACE_GENERIC = 60;
+    const MATH_SVG_SCALE_FACTOR = 4;
+    const MATH_DISPLAY_MAX_WIDTH_RATIO = 0.95;
+    const MATH_DISPLAY_MAX_HEIGHT_RATIO = 0.28;
+    const MATH_DISPLAY_MIN_HEIGHT_MULTIPLIER = 1.4;
+    const MATH_DISPLAY_SPACING_MULTIPLIER = 0.65;
+    const MATH_INLINE_HEIGHT_MULTIPLIER = 0.95;
+    const MATH_INLINE_MIN_HEIGHT_MULTIPLIER = 0.75;
+    const MATH_INLINE_MAX_WIDTH_MULTIPLIER = 3.5;
+    const MATH_INLINE_BASELINE_MULTIPLIER = 0.36;
 
     const addPage = () => pdfDoc.addPage([pageWidth, pageHeight]);
     let page = addPage();
     let y = pageHeight - margin;
+
+    const addLinkAnnotation = (href: string, x: number, yPos: number, width: number, height: number) => {
+      try {
+        const linkRef = pdfDoc.context.register(
+          pdfDoc.context.obj({
+            Type: 'Annot',
+            Subtype: 'Link',
+            Rect: [x, yPos, x + width, yPos + height],
+            Border: [0, 0, 0],
+            A: { Type: 'Action', S: 'URI', URI: PDFString.of(href) },
+          }),
+        );
+        const existingAnnots: any = page.node.get(PDFName.of('Annots'));
+        if (existingAnnots) (existingAnnots as any).push(linkRef);
+        else page.node.set(PDFName.of('Annots'), pdfDoc.context.obj([linkRef]));
+      } catch { }
+    };
+
+    const svgToPngImage = async (svg: string, scaleFactor: number) => {
+      const tempPngBuf = await sharp(Buffer.from(svg)).png().toBuffer();
+      const tempPngImg = await pdfDoc.embedPng(tempPngBuf);
+      const pngBuf = await sharp(Buffer.from(svg))
+        .png({ quality: 100 })
+        .resize({
+          width: Math.round(tempPngImg.width * scaleFactor),
+          height: Math.round(tempPngImg.height * scaleFactor),
+          fit: 'contain',
+        })
+        .toBuffer();
+      const pngImg = await pdfDoc.embedPng(pngBuf);
+      return { pngImg, tempWidth: tempPngImg.width, tempHeight: tempPngImg.height };
+    };
 
     const drawTextLine = (text: string, bold = false) => {
       const usedFont = bold ? fontBold : font;
@@ -844,14 +973,7 @@ export async function POST(req: NextRequest) {
       let available = maxLineWidth - indent;
       let line: Seg[] = [];
 
-      const widthOfSeg = (seg: Seg) => {
-        try {
-          return seg.font.widthOfTextAtSize(seg.text, seg.size);
-        } catch {
-          // Fallback: estimate width based on character count
-          return seg.text.length * seg.size * 0.5;
-        }
-      };
+      const widthOfSeg = (seg: Seg) => measureTextWidth(seg.font, seg.text, seg.size);
       const flushLine = () => {
         let x = margin + indent;
         if (line.length === 1 && line[0].center) {
@@ -876,22 +998,7 @@ export async function POST(req: NextRequest) {
           }
 
           // Add clickable URI annotation if this segment represents a link
-          if (seg.href) {
-            try {
-              const linkRef = pdfDoc.context.register(
-                pdfDoc.context.obj({
-                  Type: 'Annot',
-                  Subtype: 'Link',
-                  Rect: [x, y, x + advanceWidth, y + seg.size],
-                  Border: [0, 0, 0],
-                  A: { Type: 'Action', S: 'URI', URI: PDFString.of((seg as any).href) },
-                }),
-              );
-              const existingAnnots: any = page.node.get(PDFName.of('Annots'));
-              if (existingAnnots) (existingAnnots as any).push(linkRef);
-              else page.node.set(PDFName.of('Annots'), pdfDoc.context.obj([linkRef]));
-            } catch {}
-          }
+          if (seg.href) addLinkAnnotation(String(seg.href), x, y, advanceWidth, seg.size);
 
           x += advanceWidth;
         }
@@ -986,68 +1093,27 @@ export async function POST(req: NextRequest) {
       try {
         const node = mjDocument.convert(latex, { display: true });
         const svg = mjAdaptor.outerHTML(node);
-        console.log('Display math SVG preview:', svg.substring(0, 200));
-
-        // Extract the actual SVG from MathJax container
-        const svgMatch = svg.match(/<svg[^>]*>[\s\S]*?<\/svg>/);
-        if (!svgMatch) {
-          throw new Error('No SVG element found in MathJax output');
-        }
-        let pureSvg = svgMatch[0];
-
-        // Remove any stroke, border, or outline attributes that cause unwanted lines
-        console.log('DISPLAY MATH - Original SVG length:', pureSvg.length);
-        const originalSvg = pureSvg;
-        // More aggressive cleanup - remove ALL stroke-related elements
-        pureSvg = pureSvg.replace(/stroke="[^"]*"/g, '');
-        pureSvg = pureSvg.replace(/stroke-width="[^"]*"/g, '');
-        pureSvg = pureSvg.replace(/stroke-opacity="[^"]*"/g, '');
-        pureSvg = pureSvg.replace(/stroke-dasharray="[^"]*"/g, '');
-        pureSvg = pureSvg.replace(/stroke-linecap="[^"]*"/g, '');
-        pureSvg = pureSvg.replace(/stroke-linejoin="[^"]*"/g, '');
-        pureSvg = pureSvg.replace(/outline="[^"]*"/g, '');
-        pureSvg = pureSvg.replace(/border="[^"]*"/g, '');
-        // Remove additional attributes that can cause visual artifacts
-        pureSvg = pureSvg.replace(/fill-opacity="[^"]*"/g, '');
-        pureSvg = pureSvg.replace(/opacity="[^"]*"/g, '');
-        // Remove ALL rect and line elements entirely
-        pureSvg = pureSvg.replace(/<rect[^>]*>/g, '');
-        pureSvg = pureSvg.replace(/<line[^>]*>/g, '');
-        // Remove stroke styles inside style attributes more aggressively
-        pureSvg = pureSvg.replace(/style="([^"]*)"/g, (match, styles) => {
-          const cleanedStyles = styles
-            .replace(/stroke[^;]*;?/g, '')
-            .replace(/border[^;]*;?/g, '')
-            .replace(/outline[^;]*;?/g, '')
-            .replace(/;;+/g, ';')
-            .replace(/^;|;$/g, '');
-          return cleanedStyles ? `style="${cleanedStyles}"` : '';
-        });
-        console.log('DISPLAY MATH - Cleaned SVG length:', pureSvg.length, 'Changed:', originalSvg !== pureSvg);
+        const baseSvg = extractMathSvg(svg);
+        const cleanSvg = cleanMathSvg(baseSvg, { removeRectElements: true, removeLineElements: true });
 
         // Parse ex-based height to estimate natural display size
-        const heightExMatch = pureSvg.match(/height\s*=\s*"([\d.]+)ex"/) || pureSvg.match(/height:\s*([\d.]+)ex/);
+        const heightExMatch = baseSvg.match(/height\s*=\s*"([\d.]+)ex"/) || baseSvg.match(/height:\s*([\d.]+)ex/);
         const heightEx = heightExMatch ? parseFloat(heightExMatch[1]) : NaN;
         const naturalDisplayH = Number.isFinite(heightEx) ? heightEx * baseSize : baseSize * 2;
 
         // High-resolution conversion
-        const scaleFactor = 3;
-        const tempPngBuf = await sharp(Buffer.from(pureSvg)).png().toBuffer();
-        const tempPngImg = await pdfDoc.embedPng(tempPngBuf);
-        const pngBuf = await sharp(Buffer.from(pureSvg))
-          .png({ quality: 100 })
-          .resize({
-            width: Math.round(tempPngImg.width * scaleFactor),
-            height: Math.round(tempPngImg.height * scaleFactor),
-            fit: 'contain',
-          })
-          .toBuffer();
-        const pngImg = await pdfDoc.embedPng(pngBuf);
+        const scaleFactor = MATH_SVG_SCALE_FACTOR;
+        let pngImg;
+        try {
+          ({ pngImg } = await svgToPngImage(cleanSvg, scaleFactor));
+        } catch {
+          ({ pngImg } = await svgToPngImage(baseSvg, scaleFactor));
+        }
 
         // Clamp display size: not wider than 75% line, not taller than ~2.0 line heights
-        const maxW = maxLineWidth * 0.75;
-        const maxH = Math.min(pageHeight * 0.25, baseSize * 2.5); // Slightly larger max height
-        const minH = baseSize * 1.2; // Minimum height for readability
+        const maxW = maxLineWidth * MATH_DISPLAY_MAX_WIDTH_RATIO;
+        const maxH = Math.min(pageHeight * MATH_DISPLAY_MAX_HEIGHT_RATIO, baseSize * 2.75);
+        const minH = baseSize * MATH_DISPLAY_MIN_HEIGHT_MULTIPLIER;
         const scaleW = maxW / pngImg.width;
         const scaleH = maxH / pngImg.height;
         const minScale = minH / pngImg.height;
@@ -1059,8 +1125,8 @@ export async function POST(req: NextRequest) {
         const x = margin + (maxLineWidth - w) / 2;
 
         // Spacing
-        const spaceBefore = Math.max(10, baseSize * 0.6);
-        const spaceAfter = Math.max(10, baseSize * 0.6);
+        const spaceBefore = Math.max(10, baseSize * MATH_DISPLAY_SPACING_MULTIPLIER + lineGap * 0.5);
+        const spaceAfter = Math.max(10, baseSize * MATH_DISPLAY_SPACING_MULTIPLIER + lineGap * 0.5);
 
         y -= spaceBefore;
         if (y - h <= margin) {
@@ -1078,67 +1144,31 @@ export async function POST(req: NextRequest) {
       }
     };
 
-    // Standard inline wrapping used in general text rendering
-    const drawInlineWrapped = async (segments: Seg[], baseSize: number, indent = 0) => {
-      let available = maxLineWidth - indent;
-      let line: Seg[] = [];
-
-      // Precompute images and widths for inline LaTeX segments
+    const prepareInlineMathSegments = async (segments: Seg[], baseSize: number) => {
       for (const seg of segments) {
         if ((seg as any).latex && !(seg as any).center) {
           try {
             const node = mjDocument.convert((seg as any).latex, { display: false });
             const svg = mjAdaptor.outerHTML(node);
 
-            // Extract the actual SVG from MathJax container
-            const svgMatch = svg.match(/<svg[^>]*>[\s\S]*?<\/svg>/);
-            if (!svgMatch) {
-              throw new Error('No SVG element found in MathJax output');
+            const baseSvg = extractMathSvg(svg);
+            const cleanSvg = cleanMathSvg(baseSvg, { removeRectStrokes: true, removeLineStrokes: true });
+
+            const scaleFactor = MATH_SVG_SCALE_FACTOR;
+            let pngImg;
+            try {
+              ({ pngImg } = await svgToPngImage(cleanSvg, scaleFactor));
+            } catch {
+              ({ pngImg } = await svgToPngImage(baseSvg, scaleFactor));
             }
-            let pureSvg = svgMatch[0];
-
-            // Remove any stroke, border, or outline attributes that cause unwanted lines
-            pureSvg = pureSvg.replace(/stroke="[^"]*"/g, 'stroke="none"');
-            pureSvg = pureSvg.replace(/stroke-width="[^"]*"/g, '');
-            pureSvg = pureSvg.replace(/outline="[^"]*"/g, '');
-            pureSvg = pureSvg.replace(/border="[^"]*"/g, '');
-            // Remove additional attributes that can cause visual artifacts
-            pureSvg = pureSvg.replace(/fill-opacity="[^"]*"/g, '');
-            pureSvg = pureSvg.replace(/stroke-opacity="[^"]*"/g, '');
-            pureSvg = pureSvg.replace(/opacity="[^"]*"/g, '');
-            // Remove any rect elements that might be creating borders
-            pureSvg = pureSvg.replace(/<rect[^>]*stroke[^>]*>/g, '');
-            // Remove stroke styles inside style attributes
-            pureSvg = pureSvg.replace(/style=\"[^\"]*stroke[^\"]*\"/g, (m) =>
-              m.replace(/stroke:[^;\"]*;?/g, '').replace(/stroke-width:[^;\"]*;?/g, ''),
-            );
-            // Remove line elements that have strokes
-            pureSvg = pureSvg.replace(/<line[^>]*stroke[^>]*>/g, '');
-
-            // Convert SVG to high-quality PNG with proper scaling
-            const scaleFactor = 3; // Consistent with display math
-            const tempPngBuf = await sharp(Buffer.from(pureSvg)).png().toBuffer();
-            const tempPngImg = await pdfDoc.embedPng(tempPngBuf);
-
-            const pngBuf = await sharp(Buffer.from(pureSvg))
-              .png({ quality: 100 })
-              .resize({
-                width: Math.round(tempPngImg.width * scaleFactor),
-                height: Math.round(tempPngImg.height * scaleFactor),
-                fit: 'contain',
-              })
-              .toBuffer();
-            const pngImg = await pdfDoc.embedPng(pngBuf);
             (seg as any)._img = pngImg;
 
-            // Size inline math to be proportional to text height with better scaling
-            const targetH = Math.min(baseSize - 1, baseSize * 0.82); // Reduce to better match surrounding text
+            const targetH = Math.min(baseSize, baseSize * MATH_INLINE_HEIGHT_MULTIPLIER);
             const aspectRatio = pngImg.width / pngImg.height;
             const targetW = targetH * aspectRatio;
 
-            // Ensure inline math doesn't get too wide or too small
-            const maxInlineW = baseSize * 2.5; // Tighter max width for inline math
-            const minInlineH = baseSize * 0.6; // Minimum height for readability
+            const maxInlineW = baseSize * MATH_INLINE_MAX_WIDTH_MULTIPLIER;
+            const minInlineH = baseSize * MATH_INLINE_MIN_HEIGHT_MULTIPLIER;
 
             let finalH = Math.max(targetH, minInlineH);
             let finalW = finalH * aspectRatio;
@@ -1152,22 +1182,25 @@ export async function POST(req: NextRequest) {
             (seg as any)._drawW = finalW;
           } catch (e) {
             console.warn('MathJax inline render failed:', (e as any)?.message || e);
-            // Fallback: simplify LaTeX to text if MathJax fails
             const fb = simplifyLatex((seg as any).latex || '');
             seg.text = fb;
             delete (seg as any).latex;
           }
         }
       }
+    };
+
+    // Standard inline wrapping used in general text rendering
+    const drawInlineWrapped = async (segments: Seg[], baseSize: number, indent = 0) => {
+      let available = maxLineWidth - indent;
+      let line: Seg[] = [];
+
+      await prepareInlineMathSegments(segments, baseSize);
 
       const widthOfSeg = (seg: Seg) => {
         const w = (seg as any)._drawW;
         if (typeof w === 'number') return w;
-        try {
-          return seg.font.widthOfTextAtSize(seg.text, seg.size);
-        } catch {
-          return seg.text.length * seg.size * 0.5;
-        }
+        return measureTextWidth(seg.font, seg.text, seg.size);
       };
       const flushLine = () => {
         let x = margin + indent;
@@ -1182,9 +1215,7 @@ export async function POST(req: NextRequest) {
             const w = (seg as any)._drawW;
             const h = (seg as any)._drawH;
             // Move math symbols higher - center around baseline
-            const multiplier = 0.2; // Position so 60% of image is above baseline, 40% below
-            const imgY = y - h * multiplier;
-            console.log(`Math positioning: y=${y}, h=${h}, multiplier=${multiplier}, imgY=${imgY}`);
+            const imgY = y - h * MATH_INLINE_BASELINE_MULTIPLIER;
             page.drawImage(img, { x, y: imgY, width: w, height: h });
             x += w;
             continue;
@@ -1216,20 +1247,7 @@ export async function POST(req: NextRequest) {
           }
 
           if ((seg as any).href) {
-            try {
-              const linkRef = pdfDoc.context.register(
-                pdfDoc.context.obj({
-                  Type: 'Annot',
-                  Subtype: 'Link',
-                  Rect: [x, y, x + advanceWidth, y + seg.size],
-                  Border: [0, 0, 0],
-                  A: { Type: 'Action', S: 'URI', URI: PDFString.of((seg as any).href) },
-                }),
-              );
-              const existingAnnots: any = page.node.get(PDFName.of('Annots'));
-              if (existingAnnots) (existingAnnots as any).push(linkRef);
-              else page.node.set(PDFName.of('Annots'), pdfDoc.context.obj([linkRef]));
-            } catch {}
+            addLinkAnnotation(String((seg as any).href), x, y, advanceWidth, seg.size);
           }
 
           x += advanceWidth;
@@ -1416,7 +1434,7 @@ export async function POST(req: NextRequest) {
         let inlineTokens: any[] | undefined;
         try {
           inlineTokens = Lexer.lexInline(item.text);
-        } catch {}
+        } catch { }
         const built = inlineTokens
           ? flattenInline(inlineTokens, font, fontSize)
           : [{ text: String(item.text), font, size: fontSize }];
@@ -1427,7 +1445,7 @@ export async function POST(req: NextRequest) {
     };
 
     // Draw a simple grid table for markdown `table` tokens
-    const drawTable = (tk: any) => {
+    const drawTable = async (tk: any) => {
       const headers = Array.isArray(tk.header) ? tk.header : [];
       const rows = Array.isArray(tk.rows) ? tk.rows : [];
       const nCols = Math.max(headers.length, rows[0]?.length || 0);
@@ -1442,6 +1460,15 @@ export async function POST(req: NextRequest) {
       const colWidth = Math.floor(maxLineWidth / nCols);
 
       // Build inline segments for a cell, preserving link citations
+      const buildTableSegmentsFromText = (text: string, baseFont: any, baseSize: number): Seg[] => {
+        const hasLatexCommand = /\\[A-Za-z]+/.test(text);
+        const hasMathDelim = /\$|\\\(|\\\[/.test(text);
+        if (hasLatexCommand && !hasMathDelim) {
+          return [{ text: '', font: baseFont, size: baseSize, latex: text }];
+        }
+        return splitMathInline(text, baseFont, baseSize);
+      };
+
       const toSegments = (cell: any, baseFont: any, baseSize: number): Seg[] => {
         if (Array.isArray(cell?.tokens)) {
           const segs: Seg[] = [];
@@ -1465,27 +1492,28 @@ export async function POST(req: NextRequest) {
               });
             } else {
               const s = String(tt.text ?? tt.raw ?? '');
-              if (s) {
-                const simple = simplifyLatex(s).replace(/\$(.*?)\$/g, '$1');
-                segs.push({ text: simple, font: baseFont, size: baseSize });
-              }
+              if (s) segs.push(...buildTableSegmentsFromText(s, baseFont, baseSize));
             }
           }
           return segs;
         }
         const s = typeof cell === 'string' ? cell : String(cell?.text ?? cell?.raw ?? '');
-        const simple = simplifyLatex(s).replace(/\$(.*?)\$/g, '$1');
-        return [{ text: simple, font: baseFont, size: baseSize }];
+        return buildTableSegmentsFromText(s, baseFont, baseSize);
       };
 
       // Wrap segments into lines constrained to cell width
-      const wrapSegments = (segments: Seg[], maxWidth: number): Seg[][] => {
+      const wrapSegments = (segments: Seg[], maxWidth: number, fallbackSize: number) => {
         const lines: Seg[][] = [];
+        const lineHeights: number[] = [];
         let line: Seg[] = [];
         let available = maxWidth;
 
         const flush = () => {
-          if (line.length) lines.push(line);
+          if (line.length) {
+            lines.push(line);
+            const maxHeight = Math.max(...line.map((seg) => (seg as any)._drawH ?? seg.size ?? fallbackSize));
+            lineHeights.push(maxHeight);
+          }
           line = [];
           available = maxWidth;
         };
@@ -1498,27 +1526,28 @@ export async function POST(req: NextRequest) {
           const font = seg.font;
           const size = seg.size;
           let remaining = seg.text || '';
-          while (remaining.length) {
+          const inlineW = (seg as any)._drawW;
+          const isInlineImage = typeof inlineW === 'number' && !remaining.length;
+          while (remaining.length || isInlineImage) {
             let w = 0;
-            try {
-              w = font.widthOfTextAtSize(remaining, size);
-            } catch {
-              w = remaining.length * size * 0.5;
-            }
+            if (isInlineImage) w = inlineW as number;
+            else w = measureTextWidth(font, remaining, size);
             if (w <= available) {
               line.push({ ...seg, text: remaining });
               available -= w;
               remaining = '';
+              if (isInlineImage) break;
             } else {
+              if (isInlineImage && !line.length) {
+                line.push({ ...seg, text: remaining });
+                flush();
+                break;
+              }
               const firstLine =
                 wrapText(
                   remaining,
                   (s) => {
-                    try {
-                      return font.widthOfTextAtSize(s, size);
-                    } catch {
-                      return s.length * size * 0.5;
-                    }
+                    return measureTextWidth(font, s, size);
                   },
                   available,
                 )[0] ?? '';
@@ -1532,34 +1561,48 @@ export async function POST(req: NextRequest) {
             }
           }
         }
-        if (line.length) lines.push(line);
-        return lines;
+        if (line.length) {
+          lines.push(line);
+          const maxHeight = Math.max(...line.map((seg) => (seg as any)._drawH ?? seg.size ?? fallbackSize));
+          lineHeights.push(maxHeight);
+        }
+        return { lines, lineHeights };
       };
 
       // Measure row height and pre-wrapped lines for rendering
-      const measureRow = (cells: any[], usedFont: any, usedSize: number) => {
+      const measureRow = (cells: Seg[][], usedFont: any, usedSize: number) => {
         const wraps: Seg[][][] = [];
-        const lineSpacing = Math.max(11, Math.round(usedSize * 1.08)); // tighter line height
+        const lineHeights: number[][] = [];
+        const lineGapInCell = Math.max(2, Math.round(usedSize * 0.2));
         const cellHeights: number[] = [];
         let rowHeight = 0;
         for (let c = 0; c < nCols; c++) {
-          const segs = toSegments(cells[c], usedFont, usedSize);
-          const lines = wrapSegments(segs, colWidth - 2 * padX);
-          wraps.push(lines);
-          const contentH = usedSize + Math.max(0, lines.length - 1) * lineSpacing; // 1 line => usedSize
+          const segs = cells[c] || [];
+          const wrapped = wrapSegments(segs, colWidth - 2 * padX, usedSize);
+          wraps.push(wrapped.lines);
+          lineHeights.push(wrapped.lineHeights);
+          const contentH =
+            wrapped.lineHeights.reduce((sum, h) => sum + h, 0) +
+            Math.max(0, wrapped.lineHeights.length - 1) * lineGapInCell;
           cellHeights.push(contentH);
           rowHeight = Math.max(rowHeight, 2 * padY + contentH);
         }
-        return { wraps, cellHeights, rowHeight, lineSpacing };
+        return { wraps, lineHeights, cellHeights, rowHeight, lineGapInCell };
       };
 
       const renderMeasuredRow = (
-        measured: { wraps: Seg[][][]; cellHeights: number[]; rowHeight: number; lineSpacing: number },
+        measured: {
+          wraps: Seg[][][];
+          lineHeights: number[][];
+          cellHeights: number[];
+          rowHeight: number;
+          lineGapInCell: number;
+        },
         usedFont: any,
         usedSize: number,
         shaded = false,
       ) => {
-        const { wraps, cellHeights, rowHeight, lineSpacing } = measured;
+        const { wraps, lineHeights, cellHeights, rowHeight, lineGapInCell } = measured;
         // Page break check; repeat header if a break occurs mid-table
         if (y - rowHeight <= margin) {
           page = addPage();
@@ -1606,45 +1649,39 @@ export async function POST(req: NextRequest) {
           const contentH = cellHeights[c];
           const freeSpace = rowHeight - 2 * padY - contentH;
           const vOffset = Math.max(0, Math.floor(freeSpace / 2));
-          let ty = y - padY - vOffset - usedSize; // baseline for first line
+          let ty = y - padY - vOffset;
 
-          for (const lineSegs of wraps[c]) {
+          for (let lIdx = 0; lIdx < wraps[c].length; lIdx++) {
+            const lineSegs = wraps[c][lIdx];
+            const lineHeight = lineHeights[c][lIdx] ?? usedSize;
+            const baselineY = ty - lineHeight * 0.85;
             let xCursor = startX;
             for (const seg of lineSegs) {
               const segFont = seg.font || usedFont;
               const segSize = seg.size || usedSize;
               const raise = (seg as any).superscript ? Math.round(segSize * 0.35) : 0;
-              const drawY = ty + raise;
+              const drawY = baselineY + raise;
               const text = seg.text || '';
               let advanceWidth = 0;
-              try {
-                advanceWidth = segFont.widthOfTextAtSize(text, segSize);
-              } catch {
-                advanceWidth = text.length * segSize * 0.5;
+              const img = (seg as any)._img;
+              const drawW = (seg as any)._drawW;
+              const drawH = (seg as any)._drawH;
+              if (img && typeof drawW === 'number' && typeof drawH === 'number') {
+                const imgY = baselineY - drawH * MATH_INLINE_BASELINE_MULTIPLIER;
+                page.drawImage(img, { x: xCursor, y: imgY, width: drawW, height: drawH });
+                advanceWidth = drawW;
+              } else if (text) {
+                advanceWidth = measureTextWidth(segFont, text, segSize);
+                drawTextWithFallback(seg.text, xCursor, drawY, segSize, segFont, seg.color || rgb(0, 0, 0));
               }
 
-              drawTextWithFallback(seg.text, xCursor, drawY, segSize, segFont, seg.color || rgb(0, 0, 0));
-
               if ((seg as any).href) {
-                try {
-                  const linkRef = pdfDoc.context.register(
-                    pdfDoc.context.obj({
-                      Type: 'Annot',
-                      Subtype: 'Link',
-                      Rect: [xCursor, drawY, xCursor + advanceWidth, drawY + segSize],
-                      Border: [0, 0, 0],
-                      A: { Type: 'Action', S: 'URI', URI: PDFString.of((seg as any).href) },
-                    }),
-                  );
-                  const existingAnnots: any = page.node.get(PDFName.of('Annots'));
-                  if (existingAnnots) (existingAnnots as any).push(linkRef);
-                  else page.node.set(PDFName.of('Annots'), pdfDoc.context.obj([linkRef]));
-                } catch {}
+                addLinkAnnotation(String((seg as any).href), xCursor, drawY, advanceWidth, segSize);
               }
 
               xCursor += advanceWidth;
             }
-            ty -= lineSpacing;
+            ty -= lineHeight + lineGapInCell;
           }
         }
 
@@ -1653,10 +1690,14 @@ export async function POST(req: NextRequest) {
 
       // Render header (avoid orphan header at page end)
       if (headers.length) {
-        const mh = measureRow(headers, fontBold, headerSize);
+        const headerSegs = headers.map((cell: any) => toSegments(cell, fontBold, headerSize));
+        for (const segs of headerSegs) await prepareInlineMathSegments(segs, headerSize);
+        const mh = measureRow(headerSegs, fontBold, headerSize);
         // If there are body rows, ensure header + first row fit; otherwise move to new page first
         if (rows.length) {
-          const firstRowMeasure = measureRow(rows[0], font, cellSize);
+          const firstRowSegs = rows[0].map((cell: any) => toSegments(cell, font, cellSize));
+          for (const segs of firstRowSegs) await prepareInlineMathSegments(segs, cellSize);
+          const firstRowMeasure = measureRow(firstRowSegs, font, cellSize);
           if (y - (mh.rowHeight + firstRowMeasure.rowHeight) <= margin) {
             page = addPage();
             y = pageHeight - margin;
@@ -1669,7 +1710,9 @@ export async function POST(req: NextRequest) {
       }
       // Render body rows with pagination and subtle zebra striping
       for (let rIdx = 0; rIdx < rows.length; rIdx++) {
-        const mr = measureRow(rows[rIdx], font, cellSize);
+        const rowSegs = rows[rIdx].map((cell: any) => toSegments(cell, font, cellSize));
+        for (const segs of rowSegs) await prepareInlineMathSegments(segs, cellSize);
+        const mr = measureRow(rowSegs, font, cellSize);
         const shadedRow = rIdx % 2 === 1; // shade odd rows for subtle zebra
         renderMeasuredRow(mr, font, cellSize, shadedRow);
       }
@@ -1887,7 +1930,7 @@ export async function POST(req: NextRequest) {
             y = pageHeight - margin;
           }
 
-          drawTable(tk);
+          await drawTable(tk);
 
           // consistent spacing after table
           y -= SPACE_AFTER_TABLE;
@@ -1934,16 +1977,7 @@ export async function POST(req: NextRequest) {
       const referencesTitle = 'References';
       const refTitleSize = 14;
       drawTextWithFallback(referencesTitle, margin, y, refTitleSize, fontBold, rgb(0, 0, 0));
-      y -= refTitleSize + 12;
-
-      // Draw separator line
-      page.drawLine({
-        start: { x: margin, y: y + 4 },
-        end: { x: pageWidth - margin, y: y + 4 },
-        thickness: 0.5,
-        color: rgb(0.6, 0.6, 0.6),
-      });
-      y -= 8;
+      y -= refTitleSize + 16;
 
       // Update references rendering to clean clickable label + domain, with hanging indent
       // Sort references by citation number to match in-text order

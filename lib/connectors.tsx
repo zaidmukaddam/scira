@@ -1,5 +1,7 @@
 import { JSX, SVGProps } from 'react';
 import Supermemory from 'supermemory';
+import { all } from 'better-all';
+import { getBetterAllOptions } from '@/lib/better-all';
 
 function getClient() {
   return new Supermemory({
@@ -195,7 +197,11 @@ export async function listUserConnections(userId: string) {
       }
     });
 
-    const allConnections = await Promise.all(connectionPromises);
+    const connectionMap = await all(
+      Object.fromEntries(connectionPromises.map((promise, index) => [`p:${index}`, async () => promise])),
+    getBetterAllOptions(),
+    );
+    const allConnections = providers.map((_, index) => connectionMap[`p:${index}`]);
     const flatConnections = allConnections.flat();
 
     console.log('connections list', flatConnections);

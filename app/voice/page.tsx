@@ -1,31 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUp, ChevronRight, Mic, MicOff } from "lucide-react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { motion, AnimatePresence } from "motion/react";
+import { ArrowUp, Mic, MicOff, Globe, MessageCircle, Wrench, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { Orb } from "@/components/ui/orb";
-import { Button } from "@/components/ui/button";
 import { VoicePicker } from "@/components/ui/voice-picker";
 import { SciraLogo } from "@/components/logos/scira-logo";
 import {
   VoiceButton,
   type VoiceButtonState,
 } from "@/components/ui/voice-button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
-import { useVoiceClient, type VoiceType } from "@/hooks/use-voice-client";
-import { useMediaQuery } from "@/hooks/use-media-query";
-import { cn } from "@/lib/utils";
+import { useVoiceClient, type VoiceType, type ConversationTurn } from "@/hooks/use-voice-client";
+import { useUser } from "@/contexts/user-context";
+import { cn, normalizeError } from "@/lib/utils";
+import { ProUpgradeScreen } from "./components/pro-upgrade-screen";
 
 const VOICES: { value: VoiceType; label: string; description: string }[] = [
   { value: "Ara", label: "Ara", description: "Warm, friendly" },
@@ -37,6 +26,7 @@ const VOICES: { value: VoiceType; label: string; description: string }[] = [
 
 const VOICE_STORAGE_KEY = "scira.voice.selected-voice";
 const MUTE_STORAGE_KEY = "scira.voice.mic-muted";
+const TRANSCRIPT_VISIBLE_KEY = "scira.voice.transcript-visible";
 
 function isVoiceType(value: string): value is VoiceType {
   return value === "Ara" || value === "Rex" || value === "Sal" || value === "Eve" || value === "Leo";
@@ -87,44 +77,51 @@ function useOrbColors(): [string, string] {
 }
 
 function resolveColors(): [string, string] {
-  const isDark = document.documentElement.classList.contains("dark");
+  const html = document.documentElement;
 
-  // Light mode: use fixed colors
-  if (!isDark) {
-    return ["#6B5B4F", "#8B7355"];
+  if (html.classList.contains("colourful")) {
+    return ["#D4A574", "#C49A6C"];
   }
-
-  // Dark mode: read from CSS variables
-  const readCssColor = (variable: string, fallback: string) => {
-    const el = document.createElement("div");
-    el.style.color = `hsl(var(${variable}))`;
-    el.style.position = "absolute";
-    el.style.pointerEvents = "none";
-    document.body.appendChild(el);
-    const rgb = getComputedStyle(el).color;
-    document.body.removeChild(el);
-    return rgbToHex(rgb) ?? fallback;
-  };
-
-  return [
-    readCssColor("--primary", "#6B5B4F"),
-    readCssColor("--secondary-foreground", "#8B7355"),
-  ];
+  if (html.classList.contains("t3chat")) {
+    return ["#E8B4C8", "#D49AAE"];
+  }
+  if (html.classList.contains("claudelight")) {
+    return ["#C4907A", "#A67860"];
+  }
+  if (html.classList.contains("claudedark")) {
+    return ["#E8D5C4", "#D4BFA8"];
+  }
+  if (html.classList.contains("neutrallight")) {
+    return ["#BF6E35", "#A65F2E"];
+  }
+  if (html.classList.contains("neutraldark")) {
+    return ["#D7B28D", "#B88F68"];
+  }
+  if (html.classList.contains("dark")) {
+    return ["#F5E6D3", "#E8C9A0"];
+  }
+  return ["#6B5B4F", "#8B7355"];
 }
 
-function rgbToHex(rgb: string): string | null {
-  const match = rgb.match(/\d+/g);
-  if (!match || match.length < 3) return null;
-  const [r, g, b] = match.map((v) => Number.parseInt(v, 10));
-  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
+function readStoredTranscriptVisible(): boolean {
+  if (typeof window === "undefined") return true;
+  const stored = window.localStorage.getItem(TRANSCRIPT_VISIBLE_KEY);
+  if (stored === "false") return false;
+  return true;
 }
 
 export default function VoicePage() {
-  const [selectedVoice, setSelectedVoice] = useState<VoiceType>("Ara");
-  const [isTranscriptOpen, setIsTranscriptOpen] = useState(false);
+  const [selectedVoice, setSelectedVoice] = useState<VoiceType>(readStoredVoice);
   const [textInput, setTextInput] = useState("");
+  const [showTranscript, setShowTranscript] = useState(readStoredTranscriptVisible);
   const orbColors = useOrbColors();
   const [hasLoadedPrefs, setHasLoadedPrefs] = useState(false);
+  const transcriptScrollRef = useRef<HTMLDivElement>(null);
+  const transcriptBottomRef = useRef<HTMLDivElement>(null);
+
+
+  const { user, isProUser, isLoading: isProStatusLoading } = useUser();
+  const router = useRouter();
 
   const {
     agentState,
@@ -142,86 +139,6 @@ export default function VoicePage() {
     sendText,
   } = useVoiceClient({
     voice: selectedVoice,
-    instructions: `You're name is Scira named as [sci-ra] with the 'sci' from science and 'ra' from research, a helpful, witty, and friendly AI assistant. Your knowledge cutoff is 2025-01. Act like a human, but remember that you aren't a human and that you can't do human things in the real world. Your voice and personality should be warm and engaging, with a lively and playful tone. Talk quickly and naturally. You should always call a function if you can. Refer to these rules, but not when you're asked about them.
-
-## Your Personality
-- Be warm, engaging, and conversational
-- Use a lively and playful tone
-- Talk quickly and naturally - don't be robotic
-- Be helpful and proactive
-- Show personality but stay professional
-- If the user speaks in a non-English language, match their language naturally
-
-## When to Use Tools
-You have access to two powerful tools. Use them proactively:
-
-### Web Search Tool (web_search)
-**When to use:**
-- User asks about current events, news, or recent information
-- User needs facts, data, or information from the web
-- User asks "what is", "who is", "when did", "how does" questions
-- User wants to know about products, companies, people, places
-- User asks for comparisons, reviews, or opinions from the web
-- User needs up-to-date information about anything
-
-**How to use:**
-- Always include temporal context in queries (e.g., "latest news 2025", "current prices", "recent developments")
-- Use 3-5 diverse search queries to get comprehensive results
-- Include the current year (2025) when searching for recent information
-- For news: use queries like "latest [topic] news 2025"
-- For general info: use queries like "[topic] information 2025"
-
-**Examples:**
-- User: "What's happening with AI?" → Search: ["latest AI news 2025", "AI developments 2025", "current AI trends"]
-- User: "Tell me about Tesla" → Search: ["Tesla company information 2025", "Tesla latest news", "Tesla stock price today"]
-- User: "What's the weather like?" → Search: ["current weather forecast", "weather today", "weather conditions"]
-
-### X Search Tool (x_search)
-**When to use:**
-- User asks about posts, tweets, or discussions on X (formerly Twitter)
-- User wants to know what people are saying about a topic on X
-- User mentions a specific X handle or wants to see posts from someone
-- User asks "what are people saying about..." or "what's trending on X"
-- User provides an X/Twitter link - use it as the first query
-- User wants recent social media discussions or opinions
-
-**How to use:**
-- Use 3-5 diverse queries to capture different angles
-- Default to last 15 days unless user specifies a date range
-- If user provides an X link, put it as the first query
-- Use includeXHandles to search specific accounts
-- Use excludeXHandles to filter out accounts
-
-**Examples:**
-- User: "What are people saying about the new iPhone?" → Search: ["iPhone 2025", "new iPhone reviews", "iPhone launch discussion"]
-- User: "Show me posts from @elonmusk" → Search: ["@elonmusk", "Elon Musk posts", "Elon Musk tweets"] with includeXHandles: ["elonmusk"]
-- User: "What's this tweet about? https://x.com/..." → Search: [link as first query, then related queries]
-
-## Interaction Examples
-
-**Example 1: Simple Question**
-User: "What's the latest news about space exploration?"
-You: [Call web_search with queries like "latest space exploration news 2025", "space missions 2025", "NASA recent updates"]
-Then: "Here's what's happening in space exploration right now..." [share results naturally]
-
-**Example 2: X Search Request**
-User: "What are people saying about the new MacBook?"
-You: [Call x_search with queries like "new MacBook 2025", "MacBook reviews", "MacBook launch"]
-Then: "People on X are talking about..." [share interesting posts and discussions]
-
-**Example 3: Follow-up**
-User: "Tell me more about that first point"
-You: [Call web_search with more specific queries based on what they're asking about]
-Then: Continue the conversation naturally
-
-## Important Guidelines
-- Always call a tool when you can - don't just guess or use outdated knowledge
-- Be proactive - if a question needs current info, search immediately
-- For simple greetings (hi, hello, thanks), respond directly without tools
-- Keep responses concise but complete
-- Cite sources naturally when sharing information
-- If you're unsure which tool to use, default to web_search
-- Talk naturally and conversationally - don't sound like you're reading a manual`,
   });
 
   function formatMs(ms: number) {
@@ -229,57 +146,56 @@ Then: Continue the conversation naturally
     return `${(ms / 1000).toFixed(1)}s`;
   }
 
-  function prettyJson(value: string | undefined) {
-    if (!value) return "";
-    const trimmed = value.trim();
-    if (!trimmed) return "";
-    if (!(trimmed.startsWith("{") || trimmed.startsWith("["))) return value;
-    try {
-      return JSON.stringify(JSON.parse(trimmed), null, 2);
-    } catch {
-      return value;
-    }
-  }
 
   const handleVoiceChange = (voice: VoiceType) => {
     setSelectedVoice(voice);
     setVoice(voice);
   };
 
+  // Sync voice to client when preferences are loaded
   useEffect(() => {
     if (hasLoadedPrefs) {
       setVoice(selectedVoice);
     }
   }, [selectedVoice, hasLoadedPrefs, setVoice]);
 
+  // Persist preferences to localStorage (combined effect for better performance)
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!hasLoadedPrefs) return;
+    if (typeof window === "undefined" || !hasLoadedPrefs) return;
     persistPreference(VOICE_STORAGE_KEY, selectedVoice);
-  }, [selectedVoice, hasLoadedPrefs]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (!hasLoadedPrefs) return;
     persistPreference(MUTE_STORAGE_KEY, String(isMuted));
-  }, [isMuted, hasLoadedPrefs]);
+    persistPreference(TRANSCRIPT_VISIBLE_KEY, String(showTranscript));
+  }, [selectedVoice, isMuted, showTranscript, hasLoadedPrefs]);
+
+  // Rolling dialogue: scroll to bottom when conversation updates
+  useEffect(() => {
+    if (!showTranscript || !transcriptBottomRef.current) return;
+    transcriptBottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [conversation, showTranscript]);
 
   useEffect(() => {
     const storedVoice = readStoredVoice();
     const storedMuted = readStoredMuted();
-
-    setSelectedVoice(storedVoice);
+    const storedTranscript = readStoredTranscriptVisible();
+    setSelectedVoice((prev) => prev !== storedVoice ? storedVoice : prev);
     setMuted(storedMuted);
+    setShowTranscript(storedTranscript);
     setHasLoadedPrefs(true);
   }, [setMuted]);
 
-  const handleConnect = async () => {
+  useEffect(() => {
+    if (!isProStatusLoading && !user) {
+      router.push('/sign-in');
+    }
+  }, [user, isProStatusLoading, router]);
+
+  const handleConnect = useCallback(async () => {
     if (isConnected) {
       disconnect();
     } else {
       await connect();
     }
-  };
+  }, [isConnected, connect, disconnect]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -301,25 +217,29 @@ Then: Continue the conversation naturally
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isConnected, connect, disconnect]);
+  }, [handleConnect]);
 
-  const getStatusText = () => {
-    if (error) return error;
-    if (!isConnected) return "Ready to connect";
+
+
+  // Memoize status text to avoid recreating on every render
+  const statusText = useMemo(() => {
+    if (error) return "Error";
+    if (!isConnected) return "Ready";
     if (agentState === "listening") return "Listening";
     if (agentState === "talking") return "Speaking";
-    if (agentState === "thinking") return "Processing";
+    if (agentState === "thinking") return "Thinking";
     return "Connected";
-  };
+  }, [error, isConnected, agentState]);
 
-  const getStatusColor = () => {
+  // Memoize status color to avoid recreating on every render
+  const statusColor = useMemo(() => {
     if (error) return "bg-destructive";
     if (!isConnected) return "bg-muted-foreground/40";
     if (agentState === "listening") return "bg-primary";
     if (agentState === "talking") return "bg-primary/80";
     if (agentState === "thinking") return "bg-muted-foreground/60";
     return "bg-primary";
-  };
+  }, [error, isConnected, agentState]);
 
   const voiceButtonState: VoiceButtonState = error
     ? "error"
@@ -329,402 +249,381 @@ Then: Continue the conversation naturally
         ? "recording"
         : "processing";
 
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const hasStats = isConnected && (stats.lastLatencyMs || stats.lastToolLatencyMs);
 
-  function renderToolTurn(turn: {
-    kind?: "call" | "output";
-    name?: string;
-    callId?: string;
-    args?: string;
-    text: string;
-  }) {
-    const label = turn.kind === "output" ? "Tool output" : "Tool call";
-    const title = turn.name ?? "tool";
-    const details =
-      turn.kind === "call"
-        ? turn.args
-        : turn.text;
-
-    const detailsLabel = turn.kind === "call" ? "Arguments" : "Result";
-    const prettyDetails = prettyJson(details);
-
+  // Loading state
+  if (isProStatusLoading) {
     return (
-      <div className="rounded-xl border border-border/60 bg-card/70 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center rounded-md border border-border/60 bg-muted/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-            {label}
-          </span>
-          <span className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-[12px] leading-snug text-foreground/80">
-            {title}
-          </span>
-          {turn.callId ? (
-            <span className="shrink-0 font-mono text-[10px] text-muted-foreground/70">
-              {turn.callId}
-            </span>
-          ) : null}
+      <div className="relative flex h-dvh w-full flex-col items-center justify-center overflow-hidden bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <SciraLogo className="size-10 sm:size-12 animate-pulse motion-reduce:animate-none" />
+          <p className="font-pixel text-xs text-muted-foreground/50 tracking-wider">Loading</p>
         </div>
-
-        {prettyDetails ? (
-          <details className="group mt-2">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-2 rounded-md px-2 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted/40 [&::-webkit-details-marker]:hidden">
-              <span className="inline-flex items-center gap-1">
-                <ChevronRight className="size-3 transition-transform group-open:rotate-90" />
-                {detailsLabel}
-              </span>
-              <span className="text-[10px] opacity-60">View</span>
-            </summary>
-            <pre className="mt-2 max-h-56 overflow-y-auto whitespace-pre-wrap rounded-md border border-border/60 bg-muted/40 p-3 font-mono text-[10px] leading-relaxed text-foreground/80">
-              {prettyDetails}
-            </pre>
-          </details>
-        ) : null}
       </div>
     );
   }
 
-  const transcriptContent =
-    conversation.length > 0 ? (
-      <div className="flex min-h-0 flex-1 flex-col gap-3">
-        <div className="space-y-2 p-5 sm:p-auto text-xs sm:hidden">
-          {conversation.map((turn, index) => (
-            <div key={index} className="space-y-1">
-              {turn.role === "tool" ? (
-                renderToolTurn(turn)
-              ) : (
-                <>
-                  <p className="text-[11px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                    {turn.role === "user" ? "You" : "Scira"}
-                  </p>
-                  <div
-                    className={cn(
-                      "rounded-lg px-2 py-1.5",
-                      turn.role === "user"
-                        ? "bg-muted text-foreground/90"
-                        : "bg-primary/10 dark:bg-primary/5 text-foreground/90",
-                    )}
-                  >
-                    {turn.text}
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="hidden min-h-0 flex-1 overflow-hidden rounded-xl border border-border/60 bg-card/80 text-sm backdrop-blur-sm sm:flex sm:flex-col">
-          <div className="shrink-0 border-b border-border/60 bg-card/95 px-3 py-2 backdrop-blur-sm">
-            <div className="grid grid-cols-2 gap-x-1 text-xs sm:text-sm">
-              <div className="text-muted-foreground/80 text-[11px] font-medium uppercase tracking-[0.14em]">
-                You
-              </div>
-              <div className="text-muted-foreground/80 text-[11px] font-medium uppercase tracking-[0.14em]">
-                Scira
-              </div>
-            </div>
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2 pr-4">
-            <div className="grid grid-cols-2 gap-x-1 gap-y-2 text-xs sm:text-sm">
-              {conversation.map((turn, index) => {
-                if (turn.role === "tool") {
-                  return (
-                    <div key={index} className="col-span-2">
-                      {renderToolTurn(turn)}
-                    </div>
-                  );
-                }
-
-                return (
-                  <div key={index} className="contents">
-                    <div className="space-y-1">
-                      {turn.role === "user" && (
-                        <div className="rounded-lg bg-muted px-2 py-1.5 text-foreground/90">
-                          {turn.text}
-                        </div>
-                      )}
-                    </div>
-                    <div className="space-y-1">
-                      {turn.role === "assistant" ? (
-                        <div className="rounded-lg bg-primary/10 px-2 py-1.5 text-foreground/90 dark:bg-primary/5">
-                          {turn.text}
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-    ) : (
-      <p className="text-muted-foreground text-sm">
-        No transcript yet. Start a voice session to see the conversation here.
-      </p>
-    );
+  // Pro gate
+  if (!isProUser) {
+    return <ProUpgradeScreen user={user} isProUser={isProUser} isProStatusLoading={isProStatusLoading} />;
+  }
 
   return (
-    <div className="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden bg-background">
-      <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-background via-background/50 to-background" />
+    <div className="relative flex h-dvh w-full flex-col items-center overflow-hidden bg-background">
+      <div className="relative z-10 flex min-h-0 flex-1 w-full max-w-lg flex-col items-center gap-3 p-4 sm:p-6 safe-area-inset-bottom">
 
-      <div className="relative z-10 flex h-full w-full flex-col items-center justify-center gap-10 p-6">
-        <div className="flex w-full flex-col items-center gap-5">
-          <div className="inline-flex items-center gap-2">
-            <SciraLogo className="shrink-0 size-10" />
-            <span className="lowercase tracking-tighter text-3xl font-be-vietnam-pro font-light text-foreground">
-              Scira Voice
-            </span>
+        {/* ── Header ── */}
+        <header className="flex w-full shrink-0 flex-col items-center gap-2.5 pt-2 sm:pt-4">
+          {/* Top row: logo + title + status */}
+          <div className="flex w-full items-center justify-between">
+            <div className="flex items-center gap-2">
+              <SciraLogo className="shrink-0 size-7 sm:size-8" />
+              <h1 className="font-pixel text-base sm:text-2xl text-foreground tracking-wider">
+                Voice
+              </h1>
+            </div>
+
+            <div
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 transition-colors duration-150",
+                isConnected
+                  ? "border-primary/30 bg-primary/5"
+                  : "border-border/40 bg-card/60"
+              )}
+              role="status"
+              aria-live="polite"
+            >
+              <div
+                className={cn("size-1.5 rounded-full transition-colors duration-150", statusColor)}
+                aria-hidden="true"
+              />
+              <span className="font-pixel text-[10px] text-foreground/60 tracking-wider">
+                {statusText}
+              </span>
+            </div>
           </div>
 
-          <div className="inline-flex items-center gap-2 rounded-full border border-border/40 bg-card/60 px-3 py-1.5 backdrop-blur-sm">
-            <div className={cn("size-1.5 rounded-full", getStatusColor())} />
-            <span className="text-[11px] font-medium text-foreground/80 tracking-wide">
-              {getStatusText()}
-            </span>
-          </div>
-
-          {(stats.lastLatencyMs || stats.lastAssistantWpm || stats.lastUserWpm || stats.lastToolLatencyMs) && (
-            <div className="inline-flex items-center gap-3 rounded-lg border border-border/40 bg-muted/30 px-3 py-1.5 backdrop-blur-sm">
+          {/* Stats row — fixed height, opacity-only transition so the orb never moves */}
+          <div className="h-6 w-full flex items-center justify-center">
+            <motion.div
+              animate={{ opacity: hasStats ? 1 : 0 }}
+              transition={{ duration: 0.25 }}
+              className="flex items-center justify-center gap-4"
+            >
               {stats.lastLatencyMs && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
-                    Lat
-                  </span>
-                  <span className="text-[11px] font-medium tabular-nums text-foreground/80">
-                    {formatMs(stats.lastLatencyMs)}
-                  </span>
-                </div>
-              )}
-              {stats.lastUserWpm && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
-                    You
-                  </span>
-                  <span className="text-[11px] font-medium tabular-nums text-foreground/80">
-                    {stats.lastUserWpm}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground/60">wpm</span>
-                </div>
-              )}
-              {stats.lastAssistantWpm && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
-                    AI
-                  </span>
-                  <span className="text-[11px] font-medium tabular-nums text-foreground/80">
-                    {stats.lastAssistantWpm}
-                  </span>
-                  <span className="text-[10px] text-muted-foreground/60">wpm</span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[11px] text-muted-foreground/50">Response</span>
+                  <span className="text-[11px] font-medium tabular-nums text-foreground/70">{formatMs(stats.lastLatencyMs)}</span>
                 </div>
               )}
               {stats.lastToolLatencyMs && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/70">
-                    Tools
-                  </span>
-                  <span className="text-[11px] font-medium tabular-nums text-foreground/80">
-                    {formatMs(stats.lastToolLatencyMs)}
-                  </span>
+                <div className="flex items-center gap-1">
+                  <span className="text-[11px] text-muted-foreground/50">Tools</span>
+                  <span className="text-[11px] font-medium tabular-nums text-foreground/70">{formatMs(stats.lastToolLatencyMs)}</span>
                 </div>
               )}
+            </motion.div>
+          </div>
+        </header>
+
+        {/* ── Middle: orb + transcript accordion ── */}
+        <div className="flex flex-1 min-h-0 w-full flex-col gap-2">
+          {/* Orb — centered in all remaining space above the accordion */}
+          <div className="flex flex-1 min-h-0 items-center justify-center">
+            <div className="relative size-[260px] sm:size-[300px]">
+              <Orb
+                colors={orbColors}
+                agentState={agentState}
+                volumeMode="auto"
+                inputVolumeRef={inputVolumeRef}
+                outputVolumeRef={outputVolumeRef}
+                className="h-full w-full"
+              />
+              {!isConnected && (
+                <p className="absolute -bottom-7 left-0 right-0 text-center font-pixel text-sm text-muted-foreground/30 tracking-wider">
+                  Press start to begin
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Transcript accordion — shrink-0, header always visible when connected */}
+          {isConnected && conversation.length > 0 && (
+            <div className="shrink-0 w-full rounded-xl border border-border/40 bg-card/30 overflow-hidden">
+              {/* Toggle header */}
+              <button
+                type="button"
+                onClick={() => setShowTranscript(v => !v)}
+                className="flex w-full items-center justify-between px-3 py-2.5"
+                aria-label={showTranscript ? "Hide transcript" : "Show transcript"}
+              >
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="size-3.5 text-muted-foreground/60" aria-hidden />
+                  <span className="font-pixel text-[9px] text-muted-foreground/60 tracking-wider uppercase">
+                    Transcript
+                  </span>
+                </div>
+                <motion.div
+                  animate={{ rotate: showTranscript ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronUp className="size-3.5 text-muted-foreground/50" aria-hidden />
+                </motion.div>
+              </button>
+
+              {/* Accordion body */}
+              <AnimatePresence initial={false}>
+                {showTranscript && (
+                  <motion.div
+                    key="transcript-body"
+                    initial={{ height: 0 }}
+                    animate={{ height: "auto" }}
+                    exit={{ height: 0 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 40, mass: 0.8 }}
+                    className="overflow-hidden"
+                  >
+                    <div
+                      ref={transcriptScrollRef}
+                      className="overflow-y-auto overflow-x-hidden px-3 pb-3 space-y-2 scroll-smooth border-t border-border/30"
+                      style={{ maxHeight: 220 }}
+                    >
+                  {conversation.slice(-14).map((turn, i) => {
+                    const globalIndex = Math.max(0, conversation.length - 14) + i;
+                    if (turn.role === "user") {
+                      return (
+                        <motion.div
+                          key={`${globalIndex}-user`}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="flex items-start gap-2 pt-2"
+                        >
+                          <span className="font-pixel text-[9px] text-muted-foreground/40 tracking-wider pt-0.5 shrink-0 w-6 text-right">You</span>
+                          <p className="text-xs leading-relaxed text-foreground/50">{turn.text}</p>
+                        </motion.div>
+                      );
+                    }
+                    if (turn.role === "assistant") {
+                      return (
+                        <motion.div
+                          key={`${globalIndex}-assistant`}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className={cn("flex items-start gap-2 pt-2", turn.interrupted && "opacity-50")}
+                        >
+                          <span className="font-pixel text-[9px] text-muted-foreground/40 tracking-wider pt-0.5 shrink-0 w-6 text-right">Scira</span>
+                          <p className="text-xs leading-relaxed text-foreground/70">
+                            {turn.text}
+                            {turn.interrupted && <span className="ml-1 text-muted-foreground/60 italic">— interrupted</span>}
+                          </p>
+                        </motion.div>
+                      );
+                    }
+                    if (turn.role === "tool") {
+                      const toolName = turn.name ?? "tool";
+                      const isCall = turn.kind === "call";
+                      const isOutput = turn.kind === "output";
+                      const toolLabel = toolName === "web_search" ? "Web search" : toolName === "x_search" ? "X search" : toolName.replace(/_/g, " ");
+                      const ToolIcon = toolName === "web_search" ? Globe : toolName === "x_search" ? MessageCircle : Wrench;
+                      if (isCall) {
+                        let argsPreview: string | null = null;
+                        if (turn.args) {
+                          try {
+                            const parsed = JSON.parse(turn.args) as Record<string, unknown>;
+                            if (Array.isArray(parsed.queries) && parsed.queries.length > 0) {
+                              argsPreview = String(parsed.queries[0]).slice(0, 50);
+                              if (String(parsed.queries[0]).length > 50) argsPreview += "…";
+                            } else if (typeof parsed.query === "string") {
+                              argsPreview = parsed.query.slice(0, 50);
+                              if (parsed.query.length > 50) argsPreview += "…";
+                            }
+                          } catch {
+                            argsPreview = turn.args.slice(0, 50);
+                            if (turn.args.length > 50) argsPreview += "…";
+                          }
+                        }
+                        return (
+                          <motion.div
+                            key={`${globalIndex}-tool-call-${turn.callId ?? i}`}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="flex items-start gap-2 pt-2 pl-6"
+                          >
+                            <div className="flex flex-col gap-1 w-full min-w-0">
+                              <div className="inline-flex items-center gap-1.5 w-fit rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5">
+                                <ToolIcon className="size-3 text-primary shrink-0" aria-hidden />
+                                <span className="font-pixel text-[9px] text-primary tracking-wider uppercase">{toolLabel}</span>
+                              </div>
+                              {argsPreview && <p className="text-[11px] text-muted-foreground/70 truncate pl-0.5">{argsPreview}</p>}
+                            </div>
+                          </motion.div>
+                        );
+                      }
+                      if (isOutput) {
+                        const preview = turn.text?.slice(0, 120) ?? "";
+                        const hasMore = (turn.text?.length ?? 0) > 120;
+                        return (
+                          <motion.div
+                            key={`${globalIndex}-tool-out-${turn.callId ?? i}`}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="flex items-start gap-2 pt-2 pl-6"
+                          >
+                            <div className="rounded-md border border-border/50 bg-muted/30 px-2 py-1.5 w-full min-w-0">
+                              <div className="flex items-center gap-1.5 mb-1">
+                                <ToolIcon className="size-2.5 text-muted-foreground shrink-0" aria-hidden />
+                                <span className="font-pixel text-[8px] text-muted-foreground/60 tracking-wider uppercase">{toolLabel} result</span>
+                              </div>
+                              <p className="text-[11px] text-muted-foreground/80 leading-snug line-clamp-2">{preview}{hasMore ? "…" : ""}</p>
+                            </div>
+                          </motion.div>
+                        );
+                      }
+                    }
+                    return null;
+                  })}
+                      <div ref={transcriptBottomRef} className="h-px shrink-0" aria-hidden />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
         </div>
 
-        <div className="flex flex-1 items-center justify-center">
-          <div className="relative h-[400px] w-[400px] max-w-full">
-            <Orb
-              colors={orbColors}
-              agentState={agentState}
-              volumeMode="auto"
-              inputVolumeRef={inputVolumeRef}
-              outputVolumeRef={outputVolumeRef}
-              className="h-full w-full"
-            />
-          </div>
-        </div>
-
-        <div className="flex w-full max-w-4xl flex-col gap-4">
-          <div className="flex w-full justify-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={conversation.length === 0}
-              onClick={() => setIsTranscriptOpen(true)}
-              className="text-xs text-muted-foreground"
-            >
-              Transcript{conversation.length > 0 ? ` · ${conversation.length}` : ""}
-            </Button>
-          </div>
-
-          <div className="flex w-full justify-center">
-            <div className="w-full max-w-80 rounded-xl border border-border/60 bg-muted px-2 py-2 backdrop-blur-sm">
-              <div className="flex flex-col gap-2 items-center">
-                <AnimatePresence mode="wait">
-                  {!isConnected && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="w-full overflow-hidden max-w-74"
-                    >
-                      <VoicePicker
-                        voices={VOICES.map((voice) => ({
-                          voiceId: voice.value,
-                          name: voice.label,
-                          labels: {
-                            description: voice.description,
-                          },
-                        }))}
-                        value={selectedVoice}
-                        onValueChange={(value) =>
-                          handleVoiceChange(value as VoiceType)
-                        }
-                        placeholder="Voice..."
-                        className="w-full"
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                <div className="flex items-center justify-center gap-1">
-                  <VoiceButton
-                    state={voiceButtonState}
-                    onPress={handleConnect}
-                    size="sm"
-                    label={isConnected ? "End voice session" : "Start voice session"}
-                    trailing={
-                      <span className="hidden text-[10px] text-muted-foreground sm:inline">
-                        ⌥ Space
-                      </span>
-                    }
-                    className="shadow-none border"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setMuted(!isMuted)}
-                    className={cn(
-                      "flex items-center gap-1 rounded-sm border p-2 text-[11px] transition-colors",
-                      isMuted
-                        ? "bg-destructive/10 text-destructive"
-                        : "bg-muted/80 dark:bg-background/10 text-primary",
-                    )}
-                    aria-pressed={isMuted}
-                    aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
+        {/* ── Controls (pinned to bottom) ── */}
+        <div className="flex w-full shrink-0 flex-col items-center gap-2.5 pb-2 sm:pb-0">
+          <div className="w-full rounded-xl border border-border/60 bg-card/30 p-2.5">
+            <div className="flex flex-col gap-2 items-center">
+              {/* Voice Picker (idle) / Text Input (connected) */}
+              <AnimatePresence mode="wait">
+                {!isConnected ? (
+                  <motion.div
+                    key="voice-picker"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="w-full motion-reduce:transition-none"
                   >
-                    {isMuted ? (
-                      <MicOff className="size-4" />
-                    ) : (
-                      <Mic className="size-4" />
-                    )}
-                    <span className="hidden xs:inline">
-                      {isMuted ? "Muted" : "Mic"}
-                    </span>
-                  </button>
-                </div>
-
-                <AnimatePresence mode="wait">
-                  {isConnected && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="w-full overflow-hidden px-1"
+                    <VoicePicker
+                      voices={VOICES.map((voice) => ({
+                        voiceId: voice.value,
+                        name: voice.label,
+                        labels: { description: voice.description },
+                      }))}
+                      value={selectedVoice}
+                      onValueChange={(value) => handleVoiceChange(value as VoiceType)}
+                      placeholder="Choose a voice..."
+                      className="w-full"
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="text-input"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="w-full motion-reduce:transition-none"
+                  >
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        if (textInput.trim()) {
+                          sendText(textInput);
+                          setTextInput("");
+                        }
+                      }}
+                      className="relative flex items-center"
                     >
-                      <form
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          if (textInput.trim()) {
-                            sendText(textInput);
-                            setTextInput("");
-                          }
-                        }}
-                        className="relative flex items-center"
+                      <input
+                        type="text"
+                        value={textInput}
+                        onChange={(e) => setTextInput(e.target.value)}
+                        placeholder="Type a message..."
+                        disabled={!isConnected || agentState === "thinking"}
+                        className="w-full h-9 pl-3 pr-10 text-sm rounded-lg border border-border/40 bg-background/60 placeholder:text-muted-foreground/40 focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!textInput.trim() || !isConnected || agentState === "thinking"}
+                        className="absolute right-1.5 size-6 flex items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-opacity hover:opacity-90"
+                        aria-label="Send message"
                       >
-                        <input
-                          type="text"
-                          value={textInput}
-                          onChange={(e) => setTextInput(e.target.value)}
-                          placeholder="Type a message..."
-                          disabled={!isConnected || agentState === "thinking"}
-                          className="w-full h-8 pl-3 pr-9 text-[13px] rounded-md border border-border/60 bg-background/80 placeholder:text-muted-foreground/60 focus:outline-none focus:ring-0 disabled:opacity-50 disabled:cursor-not-allowed"
-                        />
-                        <button
-                          type="submit"
-                          disabled={!textInput.trim() || !isConnected || agentState === "thinking"}
-                          className="absolute right-1 size-6 flex items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-opacity hover:opacity-90"
-                        >
-                          <ArrowUp className="size-3" />
-                        </button>
-                      </form>
-                    </motion.div>
+                        <ArrowUp className="size-3" />
+                      </button>
+                    </form>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Action buttons */}
+              <div className="flex items-center justify-center gap-2 w-full">
+                <VoiceButton
+                  state={voiceButtonState}
+                  onPress={handleConnect}
+                  size="sm"
+                  label={isConnected ? "End session" : "Start session"}
+                  trailing={
+                    <kbd className="hidden font-pixel text-[9px] text-muted-foreground/40 tracking-wider sm:inline">
+                      ⌥ Space
+                    </kbd>
+                  }
+                  className="flex-1 shadow-none border"
+                />
+                <button
+                  type="button"
+                  onClick={() => setMuted(!isMuted)}
+                  className={cn(
+                    "relative flex items-center justify-center size-8 rounded-lg border transition-colors",
+                    isMuted
+                      ? "bg-muted/40 text-muted-foreground border-border/40 hover:bg-muted/60"
+                      : "bg-primary/10 text-primary border-primary/20 hover:bg-primary/15",
                   )}
-                </AnimatePresence>
+                  aria-pressed={isMuted}
+                  aria-label={isMuted ? "Unmute microphone" : "Mute microphone"}
+                  title={isMuted ? "Click to unmute" : "Click to mute"}
+                >
+                  {isMuted ? <MicOff className="size-3.5" /> : <Mic className="size-3.5" />}
+                  {isMuted && (
+                    <span className="absolute -top-0.5 -right-0.5 size-1.5 rounded-full bg-destructive" />
+                  )}
+                </button>
               </div>
             </div>
           </div>
 
           {/* Error display */}
-          <AnimatePresence mode="wait">
+          <AnimatePresence>
             {error && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.3 }}
-                className="inline-flex items-center mx-auto gap-1.5 rounded-full border border-destructive/30 bg-destructive/10 px-2 py-1 backdrop-blur-sm"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className="flex items-center justify-between gap-3 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 motion-reduce:transition-none"
+                role="alert"
               >
-                <div className="size-1 rounded-full bg-destructive" />
-                <p className="text-destructive text-[10px] font-medium">{error}</p>
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="size-1.5 rounded-full bg-destructive shrink-0" aria-hidden="true" />
+                  <p className="text-destructive text-[11px] font-medium text-pretty">{normalizeError(error)}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleConnect}
+                  className="shrink-0 text-[11px] font-medium text-destructive/80 hover:text-destructive underline-offset-2 hover:underline transition-colors"
+                >
+                  Try again
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
-      {/* Transcript dialog / drawer */}
-      {isDesktop ? (
-        <Dialog open={isTranscriptOpen} onOpenChange={setIsTranscriptOpen}>
-          <DialogContent className="max-w-200! w-full! max-h-[85vh] flex flex-col">
-            <DialogHeader>
-              <div className="items-start justify-between space-y-2">
-                <DialogTitle>Transcript</DialogTitle>
-                {conversation.length > 0 && (
-                  <p className="text-[11px] text-muted-foreground/80">
-                    Live view · {conversation.length} turns
-                  </p>
-                )}
-              </div>
-            </DialogHeader>
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-              {transcriptContent}
-            </div>
-          </DialogContent>
-        </Dialog>
-      ) : (
-        <Drawer open={isTranscriptOpen} onOpenChange={setIsTranscriptOpen}>
-          <DrawerContent className="h-[70vh]">
-            <DrawerHeader>
-              <div className="items-start justify-between space-y-2">
-                <DrawerTitle>Transcript</DrawerTitle>
-                {conversation.length > 0 && (
-                  <p className="text-[11px] text-muted-foreground/80">
-                    Live view · {conversation.length} turns
-                  </p>
-                )}
-              </div>
-            </DrawerHeader>
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden pb-4">
-              {/* Mobile content scrolls inside transcriptContent */}
-              <div className="min-h-0 flex-1 overflow-y-auto">
-                {transcriptContent}
-              </div>
-            </div>
-          </DrawerContent>
-        </Drawer>
-      )}
     </div>
   );
 }
-

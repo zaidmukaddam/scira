@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getCurrentUser } from '@/app/actions';
 import { type ComprehensiveUserData } from '@/lib/user-data';
-import { shouldBypassRateLimits } from '@/ai/providers';
+import { shouldBypassRateLimits } from '@/ai/models';
 
 export function useUserData() {
   const {
@@ -13,10 +13,11 @@ export function useUserData() {
   } = useQuery({
     queryKey: ['comprehensive-user-data'],
     queryFn: getCurrentUser,
-    // Keep this aggressively fresh so subscription changes reflect quickly
-    staleTime: 5 * 1000,
-    gcTime: 5 * 60 * 1000,
-    refetchOnWindowFocus: true,
+    // Keep reasonably fresh without frequent refetches on reload/focus
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
     retry: 2,
   });
 
@@ -65,23 +66,23 @@ export function useUserData() {
     // Legacy compatibility helpers
     subscriptionData: userData?.polarSubscription
       ? {
-          hasSubscription: true,
-          subscription: userData.polarSubscription,
-        }
+        hasSubscription: true,
+        subscription: userData.polarSubscription,
+      }
       : { hasSubscription: false },
 
     // Map dodoSubscription to legacy dodoProStatus structure for settings dialog
     dodoProStatus: userData?.dodoSubscription
       ? {
-          isProUser: userData.proSource === 'dodo' && userData.isProUser,
-          hasSubscriptions: userData.dodoSubscription.hasSubscriptions,
-          expiresAt: userData.dodoSubscription.expiresAt,
-          mostRecentSubscription: userData.dodoSubscription.mostRecentSubscription,
-          daysUntilExpiration: userData.dodoSubscription.daysUntilExpiration,
-          isExpired: userData.dodoSubscription.isExpired,
-          isExpiringSoon: userData.dodoSubscription.isExpiringSoon,
-          source: userData.proSource,
-        }
+        isProUser: userData.proSource === 'dodo' && userData.isProUser,
+        hasSubscriptions: userData.dodoSubscription.hasSubscriptions,
+        expiresAt: userData.dodoSubscription.expiresAt,
+        mostRecentSubscription: userData.dodoSubscription.mostRecentSubscription,
+        daysUntilExpiration: userData.dodoSubscription.daysUntilExpiration,
+        isExpired: userData.dodoSubscription.isExpired,
+        isExpiringSoon: userData.dodoSubscription.isExpiringSoon,
+        source: userData.proSource,
+      }
       : null,
 
     expiresAt: userData?.dodoSubscription?.expiresAt,

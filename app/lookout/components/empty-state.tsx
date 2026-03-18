@@ -21,9 +21,9 @@ export function EmptyState({
   variant = 'dashed',
 }: EmptyStateProps) {
   return (
-    <Card className={variant === 'dashed' ? 'border-dashed shadow-none' : 'shadow-none'}>
-      <CardContent className="flex flex-col items-center justify-center py-8">
-        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+    <Card className={`shadow-none rounded-xl ${variant === 'dashed' ? 'border-dashed border-border/60' : 'border-border/60'}`}>
+      <CardContent className="flex flex-col items-center justify-center py-12">
+        <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-4">
           <HugeiconsIcon
             icon={icon}
             size={20}
@@ -32,8 +32,8 @@ export function EmptyState({
             className="text-muted-foreground"
           />
         </div>
-        <h3 className="text-lg font-medium mb-1">{title}</h3>
-        <p className="text-sm text-muted-foreground text-center max-w-sm mb-4">{description}</p>
+        <h3 className="text-sm font-semibold mb-1">{title}</h3>
+        <p className="font-pixel text-[10px] text-muted-foreground/50 uppercase tracking-wider text-center max-w-xs mb-4">{description}</p>
         {children}
       </CardContent>
     </Card>
@@ -45,8 +45,8 @@ export function NoActiveLookoutsEmpty() {
   return (
     <EmptyState
       icon={BinocularsIcon}
-      title="Get started by adding a lookout"
-      description="Schedule a lookout to automate searches and get reminders when they complete."
+      title="No lookouts yet"
+      description="Create a lookout to automate searches on a schedule"
     />
   );
 }
@@ -56,7 +56,7 @@ export function NoArchivedLookoutsEmpty() {
     <EmptyState
       icon={Archive01Icon}
       title="No archived lookouts"
-      description="Archived lookouts will appear here."
+      description="Archived lookouts will appear here"
       variant="default"
     />
   );

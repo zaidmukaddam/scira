@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { HugeiconsIcon } from '@/components/ui/hugeicons';
-import { PlusSignIcon, BinocularsIcon, RefreshIcon, Cancel01Icon } from '@hugeicons/core-free-icons';
+import { PlusSignIcon, BinocularsIcon, RefreshIcon, Cancel01Icon, ViewIcon, ShuffleIcon } from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs as KumoTabs } from '@cloudflare/kumo';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import {
@@ -24,7 +24,7 @@ import { useLookouts } from '@/hooks/use-lookouts';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { LookoutDetailsSidebar } from './components/lookout-details-sidebar';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 
 // Import our new components
 import { LoadingSkeletons } from './components/loading-skeleton';
@@ -34,7 +34,7 @@ import { LookoutCard } from './components/lookout-card';
 import { ProUpgradeScreen } from './components/pro-upgrade-screen';
 import { LookoutForm } from './components/lookout-form';
 import { useLookoutForm } from './hooks/use-lookout-form';
-import { getRandomExamples, LOOKOUT_LIMITS, timezoneOptions } from './constants';
+import { getRandomExamples, allExampleLookouts, LOOKOUT_LIMITS, LOOKOUT_SEARCH_MODES, timezoneOptions } from './constants';
 import { formatFrequency } from './utils/time-utils';
 
 interface Lookout {
@@ -45,8 +45,18 @@ interface Lookout {
   timezone: string;
   nextRunAt: Date;
   status: 'active' | 'paused' | 'archived' | 'running';
+  searchMode?: string;
   lastRunAt?: Date | null;
   lastRunChatId?: string | null;
+  runHistory?: Array<{
+    runAt: string;
+    chatId: string;
+    status: 'success' | 'error' | 'timeout';
+    error?: string;
+    duration?: number;
+    tokensUsed?: number;
+    searchesPerformed?: number;
+  }>;
   createdAt: Date;
   cronSchedule?: string;
 }
@@ -57,6 +67,16 @@ export default function LookoutPage() {
 
   // Random examples state
   const [randomExamples, setRandomExamples] = React.useState(() => getRandomExamples(3));
+
+  // All examples dialog state
+  const [isAllExamplesOpen, setIsAllExamplesOpen] = React.useState(false);
+  const [selectedModeFilter, setSelectedModeFilter] = React.useState<string | null>(null);
+
+  // Filter examples by selected mode
+  const filteredExamples = React.useMemo(() => {
+    if (!selectedModeFilter) return allExampleLookouts;
+    return allExampleLookouts.filter((example) => example.searchMode === selectedModeFilter);
+  }, [selectedModeFilter]);
 
   // Sidebar state for lookout details
   const [selectedLookout, setSelectedLookout] = React.useState<Lookout | null>(null);
@@ -167,7 +187,7 @@ export default function LookoutPage() {
   // Handle error display
   React.useEffect(() => {
     if (error) {
-      toast.error('Failed to load lookouts');
+      sileo.error({ title: 'Failed to load lookouts' });
     }
   }, [error]);
 
@@ -266,11 +286,11 @@ export default function LookoutPage() {
           >
             <div className="h-full flex flex-col">
               {/* Header */}
-              <div className="border-b px-3 sm:px-4 py-3 flex-shrink-0">
+              <div className="border-b border-border/40 px-4 py-3 shrink-0">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <HugeiconsIcon icon={BinocularsIcon} size={16} color="currentColor" strokeWidth={1.5} />
-                    <span className="font-medium text-sm">Lookout Details</span>
+                  <div className="flex items-center gap-2.5">
+                    <HugeiconsIcon icon={BinocularsIcon} size={16} color="currentColor" strokeWidth={1.5} className="text-muted-foreground" />
+                    <span className="text-sm font-semibold tracking-tight">Details</span>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => setIsSidebarOpen(false)} className="h-7 w-7 p-0">
                     <HugeiconsIcon icon={Cancel01Icon} size={14} color="currentColor" strokeWidth={1.5} />
@@ -302,13 +322,16 @@ export default function LookoutPage() {
             {/* Header with Title, Tabs and Actions */}
             <div className="mb-6 space-y-4">
               {/* Title - Always at top */}
-              <div className="flex items-center justify-center gap-2 relative">
+              <div className="flex items-center justify-center gap-3 relative">
                 {/* Mobile sidebar trigger */}
                 <div className="md:hidden absolute left-0">
                   <SidebarTrigger />
                 </div>
-                <HugeiconsIcon icon={BinocularsIcon} size={32} color="currentColor" strokeWidth={1.5} />
-                <h1 className="text-2xl font-semibold font-be-vietnam-pro">Scira Lookout</h1>
+                <HugeiconsIcon icon={BinocularsIcon} size={24} color="currentColor" strokeWidth={1.5} className="text-muted-foreground" />
+                <h1 className="text-xl font-semibold tracking-tight">Lookout</h1>
+                <span className="font-pixel text-[10px] text-muted-foreground/50 uppercase tracking-wider">
+                  {totalLookouts}/{LOOKOUT_LIMITS.TOTAL_LOOKOUTS}
+                </span>
               </div>
 
               {isMobile ? (
@@ -369,26 +392,31 @@ export default function LookoutPage() {
                   </div>
 
                   {/* Tabs for mobile */}
-                  <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="bg-muted w-full">
-                      <TabsTrigger value="active" className="flex-1">
-                        Active
-                      </TabsTrigger>
-                      <TabsTrigger value="archived" className="flex-1">
-                        Archived
-                      </TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                  <KumoTabs
+                    variant="segmented"
+                    value={activeTab}
+                    onValueChange={setActiveTab}
+                    className="w-full [--color-kumo-tint:var(--muted)] [--text-color-kumo-strong:var(--muted-foreground)] [--text-color-kumo-default:var(--foreground)] [--color-kumo-overlay:var(--background)] [--color-kumo-fill-hover:var(--border)]"
+                    listClassName="w-full [&>button]:flex-1 [&>button]:justify-center"
+                    tabs={[
+                      { value: 'active', label: 'Active' },
+                      { value: 'archived', label: 'Archived' },
+                    ]}
+                  />
                 </div>
               ) : (
                 /* Desktop Layout: Tabs and Actions side by side */
                 <div className="flex justify-between items-center">
-                  <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="bg-muted">
-                      <TabsTrigger value="active">Active</TabsTrigger>
-                      <TabsTrigger value="archived">Archived</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
+                  <KumoTabs
+                    variant="segmented"
+                    value={activeTab}
+                    onValueChange={setActiveTab}
+                    className="[--color-kumo-tint:var(--muted)] [--text-color-kumo-strong:var(--muted-foreground)] [--text-color-kumo-default:var(--foreground)] [--color-kumo-overlay:var(--background)] [--color-kumo-fill-hover:var(--border)]"
+                    tabs={[
+                      { value: 'active', label: 'Active' },
+                      { value: 'archived', label: 'Archived' },
+                    ]}
+                  />
 
                   <div className="flex items-center gap-2">
                     <Button
@@ -448,15 +476,15 @@ export default function LookoutPage() {
             {!canCreateMore && <TotalLimitWarning />}
             {canCreateMore && !canCreateDailyMore && <DailyLimitWarning />}
 
-            {/* Main Content Tabs */}
-            <Tabs value={activeTab} defaultValue="active" className="space-y-6">
-              <TabsContent value="active" className="space-y-6">
+            {/* Main Content */}
+            <div className="space-y-6">
+              {activeTab === 'active' && <div className="space-y-6">
                 {isLoading ? (
                   <LoadingSkeletons count={3} />
                 ) : filteredLookouts.length === 0 ? (
                   <NoActiveLookoutsEmpty />
                 ) : (
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredLookouts.map((lookout) => (
                       <LookoutCard
                         key={lookout.id}
@@ -468,17 +496,32 @@ export default function LookoutPage() {
                         onOpenDetails={handleOpenLookoutDetails}
                       />
                     ))}
+
+                    {/* Add new lookout card */}
+                    {canCreateMore && (
+                      <Card
+                        className="shadow-none cursor-pointer border-dashed border border-border/60 hover:border-primary/40 transition-all duration-200 flex items-center justify-center h-full min-h-[200px] group rounded-xl"
+                        onClick={() => formHook.handleDialogOpenChange(true)}
+                      >
+                        <div className="flex flex-col items-center gap-2.5 text-muted-foreground group-hover:text-primary transition-colors">
+                          <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                            <HugeiconsIcon icon={PlusSignIcon} size={18} color="currentColor" strokeWidth={1.5} />
+                          </div>
+                          <span className="font-pixel text-[10px] uppercase tracking-wider">New lookout</span>
+                        </div>
+                      </Card>
+                    )}
                   </div>
                 )}
-              </TabsContent>
+              </div>}
 
-              <TabsContent value="archived">
+              {activeTab === 'archived' && <div>
                 {isLoading ? (
                   <LoadingSkeletons count={2} showActions={false} />
                 ) : filteredLookouts.length === 0 ? (
                   <NoArchivedLookoutsEmpty />
                 ) : (
-                  <div className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredLookouts.map((lookout) => (
                       <LookoutCard
                         key={lookout.id}
@@ -493,34 +536,142 @@ export default function LookoutPage() {
                     ))}
                   </div>
                 )}
-              </TabsContent>
-            </Tabs>
+              </div>}
+            </div>
 
             {/* Example Cards */}
             <div className="mt-12">
-              <h2 className="text-lg font-semibold mb-4">Example Lookouts</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-hidden">
-                {randomExamples.map((example, index) => (
-                  <Card
-                    key={index}
-                    className="cursor-pointer transition-all duration-200 group !pb-0 !mb-0 max-h-96 h-full border hover:border-primary/30 shadow-none"
-                    onClick={() => formHook.handleUseExample(example)}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-sm font-semibold">Examples</h2>
+                  <span className="font-pixel text-[9px] text-muted-foreground/50 uppercase tracking-wider">{allExampleLookouts.length}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setRandomExamples(getRandomExamples(3))}
+                    title="Shuffle examples"
                   >
-                    <CardHeader>
-                      <CardTitle className="text-sm font-medium group-hover:text-primary transition-colors">
-                        {example.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="bg-accent/50 border !mb-0 sm:!-mb-1 border-accent rounded-t-lg mx-3 p-4 grow h-28 sm:h-28 group-hover:bg-accent/70 group-hover:border-primary/20 transition-all duration-200">
-                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                        {example.prompt.slice(0, 100)}...
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatFrequency(example.frequency, example.time)}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
+                    <HugeiconsIcon icon={ShuffleIcon} size={14} color="currentColor" strokeWidth={1.5} />
+                  </Button>
+                  <Dialog open={isAllExamplesOpen} onOpenChange={setIsAllExamplesOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <HugeiconsIcon icon={ViewIcon} size={14} color="currentColor" strokeWidth={1.5} className="mr-1.5" />
+                        View All
+                      </Button>
+                    </DialogTrigger>
+                  <DialogContent className="sm:max-w-[700px] max-h-[85vh] overflow-hidden flex flex-col">
+                    <DialogHeader className="pb-4">
+                      <DialogTitle className="text-lg">All Example Lookouts</DialogTitle>
+                    </DialogHeader>
+
+                    {/* Mode Filter Tabs */}
+                    <div className="flex flex-wrap gap-1.5 pb-4 border-b border-border/40">
+                      <Button
+                        variant={selectedModeFilter === null ? 'default' : 'outline'}
+                        size="sm"
+                        className="h-7 text-xs"
+                        onClick={() => setSelectedModeFilter(null)}
+                      >
+                        All <span className="font-pixel text-[8px] text-inherit/70 ml-1 uppercase">{allExampleLookouts.length}</span>
+                      </Button>
+                      {LOOKOUT_SEARCH_MODES.map((mode) => {
+                        const count = allExampleLookouts.filter((e) => e.searchMode === mode.value).length;
+                        if (count === 0) return null;
+                        return (
+                          <Button
+                            key={mode.value}
+                            variant={selectedModeFilter === mode.value ? 'default' : 'outline'}
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => setSelectedModeFilter(mode.value)}
+                          >
+                            <HugeiconsIcon icon={mode.icon} size={12} color="currentColor" strokeWidth={1.5} className="mr-1" />
+                            {mode.label} <span className="font-pixel text-[8px] text-inherit/70 ml-1 uppercase">{count}</span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Examples Grid */}
+                    <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 py-2">
+                        {filteredExamples.map((example, index) => {
+                          const modeConfig = LOOKOUT_SEARCH_MODES.find((m) => m.value === example.searchMode);
+                          return (
+                            <Card
+                              key={index}
+                              className="cursor-pointer transition-all duration-200 group border hover:border-primary/30 shadow-none"
+                              onClick={() => {
+                                formHook.handleUseExample(example);
+                                setIsAllExamplesOpen(false);
+                              }}
+                            >
+                              <CardHeader className="pb-2">
+                                <div className="flex items-start justify-between gap-2">
+                                  <CardTitle className="text-sm font-medium group-hover:text-primary transition-colors line-clamp-1">
+                                    {example.title}
+                                  </CardTitle>
+                                  {modeConfig && (
+                                    <span className="flex items-center gap-1 font-pixel text-[9px] text-muted-foreground/50 bg-muted px-1.5 py-0.5 rounded-md shrink-0 uppercase tracking-wider">
+                                      <HugeiconsIcon icon={modeConfig.icon} size={10} color="currentColor" strokeWidth={1.5} />
+                                      {modeConfig.label}
+                                    </span>
+                                  )}
+                                </div>
+                              </CardHeader>
+                              <CardContent className="pt-0">
+                                <p className="text-xs text-muted-foreground mb-2 line-clamp-2">
+                                  {example.prompt.slice(0, 120)}...
+                                </p>
+                                <p className="font-pixel text-[9px] text-muted-foreground/50 uppercase tracking-wider">
+                                  {formatFrequency(example.frequency, example.time)}
+                                </p>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </DialogContent>
+                  </Dialog>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-hidden">
+                {randomExamples.map((example, index) => {
+                  const modeConfig = LOOKOUT_SEARCH_MODES.find((m) => m.value === example.searchMode);
+                  return (
+                    <Card
+                      key={index}
+                      className="cursor-pointer transition-all duration-200 group pb-0! mb-0! max-h-96 h-full border hover:border-primary/30 shadow-none"
+                      onClick={() => formHook.handleUseExample(example)}
+                    >
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-2">
+                          <CardTitle className="text-sm font-medium group-hover:text-primary transition-colors">
+                            {example.title}
+                          </CardTitle>
+                          {modeConfig && (
+                            <span className="flex items-center gap-1 font-pixel text-[9px] text-muted-foreground/50 bg-muted px-1.5 py-0.5 rounded-md shrink-0 uppercase tracking-wider">
+                              <HugeiconsIcon icon={modeConfig.icon} size={10} color="currentColor" strokeWidth={1.5} />
+                              {modeConfig.label}
+                            </span>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="bg-accent/50 border mb-0! sm:-mb-1! border-accent rounded-t-lg mx-3 p-4 grow h-28 sm:h-28 group-hover:bg-accent/70 group-hover:border-primary/20 transition-all duration-200">
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                          {example.prompt.slice(0, 100)}...
+                        </p>
+                        <p className="font-pixel text-[9px] text-muted-foreground/50 uppercase tracking-wider">
+                          {formatFrequency(example.frequency, example.time)}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
           </div>

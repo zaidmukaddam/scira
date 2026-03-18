@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { subscription, dodosubscription } from './db/schema';
-import { getReadReplica, maindb } from './db';
+import { db, maindb } from './db';
 import { auth } from './auth';
 import { headers } from 'next/headers';
 import {
@@ -15,6 +15,8 @@ import {
   getDodoProStatus,
   setDodoProStatus,
 } from './performance-cache';
+import { flow } from 'better-all';
+import { getBetterAllOptions } from './better-all';
 
 export type SubscriptionDetails = {
   id: string;
@@ -116,30 +118,48 @@ async function checkDodoSubscriptionProStatus(userId: string): Promise<boolean> 
   }
 }
 
-// Combined function to check Pro status from both Polar and Dodo Subscriptions
+// Combined function to check Pro status from both Polar and Dodo Subscriptions.
+// Uses flow() to race both queries — exits as soon as either finds an active subscription.
 async function getComprehensiveProStatus(
   userId: string,
 ): Promise<{ isProUser: boolean; source: 'polar' | 'dodo' | 'none' }> {
+  type ProResult = { isProUser: boolean; source: 'polar' | 'dodo' | 'none' };
   try {
-    const readDb = getReadReplica();
-    // Check Polar subscriptions first
-    const userSubscriptions = await readDb.select().from(subscription).where(eq(subscription.userId, userId));
-    const activeSubscription = userSubscriptions.find((sub) => sub.status === 'active');
-
-    if (activeSubscription) {
-      console.log('🔥 Polar subscription found for user:', userId);
-      return { isProUser: true, source: 'polar' };
-    }
-
-    // If no Polar subscription, check Dodo Subscriptions
-    const hasDodoProStatus = await checkDodoSubscriptionProStatus(userId);
-
-    if (hasDodoProStatus) {
-      console.log('🔥 Dodo subscription found for user:', userId);
-      return { isProUser: true, source: 'dodo' };
-    }
-
-    return { isProUser: false, source: 'none' };
+    const result = await flow<ProResult>(
+      {
+        async polarSubscriptions() {
+          const subs = await db.select().from(subscription).where(eq(subscription.userId, userId));
+          const active = subs.find((sub) => sub.status === 'active');
+          if (active) {
+            console.log('🔥 Polar subscription found for user:', userId);
+            this.$end({ isProUser: true, source: 'polar' });
+          }
+          return subs;
+        },
+        async dodoSubscriptions() {
+          const cached = getDodoSubscriptions(userId);
+          const subs = cached ?? await (async () => {
+            const data = await maindb.select().from(dodosubscription).where(eq(dodosubscription.userId, userId));
+            setDodoSubscriptions(userId, data);
+            return data;
+          })();
+          const now = new Date();
+          const active = subs.find((sub: any) => {
+            const periodEnd = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd) : null;
+            if (!periodEnd || periodEnd <= now) return false;
+            return sub.status === 'active' || sub.status === 'cancelled';
+          });
+          if (active) {
+            console.log('🔥 Dodo subscription found for user:', userId);
+            setDodoProStatus(userId, { isProUser: true, hasSubscriptions: true });
+            this.$end({ isProUser: true, source: 'dodo' });
+          }
+          return subs;
+        },
+      },
+      getBetterAllOptions(),
+    );
+    return result ?? { isProUser: false, source: 'none' };
   } catch (error) {
     console.error('Error getting comprehensive pro status:', error);
     return { isProUser: false, source: 'none' };
@@ -158,7 +178,7 @@ export async function getSubscriptionDetails(): Promise<SubscriptionDetailsResul
       return { hasSubscription: false };
     }
 
-    const readDb = getReadReplica();
+    const readDb = db;
 
     // Check cache first
     const cacheKey = createSubscriptionKey(session.user.id);

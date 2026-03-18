@@ -1,3 +1,28 @@
+import {
+  AtomicPowerIcon,
+  GlobalSearchIcon,
+  MicroscopeIcon,
+  YoutubeIcon,
+  RedditIcon,
+  Github01Icon,
+  AppleStocksIcon,
+  NewTwitterIcon,
+} from '@hugeicons/core-free-icons';
+
+// Search modes available for lookouts (non-auth-required modes only)
+export const LOOKOUT_SEARCH_MODES = [
+  { value: 'extreme', label: 'Extreme', icon: AtomicPowerIcon, description: 'Deep research with multiple sources' },
+  { value: 'web', label: 'Web', icon: GlobalSearchIcon, description: 'Search across the web' },
+  { value: 'academic', label: 'Academic', icon: MicroscopeIcon, description: 'Search academic papers' },
+  { value: 'youtube', label: 'YouTube', icon: YoutubeIcon, description: 'Search YouTube videos' },
+  { value: 'reddit', label: 'Reddit', icon: RedditIcon, description: 'Search Reddit posts' },
+  { value: 'github', label: 'GitHub', icon: Github01Icon, description: 'Search GitHub repositories' },
+  { value: 'stocks', label: 'Stocks', icon: AppleStocksIcon, description: 'Stock information' },
+  { value: 'x', label: 'X', icon: NewTwitterIcon, description: 'Search X posts' },
+] as const;
+
+export type LookoutSearchMode = (typeof LOOKOUT_SEARCH_MODES)[number]['value'];
+
 export const frequencyOptions = [
   { value: 'once', label: 'Once' },
   { value: 'daily', label: 'Daily' },
@@ -80,6 +105,7 @@ export const timezoneOptions = [
 ];
 
 export const allExampleLookouts = [
+  // EXTREME MODE EXAMPLES (deep multi-source research)
   {
     title: 'Daily AI News Digest',
     prompt:
@@ -87,31 +113,7 @@ export const allExampleLookouts = [
     frequency: 'daily',
     time: '09:00',
     timezone: 'America/New_York',
-  },
-  {
-    title: 'Weekly Crypto Market Analysis',
-    prompt:
-      'Provide a comprehensive analysis of the cryptocurrency market over the past week. Include price movements for major coins (BTC, ETH, SOL), significant news events, regulatory updates, and emerging trends in DeFi and NFTs. Highlight any major institutional adoptions, regulatory changes, or market-moving events.',
-    frequency: 'weekly',
-    time: '18:00',
-    timezone: 'UTC',
-    dayOfWeek: '0', // Sunday
-  },
-  {
-    title: 'Monthly Climate Tech Report',
-    prompt:
-      'Research and summarize the latest developments in climate technology and sustainability. Cover new renewable energy projects, carbon capture innovations, green tech funding rounds, and policy changes affecting the climate tech sector. Include updates on clean energy adoption rates and breakthrough technologies.',
-    frequency: 'monthly',
-    time: '10:00',
-    timezone: 'Europe/London',
-  },
-  {
-    title: 'Daily Stock Market Summary',
-    prompt:
-      "Provide a comprehensive summary of today's stock market performance. Include major index movements (S&P 500, NASDAQ, DOW), notable earnings announcements, significant corporate news, and any economic indicators that moved markets. Focus on actionable insights for investors.",
-    frequency: 'daily',
-    time: '16:30',
-    timezone: 'America/New_York',
+    searchMode: 'extreme',
   },
   {
     title: 'Weekly Startup Funding Roundup',
@@ -121,7 +123,19 @@ export const allExampleLookouts = [
     time: '11:00',
     timezone: 'America/Los_Angeles',
     dayOfWeek: '1', // Monday
+    searchMode: 'extreme',
   },
+  {
+    title: 'Monthly Climate Tech Report',
+    prompt:
+      'Research and summarize the latest developments in climate technology and sustainability. Cover new renewable energy projects, carbon capture innovations, green tech funding rounds, and policy changes affecting the climate tech sector. Include updates on clean energy adoption rates and breakthrough technologies.',
+    frequency: 'monthly',
+    time: '10:00',
+    timezone: 'Europe/London',
+    searchMode: 'extreme',
+  },
+
+  // WEB MODE EXAMPLES (general web search)
   {
     title: 'Daily Tech Acquisitions & Mergers',
     prompt:
@@ -129,23 +143,7 @@ export const allExampleLookouts = [
     frequency: 'daily',
     time: '14:00',
     timezone: 'Europe/Berlin',
-  },
-  {
-    title: 'Weekly Gaming Industry News',
-    prompt:
-      'Summarize the most important developments in the gaming industry over the past week. Include new game releases, studio acquisitions, platform updates, esports news, and emerging gaming technologies like VR/AR. Focus on industry trends and major business developments.',
-    frequency: 'weekly',
-    time: '20:00',
-    timezone: 'Asia/Tokyo',
-    dayOfWeek: '5', // Friday
-  },
-  {
-    title: 'Monthly SaaS Market Analysis',
-    prompt:
-      'Provide an in-depth analysis of the SaaS market trends over the past month. Include new product launches, pricing changes, market consolidation, and emerging SaaS categories. Analyze growth metrics, customer acquisition trends, and competitive landscape shifts.',
-    frequency: 'monthly',
-    time: '08:00',
-    timezone: 'America/Chicago',
+    searchMode: 'web',
   },
   {
     title: 'Daily Regulatory & Policy Updates',
@@ -154,6 +152,7 @@ export const allExampleLookouts = [
     frequency: 'daily',
     time: '07:00',
     timezone: 'America/New_York',
+    searchMode: 'web',
   },
   {
     title: 'Weekly Cybersecurity Incidents',
@@ -163,22 +162,190 @@ export const allExampleLookouts = [
     time: '15:30',
     timezone: 'UTC',
     dayOfWeek: '3', // Wednesday
+    searchMode: 'web',
   },
+
+  // ACADEMIC MODE EXAMPLES (scholarly papers and research)
   {
-    title: 'Monthly Real Estate Tech Trends',
+    title: 'Weekly Machine Learning Research',
     prompt:
-      'Analyze the latest trends in real estate technology over the past month. Cover PropTech innovations, virtual tour technologies, blockchain applications in real estate, and market digitization trends. Include funding activities and major platform launches.',
-    frequency: 'monthly',
-    time: '12:00',
-    timezone: 'America/Los_Angeles',
-  },
-  {
-    title: 'Daily Healthcare Innovation News',
-    prompt:
-      'Monitor and report on breakthrough healthcare innovations, medical device approvals, telemedicine developments, and digital health funding from the past 24 hours. Include regulatory approvals, clinical trial results, and emerging healthtech trends.',
-    frequency: 'daily',
-    time: '11:30',
+      'Find and summarize the most impactful machine learning papers published this week. Cover topics like large language models, computer vision, reinforcement learning, and AI safety. Include key findings, methodologies, and potential real-world applications.',
+    frequency: 'weekly',
+    time: '10:00',
     timezone: 'America/New_York',
+    dayOfWeek: '1', // Monday
+    searchMode: 'academic',
+  },
+  {
+    title: 'Monthly Biotech Research Digest',
+    prompt:
+      'Compile a summary of groundbreaking biotechnology research papers from the past month. Focus on gene therapy, CRISPR developments, drug discovery, and personalized medicine. Highlight papers with potential clinical applications.',
+    frequency: 'monthly',
+    time: '09:00',
+    timezone: 'Europe/London',
+    searchMode: 'academic',
+  },
+  {
+    title: 'Weekly Quantum Computing Papers',
+    prompt:
+      'Search for and summarize recent academic papers on quantum computing. Include advances in quantum algorithms, error correction, hardware developments, and practical applications. Focus on breakthrough results and their implications.',
+    frequency: 'weekly',
+    time: '14:00',
+    timezone: 'America/Los_Angeles',
+    dayOfWeek: '5', // Friday
+    searchMode: 'academic',
+  },
+
+  // YOUTUBE MODE EXAMPLES (video content)
+  {
+    title: 'Weekly Tech YouTube Roundup',
+    prompt:
+      'Find the most popular and informative tech YouTube videos from the past week. Include product reviews, tutorials, and tech news coverage from channels like MKBHD, Linus Tech Tips, and similar creators. Summarize key takeaways and notable opinions.',
+    frequency: 'weekly',
+    time: '18:00',
+    timezone: 'America/New_York',
+    dayOfWeek: '6', // Saturday
+    searchMode: 'youtube',
+  },
+  {
+    title: 'Daily Programming Tutorial Discoveries',
+    prompt:
+      'Search for new programming tutorials and coding content uploaded in the last 24 hours. Focus on web development, Python, JavaScript, and system design. Highlight tutorials from popular educators and emerging creators.',
+    frequency: 'daily',
+    time: '20:00',
+    timezone: 'UTC',
+    searchMode: 'youtube',
+  },
+  {
+    title: 'Weekly AI/ML Video Content',
+    prompt:
+      'Find educational YouTube videos about artificial intelligence and machine learning from the past week. Include lectures, tutorials, paper explanations, and industry talks. Focus on content suitable for both beginners and advanced practitioners.',
+    frequency: 'weekly',
+    time: '11:00',
+    timezone: 'Asia/Tokyo',
+    dayOfWeek: '0', // Sunday
+    searchMode: 'youtube',
+  },
+
+  // REDDIT MODE EXAMPLES (community discussions)
+  {
+    title: 'Daily Reddit Tech Discussions',
+    prompt:
+      'Monitor top discussions from r/technology, r/programming, and r/startups from the past 24 hours. Summarize trending topics, popular opinions, and any viral tech stories. Include notable AMAs or insider perspectives.',
+    frequency: 'daily',
+    time: '21:00',
+    timezone: 'America/Los_Angeles',
+    searchMode: 'reddit',
+  },
+  {
+    title: 'Weekly Developer Community Insights',
+    prompt:
+      'Compile the most upvoted posts and discussions from r/webdev, r/javascript, r/python, and r/devops over the past week. Focus on tool recommendations, career advice, and industry trends shared by the community.',
+    frequency: 'weekly',
+    time: '17:00',
+    timezone: 'America/New_York',
+    dayOfWeek: '5', // Friday
+    searchMode: 'reddit',
+  },
+  {
+    title: 'Daily Startup & Entrepreneur Buzz',
+    prompt:
+      'Track trending discussions from r/startups, r/entrepreneur, and r/SaaS. Summarize popular advice, success stories, failure post-mortems, and hot takes on startup culture and business strategies.',
+    frequency: 'daily',
+    time: '08:00',
+    timezone: 'Europe/London',
+    searchMode: 'reddit',
+  },
+
+  // GITHUB MODE EXAMPLES (repositories and code)
+  {
+    title: 'Weekly Trending GitHub Repos',
+    prompt:
+      'Find the most starred and trending GitHub repositories from the past week. Include new developer tools, open source projects, and interesting libraries across languages. Provide brief descriptions of what each project does and why it is gaining traction.',
+    frequency: 'weekly',
+    time: '10:00',
+    timezone: 'UTC',
+    dayOfWeek: '1', // Monday
+    searchMode: 'github',
+  },
+  {
+    title: 'Daily AI/ML Open Source Updates',
+    prompt:
+      'Search for new and updated AI/ML repositories on GitHub from the past 24 hours. Focus on model implementations, training frameworks, and research code releases. Highlight repos from major AI labs and notable researchers.',
+    frequency: 'daily',
+    time: '09:00',
+    timezone: 'America/Los_Angeles',
+    searchMode: 'github',
+  },
+  {
+    title: 'Weekly DevOps Tools Discovery',
+    prompt:
+      'Find new DevOps, infrastructure, and platform engineering tools on GitHub. Include Kubernetes operators, CI/CD tools, monitoring solutions, and cloud-native projects. Focus on production-ready and actively maintained repositories.',
+    frequency: 'weekly',
+    time: '14:00',
+    timezone: 'Europe/Berlin',
+    dayOfWeek: '3', // Wednesday
+    searchMode: 'github',
+  },
+
+  // STOCKS MODE EXAMPLES (market data)
+  {
+    title: 'Daily Stock Market Summary',
+    prompt:
+      "Provide a comprehensive summary of today's stock market performance. Include major index movements (S&P 500, NASDAQ, DOW), notable earnings announcements, significant corporate news, and any economic indicators that moved markets. Focus on actionable insights for investors.",
+    frequency: 'daily',
+    time: '16:30',
+    timezone: 'America/New_York',
+    searchMode: 'stocks',
+  },
+  {
+    title: 'Weekly Tech Stock Analysis',
+    prompt:
+      'Analyze the performance of major tech stocks (AAPL, GOOGL, MSFT, AMZN, NVDA, META, TSLA) over the past week. Include price changes, trading volume, analyst ratings, and any news affecting these companies. Provide a technical outlook.',
+    frequency: 'weekly',
+    time: '18:00',
+    timezone: 'America/New_York',
+    dayOfWeek: '5', // Friday
+    searchMode: 'stocks',
+  },
+  {
+    title: 'Daily Pre-Market Earnings Watch',
+    prompt:
+      'List all companies reporting earnings today, both pre-market and after-hours. Include expected EPS, revenue estimates, and key metrics to watch. Highlight any stocks with significant implied moves based on options pricing.',
+    frequency: 'daily',
+    time: '06:00',
+    timezone: 'America/New_York',
+    searchMode: 'stocks',
+  },
+
+  // X (TWITTER) MODE EXAMPLES (social media insights)
+  {
+    title: 'Daily Tech Twitter Highlights',
+    prompt:
+      'Curate the most engaging and informative posts from Tech Twitter/X in the past 24 hours. Include viral threads, hot takes from industry leaders, product announcements, and tech debates. Focus on posts from founders, engineers, and VCs.',
+    frequency: 'daily',
+    time: '19:00',
+    timezone: 'America/Los_Angeles',
+    searchMode: 'x',
+  },
+  {
+    title: 'Weekly AI Twitter Discourse',
+    prompt:
+      'Summarize the major AI-related conversations happening on X/Twitter this week. Include debates about AI safety, new model releases, demos going viral, and opinions from researchers and entrepreneurs. Track sentiment around major AI companies.',
+    frequency: 'weekly',
+    time: '17:00',
+    timezone: 'America/New_York',
+    dayOfWeek: '6', // Saturday
+    searchMode: 'x',
+  },
+  {
+    title: 'Daily Startup Announcements on X',
+    prompt:
+      'Track product launches, funding announcements, and major updates shared by startups on X/Twitter in the past 24 hours. Focus on posts from YC companies, notable founders, and emerging tech startups. Include engagement metrics and community reactions.',
+    frequency: 'daily',
+    time: '18:00',
+    timezone: 'America/Los_Angeles',
+    searchMode: 'x',
   },
 ];
 
@@ -208,6 +375,7 @@ export const DEFAULT_FORM_VALUES = {
   TIME: '09:00',
   TIMEZONE: 'UTC',
   DAY_OF_WEEK: '0', // Sunday
+  SEARCH_MODE: 'extreme', // Default to extreme search
 } as const;
 
 export const dayOfWeekOptions = [

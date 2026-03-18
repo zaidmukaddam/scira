@@ -4,6 +4,8 @@ import { getTweet } from 'react-tweet/api';
 import { xai } from '@ai-sdk/xai';
 import { UIMessageStreamWriter } from 'ai';
 import { ChatMessage } from '@/lib/types';
+import { all } from 'better-all';
+import { getBetterAllOptions } from '@/lib/better-all';
 
 interface CitationSource {
   sourceType?: string;
@@ -113,13 +115,13 @@ export function xSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage>) {
 
             const { text, sources } = await generateText({
               model: xai.responses('grok-4-1-fast-non-reasoning'),
-              system: `You are a helpful assistant that searches for X content with all the tools available to you. Do not use user search tool.  You can search for the thread or the content of the post. You can also search for the content of the post using thread fetch tool. NO NEED TO WRITE A SINGLE WORD AFTER RUNNING THE TOOLs AT ALL COSTS!!`,
+              system: `You are a helpful assistant that searches for X content with all the tools available to you. Do not use user search tool. Max limit of results is 30. You can search for the thread or the content of the post. You can also search for the content of the post using thread fetch tool. Go deep to find the latest information on the topic. NO NEED TO WRITE A SINGLE WORD AFTER RUNNING THE TOOLs AT ALL COSTS!!`,
               messages: [{
                 role: 'user',
                 content: query
               }],
-              maxOutputTokens: 1,
-              stopWhen: stepCountIs(1),
+              maxOutputTokens: 5,
+              stopWhen: stepCountIs(2),
               tools: {
                 x_search: xai.tools.xSearch(xSearchToolConfig),
               },
@@ -174,7 +176,11 @@ export function xSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage>) {
                   }
                 });
 
-              const tweetResults = await Promise.all(tweetFetchPromises);
+              const tweetMap = await all(
+                Object.fromEntries(tweetFetchPromises.map((promise, index) => [`t:${index}`, async () => promise])),
+                getBetterAllOptions(),
+              );
+              const tweetResults = tweetFetchPromises.map((_, index) => tweetMap[`t:${index}`]);
 
               const validTweets = tweetResults.filter((result) => result !== null);
 
@@ -256,7 +262,11 @@ export function xSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage>) {
           }
         });
 
-        const searches = await Promise.all(searchPromises);
+        const searchMap = await all(
+          Object.fromEntries(searchPromises.map((promise, index) => [`q:${index}`, async () => promise])),
+          getBetterAllOptions(),
+        );
+        const searches = queries.map((_, index) => searchMap[`q:${index}`]);
 
         // Deduplicate posts across all queries based on tweet URL
         const seenUrls = new Set<string>();

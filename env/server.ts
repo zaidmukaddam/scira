@@ -2,11 +2,12 @@
 import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
+
 export const serverEnv = createEnv({
   server: {
     XAI_API_KEY: z.string().min(1),
     OPENAI_API_KEY: z.string().min(1),
-    ANTHROPIC_API_KEY: z.string().min(1),
+    // ANTHROPIC_API_KEY: z.string().min(1),
     GROQ_API_KEY: z.string().min(1),
     GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1),
     DAYTONA_API_KEY: z.string().min(1),
@@ -28,6 +29,7 @@ export const serverEnv = createEnv({
     TMDB_API_KEY: z.string().min(1),
     YT_ENDPOINT: z.string().min(1),
     FIRECRAWL_API_KEY: z.string().min(1),
+    NOTTE_API_KEY: z.string().optional(),
     PARALLEL_API_KEY: z.string().min(1),
     OPENWEATHER_API_KEY: z.string().min(1),
     GOOGLE_MAPS_API_KEY: z.string().min(1),
@@ -41,7 +43,22 @@ export const serverEnv = createEnv({
     QSTASH_TOKEN: z.string().min(1),
     RESEND_API_KEY: z.string().min(1),
     SUPERMEMORY_API_KEY: z.string().min(1),
+    SPOTIFY_CLIENT_ID: z.string().min(1),
+    SPOTIFY_CLIENT_SECRET: z.string().min(1),
+    MCP_CREDENTIALS_ENCRYPTION_KEY: z.string().min(1),
+    MCP_OAUTH_CALLBACK_ORIGIN: z.string().url().optional(),
     ALLOWED_ORIGINS: z.string().optional().default('http://localhost:3000'),
+    GITHUB_MCP_CLIENT_ID: z.string().optional(),
+    GITHUB_MCP_CLIENT_SECRET: z.string().optional(),
+    BOX_MCP_CLIENT_ID: z.string().optional(),
+    BOX_MCP_CLIENT_SECRET: z.string().optional(),
+    DROPBOX_MCP_CLIENT_ID: z.string().optional(),
+    DROPBOX_MCP_CLIENT_SECRET: z.string().optional(),
+    SLACK_MCP_CLIENT_ID: z.string().optional(),
+    SLACK_MCP_CLIENT_SECRET: z.string().optional(),
+    HUBSPOT_MCP_CLIENT_ID: z.string().optional(),
+    HUBSPOT_MCP_CLIENT_SECRET: z.string().optional(),
+    UPSTASH_BOX_API_KEY: z.string().optional(),
   },
   experimental__runtimeEnv: process.env,
 });

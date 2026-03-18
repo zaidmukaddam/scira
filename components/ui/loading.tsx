@@ -1,13 +1,15 @@
 import { cn } from '@/lib/utils';
 
-export function ClassicLoader({ className, size = 'md' }: { className?: string; size?: 'sm' | 'md' | 'lg' }) {
+export function ClassicLoader({ className, size = 'md' }: { className?: string; size?: 'xs' | 'sm' | 'md' | 'lg' }) {
   const sizeClasses = {
+    xs: 'size-2.5',
     sm: 'size-4',
     md: 'size-5',
     lg: 'size-6',
   };
 
   const barSizes = {
+    xs: { height: '3px', width: '1px' },
     sm: { height: '6px', width: '1.5px' },
     md: { height: '8px', width: '2px' },
     lg: { height: '10px', width: '2.5px' },
@@ -23,8 +25,8 @@ export function ClassicLoader({ className, size = 'md' }: { className?: string; 
             style={{
               top: '0',
               left: '50%',
-              marginLeft: size === 'sm' ? '-0.75px' : size === 'lg' ? '-1.25px' : '-1px',
-              transformOrigin: `${size === 'sm' ? '0.75px' : size === 'lg' ? '1.25px' : '1px'} ${size === 'sm' ? '10px' : size === 'lg' ? '14px' : '12px'}`,
+              marginLeft: size === 'xs' ? '-0.5px' : size === 'sm' ? '-0.75px' : size === 'lg' ? '-1.25px' : '-1px',
+              transformOrigin: `${size === 'xs' ? '0.5px' : size === 'sm' ? '0.75px' : size === 'lg' ? '1.25px' : '1px'} ${size === 'xs' ? '6px' : size === 'sm' ? '10px' : size === 'lg' ? '14px' : '12px'}`,
               transform: `rotate(${i * 30}deg)`,
               opacity: 0,
               animationDelay: `${i * 0.1}s`,

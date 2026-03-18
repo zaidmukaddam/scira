@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -31,14 +31,31 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Search, Globe, MoreVertical, Check, Pencil, Trash2, Share2, Lock, Plus } from 'lucide-react';
-import { toast } from 'sonner';
+import { Globe, MoreHorizontal, Check, Pencil, Trash2, Share2, Lock, Plus, Pin, PinOff, Clock, Cpu, ChevronDown } from 'lucide-react';
+import { sileo } from 'sileo';
 import Link from 'next/link';
-import { bulkDeleteChats, getAllChatsWithPreview, searchChatsByTitle, updateChatTitle, deleteChat, updateChatVisibility } from '@/app/actions';
-import { formatDistanceToNow } from 'date-fns';
+import {
+  bulkDeleteChats,
+  getAllChatsWithPreview,
+  searchChatsByTitle,
+  updateChatPinned,
+  updateChatTitle,
+  deleteChat,
+  updateChatVisibility,
+} from '@/app/actions';
+import { formatDistanceToNow, isToday, isYesterday, isThisWeek, isThisMonth, differenceInDays } from 'date-fns';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { FolderLibraryIcon } from '@hugeicons/core-free-icons';
+import { FolderLibraryIcon, Search01Icon } from '@hugeicons/core-free-icons';
+import { cn } from '@/lib/utils';
+import { models } from '@/ai/models';
+import { DropdownMenuCheckboxItem, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
+
+// Map a raw model value (e.g. "scira-grok-3") to a short display label
+function getModelLabel(modelValue: string): string {
+  const found = models.find((m) => m.value === modelValue);
+  return found?.label ?? modelValue.replace(/^scira-/, '').replace(/-/g, ' ');
+}
 
 interface Chat {
   id: string;
@@ -46,19 +63,106 @@ interface Chat {
   title: string;
   createdAt: Date;
   updatedAt: Date;
+  isPinned: boolean;
   visibility: 'public' | 'private';
-  preview?: string;
+  preview?: string | null;
+  model?: string | null;
 }
 
 interface SearchesPageProps {
   userId: string;
 }
 
+type VisibilityFilter = 'all' | 'public' | 'private';
+type DateFilter = 'all' | 'today' | 'week' | 'month';
+type SortOrder = 'newest' | 'oldest';
+
 const ITEMS_PER_PAGE = 25;
+
+function fuzzySearch(query: string, text: string): boolean {
+  if (!query) return true;
+  const queryLower = query.toLowerCase();
+  const textLower = text.toLowerCase();
+  if (textLower.includes(queryLower)) return true;
+  let queryIndex = 0;
+  for (let i = 0; i < textLower.length && queryIndex < queryLower.length; i++) {
+    if (textLower[i] === queryLower[queryIndex]) queryIndex++;
+  }
+  return queryIndex === queryLower.length;
+}
+
+function advancedSearch(
+  chat: Chat,
+  query: string,
+  visibilityFilter: VisibilityFilter,
+  dateFilter: DateFilter,
+): boolean {
+  if (visibilityFilter !== 'all' && chat.visibility !== visibilityFilter) return false;
+
+  if (dateFilter !== 'all') {
+    const dateToCheck = chat.updatedAt || chat.createdAt;
+    const chatDate = dateToCheck instanceof Date ? dateToCheck : new Date(dateToCheck);
+    if (isNaN(chatDate.getTime())) return false;
+    const now = new Date();
+    switch (dateFilter) {
+      case 'today':
+        if (!isToday(chatDate)) return false;
+        break;
+      case 'week': {
+        const daysDiff = differenceInDays(now, chatDate);
+        if (daysDiff < 0 || daysDiff > 7) return false;
+        break;
+      }
+      case 'month':
+        if (!isThisMonth(chatDate)) return false;
+        break;
+    }
+  }
+
+  if (!query) return true;
+
+  if (query.startsWith('public:')) return chat.visibility === 'public' && fuzzySearch(query.slice(7), chat.title);
+  if (query.startsWith('private:')) return chat.visibility === 'private' && fuzzySearch(query.slice(8), chat.title);
+  if (query.startsWith('today:')) return isToday(new Date(chat.updatedAt || chat.createdAt)) && fuzzySearch(query.slice(6), chat.title);
+  if (query.startsWith('week:')) {
+    const chatDate = new Date(chat.updatedAt || chat.createdAt);
+    const daysDiff = differenceInDays(new Date(), chatDate);
+    return daysDiff >= 0 && daysDiff <= 7 && fuzzySearch(query.slice(5), chat.title);
+  }
+  if (query.startsWith('month:')) return isThisMonth(new Date(chat.updatedAt || chat.createdAt)) && fuzzySearch(query.slice(6), chat.title);
+
+  return fuzzySearch(query, chat.title);
+}
+
+type TimeGroup = 'pinned' | 'today' | 'yesterday' | 'this_week' | 'this_month' | 'earlier';
+
+function getChatTimeGroup(chat: Chat): TimeGroup {
+  if (chat.isPinned) return 'pinned';
+  const d = new Date(chat.updatedAt || chat.createdAt);
+  if (isToday(d)) return 'today';
+  if (isYesterday(d)) return 'yesterday';
+  if (isThisWeek(d)) return 'this_week';
+  if (isThisMonth(d)) return 'this_month';
+  return 'earlier';
+}
+
+const GROUP_LABELS: Record<TimeGroup, string> = {
+  pinned: 'Pinned',
+  today: 'Today',
+  yesterday: 'Yesterday',
+  this_week: 'This week',
+  this_month: 'This month',
+  earlier: 'Earlier',
+};
+
+const GROUP_ORDER: TimeGroup[] = ['pinned', 'today', 'yesterday', 'this_week', 'this_month', 'earlier'];
 
 export function SearchesPage({ userId }: SearchesPageProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
+  const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>('all');
+  const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [selectedChatIds, setSelectedChatIds] = useState<Set<string>>(new Set());
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -71,133 +175,110 @@ export function SearchesPage({ userId }: SearchesPageProps) {
   const [showSingleDeleteDialog, setShowSingleDeleteDialog] = useState(false);
   const [chatToDelete, setChatToDelete] = useState<{ id: string; title: string } | null>(null);
   const [showVisibilityDialog, setShowVisibilityDialog] = useState(false);
-  const [chatToShare, setChatToShare] = useState<{ id: string; title: string; visibility: 'public' | 'private' } | null>(null);
+  const [chatToShare, setChatToShare] = useState<{
+    id: string;
+    title: string;
+    visibility: 'public' | 'private';
+  } | null>(null);
   const [isChangingVisibility, setIsChangingVisibility] = useState(false);
   const [openDropdownId, setOpenDropdownId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
-  // Debounce search query
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-    }, 300);
-
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Fetch chats (either all or search results) with offset-based pagination
-  const {
-    data,
-    isLoading,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useInfiniteQuery({
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: ['searches', userId, debouncedQuery],
     initialPageParam: 0,
     queryFn: async ({ pageParam }) => {
       const offset = pageParam * ITEMS_PER_PAGE;
-
       if (debouncedQuery.trim().length === 0) {
         const result = await getAllChatsWithPreview(ITEMS_PER_PAGE, offset);
-        if ('error' in result) {
-          throw new Error(result.error);
-        }
-        const chats = result.chats as Chat[];
-        return chats;
+        if ('error' in result) throw new Error(result.error);
+        return result.chats as Chat[];
       }
-
       const result = await searchChatsByTitle(debouncedQuery, ITEMS_PER_PAGE, offset);
-      if ('error' in result) {
-        throw new Error(result.error);
-      }
-      const chats = result.chats as Chat[];
-      return chats;
+      if ('error' in result) throw new Error(result.error);
+      return result.chats as Chat[];
     },
-    getNextPageParam: (lastPage, allPages) =>
-      lastPage.length === ITEMS_PER_PAGE ? allPages.length : undefined,
-    staleTime: 30000, // 30 seconds
+    refetchInterval: 6000,
+    refetchOnWindowFocus: true,
+    getNextPageParam: (lastPage, allPages) => (lastPage.length === ITEMS_PER_PAGE ? allPages.length : undefined),
+    staleTime: 30000,
   });
 
-  const pages = data?.pages ?? [];
-  const displayedChats = pages.flat();
-  const hasMore = !!hasNextPage;
+  const allChats = useMemo(() => (data?.pages ?? []).flat(), [data]);
 
-  // Handle select/deselect individual chat
+  const displayedChats = useMemo(() => {
+    const filtered = allChats.filter((chat) => advancedSearch(chat, debouncedQuery, visibilityFilter, dateFilter));
+    if (sortOrder === 'oldest') {
+      return [...filtered].sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+    }
+    return filtered;
+  }, [allChats, debouncedQuery, visibilityFilter, dateFilter, sortOrder]);
+
+  const groupedChats = useMemo(() => {
+    const groups: Partial<Record<TimeGroup, Chat[]>> = {};
+    for (const chat of displayedChats) {
+      const group = getChatTimeGroup(chat);
+      if (!groups[group]) groups[group] = [];
+      groups[group]!.push(chat);
+    }
+    return groups;
+  }, [displayedChats]);
+
+  const hasMore = !!hasNextPage;
+  const hasActiveFilters = visibilityFilter !== 'all' || dateFilter !== 'all' || searchQuery.length > 0 || sortOrder !== 'newest';
+
   const toggleChatSelection = useCallback((chatId: string) => {
     setSelectedChatIds((prev) => {
       const next = new Set(prev);
-      if (next.has(chatId)) {
-        next.delete(chatId);
-      } else {
-        next.add(chatId);
-      }
+      next.has(chatId) ? next.delete(chatId) : next.add(chatId);
       return next;
     });
   }, []);
 
-  // Handle select/deselect all (only for displayed chats)
   const toggleSelectAll = useCallback(() => {
     const displayedIds = new Set(displayedChats.map((c) => c.id));
-    const allDisplayedSelected = displayedChats.every((c) => selectedChatIds.has(c.id));
-
-    if (allDisplayedSelected) {
-      // Deselect all displayed chats
-      setSelectedChatIds((prev) => {
-        const next = new Set(prev);
-        displayedIds.forEach((id) => next.delete(id));
-        return next;
-      });
-    } else {
-      // Select all displayed chats
-      setSelectedChatIds((prev) => {
-        const next = new Set(prev);
-        displayedIds.forEach((id) => next.add(id));
-        return next;
-      });
-    }
+    const allSelected = displayedChats.every((c) => selectedChatIds.has(c.id));
+    setSelectedChatIds((prev) => {
+      const next = new Set(prev);
+      displayedIds.forEach((id) => (allSelected ? next.delete(id) : next.add(id)));
+      return next;
+    });
   }, [displayedChats, selectedChatIds]);
 
-  // Handle bulk delete
   const handleBulkDelete = useCallback(async () => {
     if (selectedChatIds.size === 0) return;
-
     setIsDeleting(true);
     try {
       const ids = Array.from(selectedChatIds);
       const result = await bulkDeleteChats(ids);
-
-      toast.success(`${result.deletedCount} chat${result.deletedCount > 1 ? 's' : ''} deleted`);
-
-      // Clear selection and exit select mode
+      sileo.success({ title: `${result.deletedCount} chat${result.deletedCount > 1 ? 's' : ''} deleted` });
       setSelectedChatIds(new Set());
       setIsSelectMode(false);
       setShowDeleteDialog(false);
-
-      // Invalidate queries to refresh the list
       queryClient.invalidateQueries({ queryKey: ['searches', userId] });
       queryClient.invalidateQueries({ queryKey: ['recent-chats', userId] });
-    } catch (error) {
-      console.error('Failed to delete chats:', error);
-      toast.error('Failed to delete chats. Please try again.');
+    } catch {
+      sileo.error({ title: 'Failed to delete chats. Please try again.' });
     } finally {
       setIsDeleting(false);
     }
   }, [selectedChatIds, userId, queryClient]);
 
-  const allDisplayedSelected = displayedChats.length > 0 && displayedChats.every(c => selectedChatIds.has(c.id));
-  const someDisplayedSelected = displayedChats.some(c => selectedChatIds.has(c.id)) && !allDisplayedSelected;
+  const allDisplayedSelected = displayedChats.length > 0 && displayedChats.every((c) => selectedChatIds.has(c.id));
+  const someDisplayedSelected = displayedChats.some((c) => selectedChatIds.has(c.id)) && !allDisplayedSelected;
 
-  // Handle opening rename dialog
   const handleRenameClick = useCallback((chat: Chat) => {
     setRenamingChat({ id: chat.id, title: chat.title });
     setNewTitle(chat.title);
     setShowRenameDialog(true);
-    setOpenDropdownId(null); // Close dropdown
+    setOpenDropdownId(null);
   }, []);
 
-  // Handle rename submit
   const handleRenameSubmit = useCallback(async () => {
     if (!renamingChat || !newTitle.trim() || newTitle.trim() === renamingChat.title) {
       setShowRenameDialog(false);
@@ -205,212 +286,320 @@ export function SearchesPage({ userId }: SearchesPageProps) {
       setNewTitle('');
       return;
     }
-
     setIsRenaming(true);
     try {
       await updateChatTitle(renamingChat.id, newTitle.trim());
-      toast.success('Chat renamed successfully');
-
-      // Invalidate queries to refresh the list
+      sileo.success({ title: 'Chat renamed successfully' });
       queryClient.invalidateQueries({ queryKey: ['searches', userId] });
-
       setShowRenameDialog(false);
       setRenamingChat(null);
       setNewTitle('');
-    } catch (error) {
-      console.error('Failed to rename chat:', error);
-      toast.error('Failed to rename chat. Please try again.');
+    } catch {
+      sileo.error({ title: 'Failed to rename chat. Please try again.' });
     } finally {
       setIsRenaming(false);
     }
   }, [renamingChat, newTitle, userId, queryClient]);
 
-  // Handle opening delete dialog for single chat
   const handleDeleteClick = useCallback((chat: Chat) => {
     setChatToDelete({ id: chat.id, title: chat.title });
     setShowSingleDeleteDialog(true);
-    setOpenDropdownId(null); // Close dropdown
+    setOpenDropdownId(null);
   }, []);
 
-  // Handle confirming single chat delete
   const handleConfirmDelete = useCallback(async () => {
     if (!chatToDelete) return;
-
     setDeletingChatId(chatToDelete.id);
     try {
       await deleteChat(chatToDelete.id);
-      toast.success('Chat deleted');
-
-      // Invalidate queries to refresh the list
+      sileo.success({ title: 'Chat deleted' });
       queryClient.invalidateQueries({ queryKey: ['searches', userId] });
       queryClient.invalidateQueries({ queryKey: ['recent-chats', userId] });
-
       setShowSingleDeleteDialog(false);
       setChatToDelete(null);
-    } catch (error) {
-      console.error('Failed to delete chat:', error);
-      toast.error('Failed to delete chat. Please try again.');
+    } catch {
+      sileo.error({ title: 'Failed to delete chat. Please try again.' });
     } finally {
       setDeletingChatId(null);
     }
   }, [chatToDelete, userId, queryClient]);
 
-  // Handle opening visibility change dialog
   const handleShareClick = useCallback((chat: Chat) => {
     setChatToShare({ id: chat.id, title: chat.title, visibility: chat.visibility });
     setShowVisibilityDialog(true);
-    setOpenDropdownId(null); // Close dropdown
+    setOpenDropdownId(null);
   }, []);
 
-  // Handle confirming visibility change
+  const handlePinToggle = useCallback(
+    async (chat: Chat) => {
+      try {
+        const updatedChat = await updateChatPinned(chat.id, !chat.isPinned);
+        if (!updatedChat) {
+          sileo.error({ title: 'Failed to update pinned state. Please try again.' });
+          return;
+        }
+        sileo.success({ title: chat.isPinned ? 'Chat unpinned' : 'Chat pinned' });
+        queryClient.invalidateQueries({ queryKey: ['searches', userId] });
+        queryClient.invalidateQueries({ queryKey: ['recent-chats', userId] });
+      } catch {
+        sileo.error({ title: 'Failed to update pinned state. Please try again.' });
+      } finally {
+        setOpenDropdownId(null);
+      }
+    },
+    [queryClient, userId],
+  );
+
   const handleConfirmVisibilityChange = useCallback(async () => {
     if (!chatToShare) return;
-
     const newVisibility = chatToShare.visibility === 'public' ? 'private' : 'public';
     setIsChangingVisibility(true);
     try {
       await updateChatVisibility(chatToShare.id, newVisibility);
-      toast.success(newVisibility === 'public' ? 'Chat is now public' : 'Chat is now private');
-
-      // Invalidate queries to refresh the list
+      sileo.success({ title: newVisibility === 'public' ? 'Chat is now public' : 'Chat is now private' });
       queryClient.invalidateQueries({ queryKey: ['searches', userId] });
-
       setShowVisibilityDialog(false);
       setChatToShare(null);
-    } catch (error) {
-      console.error('Failed to update chat visibility:', error);
-      toast.error('Failed to update visibility. Please try again.');
+    } catch {
+      sileo.error({ title: 'Failed to update visibility. Please try again.' });
     } finally {
       setIsChangingVisibility(false);
     }
   }, [chatToShare, userId, queryClient]);
 
-  // Handle entering select mode and selecting a chat
-  const handleSelectClick = useCallback((chatId: string) => {
-    setIsSelectMode(true);
-    toggleChatSelection(chatId);
-    setOpenDropdownId(null); // Close dropdown
-  }, [toggleChatSelection]);
+  const handleSelectClick = useCallback(
+    (chatId: string) => {
+      setIsSelectMode(true);
+      toggleChatSelection(chatId);
+      setOpenDropdownId(null);
+    },
+    [toggleChatSelection],
+  );
 
-  const handleShowMore = useCallback(() => {
-    fetchNextPage();
-  }, [fetchNextPage]);
+  const renderChatRow = (chat: Chat) => {
+    const isSelected = selectedChatIds.has(chat.id);
+    const activityDate = new Date(chat.updatedAt || chat.createdAt);
+    const modelLabel = chat.model ? getModelLabel(chat.model) : null;
+
+    return (
+      <div key={chat.id} className="group relative border-b border-border/30 last:border-0">
+        {isSelectMode && (
+          <Checkbox
+            checked={isSelected}
+            onCheckedChange={() => toggleChatSelection(chat.id)}
+            aria-label={`Select ${chat.title}`}
+            className="absolute -left-5 md:-left-6 top-[18px] data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+          />
+        )}
+        <div className="flex items-start py-4 px-1">
+          <Link href={`/search/${chat.id}`} className="flex-1 min-w-0 space-y-1.5 pr-8">
+          {/* Title */}
+          <div className="flex items-center gap-1.5">
+            <p className="text-[15px] font-medium leading-snug truncate group-hover:text-primary transition-colors duration-150">
+              {chat.title}
+            </p>
+            {chat.isPinned && <Pin className="size-3 shrink-0 text-muted-foreground/40 fill-muted-foreground/20" />}
+            {chat.visibility === 'public' && <Globe className="size-3 shrink-0 text-muted-foreground/40" />}
+          </div>
+
+          {/* Preview — 2 lines */}
+          {chat.preview && (
+            <p className="text-sm text-muted-foreground/60 line-clamp-2 leading-relaxed">
+              {chat.preview}
+            </p>
+          )}
+
+          {/* Metadata */}
+          <div className="flex items-center gap-2 pt-0.5 flex-wrap">
+            {modelLabel && (
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/50 border border-border/50 rounded-sm px-1.5 py-0.5 leading-none">
+                <Cpu className="size-3" />
+                {modelLabel}
+              </span>
+            )}
+            <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/40 tabular-nums">
+              <Clock className="size-3" />
+              {formatDistanceToNow(activityDate, { addSuffix: true })}
+            </span>
+          </div>
+        </Link>
+
+          {/* Always-visible menu */}
+          <div className="absolute right-1 top-4 shrink-0">
+            <DropdownMenu open={openDropdownId === chat.id} onOpenChange={(open) => setOpenDropdownId(open ? chat.id : null)}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="size-7 p-0 rounded-md text-muted-foreground/40 hover:text-foreground"
+                  onClick={(e) => e.preventDefault()}
+                  aria-label="More options"
+                >
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem onClick={(e) => { e.preventDefault(); handlePinToggle(chat); }} className="gap-2 text-xs">
+                  {chat.isPinned ? <><PinOff className="size-3.5" />Unpin</> : <><Pin className="size-3.5" />Pin</>}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.preventDefault(); handleSelectClick(chat.id); }} className="gap-2 text-xs">
+                  <Check className="size-3.5" />Select
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.preventDefault(); handleShareClick(chat); }} className="gap-2 text-xs">
+                  {chat.visibility === 'public'
+                    ? <><Lock className="size-3.5" />Make private</>
+                    : <><Share2 className="size-3.5" />Share</>}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={(e) => { e.preventDefault(); handleRenameClick(chat); }} className="gap-2 text-xs">
+                  <Pencil className="size-3.5" />Rename
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={(e) => { e.preventDefault(); handleDeleteClick(chat); }} variant="destructive" className="gap-2 text-xs">
+                  <Trash2 className="size-3.5" />Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
-    <div className="w-full h-screen flex flex-col">
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden px-4 pt-4 md:px-8 md:pt-8 max-w-3xl mx-auto w-full">
-        {/* Fixed Header */}
-        <div className="shrink-0">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              {/* Mobile sidebar trigger */}
-              <div className="md:hidden">
-                <SidebarTrigger />
-              </div>
-              <div className="flex items-center gap-2">
-                <HugeiconsIcon icon={FolderLibraryIcon} size={24} strokeWidth={1.5} className="shrink-0" />
-                <h1 className="text-xl md:text-2xl font-normal font-be-vietnam-pro tracking-tight">Search Library</h1>
-              </div>
+    <div className="w-full h-dvh flex flex-col">
+      {/* Header */}
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
+        <div className="flex h-14 items-center justify-between px-4 md:px-6 max-w-3xl mx-auto w-full">
+          <div className="flex items-center gap-2.5">
+            <div className="md:hidden">
+              <SidebarTrigger />
             </div>
-            <Link href="/new" prefetch>
-              <Button variant="outline" size="sm" className="gap-2">
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">New Search</span>
-              </Button>
-            </Link>
-          </div>
-
-          {/* Fixed Search Input */}
-          <div className="mb-6 relative z-10 bg-background">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search your chats..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 h-10 text-sm bg-muted/50 border-0 focus-visible:ring-1 focus-visible:ring-ring"
-              />
-            </div>
-          </div>
-
-          {/* Chat count and Select toggle */}
-          <div className="flex items-center justify-start gap-2 mb-4">
-            {isLoading ? (
-              <Skeleton className="h-4 w-16" />
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                {displayedChats.length} {displayedChats.length === 1 ? 'search' : 'searches'} with Scira
-              </p>
+            <HugeiconsIcon icon={FolderLibraryIcon} size={18} strokeWidth={1.5} className="shrink-0 text-foreground/70" />
+            <h1 className="text-base font-semibold tracking-tight">Library</h1>
+            {!isLoading && displayedChats.length > 0 && (
+              <span className="text-xs text-muted-foreground/50 tabular-nums">{displayedChats.length}</span>
             )}
-            <Button
-              variant="link"
-              size="sm"
-              onClick={() => {
-                if (isSelectMode) {
-                  // Exit select mode and clear selections
-                  setIsSelectMode(false);
-                  setSelectedChatIds(new Set());
-                } else {
-                  // Enter select mode
-                  setIsSelectMode(true);
-                }
-              }}
-              className="h-auto p-0 text-sm text-foreground hover:text-primary underline"
-            >
-              {isSelectMode ? 'Done' : 'Select'}
+          </div>
+          <Link href="/new" prefetch>
+            <Button variant="outline" size="sm" className="h-8 text-sm rounded-md gap-1.5 px-3 font-medium">
+              <Plus className="size-3.5" />
+              New
             </Button>
+          </Link>
+        </div>
+      </header>
+
+      <main className="flex-1 flex flex-col overflow-hidden max-w-3xl mx-auto w-full">
+        {/* Search — static */}
+        <div className="shrink-0 pt-3 pb-2.5 px-4 md:px-6">
+          <div className="relative">
+            <HugeiconsIcon icon={Search01Icon} size={15} strokeWidth={1.5} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="Search threads..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9 text-sm rounded-lg bg-muted/50 border-border/40 focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-border/40"
+            />
           </div>
         </div>
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto -mx-4 px-4 md:-mx-6 md:px-6">
-          {/* Bulk Actions Bar - Only show when in select mode and items are selected */}
-          {isSelectMode && selectedChatIds.size > 0 && (
-            <div className="mb-4 flex flex-wrap items-center gap-2 sm:gap-3 text-sm">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  checked={allDisplayedSelected ? true : someDisplayedSelected ? 'indeterminate' : false}
-                  onCheckedChange={toggleSelectAll}
-                  aria-label="Select all displayed chats"
-                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                />
-                <button
-                  onClick={toggleSelectAll}
-                  className="text-muted-foreground hover:text-foreground cursor-pointer"
-                >
-                  {allDisplayedSelected ? 'Deselect all' : 'Select all'}
-                </button>
-              </div>
-              <span className="text-muted-foreground hidden sm:inline">·</span>
-              <span className="text-muted-foreground">
-                {selectedChatIds.size} selected
-              </span>
-              <span className="text-muted-foreground hidden sm:inline">·</span>
-              <Button
-                variant="link"
-                size="sm"
-                onClick={() => setShowDeleteDialog(true)}
-                disabled={isDeleting}
-                className="h-auto p-0 text-destructive hover:text-destructive/80"
-              >
-                Delete
-              </Button>
-            </div>
-          )}
+        {/* Filter bar — static */}
+        <div className="shrink-0 pb-2.5 flex items-center gap-1.5 px-4 md:px-6">
+          {/* Select / Done */}
+          <button
+            onClick={() => { setIsSelectMode((v) => !v); setSelectedChatIds(new Set()); }}
+            className={cn(
+              'inline-flex items-center h-7 px-2.5 text-xs rounded-md border transition-colors',
+              isSelectMode
+                ? 'border-foreground/40 bg-foreground text-background font-medium'
+                : 'border-border/60 text-foreground/70 hover:text-foreground hover:border-border',
+            )}
+          >
+            {isSelectMode ? 'Done' : 'Select'}
+          </button>
 
+          {/* Date filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className={cn(
+                'inline-flex items-center gap-1 h-7 px-2.5 text-xs rounded-md border transition-colors',
+                dateFilter !== 'all'
+                  ? 'border-foreground/40 text-foreground font-medium'
+                  : 'border-border/60 text-foreground/70 hover:text-foreground hover:border-border',
+              )}>
+                {dateFilter === 'all' ? 'Any time' : dateFilter === 'today' ? 'Today' : dateFilter === 'week' ? 'Last 7 days' : 'This month'}
+                <ChevronDown className="size-3 opacity-60" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-36">
+              {([['all', 'Any time'], ['today', 'Today'], ['week', 'Last 7 days'], ['month', 'This month']] as const).map(([v, label]) => (
+                <DropdownMenuItem key={v} onClick={() => setDateFilter(v)} className="text-xs gap-2">
+                  {label}
+                  {dateFilter === v && <Check className="size-3 ml-auto" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Visibility filter */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className={cn(
+                'inline-flex items-center gap-1 h-7 px-2.5 text-xs rounded-md border transition-colors',
+                visibilityFilter !== 'all'
+                  ? 'border-foreground/40 text-foreground font-medium'
+                  : 'border-border/60 text-foreground/70 hover:text-foreground hover:border-border',
+              )}>
+                {visibilityFilter === 'all' ? 'Type' : visibilityFilter === 'private' ? 'Private' : 'Shared'}
+                <ChevronDown className="size-3 opacity-60" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-32">
+              {([['all', 'All'], ['private', 'Private'], ['public', 'Shared']] as const).map(([v, label]) => (
+                <DropdownMenuItem key={v} onClick={() => setVisibilityFilter(v)} className="text-xs gap-2">
+                  {label}
+                  {visibilityFilter === v && <Check className="size-3 ml-auto" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Sort — right-aligned */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className={cn(
+                'inline-flex items-center gap-1 h-7 px-2.5 text-xs rounded-md border transition-colors ml-auto',
+                sortOrder !== 'newest'
+                  ? 'border-foreground/40 text-foreground font-medium'
+                  : 'border-border/60 text-foreground/70 hover:text-foreground hover:border-border',
+              )}>
+                Sort: {sortOrder === 'newest' ? 'Newest' : 'Oldest'}
+                <ChevronDown className="size-3 opacity-60" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-36">
+              {([['newest', 'Newest first'], ['oldest', 'Oldest first']] as const).map(([v, label]) => (
+                <DropdownMenuItem key={v} onClick={() => setSortOrder(v)} className="text-xs gap-2">
+                  {label}
+                  {sortOrder === v && <Check className="size-3 ml-auto" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* Scrollable Chat List */}
+        <div className="flex-1 overflow-y-auto px-4 md:px-6">
           {/* Loading State */}
           {isLoading && (
-            <div className="space-y-0">
+            <div className="space-y-0.5 pt-1">
               {[...Array(10)].map((_, i) => (
-                <div key={i} className="py-4 border-b border-border/40">
-                  <div className="flex items-start gap-3">
-                    <Skeleton className="h-4 w-4 rounded shrink-0 mt-0.5" />
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-2/3" />
-                      <Skeleton className="h-3 w-32" />
-                    </div>
+                <div key={i} className="flex items-center gap-3 px-3 py-2.5">
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-3.5 rounded" style={{ width: `${50 + (i % 4) * 12}%` }} />
+                    <Skeleton className="h-3 rounded" style={{ width: `${65 + (i % 3) * 10}%` }} />
+                    <Skeleton className="h-3 w-16 rounded" />
                   </div>
                 </div>
               ))}
@@ -419,199 +608,123 @@ export function SearchesPage({ userId }: SearchesPageProps) {
 
           {/* Error State */}
           {error && (
-            <div className="flex flex-col items-center justify-center py-16">
-              <p className="text-sm text-muted-foreground mb-2">Failed to load chats</p>
-              <p className="text-xs text-muted-foreground">Please try refreshing the page</p>
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <p className="text-sm font-medium text-foreground mb-1">Something went wrong</p>
+              <p className="text-xs text-muted-foreground">Failed to load chats — try refreshing the page</p>
             </div>
           )}
 
-          {/* Empty State - No Chats */}
-          {!isLoading && !error && displayedChats.length === 0 && searchQuery.trim().length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16">
-              <h3 className="text-base font-normal mb-2 text-muted-foreground">No chats yet</h3>
-              <p className="text-sm text-muted-foreground mb-6 text-center max-w-md">
-                Start a conversation to see it here
-              </p>
+          {/* Empty State — No Chats */}
+          {!isLoading && !error && displayedChats.length === 0 && !hasActiveFilters && (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <div className="size-11 rounded-xl bg-muted/60 flex items-center justify-center mb-4 border border-border/40">
+                <HugeiconsIcon icon={FolderLibraryIcon} size={22} strokeWidth={1.5} className="text-muted-foreground/70" />
+              </div>
+              <p className="text-sm font-medium text-foreground mb-1 text-balance">Your library is empty</p>
+              <p className="text-xs text-muted-foreground text-pretty mb-5">Start a conversation and it will appear here</p>
               <Link href="/">
-                <Button variant="outline" size="sm">Start Chatting</Button>
+                <Button variant="outline" size="sm" className="h-8 text-xs rounded-lg">
+                  Start chatting
+                </Button>
               </Link>
             </div>
           )}
 
-          {/* Empty State - No Search Results */}
-          {!isLoading && !error && displayedChats.length === 0 && searchQuery.trim().length > 0 && (
-            <div className="flex flex-col items-center justify-center py-16">
-              <h3 className="text-base font-normal mb-2 text-muted-foreground">No results found</h3>
-              <p className="text-sm text-muted-foreground text-center max-w-md">
-                No chats match &ldquo;{searchQuery}&rdquo;
+          {/* Empty State — No Results */}
+          {!isLoading && !error && displayedChats.length === 0 && hasActiveFilters && (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <p className="text-sm font-medium text-foreground mb-1 text-balance">No results found</p>
+              <p className="text-xs text-muted-foreground text-pretty mb-4">
+                {searchQuery.trim().length > 0
+                  ? <>Nothing matched &ldquo;{searchQuery}&rdquo;</>
+                  : dateFilter !== 'all'
+                    ? <>No chats from {dateFilter === 'today' ? 'today' : dateFilter === 'week' ? 'the last 7 days' : 'this month'}</>
+                    : <>No {visibilityFilter} chats found</>}
               </p>
+              <button
+                onClick={() => { setSearchQuery(''); setDateFilter('all'); setVisibilityFilter('all'); }}
+                className="text-xs text-muted-foreground hover:text-foreground underline-offset-2 hover:underline transition-colors"
+              >
+                Clear filters
+              </button>
             </div>
           )}
 
-          {/* Chat List */}
+          {/* Grouped Chat List */}
           {!isLoading && !error && displayedChats.length > 0 && (
-            <div className="space-y-0">
-              {displayedChats.map((chat, index) => {
-                const isSelected = selectedChatIds.has(chat.id);
-                const createdDate = new Date(chat.createdAt);
-                const isLastItem = index === displayedChats.length - 1 && !hasMore;
-
+            <div className="space-y-4 pt-1 pb-4">
+              {GROUP_ORDER.map((groupKey) => {
+                const chats = groupedChats[groupKey];
+                if (!chats || chats.length === 0) return null;
                 return (
-                  <div
-                    key={chat.id}
-                    className={`group relative py-4 ${!isLastItem ? 'border-b border-border/40' : ''}`}
-                  >
-                    <div className="flex items-start gap-3">
-                      {/* Checkbox - only visible when in select mode */}
-                      {isSelectMode && (
-                        <div className="shrink-0 mt-0.5">
-                          <Checkbox
-                            checked={isSelected}
-                            onCheckedChange={() => toggleChatSelection(chat.id)}
-                            aria-label={`Select ${chat.title}`}
-                            className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                          />
-                        </div>
-                      )}
-
-                      {/* Chat Content */}
-                      <Link
-                        href={`/search/${chat.id}`}
-                        className="flex-1 min-w-0 space-y-1 sm:space-y-1.5"
-                      >
-                        {/* Title */}
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-normal text-sm sm:text-base truncate group-hover:text-primary/80 transition-colors">
-                            {chat.title}
-                          </h3>
-                          {chat.visibility === 'public' && (
-                            <Globe className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
-                          )}
-                        </div>
-
-                        {/* Timestamp */}
-                        <p className="text-xs sm:text-sm text-muted-foreground">
-                          Last message {formatDistanceToNow(createdDate, { addSuffix: false })} ago
-                        </p>
-                      </Link>
-
-                      {/* Three-dots menu - always visible on mobile, visible on hover for desktop */}
-                      <div className={`shrink-0 transition-opacity ${openDropdownId === chat.id ? 'opacity-100' : 'opacity-100 md:opacity-0 md:group-hover:opacity-100'}`}>
-                        <DropdownMenu open={openDropdownId === chat.id} onOpenChange={(open) => setOpenDropdownId(open ? chat.id : null)}>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 hover:bg-muted"
-                              onClick={(e) => e.preventDefault()}
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                              <span className="sr-only">More options</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleSelectClick(chat.id);
-                              }}
-                              className="gap-2"
-                            >
-                              <Check className="h-4 w-4" />
-                              Select
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleShareClick(chat);
-                              }}
-                              className="gap-2"
-                            >
-                              {chat.visibility === 'public' ? (
-                                <>
-                                  <Lock className="h-4 w-4" />
-                                  Make private
-                                </>
-                              ) : (
-                                <>
-                                  <Share2 className="h-4 w-4" />
-                                  Share
-                                </>
-                              )}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleRenameClick(chat);
-                              }}
-                              className="gap-2"
-                            >
-                              <Pencil className="h-4 w-4" />
-                              Rename
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleDeleteClick(chat);
-                              }}
-                              variant="destructive"
-                              className="gap-2"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
+                  <div key={groupKey}>
+                    <p className="text-[11px] font-medium text-muted-foreground/40 uppercase tracking-wide px-1 pb-1 select-none">
+                      {GROUP_LABELS[groupKey]}
+                    </p>
+                    <div>
+                      {chats.map(renderChatRow)}
                     </div>
                   </div>
                 );
               })}
-            </div>
-          )}
 
-          {/* Pagination Loading Skeleton */}
-          {isFetchingNextPage && (
-            <div className="space-y-0 border-t border-border/40">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="py-4 border-b border-border/40">
-                  <div className="flex items-start gap-3">
-                    {isSelectMode && <Skeleton className="h-4 w-4 rounded shrink-0 mt-0.5" />}
-                    <div className="flex-1 space-y-2">
-                      <Skeleton className="h-4 w-2/3" />
-                      <Skeleton className="h-3 w-32" />
+              {/* Pagination Loading */}
+              {isFetchingNextPage && (
+                <div className="space-y-0.5">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="flex items-center gap-3 px-3 py-2.5">
+                      <div className="flex-1 space-y-1.5">
+                        <Skeleton className="h-3.5 rounded" style={{ width: `${50 + (i % 3) * 14}%` }} />
+                        <Skeleton className="h-3 rounded" style={{ width: `${60 + (i % 4) * 8}%` }} />
+                        <Skeleton className="h-3 w-16 rounded" />
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
+              )}
 
-          {/* Show More Button */}
-          {!isLoading && !error && hasMore && (
-            <div className="py-6 flex justify-center">
-              <Button
-                variant="outline"
-                onClick={handleShowMore}
-                disabled={isFetchingNextPage}
-                className="w-full"
-              >
-                {isFetchingNextPage ? 'Loading...' : 'Show more'}
-              </Button>
+              {hasMore && !isFetchingNextPage && (
+                <div className="px-3">
+                  <Button
+                    variant="ghost"
+                    onClick={() => fetchNextPage()}
+                    disabled={isFetchingNextPage}
+                    size="sm"
+                    className="h-8 text-xs w-full text-muted-foreground hover:text-foreground rounded-lg border border-border/50"
+                  >
+                    Load more
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </div>
-
       </main>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Floating bulk-action bar */}
+      {isSelectMode && selectedChatIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 py-2.5 rounded-xl bg-background border border-border shadow-lg">
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {selectedChatIds.size} {selectedChatIds.size === 1 ? 'thread' : 'threads'} selected
+          </span>
+          <button
+            onClick={() => setShowDeleteDialog(true)}
+            disabled={isDeleting}
+            className="inline-flex items-center gap-1.5 text-sm font-medium bg-destructive text-destructive-foreground px-3 py-1.5 rounded-md hover:bg-destructive/90 transition-colors disabled:opacity-50"
+          >
+            <Trash2 className="size-3.5" />
+            Delete {selectedChatIds.size} {selectedChatIds.size === 1 ? 'Thread' : 'Threads'}
+          </button>
+        </div>
+      )}
+
+      {/* Bulk Delete Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete chats</AlertDialogTitle>
+            <AlertDialogTitle>Delete {selectedChatIds.size} chat{selectedChatIds.size > 1 ? 's' : ''}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete {selectedChatIds.size} chat{selectedChatIds.size > 1 ? 's' : ''}? This action cannot be undone.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -621,7 +734,7 @@ export function SearchesPage({ userId }: SearchesPageProps) {
               disabled={isDeleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? 'Deleting...' : 'Delete'}
+              {isDeleting ? 'Deleting…' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -632,62 +745,51 @@ export function SearchesPage({ userId }: SearchesPageProps) {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Rename chat</DialogTitle>
-            <DialogDescription>
-              Enter a new name for this chat.
-            </DialogDescription>
+            <DialogDescription>Enter a new name for this chat.</DialogDescription>
           </DialogHeader>
-          <div className="py-4">
+          <div className="py-3">
             <Input
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="Enter chat name"
-              className="w-full"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleRenameSubmit();
-                }
-              }}
+              placeholder="Chat name"
+              className="rounded-lg"
+              onKeyDown={(e) => { if (e.key === 'Enter') handleRenameSubmit(); }}
               autoFocus
             />
           </div>
           <DialogFooter>
             <Button
               variant="outline"
-              onClick={() => {
-                setShowRenameDialog(false);
-                setRenamingChat(null);
-                setNewTitle('');
-              }}
+              onClick={() => { setShowRenameDialog(false); setRenamingChat(null); setNewTitle(''); }}
               disabled={isRenaming}
+              className="rounded-lg"
             >
               Cancel
             </Button>
             <Button
               onClick={handleRenameSubmit}
               disabled={isRenaming || !newTitle.trim() || newTitle.trim() === renamingChat?.title}
+              className="rounded-lg"
             >
-              {isRenaming ? 'Renaming...' : 'Rename'}
+              {isRenaming ? 'Renaming…' : 'Rename'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Single Chat Delete Confirmation Dialog */}
+      {/* Single Delete Dialog */}
       <AlertDialog open={showSingleDeleteDialog} onOpenChange={setShowSingleDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete chat</AlertDialogTitle>
+            <AlertDialogTitle>Delete chat?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &ldquo;{chatToDelete?.title}&rdquo;? This action cannot be undone.
+              &ldquo;{chatToDelete?.title}&rdquo; will be permanently deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
               disabled={deletingChatId !== null}
-              onClick={() => {
-                setShowSingleDeleteDialog(false);
-                setChatToDelete(null);
-              }}
+              onClick={() => { setShowSingleDeleteDialog(false); setChatToDelete(null); }}
             >
               Cancel
             </AlertDialogCancel>
@@ -696,46 +798,34 @@ export function SearchesPage({ userId }: SearchesPageProps) {
               disabled={deletingChatId !== null}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deletingChatId !== null ? 'Deleting...' : 'Delete'}
+              {deletingChatId !== null ? 'Deleting…' : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Visibility Change Confirmation Dialog */}
+      {/* Visibility Dialog */}
       <AlertDialog open={showVisibilityDialog} onOpenChange={setShowVisibilityDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {chatToShare?.visibility === 'public' ? 'Make chat private' : 'Share chat'}
+              {chatToShare?.visibility === 'public' ? 'Make private?' : 'Share chat?'}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {chatToShare?.visibility === 'public' ? (
-                <>
-                  Are you sure you want to make &ldquo;{chatToShare?.title}&rdquo; private? Only you will be able to access it.
-                </>
-              ) : (
-                <>
-                  Are you sure you want to share &ldquo;{chatToShare?.title}&rdquo;? Anyone with the link will be able to view it.
-                </>
-              )}
+              {chatToShare?.visibility === 'public'
+                ? <>Only you will be able to access &ldquo;{chatToShare?.title}&rdquo;.</>
+                : <>Anyone with the link will be able to view &ldquo;{chatToShare?.title}&rdquo;.</>}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
               disabled={isChangingVisibility}
-              onClick={() => {
-                setShowVisibilityDialog(false);
-                setChatToShare(null);
-              }}
+              onClick={() => { setShowVisibilityDialog(false); setChatToShare(null); }}
             >
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmVisibilityChange}
-              disabled={isChangingVisibility}
-            >
-              {isChangingVisibility ? 'Updating...' : chatToShare?.visibility === 'public' ? 'Make private' : 'Share'}
+            <AlertDialogAction onClick={handleConfirmVisibilityChange} disabled={isChangingVisibility}>
+              {isChangingVisibility ? 'Updating…' : chatToShare?.visibility === 'public' ? 'Make private' : 'Share'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

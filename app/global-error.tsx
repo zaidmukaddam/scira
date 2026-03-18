@@ -4,27 +4,8 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { RefreshCw, Home, TriangleAlert, ChevronDown, ChevronUp, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Be_Vietnam_Pro, Baumans } from 'next/font/google';
-import localFont from 'next/font/local';
+import { Be_Vietnam_Pro, Baumans, Geist } from 'next/font/google';
 import { AnimatePresence, motion } from 'framer-motion';
-
-const sfPro = localFont({
-  src: [
-    {
-      path: '../public/fonts/SF-Pro.ttf',
-      weight: '100 900',
-      style: 'normal',
-    },
-    {
-      path: '../public/fonts/SF-Pro-Italic.ttf',
-      weight: '100 900',
-      style: 'italic',
-    },
-  ],
-  variable: '--font-sans',
-  preload: true,
-  display: 'swap',
-});
 
 const beVietnamPro = Be_Vietnam_Pro({
   subsets: ['latin'],
@@ -38,6 +19,14 @@ const baumans = Baumans({
   subsets: ['latin'],
   variable: '--font-baumans',
   weight: '400',
+  display: 'swap',
+  preload: true,
+});
+
+const geist = Geist({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
   preload: true,
 });
@@ -80,7 +69,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${sfPro.variable} ${beVietnamPro.variable} ${baumans.variable} font-sans antialiased bg-background text-foreground`}
+        className={`${geist.variable} ${beVietnamPro.variable} ${baumans.variable} font-sans antialiased bg-background text-foreground`}
         suppressHydrationWarning
       >
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-background">

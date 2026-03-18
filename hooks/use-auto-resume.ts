@@ -1,7 +1,7 @@
 "use client";
 
 import type { UseChatHelpers } from "@ai-sdk/react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useDataStream } from "@/components/data-stream-provider";
 import type { ChatMessage } from "@/lib/types";
 
@@ -19,21 +19,19 @@ export function useAutoResume({
   setMessages,
 }: UseAutoResumeParams) {
   const { dataStream } = useDataStream();
+  const hasAttemptedAutoResumeRef = useRef(false);
 
   useEffect(() => {
-    if (!autoResume) {
-      return;
-    }
+    if (!autoResume) return;
+    if (hasAttemptedAutoResumeRef.current) return;
+    hasAttemptedAutoResumeRef.current = true;
 
     const mostRecentMessage = initialMessages.at(-1);
 
     if (mostRecentMessage?.role === "user") {
-      resumeStream();
+      void resumeStream();
     }
-
-    // we intentionally run this once
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoResume, initialMessages.at, resumeStream]);
+  }, [autoResume, initialMessages, resumeStream]);
 
   useEffect(() => {
     if (!dataStream) {

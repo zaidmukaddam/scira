@@ -19,6 +19,8 @@
 # misc
 .DS_Store
 *.pem
+__pycache__/
+*.pyc
 
 # debug
 npm-debug.log*
@@ -37,3 +39,17 @@ yarn-error.log*
 next-env.d.ts
 
 certificates
+creds.ts
+
+# local SQL scripts
+*.sql
+
+
+# IDE / AI tools
+.cursor/
+.codex/
+.claude/
+.opencode/
+.agents/
+
+video/node_modules

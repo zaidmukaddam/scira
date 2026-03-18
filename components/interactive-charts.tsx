@@ -1,9 +1,17 @@
 import React, { useMemo } from 'react';
-import ReactECharts, { EChartsOption } from 'echarts-for-react';
+import dynamic from 'next/dynamic';
+import type { EChartsOption } from 'echarts-for-react';
 import { Card, CardTitle, CardHeader } from '@/components/ui/card';
 import { useTheme } from 'next-themes';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Dynamically import ReactECharts - it's a heavy library (~200-300KB)
+const ReactECharts = dynamic(() => import('echarts-for-react'), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[400px] w-full rounded-lg" />,
+});
 
 // Minimal, vibrant color palette
 const CHART_COLORS = {

@@ -13,19 +13,21 @@ const nextConfig: NextConfig = {
     removeConsole:
       process.env.NODE_ENV === 'production'
         ? {
-          exclude: ['error'],
-        }
+            exclude: ['error'],
+          }
         : false,
   },
   // Add Turbopack alias to resolve MathJax default font to NewCM font
   turbopack: {
     resolveAlias: {
+      '#default-font': '@mathjax/mathjax-newcm-font/mjs',
       '#default-font/*': '@mathjax/mathjax-newcm-font/mjs/*',
     },
     resolveExtensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.json'],
   },
   reactCompiler: true,
   experimental: {
+    webpackMemoryOptimizations: true,
     turbopackFileSystemCacheForDev: true,
     turbopackFileSystemCacheForBuild: true,
     optimizePackageImports: [
@@ -34,9 +36,30 @@ const nextConfig: NextConfig = {
       '@hugeicons/react',
       '@hugeicons/core-free-icons',
       'date-fns',
+      '@radix-ui/react-tooltip',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-alert-dialog',
+      '@radix-ui/react-accordion',
+      '@radix-ui/react-select',
+      '@radix-ui/react-popover',
+      '@radix-ui/react-avatar',
+      '@radix-ui/react-separator',
+      '@radix-ui/react-switch',
+      '@radix-ui/react-checkbox',
+      '@radix-ui/react-label',
+      '@radix-ui/react-slider',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-scroll-area',
+      '@radix-ui/react-collapsible',
+      '@radix-ui/react-navigation-menu',
+      '@radix-ui/react-hover-card',
+      '@radix-ui/react-progress',
+      'recharts',
+      'sileo',
     ],
     serverActions: {
-      bodySizeLimit: '20mb',
+      bodySizeLimit: '2000mb',
     },
     staleTimes: {
       dynamic: 10,
@@ -44,18 +67,24 @@ const nextConfig: NextConfig = {
     },
   },
   // Ensure MathJax packages are treated as externals for server bundling
-  serverExternalPackages: ['@aws-sdk/client-s3', 'prettier'],
+  serverExternalPackages: [
+    '@aws-sdk/client-s3',
+    'prettier',
+    'experimental-fast-webstreams',
+    '@basetenlabs/performance-client',
+    '@ai-sdk/baseten',
+  ],
   transpilePackages: [
     'geist',
     '@daytonaio/sdk',
     'shiki',
-    'resumable-stream',
+    'ai-resumable-stream',
     '@t3-oss/env-nextjs',
     '@t3-oss/env-core',
     '@mathjax/src',
     '@mathjax/mathjax-newcm-font',
   ],
-  devIndicators: process.env.NODE_ENV === 'production' ? false : { position: 'bottom-right' },
+  devIndicators: false,
   // Webpack fallback alias for environments not using Turbopack
   webpack: (config, { isServer }) => {
     config.resolve = config.resolve || {};
@@ -77,7 +106,8 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        // Apply X-Frame-Options: DENY to all routes except public legal pages
+        source: '/((?!privacy-policy|terms|about).*)',
         headers: [
           {
             key: 'X-Content-Type-Options',
@@ -86,6 +116,20 @@ const nextConfig: NextConfig = {
           {
             key: 'X-Frame-Options',
             value: 'DENY',
+          },
+          {
+            key: 'Referrer-Policy',
+            value: 'strict-origin-when-cross-origin',
+          },
+        ],
+      },
+      {
+        // Public legal pages — no X-Frame-Options so Google's OAuth validator can process them
+        source: '/(privacy-policy|terms|about)',
+        headers: [
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
           },
           {
             key: 'Referrer-Policy',

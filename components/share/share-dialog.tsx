@@ -10,10 +10,12 @@ import {
   XLogoIcon,
   RedditLogoIcon,
 } from '@phosphor-icons/react';
+import { Copy } from 'lucide-react';
 import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import { Share03Icon } from '@hugeicons/core-free-icons';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { Button } from '@/components/ui/button';
+import { ExternalLink } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
@@ -42,7 +44,7 @@ export function ShareDialog({
   const [choice, setChoice] = useState<'public' | 'private'>(selectedVisibilityType);
   const [isShared, setIsShared] = useState<boolean>(selectedVisibilityType === 'public');
 
-  const shareUrl = chatId ? `https://scira.ai/search/${chatId}` : '';
+  const shareUrl = chatId ? `https://scira.ai/share/${chatId}` : '';
 
   useEffect(() => {
     if (!isOpen) {
@@ -59,11 +61,23 @@ export function ShareDialog({
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
-      toast.success('Link copied to clipboard');
+      sileo.success({ 
+        title: 'Link copied to clipboard',
+        description: 'You can now paste it anywhere',
+        icon: <Copy className="h-4 w-4" />,
+        button: {
+          title: 'Open link',
+          onClick: () => window.open(shareUrl, '_blank', 'noopener,noreferrer')
+        }
+      });
       setTimeout(() => setCopied(false), 2000);
     } catch (error) {
       console.error('Failed to copy to clipboard:', error);
-      toast.error('Failed to copy link');
+      sileo.error({ 
+        title: 'Failed to copy link',
+        description: 'Please try again',
+        icon: <XLogoIcon className="h-4 w-4" weight="fill" />
+      });
     }
   };
 
@@ -77,7 +91,11 @@ export function ShareDialog({
       await handleCopyLink();
     } catch (error) {
       console.error('Error sharing chat:', error);
-      toast.error('Failed to share chat');
+      sileo.error({ 
+        title: 'Failed to share chat',
+        description: 'Please try again',
+        icon: <XLogoIcon className="h-4 w-4" weight="fill" />
+      });
     } finally {
       setIsChangingVisibility(false);
     }
@@ -90,11 +108,19 @@ export function ShareDialog({
       await onVisibilityChange('private');
       setChoice('private');
       setIsShared(false);
-      toast.success('Chat is now private');
+      sileo.success({ 
+        title: 'Chat is now private',
+        description: 'Your chat is no longer publicly accessible',
+        icon: <LockIcon className="h-4 w-4" weight="fill" />
+      });
       onOpenChange(false);
     } catch (error) {
       console.error('Error making chat private:', error);
-      toast.error('Failed to make chat private');
+      sileo.error({ 
+        title: 'Failed to make chat private',
+        description: 'Please try again',
+        icon: <XLogoIcon className="h-4 w-4" weight="fill" />
+      });
     } finally {
       setIsChangingVisibility(false);
     }

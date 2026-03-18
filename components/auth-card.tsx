@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { parseAsString, useQueryState } from 'nuqs';
 import { authClient, signIn } from '@/lib/auth-client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 
 type AuthProvider = 'github' | 'google' | 'twitter' | 'microsoft';
@@ -78,22 +79,19 @@ const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon,
       className={`
         relative w-full h-12 text-sm
         bg-background
-        border border-border
-        hover:bg-muted/50 hover:border-foreground/20
+        border border-border/60 rounded-xl
+        hover:bg-muted/30 hover:border-foreground/15
         active:scale-[0.99]
         transition-all duration-200
         disabled:opacity-50 disabled:cursor-not-allowed
         flex items-center justify-center gap-3
         group
-        ${isLastUsed ? 'ring-1 ring-foreground/10' : ''}
+        ${isLastUsed ? 'ring-1 ring-primary/20 border-primary/20' : ''}
       `}
       disabled={loading}
       onClick={async () => {
         await signIn.social(
-          {
-            provider,
-            callbackURL,
-          },
+          { provider, callbackURL },
           {
             onRequest: () => {
               setLoading(true);
@@ -105,11 +103,9 @@ const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon,
       <div className="w-5 h-5 flex items-center justify-center">
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : icon}
       </div>
-      <span className="font-medium text-foreground/80 group-hover:text-foreground transition-colors">
-        {title}
-      </span>
+      <span className="font-medium text-foreground/80 group-hover:text-foreground transition-colors">{title}</span>
       {isLastUsed && (
-        <span className="absolute right-3 text-[10px] uppercase tracking-wider text-muted-foreground">
+        <span className="absolute right-3 font-pixel text-[9px] uppercase tracking-wider text-primary/70">
           Last used
         </span>
       )}
@@ -118,24 +114,33 @@ const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon,
 };
 
 export default function AuthCard({ title, description, mode = 'sign-in' }: AuthCardProps) {
+  const [redirect] = useQueryState('redirect', parseAsString.withDefault('/'));
   const [githubLoading, setGithubLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [twitterLoading, setTwitterLoading] = useState(false);
   const [microsoftLoading, setMicrosoftLoading] = useState(false);
 
   const lastMethod = authClient.getLastUsedLoginMethod();
+  const callbackURL = redirect;
 
   return (
     <div className="w-full max-w-sm mx-auto">
       {/* Header */}
-      <div className="text-center mb-10">
-        <h1 className="text-3xl font-light tracking-tight text-foreground font-be-vietnam-pro mb-3">
-          {title}
-        </h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {description}
-        </p>
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-light tracking-tight text-foreground font-be-vietnam-pro mb-3">{title}</h1>
+        <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">{description}</p>
       </div>
+
+      {/* Value props - only on sign up */}
+      {mode === 'sign-up' && (
+        <div className="flex items-center justify-center gap-3 mb-8">
+          {['Free to start', 'No credit card', 'Cancel anytime'].map((label) => (
+            <span key={label} className="text-[10px] text-muted-foreground bg-muted/40 px-2.5 py-1 rounded-full">
+              {label}
+            </span>
+          ))}
+        </div>
+      )}
 
       {/* Auth Buttons */}
       <div className="space-y-3">
@@ -144,7 +149,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
           provider="google"
           loading={googleLoading}
           setLoading={setGoogleLoading}
-          callbackURL="/"
+          callbackURL={callbackURL}
           icon={<AuthIcons.Google className="w-4 h-4" />}
           isLastUsed={lastMethod === 'google'}
         />
@@ -153,7 +158,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
           provider="github"
           loading={githubLoading}
           setLoading={setGithubLoading}
-          callbackURL="/"
+          callbackURL={callbackURL}
           icon={<AuthIcons.Github className="w-4 h-4" />}
           isLastUsed={lastMethod === 'github'}
         />
@@ -162,7 +167,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
           provider="twitter"
           loading={twitterLoading}
           setLoading={setTwitterLoading}
-          callbackURL="/"
+          callbackURL={callbackURL}
           icon={<AuthIcons.Twitter className="w-4 h-4" />}
           isLastUsed={lastMethod === 'twitter'}
         />
@@ -171,19 +176,34 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
           provider="microsoft"
           loading={microsoftLoading}
           setLoading={setMicrosoftLoading}
-          callbackURL="/"
+          callbackURL={callbackURL}
           icon={<AuthIcons.Microsoft className="w-4 h-4" />}
           isLastUsed={lastMethod === 'microsoft'}
         />
       </div>
 
+      {/* Pro upsell - on sign up */}
+      {mode === 'sign-up' && (
+        <div className="mt-6 p-3.5 rounded-xl border border-border/30 bg-muted/20 flex items-center gap-3">
+          <Sparkles className="w-4 h-4 text-primary/60 shrink-0" />
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            <span className="text-foreground font-medium">Pro starts at $5/mo</span> for students. Unlimited research,
+            all models, voice mode & more.
+          </p>
+        </div>
+      )}
+
       {/* Switch Auth Mode */}
-      <div className="mt-10 text-center">
+      <div className="mt-8 text-center">
         <span className="text-sm text-muted-foreground">
           {mode === 'sign-in' ? "Don't have an account? " : 'Already have an account? '}
         </span>
         <Link
-          href={mode === 'sign-in' ? '/sign-up' : '/sign-in'}
+          href={
+            mode === 'sign-in'
+              ? `/sign-up${callbackURL !== '/' ? `?redirect=${encodeURIComponent(callbackURL)}` : ''}`
+              : `/sign-in${callbackURL !== '/' ? `?redirect=${encodeURIComponent(callbackURL)}` : ''}`
+          }
           className="text-sm font-medium text-foreground hover:underline underline-offset-4 transition-colors"
         >
           {mode === 'sign-in' ? 'Sign up' : 'Sign in'}
@@ -191,7 +211,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
       </div>
 
       {/* Legal */}
-      <p className="mt-8 text-[11px] text-center text-muted-foreground leading-relaxed">
+      <p className="mt-6 text-[11px] text-center text-muted-foreground leading-relaxed">
         By continuing, you agree to our{' '}
         <Link
           href="/terms"

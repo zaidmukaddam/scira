@@ -9,39 +9,35 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 function SearchesPageSkeleton() {
   return (
-    <div className="w-full h-screen flex flex-col">
-      <main className="flex-1 flex flex-col overflow-hidden px-4 pt-4 md:px-8 md:pt-8 max-w-3xl mx-auto w-full">
-        {/* Header skeleton */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-6 w-6 md:hidden" />
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-6 w-6" />
-              <Skeleton className="h-6 w-32 sm:w-40" />
-            </div>
+    <div className="w-full h-dvh flex flex-col">
+      <div className="border-b border-border/50">
+        <div className="flex h-14 items-center justify-between px-4 md:px-6 max-w-3xl mx-auto w-full">
+          <div className="flex items-center gap-2.5">
+            <Skeleton className="size-6 md:hidden rounded" />
+            <Skeleton className="size-4.5 rounded" />
+            <Skeleton className="h-4 w-24 rounded" />
           </div>
-          <Skeleton className="h-8 w-8 sm:w-28" />
+          <div className="flex items-center gap-1.5">
+            <Skeleton className="h-7 w-14 rounded-md" />
+            <Skeleton className="h-7 w-16 rounded-md" />
+          </div>
         </div>
-
-        {/* Search input skeleton */}
-        <Skeleton className="h-10 w-full mb-6" />
-
-        {/* Count skeleton */}
-        <div className="flex items-center gap-2 mb-4">
-          <Skeleton className="h-4 w-32" />
-          <Skeleton className="h-4 w-12" />
+      </div>
+      <main className="flex-1 flex flex-col overflow-hidden max-w-3xl mx-auto w-full px-4 md:px-6">
+        <div className="pt-4 pb-3 space-y-2.5">
+          <Skeleton className="h-9 w-full rounded-lg" />
+          <div className="flex gap-1.5">
+            <Skeleton className="h-8 w-52 rounded-lg" />
+            <Skeleton className="h-8 w-36 rounded-lg" />
+          </div>
         </div>
-
-        {/* Chat list skeleton */}
-        <div className="space-y-0 flex-1">
+        <div className="space-y-0.5 pt-1">
+          <Skeleton className="h-3 w-10 rounded mb-1 mx-3" />
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="py-4 border-b border-border/40">
-              <div className="flex items-start gap-3">
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-2/3" />
-                  <Skeleton className="h-3 w-32" />
-                </div>
-                <Skeleton className="h-8 w-8 shrink-0" />
+            <div key={i} className="flex items-center gap-3 px-3 py-2.5">
+              <div className="flex-1 space-y-1.5">
+                <Skeleton className="h-3.5 rounded" style={{ width: `${55 + (i % 3) * 15}%` }} />
+                <Skeleton className="h-3 w-20 rounded" />
               </div>
             </div>
           ))}

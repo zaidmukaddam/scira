@@ -16,9 +16,11 @@ import {
   customInstructions,
   stream,
   lookout,
+  userMcpServer,
 } from '@/lib/db/schema';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { db } from '@/lib/db';
+import { dash } from '@better-auth/infra';
+import { db, maindb } from '@/lib/db';
 import { config } from 'dotenv';
 import { serverEnv } from '@/env/server';
 import { checkout, polar, portal, usage, webhooks } from '@polar-sh/better-auth';
@@ -30,9 +32,9 @@ import {
   webhooks as dodowebhooks,
 } from '@dodopayments/better-auth';
 import DodoPayments from 'dodopayments';
-import { eq } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { invalidateUserCaches } from './performance-cache';
-import { clearUserDataCache } from './user-data-server';
+import { clearUserDataCache, invalidateSessionCacheForToken } from './user-data-server';
 
 config({
   path: '.env.local',
@@ -57,7 +59,7 @@ function parseBooleanFlag(value: unknown): boolean {
   return Boolean(value);
 }
 
-const polarClient = new Polar({
+export const polarClient = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN,
   ...(process.env.NODE_ENV === 'production' ? {} : { server: 'sandbox' }),
 });
@@ -106,12 +108,20 @@ async function handleSubscriptionWebhook(payload: any, status: string) {
         data.next_payment_due_date,
     );
 
-    const cancelAtPeriodEnd = parseBooleanFlag(
-      data.cancel_at_next_billing_date ??
-        data.cancel_at_period_end ??
-        data.cancel_at_current_period_end ??
-        data.cancelled_at_period_end,
-    );
+    // Dodo sends cancel_at_next_billing_date as a required boolean.
+    // When a user cancels, Dodo sets status='cancelled' and cancel_at_next_billing_date=false
+    // (because the cancellation already took effect — it no longer "will cancel" at next billing).
+    // However, our app uses cancelAtPeriodEnd=true on cancelled subs to grant access until
+    // the paid period ends. So when status is 'cancelled', we force cancelAtPeriodEnd to true.
+    const cancelAtPeriodEnd =
+      status === 'cancelled'
+        ? true
+        : parseBooleanFlag(
+            data.cancel_at_next_billing_date ??
+              data.cancel_at_period_end ??
+              data.cancel_at_current_period_end ??
+              data.cancelled_at_period_end,
+          );
 
     // Build subscription data
     const subscriptionData = {
@@ -158,13 +168,24 @@ async function handleSubscriptionWebhook(payload: any, status: string) {
         set: {
           updatedAt: subscriptionData.updatedAt || new Date(),
           status: subscriptionData.status,
+          productId: subscriptionData.productId,
+          customerId: subscriptionData.customerId,
+          businessId: subscriptionData.businessId,
+          brandId: subscriptionData.brandId,
+          currency: subscriptionData.currency,
           amount: subscriptionData.amount,
+          interval: subscriptionData.interval,
+          intervalCount: subscriptionData.intervalCount,
+          trialPeriodDays: subscriptionData.trialPeriodDays,
           currentPeriodStart: subscriptionData.currentPeriodStart,
           currentPeriodEnd: subscriptionData.currentPeriodEnd,
           cancelledAt: subscriptionData.cancelledAt,
           cancelAtPeriodEnd: subscriptionData.cancelAtPeriodEnd,
           endedAt: subscriptionData.endedAt,
+          discountId: subscriptionData.discountId,
+          customer: subscriptionData.customer,
           metadata: subscriptionData.metadata,
+          productCart: subscriptionData.productCart,
           userId: subscriptionData.userId,
         },
       });
@@ -184,12 +205,30 @@ async function handleSubscriptionWebhook(payload: any, status: string) {
 }
 
 export const auth = betterAuth({
+  appName: 'scira',
+  baseURL: process.env.NODE_ENV === 'production' ? process.env.BETTER_AUTH_BASE_URL : 'http://localhost:3000',
   rateLimit: {
     max: 100,
     window: 60,
   },
   experimental: { joins: true },
-  database: drizzleAdapter(db, {
+  // advanced: {
+  //   ipAddress: {
+  //     ipAddressHeaders: ["x-vercel-forwarded-for", "x-forwarded-for"],
+  //   }
+  // },
+  databaseHooks: {
+    session: {
+      delete: {
+        before: async (session) => {
+          // Immediately evict the token from the session cache on logout/revocation
+          // so the 15-min TTL window can't be exploited with a stolen cookie
+          invalidateSessionCacheForToken(session.token);
+        },
+      },
+    },
+  },
+  database: drizzleAdapter(maindb, {
     provider: 'pg',
     schema: {
       user,
@@ -206,6 +245,7 @@ export const auth = betterAuth({
       customInstructions,
       stream,
       lookout,
+      userMcpServer,
     },
   }),
   socialProviders: {
@@ -228,44 +268,12 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    dash(),
     lastLoginMethod(),
     polar({
       client: polarClient,
-      createCustomerOnSignUp: true,
+      createCustomerOnSignUp: false,
       enableCustomerPortal: true,
-      getCustomerCreateParams: async ({ user: newUser }) => {
-        console.log('🚀 getCustomerCreateParams called for user:', newUser.id);
-
-        try {
-          // Look for existing customer by email
-          const { result: existingCustomers } = await polarClient.customers.list({
-            email: newUser.email,
-          });
-
-          const existingCustomer = existingCustomers.items[0];
-
-          if (existingCustomer && existingCustomer.externalId && existingCustomer.externalId !== newUser.id) {
-            console.log(
-              `🔗 Found existing customer ${existingCustomer.id} with external ID ${existingCustomer.externalId}`,
-            );
-            console.log(`🔄 Updating user ID from ${newUser.id} to ${existingCustomer.externalId}`);
-
-            // Update the user's ID in database to match the existing external ID
-            if (!newUser.id) {
-              console.error('Missing newUser.id; skipping user ID update to existing external ID');
-            } else {
-              await db.update(user).set({ id: existingCustomer.externalId }).where(eq(user.id, newUser.id));
-            }
-
-            console.log(`✅ Updated user ID to match existing external ID: ${existingCustomer.externalId}`);
-          }
-
-          return {};
-        } catch (error) {
-          console.error('💥 Error in getCustomerCreateParams:', error);
-          return {};
-        }
-      },
       use: [
         checkout({
           products: [
@@ -444,6 +452,18 @@ export const auth = betterAuth({
                   throw new Error('NEXT_PUBLIC_PREMIUM_SLUG environment variable is required');
                 })(),
             },
+            {
+              productId:
+                process.env.NEXT_PUBLIC_MAX_TIER ||
+                (() => {
+                  throw new Error('NEXT_PUBLIC_MAX_TIER environment variable is required');
+                })(),
+              slug:
+                process.env.NEXT_PUBLIC_MAX_SLUG ||
+                (() => {
+                  throw new Error('NEXT_PUBLIC_MAX_SLUG environment variable is required');
+                })(),
+            },
           ],
           successUrl: '/success',
           authenticatedUsersOnly: true,
@@ -459,6 +479,38 @@ export const auth = betterAuth({
           onSubscriptionActive: async (payload) => {
             console.log('🎯 Processing subscription.active webhook');
             await handleSubscriptionWebhook(payload, 'active');
+
+            // If this is a Max subscription (not Pro), revoke any active Polar subscription
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const d: any = payload.data;
+            const productId = d?.product_id || d?.product_cart?.[0]?.product_id;
+            const proProductId = process.env.NEXT_PUBLIC_PREMIUM_TIER;
+            if (productId && proProductId && productId !== proProductId) {
+              const customerEmail = d?.customer?.email;
+              if (customerEmail) {
+                try {
+                  const userRecord = await db.query.user.findFirst({
+                    where: eq(user.email, customerEmail),
+                    columns: { id: true },
+                  });
+                  if (userRecord) {
+                    const activePolarSub = await db.query.subscription.findFirst({
+                      where: and(eq(subscription.userId, userRecord.id), eq(subscription.status, 'active')),
+                    });
+                    if (activePolarSub) {
+                      console.log('🔄 [UPGRADE] Revoking Polar sub for Max upgrade:', activePolarSub.id);
+                      await polarClient.subscriptions.revoke({ id: activePolarSub.id });
+                      console.log('✅ [UPGRADE] Polar sub revoked:', activePolarSub.id);
+                    }
+
+                    invalidateUserCaches(userRecord.id);
+                    clearUserDataCache(userRecord.id);
+                  }
+                } catch (err) {
+                  console.error('❌ [UPGRADE] Failed to reconcile Polar subscription on Max upgrade:', err);
+                }
+              }
+            }
           },
           onSubscriptionOnHold: async (payload) => {
             console.log('🎯 Processing subscription.on_hold webhook');
@@ -489,6 +541,16 @@ export const auth = betterAuth({
     }),
     nextCookies(),
   ],
-  trustedOrigins: ['http://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
-  allowedOrigins: ['http://localhost:3000', 'https://scira.ai', 'https://www.scira.ai'],
+  trustedOrigins: [
+    'http://localhost:3000',
+    'https://scira.ai',
+    'https://www.scira.ai',
+    'https://scira-zaidmukaddam-sciraai.vercel.app',
+  ],
+  allowedOrigins: [
+    'http://localhost:3000',
+    'https://scira.ai',
+    'https://www.scira.ai',
+    'https://scira-zaidmukaddam-sciraai.vercel.app',
+  ],
 });

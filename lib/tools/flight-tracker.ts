@@ -1,6 +1,8 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { serverEnv } from '@/env/server';
+import { all } from 'better-all';
+import { getBetterAllOptions } from '@/lib/better-all';
 
 const preferredTimingTypes = ['actual', 'estimated', 'scheduled'] as const;
 
@@ -219,7 +221,10 @@ export const flightTrackerTool = tool({
         });
 
         // Wait for all airport lookups to complete
-        await Promise.all(airportLookupPromises);
+        await all(
+          Object.fromEntries(airportLookupPromises.map((promise, index) => [`a:${index}`, async () => promise])),
+          getBetterAllOptions(),
+        );
 
         // Build flight data for each leg
         const flightData: any[] = [];
@@ -299,15 +304,15 @@ export const flightTrackerTool = tool({
           // Parse duration from leg
           const durationMinutes = leg.scheduledLegDuration
             ? (() => {
-                const duration = leg.scheduledLegDuration;
-                const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
-                if (matches) {
-                  const hours = parseInt(matches[1] || '0');
-                  const minutes = parseInt(matches[2] || '0');
-                  return hours * 60 + minutes;
-                }
-                return null;
-              })()
+              const duration = leg.scheduledLegDuration;
+              const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
+              if (matches) {
+                const hours = parseInt(matches[1] || '0');
+                const minutes = parseInt(matches[2] || '0');
+                return hours * 60 + minutes;
+              }
+              return null;
+            })()
             : null;
 
           const flightStatus = determineFlightStatus({

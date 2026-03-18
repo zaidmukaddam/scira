@@ -12,7 +12,6 @@ import { Separator } from '@/components/ui/separator';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { PanelLeftOpen, PanelRightOpen } from 'lucide-react';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_WIDTH = '16rem';
@@ -253,11 +252,27 @@ function Sidebar({
   );
 }
 
-function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar, state, isMobile, openMobile } = useSidebar();
+function SidebarSimpleLeftSquareIcon(props: React.ComponentProps<'svg'>) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
+      <path
+        d="M2.75 7.75C2.75 6.09315 4.09315 4.75 5.75 4.75H18.25C19.9069 4.75 21.25 6.09315 21.25 7.75V16.25C21.25 17.9069 19.9069 19.25 18.25 19.25H5.75C4.09315 19.25 2.75 17.9069 2.75 16.25V7.75Z"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinejoin="round"
+      />
+      <path
+        d="M6.25 8.25V15.75"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
-  // On mobile, check if the sheet is open; on desktop, check the sidebar state
-  const isOpen = isMobile ? openMobile : state === 'expanded';
+function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<typeof Button>) {
+  const { toggleSidebar } = useSidebar();
 
   return (
     <Button
@@ -265,14 +280,14 @@ function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<t
       data-slot="sidebar-trigger"
       variant="ghost"
       size="icon"
-      className={cn('size-7', className, isOpen ? 'cursor-w-resize' : 'cursor-e-resize')}
+      className={cn('size-7', className)}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
       }}
       {...props}
     >
-      {isOpen ? <PanelRightOpen size={16} className='size-5' strokeWidth={1.5} /> : <PanelLeftOpen size={16} className='size-5' strokeWidth={1.5} />}
+      <SidebarSimpleLeftSquareIcon className="size-5.5" />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

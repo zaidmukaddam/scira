@@ -5,9 +5,9 @@ import { Check, ArrowRight, Loader2, Infinity, Cpu, FileText, Eye, RefreshCw, Sp
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
-import { useUserData } from '@/hooks/use-user-data';
 import { useSession } from '@/lib/auth-client';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getCurrentUser } from '@/app/actions';
 
 const PRO_FEATURES = [
   { icon: Infinity, label: 'Unlimited searches', description: 'No daily limits' },
@@ -16,11 +16,30 @@ const PRO_FEATURES = [
   { icon: Eye, label: 'Scira Lookout', description: 'Real-time monitoring' },
 ];
 
+const MAX_FEATURES = [
+  { icon: Infinity, label: 'Unlimited searches', description: 'No daily limits' },
+  { icon: Cpu, label: 'Claude Max models', description: 'Access Sonnet, Opus & Thinking models' },
+  { icon: FileText, label: 'PDF analysis', description: 'Upload & analyze documents' },
+  { icon: Eye, label: 'Scira Lookout', description: 'Real-time monitoring' },
+];
+
 export default function SuccessPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: session, isPending: isSessionPending } = useSession();
-  const { isProUser, isLoading, refetch } = useUserData();
+  const {
+    data: freshUser,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ['success-page-user'],
+    queryFn: () => getCurrentUser(),
+    enabled: Boolean(session),
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+  });
+  const isProUser = freshUser?.isProUser === true;
+  const user = freshUser;
   const [showContent, setShowContent] = useState(false);
   const [showRetry, setShowRetry] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
@@ -34,40 +53,51 @@ export default function SuccessPage() {
     }
   }, [isSessionPending, session, router]);
 
-  // Poll for subscription status if not yet active
+  // Poll for fresh server-backed subscription status if not yet active
   useEffect(() => {
-    if (!isProUser && !isLoading) {
-      const interval = setInterval(() => {
-        refetch();
-      }, 2000);
+    if (!session || isProUser || isLoading) return;
 
-      // Show retry button after 10 seconds
-      const retryTimeout = setTimeout(() => {
-        setShowRetry(true);
-      }, 10000);
+    const interval = setInterval(() => {
+      refetch();
+    }, 2000);
 
-      // Stop polling after 30 seconds
-      const timeout = setTimeout(() => {
-        clearInterval(interval);
-      }, 30000);
+    // Show retry button after 10 seconds
+    const retryTimeout = setTimeout(() => {
+      setShowRetry(true);
+    }, 10000);
 
-      return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
-        clearTimeout(retryTimeout);
-      };
-    }
-  }, [isProUser, isLoading, refetch]);
+    // Stop polling after 30 seconds
+    const timeout = setTimeout(() => {
+      clearInterval(interval);
+    }, 30000);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+      clearTimeout(retryTimeout);
+    };
+  }, [session, isProUser, isLoading, refetch]);
 
   const handleClearCache = async () => {
     setIsClearing(true);
+    // Clear localStorage cache so stale subscription data doesn't persist
+    try {
+      localStorage.removeItem('scira-user-data');
+    } catch {}
     // Invalidate all user-related queries
     await queryClient.invalidateQueries({ queryKey: ['comprehensive-user-data'] });
     await refetch();
     setIsClearing(false);
   };
 
-  // Trigger confetti when pro status is confirmed
+  const isMaxUser = user?.isMaxUser === true;
+  const planName = isMaxUser ? 'Max' : 'Pro';
+  const planFeatures = isMaxUser ? MAX_FEATURES : PRO_FEATURES;
+  const planIntro = isMaxUser
+    ? "Your Max subscription is now active. Here's what you've unlocked."
+    : "Your subscription is now active. Here's what you've unlocked.";
+
+  // Trigger confetti when plan status is confirmed
   useEffect(() => {
     if (isProUser && !hasTriggeredConfetti.current) {
       hasTriggeredConfetti.current = true;
@@ -135,17 +165,11 @@ export default function SuccessPage() {
           <Loader2 className="h-8 w-8 animate-spin mx-auto mb-6 text-muted-foreground" />
           <h2 className="text-lg font-medium text-foreground mb-2">Verifying your subscription</h2>
           <p className="text-sm text-muted-foreground mb-6">This will only take a moment...</p>
-          
+
           {showRetry && (
             <div className="space-y-3">
               <p className="text-xs text-muted-foreground">Taking longer than expected?</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleClearCache}
-                disabled={isClearing}
-                className="h-9"
-              >
+              <Button variant="outline" size="sm" onClick={handleClearCache} disabled={isClearing} className="h-9">
                 {isClearing ? (
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                 ) : (
@@ -176,12 +200,12 @@ export default function SuccessPage() {
         </div>
 
         {/* Content */}
-        <h1 className="text-3xl font-medium text-foreground mb-3 tracking-tight">Welcome to Scira Pro</h1>
-        <p className="text-muted-foreground mb-10">Your subscription is now active. Here&apos;s what you&apos;ve unlocked.</p>
+        <h1 className="text-3xl font-medium text-foreground mb-3 tracking-tight">Welcome to Scira {planName}</h1>
+        <p className="text-muted-foreground mb-10">{planIntro}</p>
 
         {/* Features Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
-          {PRO_FEATURES.map((feature, index) => (
+          {planFeatures.map((feature, index) => (
             <div
               key={feature.label}
               className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border border-border/50"
@@ -216,8 +240,10 @@ export default function SuccessPage() {
               <Sparkles className="h-4 w-4 text-foreground" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium text-foreground">XQL</p>
-              <p className="text-xs text-muted-foreground">Natural language data queries</p>
+              <p className="text-sm font-medium text-foreground">{isMaxUser ? 'Canvas & XQL' : 'XQL'}</p>
+              <p className="text-xs text-muted-foreground">
+                {isMaxUser ? 'Advanced workflows and natural language data queries' : 'Natural language data queries'}
+              </p>
             </div>
           </div>
         </div>

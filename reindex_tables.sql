@@ -59,6 +59,16 @@ DROP INDEX CONCURRENTLY IF EXISTS idx_verification_identifier;
 -- Stream Indexes
 DROP INDEX CONCURRENTLY IF EXISTS idx_stream_chat_created;
 
+-- Dodo Subscription Indexes
+DROP INDEX CONCURRENTLY IF EXISTS idx_dodosubscription_user_id;
+DROP INDEX CONCURRENTLY IF EXISTS idx_dodosubscription_user_status;
+DROP INDEX CONCURRENTLY IF EXISTS idx_dodosubscription_user_created;
+DROP INDEX CONCURRENTLY IF EXISTS idx_dodosubscription_status_period;
+DROP INDEX CONCURRENTLY IF EXISTS idx_dodosubscription_customer_id;
+
+-- User Preferences Indexes
+DROP INDEX CONCURRENTLY IF EXISTS idx_user_preferences_user_id;
+
 -- =============================================================================
 -- STEP 2: RECREATE ALL INDEXES
 -- =============================================================================
@@ -171,6 +181,30 @@ ON message(role, created_at DESC);
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_payment_subscription
 ON payment(subscription_id) WHERE subscription_id IS NOT NULL;
 
+-- 28. DODO SUBSCRIPTION USER - Primary lookup for user subscriptions
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dodosubscription_user_id
+ON dodosubscription(user_id);
+
+-- 29. DODO SUBSCRIPTION USER + STATUS - Active subscription checks
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dodosubscription_user_status
+ON dodosubscription(user_id, status);
+
+-- 30. DODO SUBSCRIPTION USER + CREATED - Sorted subscription history
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dodosubscription_user_created
+ON dodosubscription(user_id, created_at DESC);
+
+-- 31. DODO SUBSCRIPTION STATUS + PERIOD - Active subscription filtering
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dodosubscription_status_period
+ON dodosubscription(status, current_period_end);
+
+-- 32. DODO SUBSCRIPTION CUSTOMER - Webhook processing
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_dodosubscription_customer_id
+ON dodosubscription(customer_id);
+
+-- 33. USER PREFERENCES USER - User preferences lookup
+CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_user_preferences_user_id
+ON user_preferences(user_id);
+
 -- =============================================================================
 -- STEP 3: REINDEX PRIMARY TABLES
 -- =============================================================================
@@ -189,6 +223,8 @@ REINDEX TABLE CONCURRENTLY extreme_search_usage;
 REINDEX TABLE CONCURRENTLY message_usage;
 REINDEX TABLE CONCURRENTLY custom_instructions;
 REINDEX TABLE CONCURRENTLY lookout;
+REINDEX TABLE CONCURRENTLY dodosubscription;
+REINDEX TABLE CONCURRENTLY user_preferences;
 
 -- =============================================================================
 -- COMPLETED

@@ -8,6 +8,36 @@ interface LocationData {
   loading: boolean;
 }
 
+let cachedLocation: LocationData | null = null;
+let locationRequest: Promise<LocationData> | null = null;
+
+async function fetchLocationOnce(): Promise<LocationData> {
+  if (cachedLocation) return cachedLocation;
+  if (locationRequest) return locationRequest;
+
+  locationRequest = getUserLocation()
+    .then((locationData) => {
+      cachedLocation = locationData;
+      return locationData;
+    })
+    .catch((error) => {
+      console.error('Failed to detect location:', error);
+      const fallback = {
+        country: 'Unknown',
+        countryCode: '',
+        isIndia: false,
+        loading: false,
+      };
+      cachedLocation = fallback;
+      return fallback;
+    })
+    .finally(() => {
+      locationRequest = null;
+    });
+
+  return locationRequest;
+}
+
 export function useLocation(): LocationData {
   const [location, setLocation] = useState<LocationData>({
     country: '',
@@ -17,23 +47,14 @@ export function useLocation(): LocationData {
   });
 
   useEffect(() => {
-    const detectLocation = async () => {
-      try {
-        const locationData = await getUserLocation();
-        setLocation(locationData);
-      } catch (error) {
-        console.error('Failed to detect location:', error);
-        // Fallback to default values
-        setLocation({
-          country: 'Unknown',
-          countryCode: '',
-          isIndia: false,
-          loading: false,
-        });
-      }
-    };
+    let mounted = true;
+    fetchLocationOnce().then((locationData) => {
+      if (mounted) setLocation(locationData);
+    });
 
-    detectLocation();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return location;

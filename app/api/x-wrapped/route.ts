@@ -4,6 +4,8 @@ import { generateText, Output, stepCountIs } from 'ai';
 import { z } from 'zod';
 import { getTweet } from 'react-tweet/api';
 import { Redis } from '@upstash/redis';
+import { all } from 'better-all';
+import { getBetterAllOptions } from '@/lib/better-all';
 
 interface CitationSource {
   sourceType?: string;
@@ -259,45 +261,52 @@ Hard rules:
       })
       .slice(0, 60);
 
-    const tweetResults = await Promise.all(
-      tweetIds.map(async (id) => {
-        try {
-          const tweet = await getTweet(id);
-          if (!tweet?.text) return null;
+    const tweetResultsMap = await all(
+      Object.fromEntries(
+        tweetIds.map((id) => [
+          `tweet:${id}`,
+          async () => {
+            try {
+              const tweet = await getTweet(id);
+              if (!tweet?.text) return null;
 
-          const createdAtRaw = (tweet as any).created_at as string | undefined;
-          const createdAt = createdAtRaw ? new Date(createdAtRaw) : null;
-          const dateIso = createdAt && !Number.isNaN(createdAt.getTime()) ? createdAt.toISOString() : '';
+              const createdAtRaw = (tweet as any).created_at as string | undefined;
+              const createdAt = createdAtRaw ? new Date(createdAtRaw) : null;
+              const dateIso = createdAt && !Number.isNaN(createdAt.getTime()) ? createdAt.toISOString() : '';
 
-          const tweetUser = (tweet as any).user as
-            | {
-              name?: string;
-              screen_name?: string;
-              profile_image_url_https?: string;
-              profile_image_url?: string;
-              followers_count?: number;
-              friends_count?: number;
-              verified?: boolean;
-              verified_type?: string | null;
+              const tweetUser = (tweet as any).user as
+                | {
+                  name?: string;
+                  screen_name?: string;
+                  profile_image_url_https?: string;
+                  profile_image_url?: string;
+                  followers_count?: number;
+                  friends_count?: number;
+                  verified?: boolean;
+                  verified_type?: string | null;
+                }
+                | undefined;
+
+              const favoriteCount = (tweet as any).favorite_count as number | undefined;
+
+              return {
+                id,
+                text: tweet.text as string,
+                url: `https://x.com/i/status/${id}`,
+                date: dateIso,
+                user: tweetUser,
+                screenName: tweetUser?.screen_name?.toLowerCase() ?? '',
+                favoriteCount: typeof favoriteCount === 'number' ? favoriteCount : 0,
+              };
+            } catch {
+              return null;
             }
-            | undefined;
-
-          const favoriteCount = (tweet as any).favorite_count as number | undefined;
-
-          return {
-            id,
-            text: tweet.text as string,
-            url: `https://x.com/i/status/${id}`,
-            date: dateIso,
-            user: tweetUser,
-            screenName: tweetUser?.screen_name?.toLowerCase() ?? '',
-            favoriteCount: typeof favoriteCount === 'number' ? favoriteCount : 0,
-          };
-        } catch {
-          return null;
-        }
-      }),
+          },
+        ]),
+      ),
+      getBetterAllOptions(),
     );
+    const tweetResults = Object.values(tweetResultsMap);
 
     // Filter to only include posts BY the target user (not mentions or replies from others)
     const authorPosts = tweetResults.filter(

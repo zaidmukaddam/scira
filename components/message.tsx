@@ -7,9 +7,11 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogClose, DialogContent } from '@/components/ui/dialog';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
+import { all } from 'better-all';
+import { getBetterAllOptions } from '@/lib/better-all';
+import { checkImageModeration } from '@/app/actions';
 import {
-  ArrowRight,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -25,9 +27,9 @@ import {
   RefreshCw,
   LogIn,
   CornerDownRight,
+  Upload,
 } from 'lucide-react';
 import { UIMessagePart } from 'ai';
-import { MarkdownRenderer } from '@/components/markdown';
 import { deleteTrailingMessages } from '@/app/actions';
 import { getErrorActions, getErrorIcon, isSignInRequired, isProRequired, isRateLimited } from '@/lib/errors';
 import { UserIcon } from '@phosphor-icons/react';
@@ -36,15 +38,11 @@ import {
   Copy01Icon,
   Crown02Icon,
   PencilEdit02Icon,
-  UserCircleIcon,
 } from '@hugeicons/core-free-icons';
 import { Attachment, ChatMessage, ChatTools, CustomUIDataTypes } from '@/lib/types';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
 import { cn } from '@/lib/utils';
-import remend from 'remend';
-import { useDataStream } from './data-stream-provider';
-
 // Enhanced Error Display Component
 interface EnhancedErrorDisplayProps {
   error: any;
@@ -300,6 +298,8 @@ interface MessageProps {
   isOwner?: boolean;
   onHighlight?: (text: string) => void;
   shouldReduceHeight?: boolean;
+  attachmentsRenderer?: (attachments: Attachment[]) => React.ReactNode;
+  onBeforeSubmit?: () => void;
 }
 
 // Message Editor Component
@@ -313,6 +313,58 @@ interface MessageEditorProps {
   user?: ComprehensiveUserData | null;
 }
 
+const MAX_EDITOR_FILES = 4;
+const MAX_EDITOR_IMAGE_SIZE = 5 * 1024 * 1024;
+const MAX_EDITOR_DOCUMENT_SIZE = 50 * 1024 * 1024;
+const EDITOR_ACCEPTED_FILE_TYPES = 'image/*,.pdf,.csv,.xlsx,.xls,.docx';
+const EDITOR_DOCUMENT_MIME_TYPES = [
+  'text/csv',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-excel',
+];
+
+function isImageFile(file: File): boolean {
+  return file.type.startsWith('image/');
+}
+
+function getMaxSizeForFile(file: File): number {
+  return isImageFile(file) ? MAX_EDITOR_IMAGE_SIZE : MAX_EDITOR_DOCUMENT_SIZE;
+}
+
+function insertFileParts(
+  parts: ChatMessage['parts'][number][],
+  newFileParts: ChatMessage['parts'][number][],
+): ChatMessage['parts'][number][] {
+  if (newFileParts.length === 0) return parts;
+
+  const updatedParts: ChatMessage['parts'][number][] = [];
+  let inserted = false;
+
+  for (const part of parts) {
+    if (!inserted && part.type === 'text') {
+      updatedParts.push(...newFileParts);
+      inserted = true;
+    }
+    updatedParts.push(part);
+  }
+
+  if (!inserted) {
+    updatedParts.push(...newFileParts);
+  }
+
+  return updatedParts;
+}
+
+function fileToDataURL(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => resolve(event.target?.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 const MessageEditor: React.FC<MessageEditorProps> = ({
   message,
   setMode,
@@ -323,6 +375,9 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
   user,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const [isDragActive, setIsDragActive] = useState<boolean>(false);
+  const [hasAttachmentEdits, setHasAttachmentEdits] = useState<boolean>(false);
   const [draftContent, setDraftContent] = useState<string>(
     message.parts
       ?.map((part) => (part.type === 'text' ? part.text : ''))
@@ -330,6 +385,8 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
       .trim() || '',
   );
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const isProUser = Boolean(user?.isProUser);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -349,10 +406,235 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
     adjustHeight();
   };
 
+  const uploadFile = useCallback(async (file: File): Promise<Attachment> => {
+    try {
+      const presignResponse = await fetch('/api/upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          filename: file.name,
+          contentType: file.type,
+          size: file.size,
+        }),
+      });
+
+      if (!presignResponse.ok) {
+        const errorText = await presignResponse.text();
+        throw new Error(`Failed to get upload URL: ${presignResponse.status} ${errorText}`);
+      }
+
+      const { presignedUrl, url } = await presignResponse.json();
+
+      const uploadResponse = await fetch(presignedUrl, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Failed to upload file: ${uploadResponse.status}`);
+      }
+
+      return {
+        name: file.name,
+        contentType: file.type,
+        url,
+      };
+    } catch (error) {
+      sileo.error({ title: `Failed to upload ${file.name}: ${error instanceof Error ? error.message : 'Unknown error'}` });
+      throw error;
+    }
+  }, []);
+
+  const handleFilesUpload = useCallback(
+    async (files: File[], onFinish: () => void) => {
+      if (files.length === 0) {
+        onFinish();
+        return;
+      }
+
+      const currentFileCount = message.parts?.filter((part) => part.type === 'file').length ?? 0;
+      const imageFiles: File[] = [];
+      const pdfFiles: File[] = [];
+      const documentFiles: File[] = [];
+      const unsupportedFiles: File[] = [];
+      const oversizedFiles: File[] = [];
+      const blockedPdfFiles: File[] = [];
+
+      files.forEach((file) => {
+        if (file.size > getMaxSizeForFile(file)) {
+          oversizedFiles.push(file);
+          return;
+        }
+
+        if (file.type.startsWith('image/')) {
+          imageFiles.push(file);
+        } else if (file.type === 'application/pdf') {
+          if (!isProUser) {
+            blockedPdfFiles.push(file);
+          } else {
+            pdfFiles.push(file);
+          }
+        } else if (EDITOR_DOCUMENT_MIME_TYPES.includes(file.type)) {
+          documentFiles.push(file);
+        } else {
+          unsupportedFiles.push(file);
+        }
+      });
+
+      if (unsupportedFiles.length > 0) {
+        sileo.error({ title: `Some files are not supported: ${unsupportedFiles.map((f) => f.name).join(', ')}` });
+      }
+
+      if (oversizedFiles.length > 0) {
+        sileo.error({ title: `Some files exceed the size limit: ${oversizedFiles.map((f) => f.name).join(', ')}` });
+      }
+
+      if (blockedPdfFiles.length > 0) {
+        sileo.error({ title: `PDF uploads require Pro subscription. Upgrade to access PDF analysis.` });
+      }
+
+      const validFiles: File[] = [...imageFiles, ...documentFiles, ...pdfFiles];
+      if (validFiles.length === 0) {
+        onFinish();
+        return;
+      }
+
+      const totalAttachments = currentFileCount + validFiles.length;
+      if (totalAttachments > MAX_EDITOR_FILES) {
+        sileo.error({ title: `You can only attach up to ${MAX_EDITOR_FILES} files.` });
+        onFinish();
+        return;
+      }
+
+      if (imageFiles.length > 0) {
+        try {
+          sileo.info({ title: 'Checking images for safety...' });
+          const imageMap = await all(
+            Object.fromEntries(imageFiles.map((file, index) => [`img:${index}`, async () => fileToDataURL(file)])),
+            getBetterAllOptions(),
+          );
+          const imageDataURLs = imageFiles.map((_, index) => imageMap[`img:${index}`]);
+          const moderationResult = await checkImageModeration(imageDataURLs);
+          if (moderationResult !== 'safe') {
+            const [status, category] = moderationResult.split('\n');
+            if (status === 'unsafe') {
+              sileo.error({ title: `Image content violates safety guidelines (${category}). Please choose different images.` });
+              onFinish();
+              return;
+            }
+          }
+        } catch (error) {
+          sileo.error({ title: 'Unable to verify image safety. Please try again.' });
+          onFinish();
+          return;
+        }
+      }
+
+      setIsUploading(true);
+
+      try {
+        const uploadedAttachments: Attachment[] = [];
+        for (const file of validFiles) {
+          try {
+            const attachment = await uploadFile(file);
+            uploadedAttachments.push(attachment);
+          } catch (error) {
+            // Continue uploading remaining files
+          }
+        }
+
+        if (uploadedAttachments.length > 0) {
+          const newFileParts = uploadedAttachments.map((attachment) => ({
+            type: 'file' as const,
+            url: attachment.url,
+            name: attachment.name,
+            mediaType: attachment.contentType || attachment.mediaType || '',
+          }));
+
+          setMessages((currentMessages) => {
+            const messageIndex = currentMessages.findIndex((m) => m.id === message.id);
+            if (messageIndex === -1) return currentMessages;
+            const currentMessage = currentMessages[messageIndex];
+            const currentParts = Array.isArray(currentMessage.parts) ? currentMessage.parts : [];
+            const updatedMessage = {
+              ...currentMessage,
+              parts: insertFileParts(currentParts, newFileParts),
+            };
+            const updatedMessages = [...currentMessages];
+            updatedMessages[messageIndex] = updatedMessage;
+            return updatedMessages;
+          });
+
+          setHasAttachmentEdits(true);
+          sileo.success({ title: `${uploadedAttachments.length} file${uploadedAttachments.length > 1 ? 's' : ''} uploaded successfully` });
+        } else {
+          sileo.error({ title: 'No files were successfully uploaded' });
+        }
+      } catch (error) {
+        sileo.error({ title: 'Failed to upload one or more files. Please try again.' });
+      } finally {
+        setIsUploading(false);
+        onFinish();
+      }
+    },
+    [isProUser, message.id, message.parts, setMessages, uploadFile],
+  );
+
+  const handleFileChange = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = Array.from(event.target.files || []);
+      await handleFilesUpload(files, () => {
+        event.target.value = '';
+      });
+    },
+    [handleFilesUpload],
+  );
+
+  const handleUploadClick = useCallback(() => {
+    if (isUploading || isSubmitting) return;
+    fileInputRef.current?.click();
+  }, [isSubmitting, isUploading]);
+
+  const handleDragOver = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (isUploading || isSubmitting) return;
+      if (event.dataTransfer.items && event.dataTransfer.items.length > 0) {
+        const hasFile = Array.from(event.dataTransfer.items).some((item) => item.kind === 'file');
+        if (hasFile) setIsDragActive(true);
+      }
+    },
+    [isSubmitting, isUploading],
+  );
+
+  const handleDragLeave = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragActive(false);
+  }, []);
+
+  const handleDrop = useCallback(
+    async (event: React.DragEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsDragActive(false);
+      if (isUploading || isSubmitting) return;
+      const files = Array.from(event.dataTransfer.files || []);
+      await handleFilesUpload(files, () => {});
+    },
+    [handleFilesUpload, isSubmitting, isUploading],
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!draftContent.trim()) {
-      toast.error('Please enter a valid message.');
+      sileo.error({ title: 'Please enter a valid message.' });
       return;
     }
 
@@ -410,21 +692,32 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
       await regenerate();
     } catch (error) {
       console.error('Error updating message:', error);
-      toast.error('Failed to update message. Please try again.');
+      sileo.error({ title: 'Failed to update message. Please try again.' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const isUnchanged = draftContent.trim() === message.parts
-    ?.map((part) => (part.type === 'text' ? part.text : ''))
-    .join('')
-    .trim();
+  const isUnchanged =
+    draftContent.trim() ===
+    message.parts
+      ?.map((part) => (part.type === 'text' ? part.text : ''))
+      .join('')
+      .trim() &&
+    !hasAttachmentEdits;
 
   return (
     <form onSubmit={handleSubmit} className="w-full space-y-3">
       {/* Editor area */}
-      <div className="w-full rounded-2xl border border-border bg-accent/80 px-4 py-3">
+      <div
+        className={cn(
+          'w-full rounded-2xl border border-border bg-accent/80 px-4 py-3 transition-colors',
+          isDragActive && 'border-primary/70 bg-primary/5',
+        )}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+      >
         <Textarea
           ref={textareaRef}
           value={draftContent}
@@ -462,6 +755,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
                   }
                   return messages;
                 });
+                setHasAttachmentEdits(true);
               }}
             />
           </div>
@@ -470,12 +764,38 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
 
       {/* Action buttons */}
       <div className="flex items-center justify-end gap-2">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={EDITOR_ACCEPTED_FILE_TYPES}
+          multiple
+          onChange={handleFileChange}
+          className="hidden"
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={handleUploadClick}
+          disabled={isSubmitting || isUploading}
+          className="rounded-lg px-3"
+          title="Upload files"
+        >
+          {isUploading ? (
+            <div className="size-4 border-2 border-foreground/60 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <>
+              <Upload className="h-4 w-4" />
+              <span className="ml-2">Upload</span>
+            </>
+          )}
+        </Button>
         <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={() => setMode('view')}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isUploading}
           className="rounded-lg px-4"
         >
           Cancel
@@ -483,7 +803,7 @@ const MessageEditor: React.FC<MessageEditorProps> = ({
         <Button
           type="submit"
           size="sm"
-          disabled={isSubmitting || isUnchanged}
+          disabled={isSubmitting || isUploading || isUnchanged}
           className="rounded-lg px-5 bg-primary hover:bg-primary/90"
         >
           {isSubmitting ? (
@@ -521,6 +841,8 @@ export const Message: React.FC<MessageProps> = ({
   isOwner = true,
   onHighlight,
   shouldReduceHeight = false,
+  attachmentsRenderer,
+  onBeforeSubmit,
 }) => {
   // State for expanding/collapsing long user messages
   const [isExpanded, setIsExpanded] = useState(false);
@@ -531,7 +853,10 @@ export const Message: React.FC<MessageProps> = ({
   // Mode state for editing
   const [mode, setMode] = useState<'view' | 'edit'>('view');
 
-  useDataStream();
+  const fileAttachments = React.useMemo(
+    () => (message.parts?.filter((part) => part.type === 'file') as unknown as Attachment[]) ?? [],
+    [message.parts],
+  );
 
   // Determine if user message should top-align avatar based on combined text length
   const combinedUserText: string = React.useMemo(() => {
@@ -582,13 +907,14 @@ export const Message: React.FC<MessageProps> = ({
       if (selectedVisibilityType === 'public' && !user) return;
 
       setSuggestedQuestions([]);
+      onBeforeSubmit?.();
 
       sendMessage({
         parts: [{ type: 'text', text: question.trim() } as UIMessagePart<CustomUIDataTypes, ChatTools>],
         role: 'user',
       });
     },
-    [sendMessage, setSuggestedQuestions, user, selectedVisibilityType],
+    [sendMessage, setSuggestedQuestions, user, selectedVisibilityType, onBeforeSubmit],
   );
 
   if (message.role === 'user') {
@@ -638,7 +964,7 @@ export const Message: React.FC<MessageProps> = ({
                               .join('')
                               .trim() || '',
                           );
-                          toast.success('Copied to clipboard');
+                          sileo.success({ title: 'Copied to clipboard' });
                         }}
                         className="p-1.5 rounded-full hover:bg-accent/80 text-muted-foreground/60 hover:text-muted-foreground transition-colors"
                         aria-label="Copy message"
@@ -659,17 +985,16 @@ export const Message: React.FC<MessageProps> = ({
                     className={`relative ${!isExpanded && exceedsMaxHeight ? 'max-h-[125px] overflow-hidden' : ''}`}
                   >
                     <div className="bg-accent/80 rounded-md px-4 py-2.5">
-                      <div className={`prose prose-sm sm:prose-base prose-neutral dark:prose-invert prose-p:my-0 prose-pre:my-1 prose-code:before:hidden prose-code:after:hidden font-sans font-normal max-w-none ${getDynamicFontSize(combinedUserText)} text-foreground dark:text-foreground`}>
-                        <MarkdownRenderer content={remend(combinedUserText)} isUserMessage={true} />
+                      <div className={`font-sans font-normal max-w-none ${getDynamicFontSize(combinedUserText)} text-foreground dark:text-foreground whitespace-pre-wrap wrap-break-word`}>
+                        {combinedUserText}
                       </div>
-                      {message.parts?.filter((part) => part.type === 'file') &&
-                        message.parts?.filter((part) => part.type === 'file').length > 0 && (
+                      {fileAttachments.length > 0 && (
                           <div className="mt-2">
-                            <AttachmentsBadge
-                              attachments={
-                                message.parts?.filter((part) => part.type === 'file') as unknown as Attachment[]
-                              }
-                            />
+                            {attachmentsRenderer ? (
+                              attachmentsRenderer(fileAttachments)
+                            ) : (
+                              <AttachmentsBadge attachments={fileAttachments} />
+                            )}
                           </div>
                         )}
                     </div>
@@ -803,18 +1128,39 @@ export const EditableAttachmentsBadge = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const fileAttachments = attachments.filter(
-    (att) =>
-      att.contentType?.startsWith('image/') ||
-      att.mediaType?.startsWith('image/') ||
-      att.contentType === 'application/pdf' ||
-      att.mediaType === 'application/pdf',
-  );
+  const editableDocumentMimeTypes = [
+    'text/csv',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'application/vnd.ms-excel',
+  ];
+  const fileAttachments = attachments.filter((att) => {
+    const contentType = att.contentType || att.mediaType || '';
+    return (
+      contentType.startsWith('image/') ||
+      contentType === 'application/pdf' ||
+      editableDocumentMimeTypes.includes(contentType)
+    );
+  });
 
   if (fileAttachments.length === 0) return null;
 
   const isPdf = (attachment: Attachment) =>
     attachment.contentType === 'application/pdf' || attachment.mediaType === 'application/pdf';
+
+  const getEditableDocumentType = (attachment: Attachment): 'csv' | 'docx' | 'xlsx' | 'pdf' | 'image' | null => {
+    const contentType = attachment.contentType || attachment.mediaType || '';
+    if (contentType === 'application/pdf') return 'pdf';
+    if (contentType === 'text/csv') return 'csv';
+    if (contentType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return 'docx';
+    if (
+      contentType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      contentType === 'application/vnd.ms-excel'
+    )
+      return 'xlsx';
+    if (contentType.startsWith('image/')) return 'image';
+    return null;
+  };
 
   return (
     <>
@@ -838,44 +1184,30 @@ export const EditableAttachmentsBadge = ({
                 }}
                 className="flex items-center gap-1.5 hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/10 rounded-full pl-0 pr-1 transition-colors"
               >
-                <div className="h-6 w-6 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-background dark:bg-background">
-                  {isPdf(attachment) ? (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-red-500 dark:text-red-400"
-                    >
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                      <polyline points="14 2 14 8 20 8"></polyline>
-                      <path d="M9 15v-2h6v2"></path>
-                      <path d="M12 18v-5"></path>
-                    </svg>
-                  ) : isImage ? (
-                    <img src={attachment.url} alt={fileName} className="h-full w-full object-cover" />
-                  ) : (
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-blue-500 dark:text-blue-400"
-                    >
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                      <polyline points="14 2 14 8 20 8"></polyline>
-                    </svg>
-                  )}
+                <div className="h-6 w-6 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-background">
+                  {(() => {
+                    const docType = getEditableDocumentType(attachment);
+                    if (docType === 'image') {
+                      return <img src={attachment.url} alt={fileName} className="h-full w-full object-cover" />;
+                    }
+                    return (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-muted-foreground"
+                      >
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                      </svg>
+                    );
+                  })()}
                 </div>
                 <span className="text-xs font-medium text-foreground dark:text-foreground truncate">
                   {truncatedName}
@@ -906,7 +1238,7 @@ export const EditableAttachmentsBadge = ({
                   size="icon"
                   onClick={() => {
                     navigator.clipboard.writeText(fileAttachments[selectedIndex].url);
-                    toast.success('File URL copied to clipboard');
+                    sileo.success({ title: 'File URL copied to clipboard' });
                   }}
                   className="h-8 w-8 rounded-md text-muted-foreground dark:text-muted-foreground"
                   title="Copy link"
@@ -1001,15 +1333,76 @@ export const EditableAttachmentsBadge = ({
                       </object>
                     </div>
                   </div>
-                ) : (
-                  <div className="flex items-center justify-center h-[60vh]">
-                    <img
-                      src={fileAttachments[selectedIndex].url}
-                      alt={fileAttachments[selectedIndex].name || `Image ${selectedIndex + 1}`}
-                      className="max-w-full max-h-[60vh] object-contain rounded-md mx-auto"
-                    />
-                  </div>
-                )}
+                ) : (() => {
+                  const editDocType = getEditableDocumentType(fileAttachments[selectedIndex]);
+                  if (editDocType === 'csv' || editDocType === 'xlsx' || editDocType === 'docx') {
+                    const fileLabel =
+                      editDocType === 'csv' ? 'CSV Spreadsheet' : editDocType === 'xlsx' ? 'Excel Spreadsheet' : 'Word Document';
+                    return (
+                      <div className="flex flex-col items-center justify-center h-[60vh] w-full">
+                        <div className="flex flex-col items-center justify-center p-8 rounded-xl border border-border bg-muted/30">
+                          <div className="p-4 rounded-full bg-muted mb-4">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="48"
+                              height="48"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="text-muted-foreground"
+                            >
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                              {editDocType === 'csv' && (
+                                <>
+                                  <line x1="8" y1="13" x2="16" y2="13"></line>
+                                  <line x1="8" y1="17" x2="16" y2="17"></line>
+                                </>
+                              )}
+                              {editDocType === 'xlsx' && (
+                                <>
+                                  <rect x="8" y="12" width="8" height="6" rx="1"></rect>
+                                  <line x1="12" y1="12" x2="12" y2="18"></line>
+                                  <line x1="8" y1="15" x2="16" y2="15"></line>
+                                </>
+                              )}
+                              {editDocType === 'docx' && (
+                                <>
+                                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                                  <line x1="10" y1="9" x2="8" y2="9"></line>
+                                </>
+                              )}
+                            </svg>
+                          </div>
+                          <h3 className="text-lg font-semibold text-foreground mb-1">
+                            {fileAttachments[selectedIndex].name || `${fileLabel} ${selectedIndex + 1}`}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-4">{fileLabel}</p>
+                          <a
+                            href={fileAttachments[selectedIndex].url}
+                            download={fileAttachments[selectedIndex].name}
+                            className="px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-md hover:bg-primary/90 transition-colors"
+                          >
+                            Download File
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <div className="flex items-center justify-center h-[60vh]">
+                      <img
+                        src={fileAttachments[selectedIndex].url}
+                        alt={fileAttachments[selectedIndex].name || `Image ${selectedIndex + 1}`}
+                        className="max-w-full max-h-[60vh] object-contain rounded-md mx-auto"
+                      />
+                    </div>
+                  );
+                })()}
 
                 {fileAttachments.length > 1 && (
                   <>
@@ -1037,42 +1430,45 @@ export const EditableAttachmentsBadge = ({
             {fileAttachments.length > 1 && (
               <div className="border-t border-neutral-200 dark:border-neutral-800 p-2">
                 <div className="flex items-center justify-center gap-2 overflow-x-auto py-1 max-w-full">
-                  {fileAttachments.map((attachment, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedIndex(idx)}
-                      className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${selectedIndex === idx
-                        ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
-                        : 'opacity-70 hover:opacity-100'
-                        }`}
-                    >
-                      {isPdf(attachment) ? (
-                        <div className="h-full w-full flex items-center justify-center bg-neutral-100 dark:bg-neutral-800">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="text-red-500 dark:text-red-400"
-                          >
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                          </svg>
-                        </div>
-                      ) : (
-                        <img
-                          src={attachment.url}
-                          alt={attachment.name || `Thumbnail ${idx + 1}`}
-                          className="h-full w-full object-cover"
-                        />
-                      )}
-                    </button>
-                  ))}
+                  {fileAttachments.map((attachment, idx) => {
+                    const thumbEditDocType = getEditableDocumentType(attachment);
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedIndex(idx)}
+                        className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${selectedIndex === idx
+                            ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
+                            : 'opacity-70 hover:opacity-100'
+                          }`}
+                      >
+                        {thumbEditDocType === 'image' ? (
+                          <img
+                            src={attachment.url}
+                            alt={attachment.name || `Thumbnail ${idx + 1}`}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center bg-muted">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="text-muted-foreground"
+                            >
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -1091,17 +1487,40 @@ export const EditableAttachmentsBadge = ({
   );
 };
 
+// Document type helper
+const documentMimeTypes = [
+  'text/csv',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.ms-excel', // .xls
+];
+
+const getDocumentType = (attachment: Attachment): 'csv' | 'docx' | 'xlsx' | 'pdf' | 'image' | null => {
+  const contentType = attachment.contentType || attachment.mediaType || '';
+  if (contentType === 'application/pdf') return 'pdf';
+  if (contentType === 'text/csv') return 'csv';
+  if (contentType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') return 'docx';
+  if (
+    contentType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+    contentType === 'application/vnd.ms-excel'
+  )
+    return 'xlsx';
+  if (contentType.startsWith('image/')) return 'image';
+  return null;
+};
+
 // Export the attachments badge component for reuse
 export const AttachmentsBadge = ({ attachments }: { attachments: Attachment[] }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const fileAttachments = attachments.filter(
-    (att) =>
-      att.contentType?.startsWith('image/') ||
-      att.mediaType?.startsWith('image/') ||
-      att.contentType === 'application/pdf' ||
-      att.mediaType === 'application/pdf',
-  );
+  const fileAttachments = attachments.filter((att) => {
+    const contentType = att.contentType || att.mediaType || '';
+    return (
+      contentType.startsWith('image/') ||
+      contentType === 'application/pdf' ||
+      documentMimeTypes.includes(contentType)
+    );
+  });
 
   React.useEffect(() => {
     console.log('fileAttachments', fileAttachments);
@@ -1120,9 +1539,6 @@ export const AttachmentsBadge = ({ attachments }: { attachments: Attachment[] })
           const fileName = attachment.name || `File ${i + 1}`;
           const truncatedName = fileName.length > 15 ? fileName.substring(0, 12) + '...' : fileName;
 
-          const fileExtension = fileName.split('.').pop()?.toLowerCase();
-          const isImage = attachment.contentType?.startsWith('image/') || attachment.mediaType?.startsWith('image/');
-
           return (
             <button
               key={i}
@@ -1132,50 +1548,60 @@ export const AttachmentsBadge = ({ attachments }: { attachments: Attachment[] })
               }}
               className="flex items-center gap-1.5 max-w-xs rounded-full pl-1 pr-3 py-1 bg-muted dark:bg-muted border border-border dark:border-border hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/10 transition-colors"
             >
-              <div className="h-6 w-6 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-background dark:bg-background">
-                {isPdf(attachment) ? (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-red-500 dark:text-red-400"
-                  >
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <path d="M9 15v-2h6v2"></path>
-                    <path d="M12 18v-5"></path>
-                  </svg>
-                ) : isImage ? (
-                  <img src={attachment.url} alt={fileName} className="h-full w-full object-cover" />
-                ) : (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="text-blue-500 dark:text-blue-400"
-                  >
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                  </svg>
-                )}
+              <div className="h-6 w-6 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-background">
+                {(() => {
+                  const docType = getDocumentType(attachment);
+                  if (docType === 'image') {
+                    return <img src={attachment.url} alt={fileName} className="h-full w-full object-cover" />;
+                  }
+                  // All document types use the same muted color
+                  return (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-muted-foreground"
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      {docType === 'pdf' && (
+                        <>
+                          <path d="M9 15v-2h6v2"></path>
+                          <path d="M12 18v-5"></path>
+                        </>
+                      )}
+                      {docType === 'csv' && (
+                        <>
+                          <line x1="8" y1="13" x2="16" y2="13"></line>
+                          <line x1="8" y1="17" x2="16" y2="17"></line>
+                        </>
+                      )}
+                      {docType === 'xlsx' && (
+                        <>
+                          <rect x="8" y="12" width="8" height="6" rx="1"></rect>
+                          <line x1="12" y1="12" x2="12" y2="18"></line>
+                          <line x1="8" y1="15" x2="16" y2="15"></line>
+                        </>
+                      )}
+                      {docType === 'docx' && (
+                        <>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <line x1="10" y1="9" x2="8" y2="9"></line>
+                        </>
+                      )}
+                    </svg>
+                  );
+                })()}
               </div>
               <span className="text-xs font-medium text-foreground dark:text-foreground truncate">
                 {truncatedName}
-                {fileExtension && !isPdf(attachment) && !isImage && (
-                  <span className="text-muted-foreground dark:text-muted-foreground ml-0.5">.{fileExtension}</span>
-                )}
               </span>
             </button>
           );
@@ -1192,7 +1618,7 @@ export const AttachmentsBadge = ({ attachments }: { attachments: Attachment[] })
                   size="icon"
                   onClick={() => {
                     navigator.clipboard.writeText(fileAttachments[selectedIndex].url);
-                    toast.success('File URL copied to clipboard');
+                    sileo.success({ title: 'File URL copied to clipboard' });
                   }}
                   className="h-8 w-8 rounded-md text-muted-foreground dark:text-muted-foreground"
                   title="Copy link"
@@ -1236,66 +1662,133 @@ export const AttachmentsBadge = ({ attachments }: { attachments: Attachment[] })
 
             <div className="flex-1 p-1 overflow-auto flex items-center justify-center">
               <div className="relative flex items-center justify-center w-full h-full">
-                {isPdf(fileAttachments[selectedIndex]) ? (
-                  <div className="w-full h-[60vh] flex flex-col rounded-md overflow-hidden border border-border dark:border-border mx-auto">
-                    <div className="bg-muted dark:bg-muted py-1.5 px-2 flex items-center justify-between border-b border-border dark:border-border">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-red-500 dark:text-red-400" />
-                        <span className="text-sm font-medium text-foreground dark:text-foreground truncate max-w-[200px]">
-                          {fileAttachments[selectedIndex].name || `PDF ${selectedIndex + 1}`}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <a
-                          href={fileAttachments[selectedIndex].url}
-                          target="_blank"
-                          className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground dark:text-muted-foreground hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/10 transition-colors"
-                          title="Open fullscreen"
-                        >
-                          <Maximize2 className="h-3.5 w-3.5" />
-                        </a>
-                      </div>
-                    </div>
-                    <div className="flex-1 w-full bg-white">
-                      <object
-                        data={fileAttachments[selectedIndex].url}
-                        type="application/pdf"
-                        className="w-full h-full"
-                      >
-                        <div className="flex flex-col items-center justify-center w-full h-full bg-muted dark:bg-muted">
-                          <FileText className="h-12 w-12 text-red-500 dark:text-red-400 mb-4" />
-                          <p className="text-muted-foreground dark:text-muted-foreground text-sm mb-2">
-                            PDF cannot be displayed directly
-                          </p>
-                          <div className="flex gap-2">
+                {(() => {
+                  const selectedFile = fileAttachments[selectedIndex];
+                  const docType = getDocumentType(selectedFile);
+
+                  if (docType === 'pdf') {
+                    return (
+                      <div className="w-full h-[60vh] flex flex-col rounded-md overflow-hidden border border-border dark:border-border mx-auto">
+                        <div className="bg-muted dark:bg-muted py-1.5 px-2 flex items-center justify-between border-b border-border dark:border-border">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-red-500 dark:text-red-400" />
+                            <span className="text-sm font-medium text-foreground dark:text-foreground truncate max-w-[200px]">
+                              {selectedFile.name || `PDF ${selectedIndex + 1}`}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
                             <a
-                              href={fileAttachments[selectedIndex].url}
+                              href={selectedFile.url}
                               target="_blank"
-                              className="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-md hover:bg-red-600 transition-colors"
+                              className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground dark:text-muted-foreground hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/10 transition-colors"
+                              title="Open fullscreen"
                             >
-                              Open PDF
-                            </a>
-                            <a
-                              href={fileAttachments[selectedIndex].url}
-                              download={fileAttachments[selectedIndex].name}
-                              className="px-3 py-1.5 bg-muted dark:bg-muted text-muted-foreground dark:text-muted-foreground text-xs font-medium rounded-md hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/10 transition-colors"
-                            >
-                              Download
+                              <Maximize2 className="h-3.5 w-3.5" />
                             </a>
                           </div>
                         </div>
-                      </object>
+                        <div className="flex-1 w-full bg-white">
+                          <object data={selectedFile.url} type="application/pdf" className="w-full h-full">
+                            <div className="flex flex-col items-center justify-center w-full h-full bg-muted dark:bg-muted">
+                              <FileText className="h-12 w-12 text-red-500 dark:text-red-400 mb-4" />
+                              <p className="text-muted-foreground dark:text-muted-foreground text-sm mb-2">
+                                PDF cannot be displayed directly
+                              </p>
+                              <div className="flex gap-2">
+                                <a
+                                  href={selectedFile.url}
+                                  target="_blank"
+                                  className="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-md hover:bg-red-600 transition-colors"
+                                >
+                                  Open PDF
+                                </a>
+                                <a
+                                  href={selectedFile.url}
+                                  download={selectedFile.name}
+                                  className="px-3 py-1.5 bg-muted dark:bg-muted text-muted-foreground dark:text-muted-foreground text-xs font-medium rounded-md hover:bg-muted-foreground/10 dark:hover:bg-muted-foreground/10 transition-colors"
+                                >
+                                  Download
+                                </a>
+                              </div>
+                            </div>
+                          </object>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  if (docType === 'csv' || docType === 'xlsx' || docType === 'docx') {
+                    const fileLabel =
+                      docType === 'csv' ? 'CSV Spreadsheet' : docType === 'xlsx' ? 'Excel Spreadsheet' : 'Word Document';
+
+                    return (
+                      <div className="flex flex-col items-center justify-center h-[60vh] w-full">
+                        <div className="flex flex-col items-center justify-center p-8 rounded-xl border border-border bg-muted/30">
+                          <div className="p-4 rounded-full bg-muted mb-4">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="48"
+                              height="48"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.5"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="text-muted-foreground"
+                            >
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                              {docType === 'csv' && (
+                                <>
+                                  <line x1="8" y1="13" x2="16" y2="13"></line>
+                                  <line x1="8" y1="17" x2="16" y2="17"></line>
+                                </>
+                              )}
+                              {docType === 'xlsx' && (
+                                <>
+                                  <rect x="8" y="12" width="8" height="6" rx="1"></rect>
+                                  <line x1="12" y1="12" x2="12" y2="18"></line>
+                                  <line x1="8" y1="15" x2="16" y2="15"></line>
+                                </>
+                              )}
+                              {docType === 'docx' && (
+                                <>
+                                  <line x1="16" y1="13" x2="8" y2="13"></line>
+                                  <line x1="16" y1="17" x2="8" y2="17"></line>
+                                  <line x1="10" y1="9" x2="8" y2="9"></line>
+                                </>
+                              )}
+                            </svg>
+                          </div>
+                          <h3 className="text-lg font-semibold text-foreground mb-1">
+                            {selectedFile.name || `${fileLabel} ${selectedIndex + 1}`}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-4">{fileLabel}</p>
+                          <a
+                            href={selectedFile.url}
+                            download={selectedFile.name}
+                            className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-medium rounded-md transition-colors flex items-center gap-2"
+                          >
+                            <Download className="h-4 w-4" />
+                            Download
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Default: image preview
+                  return (
+                    <div className="flex items-center justify-center h-[60vh]">
+                      <img
+                        src={selectedFile.url}
+                        alt={selectedFile.name || `Image ${selectedIndex + 1}`}
+                        className="max-w-full max-h-[60vh] object-contain rounded-md mx-auto"
+                      />
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-[60vh]">
-                    <img
-                      src={fileAttachments[selectedIndex].url}
-                      alt={fileAttachments[selectedIndex].name || `Image ${selectedIndex + 1}`}
-                      className="max-w-full max-h-[60vh] object-contain rounded-md mx-auto"
-                    />
-                  </div>
-                )}
+                  );
+                })()}
 
                 {fileAttachments.length > 1 && (
                   <>
@@ -1321,44 +1814,47 @@ export const AttachmentsBadge = ({ attachments }: { attachments: Attachment[] })
             </div>
 
             {fileAttachments.length > 1 && (
-              <div className="border-t border-border dark:border-border p-2">
+              <div className="border-t border-border p-2">
                 <div className="flex items-center justify-center gap-2 overflow-x-auto py-1 max-w-full">
-                  {fileAttachments.map((attachment, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedIndex(idx)}
-                      className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${selectedIndex === idx
-                        ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
-                        : 'opacity-70 hover:opacity-100'
-                        }`}
-                    >
-                      {isPdf(attachment) ? (
-                        <div className="h-full w-full flex items-center justify-center bg-muted dark:bg-muted">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="text-red-500 dark:text-red-400"
-                          >
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                          </svg>
-                        </div>
-                      ) : (
-                        <img
-                          src={attachment.url}
-                          alt={attachment.name || `Thumbnail ${idx + 1}`}
-                          className="h-full w-full object-cover"
-                        />
-                      )}
-                    </button>
-                  ))}
+                  {fileAttachments.map((attachment, idx) => {
+                    const thumbDocType = getDocumentType(attachment);
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedIndex(idx)}
+                        className={`relative h-10 w-10 rounded-md overflow-hidden shrink-0 transition-all ${selectedIndex === idx
+                            ? 'ring-2 ring-primary ring-offset-1 ring-offset-background'
+                            : 'opacity-70 hover:opacity-100'
+                          }`}
+                      >
+                        {thumbDocType === 'image' ? (
+                          <img
+                            src={attachment.url}
+                            alt={attachment.name || `Thumbnail ${idx + 1}`}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center bg-muted">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className="text-muted-foreground"
+                            >
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}

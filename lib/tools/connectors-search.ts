@@ -2,6 +2,8 @@ import { tool } from 'ai';
 import { z } from 'zod';
 import Supermemory from 'supermemory';
 import { CONNECTOR_CONFIGS, type ConnectorProvider, type ConnectorConfig } from '@/lib/connectors';
+import { all } from 'better-all';
+import { getBetterAllOptions } from '@/lib/better-all';
 
 // Type definitions for Supermemory documents
 interface DocumentChunk {
@@ -130,7 +132,11 @@ export function createConnectorsSearchTool(userId: string, selectedConnectors?: 
             }
           });
 
-          const searchResults = await Promise.all(searchPromises);
+          const searchMap = await all(
+            Object.fromEntries(searchPromises.map((promise, index) => [`p:${index}`, async () => promise])),
+            getBetterAllOptions(),
+          );
+          const searchResults = providersToSearch.map((_, index) => searchMap[`p:${index}`]);
 
           // Combine all results
           allResults = searchResults.flatMap((result) => result.results || []);

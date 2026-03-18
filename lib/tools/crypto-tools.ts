@@ -1,6 +1,8 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { serverEnv } from '@/env/server';
+import { all } from 'better-all';
+import { getBetterAllOptions } from '@/lib/better-all';
 
 export const coinDataTool = tool({
   description: 'Get comprehensive coin data including metadata and market data by coin ID.',
@@ -168,23 +170,33 @@ export const coinOhlcTool = tool({
     console.log('Days:', days);
 
     try {
-      const [ohlcResponse, coinDataResponse] = await Promise.all([
-        fetch(`https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=${vsCurrency}&days=${days}`, {
-          headers: {
-            Accept: 'application/json',
-            'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
+      const { ohlcResponse, coinDataResponse } = await all(
+        {
+          async ohlcResponse() {
+            return fetch(
+              `https://api.coingecko.com/api/v3/coins/${coinId}/ohlc?vs_currency=${vsCurrency}&days=${days}`,
+              {
+                headers: {
+                  Accept: 'application/json',
+                  'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
+                },
+              },
+            );
           },
-        }),
-        fetch(
-          `https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=true&market_data=true&community_data=true&developer_data=true&sparkline=false`,
-          {
-            headers: {
-              Accept: 'application/json',
-              'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
-            },
+          async coinDataResponse() {
+            return fetch(
+              `https://api.coingecko.com/api/v3/coins/${coinId}?localization=false&tickers=true&market_data=true&community_data=true&developer_data=true&sparkline=false`,
+              {
+                headers: {
+                  Accept: 'application/json',
+                  'x-cg-demo-api-key': serverEnv.COINGECKO_API_KEY,
+                },
+              },
+            );
           },
-        ),
-      ]);
+        },
+        getBetterAllOptions(),
+      );
 
       if (!ohlcResponse.ok) {
         throw new Error(`CoinGecko OHLC API error: ${ohlcResponse.status} ${ohlcResponse.statusText}`);
@@ -194,7 +206,17 @@ export const coinOhlcTool = tool({
         throw new Error(`CoinGecko Coin Data API error: ${coinDataResponse.status} ${coinDataResponse.statusText}`);
       }
 
-      const [ohlcData, coinData] = await Promise.all([ohlcResponse.json(), coinDataResponse.json()]);
+      const { ohlcData, coinData } = await all(
+        {
+          async ohlcData() {
+            return ohlcResponse.json();
+          },
+          async coinData() {
+            return coinDataResponse.json();
+          },
+        },
+        getBetterAllOptions(),
+      );
 
       const formattedOhlcData = ohlcData.map(
         ([timestamp, open, high, low, close]: [number, number, number, number, number]) => ({
