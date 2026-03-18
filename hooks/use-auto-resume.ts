@@ -10,6 +10,7 @@ export type UseAutoResumeParams = {
   initialMessages: ChatMessage[];
   resumeStream: UseChatHelpers<ChatMessage>["resumeStream"];
   setMessages: UseChatHelpers<ChatMessage>["setMessages"];
+  status: string;
 };
 
 export function useAutoResume({
@@ -17,11 +18,19 @@ export function useAutoResume({
   initialMessages,
   resumeStream,
   setMessages,
+  status,
 }: UseAutoResumeParams) {
   const { dataStream } = useDataStream();
 
   useEffect(() => {
     if (!autoResume) {
+      return;
+    }
+
+    // Only attempt to resume when the hook is in a stable ready state.
+    // If status is 'streaming' or 'submitted', a stream is already active in
+    // this tab — calling resumeStream() would cancel it and wipe the UI.
+    if (status !== "ready") {
       return;
     }
 

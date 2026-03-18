@@ -895,6 +895,28 @@ export async function POST(req: Request) {
             return null;
           }
 
+          // Extracts the first complete top-level JSON object from text, stopping
+          // at the matching closing brace. This prevents greedy regex from
+          // consuming everything including any trailing content the model appends
+          // (e.g. actual search results, <|python_start|> tokens, etc.).
+          const extractFirstJsonObject = (text: string): string => {
+            const start = text.indexOf('{');
+            if (start === -1) return text;
+            let depth = 0;
+            let inString = false;
+            let escape = false;
+            for (let i = start; i < text.length; i++) {
+              const ch = text[i];
+              if (escape) { escape = false; continue; }
+              if (ch === '\\' && inString) { escape = true; continue; }
+              if (ch === '"') { inString = !inString; continue; }
+              if (inString) continue;
+              if (ch === '{') depth++;
+              if (ch === '}') { depth--; if (depth === 0) return text.slice(start, i + 1); }
+            }
+            return text.slice(start);
+          };
+
           try {
             const { text: repairedText } = await generateTextAI({
               model: scx.languageModel('llama-4'),
@@ -914,9 +936,32 @@ export async function POST(req: Request) {
               ].join('\n'),
             });
 
-            const jsonMatch = repairedText.match(/```(?:json)?\s*([\s\S]*?)```/) || repairedText.match(/\{[\s\S]*\}/);
-            const rawJSON = jsonMatch ? (jsonMatch[1] ?? jsonMatch[0]).trim() : repairedText;
-            const repairedArgs = JSON.parse(jsonrepair(rawJSON));
+            // Prefer a fenced code block; otherwise extract just the first JSON object.
+            const codeBlock = repairedText.match(/```(?:json)?\s*([\s\S]*?)```/);
+            const rawJSON = codeBlock
+              ? (codeBlock[1] ?? '').trim()
+              : extractFirstJsonObject(repairedText);
+
+            let repairedArgs = JSON.parse(jsonrepair(rawJSON));
+
+            // Some models wrap the corrected args in a function-call envelope:
+            // { "name": "tool_name", "parameters": { ...actual args... } }
+            // Unwrap it so the SDK receives only the tool's input fields.
+            if (
+              typeof repairedArgs.name === 'string' &&
+              repairedArgs.name === toolCall.toolName &&
+              repairedArgs.parameters &&
+              typeof repairedArgs.parameters === 'object'
+            ) {
+              repairedArgs = repairedArgs.parameters;
+            } else if (
+              typeof repairedArgs.name === 'string' &&
+              repairedArgs.name === toolCall.toolName &&
+              repairedArgs.arguments &&
+              typeof repairedArgs.arguments === 'object'
+            ) {
+              repairedArgs = repairedArgs.arguments;
+            }
 
             console.log('repairedArgs', repairedArgs);
 
@@ -1010,45 +1055,49 @@ export async function POST(req: Request) {
       }
       return "I encountered an unexpected issue while processing your request. Please try again.";
     },
-    onFinish: ({ messages: streamedMessages }) => {
+    onFinish: async ({ messages: streamedMessages }) => {
       if (!lightweightUser) {
         return;
       }
 
-      after(async () => {
-        try {
-          await saveMessages({
-            messages: streamedMessages.map((message) => {
-              const validParts = (message.parts ?? [])
-                .filter((part: any) => part != null && typeof part === 'object')
-                .filter((part: any) => part.type !== 'data-thinking_status')
-                .map((part: any) => {
-                  // Guard against text parts with undefined text (can happen when a step only produces tool calls)
-                  if (part.type === 'text' && part.text === undefined) {
-                    return { ...part, text: '' };
-                  }
-                  // Drop reasoning parts if model doesn't support reasoning
-                  if (part.type === 'reasoning' && !supportsReasoning) {
-                    return null;
-                  }
-                  return part;
-                })
-                .filter((part: any) => part !== null);
+      // Save synchronously (without after()) so messages are committed to the DB
+      // before the connection closes. The stream has already been fully delivered
+      // to the client at this point, so this does not affect perceived latency.
+      // Using after() caused a race: if the user navigated back to the page before
+      // the background task ran, the DB would still show only the user message,
+      // resulting in an empty chat.
+      try {
+        await saveMessages({
+          messages: streamedMessages.map((message) => {
+            const validParts = (message.parts ?? [])
+              .filter((part: any) => part != null && typeof part === 'object')
+              .filter((part: any) => part.type !== 'data-thinking_status')
+              .map((part: any) => {
+                // Guard against text parts with undefined text (can happen when a step only produces tool calls)
+                if (part.type === 'text' && part.text === undefined) {
+                  return { ...part, text: '' };
+                }
+                // Drop reasoning parts if model doesn't support reasoning
+                if (part.type === 'reasoning' && !supportsReasoning) {
+                  return null;
+                }
+                return part;
+              })
+              .filter((part: any) => part !== null);
 
-              return {
-                id: message.id,
-                role: message.role,
-                parts: validParts,
-                createdAt: new Date(),
-                attachments: [],
-                chatId: id,
-              };
-            }),
-          });
-        } catch (error) {
-          console.error('Failed to save messages in onFinish:', error);
-        }
-      });
+            return {
+              id: message.id,
+              role: message.role,
+              parts: validParts,
+              createdAt: new Date(),
+              attachments: [],
+              chatId: id,
+            };
+          }),
+        });
+      } catch (error) {
+        console.error('Failed to save messages in onFinish:', error);
+      }
     },
   });
   return createUIMessageStreamResponse({ stream });

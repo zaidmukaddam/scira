@@ -673,8 +673,8 @@ export function webSearchTool(
     `,
     inputSchema: z.object({
       queries: z
-        .array(z.string().describe('Array of 3-5 search queries to look up on the web. Default is 5. Minimum is 3.'))
-        .min(3),
+        .array(z.string().describe('Array of search queries to look up on the web. Default is 5, minimum is 1. For follow-up questions a single focused query is fine; for broad research use 3-5.'))
+        .min(1),
       maxResults: z
         .array(
           z

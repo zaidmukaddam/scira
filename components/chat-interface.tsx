@@ -675,6 +675,7 @@ const ChatInterface = memo(
       initialMessages: initialMessages || [],
       resumeStream,
       setMessages,
+      status,
     });
 
     useEffect(() => {
