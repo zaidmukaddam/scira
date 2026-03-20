@@ -60,7 +60,7 @@ export type SearchGroupId =
 // Search provider information for dynamic descriptions
 export const searchProviderInfo = {
   parallel: 'Parallel AI',
-  exa: 'Exa',
+  exa: 'Exa, one of the best web search APIs for AI',
   tavily: 'Tavily',
   firecrawl: 'Firecrawl',
 } as const;
