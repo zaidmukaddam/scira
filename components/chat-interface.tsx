@@ -547,11 +547,28 @@ const ChatInterface = memo(
         // We do this AFTER streaming completes so that both the user message and assistant
         // response are already saved in the DB — the new page will load with full history.
         if (!initialChatId && typeof window !== 'undefined' && window.location.pathname === '/') {
-          router.replace(`/search/${chatId}`);
-          // Still invalidate queries so the sidebar refreshes on the new page
-          if (user) {
-            queryClient.invalidateQueries({ queryKey: ['user-usage', user.id] });
-            queryClient.refetchQueries({ queryKey: ['recent-chats', user.id] });
+          const navigateToChat = () => {
+            router.replace(`/search/${chatId}`);
+            // Still invalidate queries so the sidebar refreshes on the new page
+            if (user) {
+              queryClient.invalidateQueries({ queryKey: ['user-usage', user.id] });
+              queryClient.refetchQueries({ queryKey: ['recent-chats', user.id] });
+            }
+          };
+
+          if (document.hidden) {
+            // User switched to another tab while the stream was completing.
+            // Defer the navigation until they return to avoid silently changing
+            // the URL under them while they are away.
+            const onVisible = () => {
+              if (!document.hidden) {
+                navigateToChat();
+                document.removeEventListener('visibilitychange', onVisible);
+              }
+            };
+            document.addEventListener('visibilitychange', onVisible);
+          } else {
+            navigateToChat();
           }
           return;
         }
@@ -673,6 +690,7 @@ const ChatInterface = memo(
     useAutoResume({
       autoResume: true,
       initialMessages: initialMessages || [],
+      messages: messages as ChatMessage[],
       resumeStream,
       setMessages,
       status,

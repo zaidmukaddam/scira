@@ -1,13 +1,14 @@
 "use client";
 
 import type { UseChatHelpers } from "@ai-sdk/react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useDataStream } from "@/components/data-stream-provider";
 import type { ChatMessage } from "@/lib/types";
 
 export type UseAutoResumeParams = {
   autoResume: boolean;
   initialMessages: ChatMessage[];
+  messages: ChatMessage[];
   resumeStream: UseChatHelpers<ChatMessage>["resumeStream"];
   setMessages: UseChatHelpers<ChatMessage>["setMessages"];
   status: string;
@@ -16,11 +17,19 @@ export type UseAutoResumeParams = {
 export function useAutoResume({
   autoResume,
   initialMessages,
+  messages,
   resumeStream,
   setMessages,
   status,
 }: UseAutoResumeParams) {
-  const { dataStream } = useDataStream();
+  const { dataStream, clearDataStream } = useDataStream();
+
+  // Keep a ref that always reflects the latest messages array so that the
+  // data-appendMessage effect never reads a stale mount-time snapshot.
+  const messagesRef = useRef<ChatMessage[]>(messages);
+  useEffect(() => {
+    messagesRef.current = messages;
+  });
 
   useEffect(() => {
     if (!autoResume) {
@@ -55,7 +64,16 @@ export function useAutoResume({
     const appendParts = dataStream.filter((p) => p.type === "data-appendMessage");
     if (appendParts.length === 0) return;
 
-    const newMessages = appendParts.map((p) => JSON.parse(p.data));
-    setMessages([...initialMessages, ...newMessages]);
-  }, [dataStream, initialMessages, setMessages]);
+    const newMessages = appendParts.map((p) => JSON.parse(p.data) as ChatMessage);
+
+    // Use the live ref (not the stale mount-time prop) so that messages
+    // accumulated during this streaming session are preserved.
+    const currentMessages = messagesRef.current;
+    const newMessageIds = new Set(newMessages.map((m) => m.id));
+    const deduped = currentMessages.filter((m) => !newMessageIds.has(m.id));
+    setMessages([...deduped, ...newMessages]);
+
+    // Clear processed data so stale entries don't re-trigger on the next render.
+    clearDataStream();
+  }, [dataStream, setMessages, clearDataStream]);
 }

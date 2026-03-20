@@ -63,6 +63,35 @@ export async function saveChat({
   }
 }
 
+export async function saveChatAndStreamId({
+  chatId,
+  userId,
+  title,
+  visibility,
+  streamId,
+}: {
+  chatId: string;
+  userId: string;
+  title: string;
+  visibility: VisibilityType;
+  streamId: string;
+}) {
+  try {
+    await db.transaction(async (tx) => {
+      await tx.insert(chat).values({
+        id: chatId,
+        createdAt: new Date(),
+        userId,
+        title,
+        visibility,
+      });
+      await tx.insert(stream).values({ id: streamId, chatId, createdAt: new Date() });
+    });
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to create chat and stream: ' + error);
+  }
+}
+
 export async function deleteChatById({ id }: { id: string }) {
   try {
     await db.delete(message).where(eq(message.chatId, id));

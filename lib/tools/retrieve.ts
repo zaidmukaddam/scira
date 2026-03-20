@@ -554,6 +554,25 @@ export const retrieveTool = tool({
   }) => {
     const startTime = Date.now();
 
+    // Guard: Supabase private storage URLs cannot be accessed by external scrapers.
+    // When these URLs appear it means the user is asking about one of their uploaded
+    // files. Use the rag_search tool instead, which queries the pre-indexed chunks.
+    const supabaseUrls = url.filter((u) =>
+      /supabase\.(co|com)\/storage/i.test(u) || u.includes('/storage/v1/object/')
+    );
+    if (supabaseUrls.length > 0) {
+      return {
+        urls: url,
+        results: [],
+        sources: [] as string[],
+        response_time: 0,
+        error:
+          `Cannot retrieve private file storage URLs directly. ` +
+          `These files are stored in your document library and must be queried with the rag_search tool. ` +
+          `Please call rag_search with the user's question to search the content of the uploaded file(s).`,
+      };
+    }
+
     try {
       const urlCount = url.length;
       

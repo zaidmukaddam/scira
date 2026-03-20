@@ -36,6 +36,7 @@ import {
   createStreamId,
   getChatByIdForValidation,
   saveChat,
+  saveChatAndStreamId,
   saveMessages,
   incrementExtremeSearchUsage,
   updateChatTitleById,
@@ -351,18 +352,18 @@ function initializeChatAndChecks({
       }
 
       if (!existingChat) {
-        // New chat: create with placeholder immediately — don't block on title generation.
-        // The real title resolves asynchronously and is sent via the stream once ready.
-        await saveChat({
-          id,
+        // New chat: create chat + stream ID in a single transaction (one DB round trip instead of two).
+        // Title is filled in asynchronously once the title LLM call resolves.
+        await saveChatAndStreamId({
+          chatId: id,
           userId: lightweightUser.userId,
           title: 'New Chat',
           visibility: selectedVisibilityType,
+          streamId,
         });
-        await createStreamId({ streamId, chatId: id });
         return { isNewChat: true, titlePromise: titleGenerationPromise };
       } else {
-        // Existing chat: create stream ID immediately (needed for resumable streams)
+        // Existing chat: create stream ID (one DB write, unavoidable for resumable streams)
         await createStreamId({ streamId, chatId: id });
         return { isNewChat: false };
       }
@@ -441,77 +442,94 @@ export async function POST(req: Request) {
   };
   recordTiming('parse_request_body', opStart);
 
+  const streamId = 'stream-' + uuidv7();
+
+  // Start all independent operations in parallel immediately — including geolocation,
+  // which previously blocked the entire pipeline with a sequential await.
   opStart = Date.now();
 
   // Location resolution priority:
-  // 1. Browser GPS (precise, user-granted) — sent from the client in the request body
-  // 2. Vercel geolocation headers (IP-based, ISP-level accuracy, deployment only)
-  // 3. ip-api.com fallback (IP-based, works locally and any platform)
-  let geoCity: string | undefined;
-  let geoRegion: string | undefined;
-  let geoCountry: string | undefined;
-  let geoLatitude: string | undefined;
-  let geoLongitude: string | undefined;
-  let locationSource: 'browser' | 'ip' = 'ip';
+  // 1. Browser GPS (precise, user-granted) — sent from client, reverse-geocoded async
+  // 2. Vercel geolocation headers (IP-based, ISP-level accuracy, synchronous)
+  // 3. ip-api.com fallback (IP-based, works locally; async only when Vercel headers are empty)
+  type GeoResult = {
+    city: string | undefined;
+    region: string | undefined;
+    country: string | undefined;
+    latitude: string | undefined;
+    longitude: string | undefined;
+    source: 'browser' | 'ip';
+  };
 
-  if (browserLat !== undefined && browserLon !== undefined) {
-    // Browser GPS available — most accurate; reverse-geocode to get city/country name
-    locationSource = 'browser';
-    geoLatitude = String(browserLat);
-    geoLongitude = String(browserLon);
-    try {
-      const reverseRes = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${browserLat}&lon=${browserLon}&format=json`,
-        {
-          headers: { 'User-Agent': 'SCX-AI-Chat/1.0' },
-          signal: AbortSignal.timeout(3000),
-        },
-      );
-      if (reverseRes.ok) {
-        const reverseData = await reverseRes.json();
-        const addr = reverseData.address ?? {};
-        geoCity = addr.city || addr.town || addr.village || addr.suburb || addr.county;
-        geoRegion = addr.state;
-        // Use ISO 2-letter country_code for region checks (e.g. "AU"), not the full name
-        // Full country name is kept only for display — the block check uses the code
-        geoCountry = addr.country_code ? addr.country_code.toUpperCase() : addr.country;
-      }
-    } catch (reverseError) {
-      console.warn('Reverse geocoding failed for browser location:', reverseError);
-      // Still have lat/lon — system prompt will use coordinates even without city name
-    }
-  } else {
-    // Fall back to IP geolocation — try Vercel headers first, then ip-api.com
-    const vercelGeo = geolocation(req);
-    geoCity = vercelGeo.city;
-    geoRegion = vercelGeo.countryRegion;
-    geoCountry = vercelGeo.country;
-    geoLatitude = vercelGeo.latitude;
-    geoLongitude = vercelGeo.longitude;
+  // Check Vercel headers synchronously first — this avoids any async fetch in most prod cases.
+  const vercelGeo = geolocation(req);
+  const hasVercelGeo = !!(vercelGeo.city || vercelGeo.country);
 
-    if (!geoCity && !geoCountry) {
+  const geoPromise: Promise<GeoResult> = (async (): Promise<GeoResult> => {
+    if (browserLat !== undefined && browserLon !== undefined) {
+      // Browser GPS — reverse-geocode to get city/country name (async fetch)
+      const base: GeoResult = {
+        city: undefined,
+        region: undefined,
+        country: undefined,
+        latitude: String(browserLat),
+        longitude: String(browserLon),
+        source: 'browser',
+      };
       try {
-        const fallbackGeo = await getGeolocation(req);
-        if (fallbackGeo.city || fallbackGeo.country) {
-          geoCity = fallbackGeo.city;
-          geoRegion = fallbackGeo.region;
-          geoCountry = fallbackGeo.country;
-          geoLatitude = fallbackGeo.latitude !== undefined ? String(fallbackGeo.latitude) : undefined;
-          geoLongitude = fallbackGeo.longitude !== undefined ? String(fallbackGeo.longitude) : undefined;
+        const reverseRes = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${browserLat}&lon=${browserLon}&format=json`,
+          {
+            headers: { 'User-Agent': 'SCX-AI-Chat/1.0' },
+            signal: AbortSignal.timeout(3000),
+          },
+        );
+        if (reverseRes.ok) {
+          const reverseData = await reverseRes.json();
+          const addr = reverseData.address ?? {};
+          base.city = addr.city || addr.town || addr.village || addr.suburb || addr.county;
+          base.region = addr.state;
+          // ISO 2-letter country_code for region access-control checks
+          base.country = addr.country_code ? addr.country_code.toUpperCase() : addr.country;
         }
-      } catch (fallbackError) {
-        console.warn('Fallback geolocation failed:', fallbackError);
+      } catch (reverseError) {
+        console.warn('Reverse geocoding failed for browser location:', reverseError);
+        // Coordinates are still available even without city/country name
       }
+      return base;
     }
-  }
-  recordTiming('geolocation_lookup', opStart);
 
-  const streamId = 'stream-' + uuidv7();
+    if (hasVercelGeo) {
+      // Synchronous Vercel header path — no network call needed
+      return {
+        city: vercelGeo.city,
+        region: vercelGeo.countryRegion,
+        country: vercelGeo.country,
+        latitude: vercelGeo.latitude,
+        longitude: vercelGeo.longitude,
+        source: 'ip',
+      };
+    }
 
-  console.log('🔍 Search API:', { model: model.trim(), group, locationSource, city: geoCity, region: geoRegion, country: geoCountry, latitude: geoLatitude, longitude: geoLongitude });
+    // ip-api.com fallback (local dev or missing Vercel headers)
+    try {
+      const fallbackGeo = await getGeolocation(req);
+      if (fallbackGeo.city || fallbackGeo.country) {
+        return {
+          city: fallbackGeo.city,
+          region: fallbackGeo.region,
+          country: fallbackGeo.country,
+          latitude: fallbackGeo.latitude !== undefined ? String(fallbackGeo.latitude) : undefined,
+          longitude: fallbackGeo.longitude !== undefined ? String(fallbackGeo.longitude) : undefined,
+          source: 'ip',
+        };
+      }
+    } catch (fallbackError) {
+      console.warn('Fallback geolocation failed:', fallbackError);
+    }
+    return { city: undefined, region: undefined, country: undefined, latitude: undefined, longitude: undefined, source: 'ip' };
+  })();
 
-  // Start all independent operations in parallel immediately
-  opStart = Date.now();
   const lightweightUserPromise = getLightweightUser();
   // Use lightweight validation query - only fetches id and userId
   const chatQueryPromise = getChatByIdForValidation({ id }); // Start immediately - doesn't depend on auth
@@ -522,10 +540,21 @@ export async function POST(req: Request) {
   })();
   recordTiming('start_parallel_operations', opStart);
 
-  // Wait for lightweight user first (needed for early exit checks)
+  // Await auth + geo in parallel — both run concurrently so neither blocks the other.
+  // For Vercel-hosted requests with geo headers, geoPromise resolves synchronously.
+  // For browser GPS, the Nominatim fetch runs alongside the auth lookup.
   opStart = Date.now();
-  const lightweightUser = await lightweightUserPromise;
-  recordTiming('get_lightweight_user', opStart);
+  const [lightweightUser, geoResult] = await Promise.all([lightweightUserPromise, geoPromise]);
+  recordTiming('get_lightweight_user_and_geo', opStart);
+
+  let geoCity = geoResult.city;
+  let geoRegion = geoResult.region;
+  let geoCountry = geoResult.country;
+  let geoLatitude = geoResult.latitude;
+  let geoLongitude = geoResult.longitude;
+  let locationSource = geoResult.source;
+
+  console.log('🔍 Search API:', { model: model.trim(), group, locationSource, city: geoCity, region: geoRegion, country: geoCountry, latitude: geoLatitude, longitude: geoLongitude });
 
   // Start full user fetch immediately (doesn't block early exits)
   const isProUser = lightweightUser?.isProUser ?? false;
@@ -664,28 +693,17 @@ export async function POST(req: Request) {
 
   customInstructions = customInstructionsResult;
 
-  // Save user message (chat is guaranteed to exist now) - await synchronously (no background)
-  if (user) {
-    opStart = Date.now();
-    try {
-      await saveMessages({
-        messages: [
-          {
-            chatId: id,
-            id: messages[messages.length - 1].id,
-            role: 'user',
-            parts: messages[messages.length - 1].parts,
-            attachments: messages[messages.length - 1].experimental_attachments ?? [],
-            createdAt: new Date(),
-          },
-        ],
-      });
-    } catch (error) {
-      console.error('Failed to save user message:', error);
-      return new ChatSDKError('bad_request:database', 'Failed to save your message. Please try again.').toResponse();
-    }
-    recordTiming('save_user_message', opStart);
-  }
+  // Capture user message payload for background save (done inside execute, non-blocking)
+  const userMessageToSave = user
+    ? {
+        chatId: id,
+        id: messages[messages.length - 1].id,
+        role: 'user' as const,
+        parts: messages[messages.length - 1].parts,
+        attachments: messages[messages.length - 1].experimental_attachments ?? [],
+        createdAt: new Date(),
+      }
+    : null;
 
   const setupTimeMs = Date.now() - requestStartTime;
   console.log('⏱ Pre-stream operation timings (ms):', preStreamTimings);
@@ -734,6 +752,16 @@ export async function POST(req: Request) {
 
   const stream = createUIMessageStream<ChatMessage>({
     execute: async ({ writer: dataStream }) => {
+      // Save the user message in the background — the chat row is guaranteed to exist
+      // (created in chatInitializationPromise before streaming started), so there is no
+      // FK violation risk. Firing without await removes ~300–500 ms from the critical
+      // path so the model call starts immediately.
+      if (userMessageToSave) {
+        saveMessages({ messages: [userMessageToSave] }).catch((err) => {
+          console.error('[search] Background user-message save failed:', err);
+        });
+      }
+
       // Stream chat title for new chats — title is generated asynchronously so the
       // stream can start immediately without waiting for the title AI call to finish.
       if (chatInitResult.isNewChat && chatInitResult.titlePromise) {
@@ -787,7 +815,7 @@ export async function POST(req: Request) {
           instructions +
           `\n\n## CONVERSATION CONTEXT\nYou have access to the full conversation history. Always read all prior messages before responding. When a user asks a follow-up question or refers to something discussed earlier (e.g. "it", "that", "what you said", "as mentioned"), use the conversation history to understand what they mean — do NOT search for something new if the information was already covered. Only call a tool again if genuinely new or updated information is needed.` +
           `\n\nIMPORTANT: Provide your final answer directly without showing your reasoning steps or thought process. Do not use numbered steps, "Step 1:", "Step 2:", or similar formatting. Just give the answer.` +
-          `\n\nTOOL USAGE RULES:\n- ALWAYS use the dedicated tool for: translation (text_translate), currency conversion (currency_converter), stock prices (stock_price), weather (get_weather_data), maps/places (find_place_on_map, nearby_places_search), movies/TV (movie_or_tv_search, trending_movies, trending_tv), current date/time (datetime). These tools exist specifically for these requests — never use web_search as a substitute.\n- Use web_search or extreme_search only for: news, current events, research questions, or factual queries not covered by a dedicated tool.\n- Do NOT use any tool for: pure knowledge questions, math, code explanations, or anything fully answerable from training data.\n- After receiving tool results, IMMEDIATELY provide your answer — do NOT make additional tool calls.\n\nCITATION RULES:\n- ONLY add citation links for URLs actually returned by a tool call. NEVER fabricate or invent URLs.\n- If you answered without calling any tool, do NOT add any links or citations at all. A plain answer is correct.` +
+          `\n\nTOOL USAGE RULES:\n- ALWAYS use the dedicated tool for: translation (text_translate), currency conversion (currency_converter), stock prices (stock_price), weather (get_weather_data), maps/places (find_place_on_map, nearby_places_search), movies/TV (movie_or_tv_search, trending_movies, trending_tv), current date/time (datetime). These tools exist specifically for these requests — never use web_search as a substitute.\n- Use web_search or extreme_search only for: news, current events, research questions, or factual queries not covered by a dedicated tool.\n- Do NOT use any tool for: pure knowledge questions, math, code explanations, or anything fully answerable from training data.\n- After receiving tool results, IMMEDIATELY provide your answer — do NOT make additional tool calls.\n- UPLOADED FILES: When a user asks questions about their uploaded files (PDFs, documents, images with text), ALWAYS use rag_search — NEVER use retrieve on Supabase storage URLs. The retrieve tool cannot access private storage URLs and will fail.\n\nCITATION RULES:\n- ONLY add citation links for URLs actually returned by a tool call. NEVER fabricate or invent URLs.\n- If you answered without calling any tool, do NOT add any links or citations at all. A plain answer is correct.` +
           (customInstructions && (isCustomInstructionsEnabled ?? true)
             ? `\n\nThe user's custom instructions are as follows and YOU MUST FOLLOW THEM AT ALL COSTS: ${customInstructions?.content}`
             : '\n') +

@@ -212,7 +212,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             key={`${messageIndex}-${partIndex}-loading`}
             className="flex flex-col min-h-[calc(100vh-18rem)] m-0! p-0! mt-4!"
           >
-            <div className="flex space-x-2 ml-8 mt-2">
+            <div className="flex items-center space-x-2 ml-8 mt-2">
               <div
                 className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
                 style={{ animationDelay: '0ms' }}
@@ -225,6 +225,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 className="w-2 h-2 rounded-full bg-muted-foreground dark:bg-muted-foreground animate-bounce"
                 style={{ animationDelay: '300ms' }}
               ></div>
+              <span className="text-xs text-muted-foreground animate-pulse ml-1">Preparing response…</span>
             </div>
           </div>
         );
@@ -236,7 +237,33 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
         if (status !== 'streaming' || !hasActiveToolInvocations) {
           return null;
         }
-        // If we're streaming with active tool invocations, don't render anything for empty text but don't block other parts
+
+        // Check if all tool invocations are done (output-available). If yes, show
+        // a "Composing answer…" indicator so there is no blank period after web
+        // search results arrive but before the text response starts.
+        const allToolsDone = parts
+          .filter((p): p is Extract<ChatMessage['parts'][number], { type: `tool-${string}` }> =>
+            p.type.startsWith('tool-'),
+          )
+          .every((p) => (p as { state?: string }).state === 'output-available');
+
+        if (allToolsDone) {
+          return (
+            <div
+              key={`${messageIndex}-${partIndex}-composing`}
+              className="flex items-center gap-2 px-1 py-0.5 mt-2 ml-1"
+            >
+              <div className="flex gap-[3px] items-center">
+                <span className="w-1.5 h-1.5 rounded-full bg-foreground/40 animate-bounce [animation-delay:0ms]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-foreground/40 animate-bounce [animation-delay:150ms]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-foreground/40 animate-bounce [animation-delay:300ms]" />
+              </div>
+              <span className="text-xs text-muted-foreground">Composing answer…</span>
+            </div>
+          );
+        }
+
+        // Tools still running — don't render anything for this empty text slot
         return <div key={`${messageIndex}-${partIndex}-empty`}></div>;
       }
 
