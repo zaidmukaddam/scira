@@ -31,7 +31,8 @@ export type ModelProvider =
   | 'kwaipilot'
   | 'stepfun'
   | 'sarvam'
-  | 'inception';
+  | 'inception'
+  | 'nvidia';
 
 export interface ProviderInfo {
   id: ModelProvider;
@@ -48,7 +49,7 @@ export const PROVIDERS: Record<ModelProvider, ProviderInfo> = {
   google: { id: 'google', name: 'Google', icon: 'google', hasNew: true },
   alibaba: { id: 'alibaba', name: 'Alibaba', icon: 'alibaba', hasNew: true },
   zhipu: { id: 'zhipu', name: 'Zhipu AI', icon: 'zhipu' },
-  minimax: { id: 'minimax', name: 'Minimax', icon: 'minimax' },
+  minimax: { id: 'minimax', name: 'Minimax', icon: 'minimax', hasNew: true },
   deepseek: { id: 'deepseek', name: 'DeepSeek', icon: 'deepseek' },
   moonshot: { id: 'moonshot', name: 'MoonShot', icon: 'moonshot' },
   cohere: { id: 'cohere', name: 'Cohere', icon: 'cohere' },
@@ -62,6 +63,7 @@ export const PROVIDERS: Record<ModelProvider, ProviderInfo> = {
   stepfun: { id: 'stepfun', name: 'StepFun', icon: 'stepfun' },
   sarvam: { id: 'sarvam', name: 'Sarvam', icon: 'sarvam', hasNew: true },
   inception: { id: 'inception', name: 'Inception', icon: 'inception', hasNew: true },
+  nvidia: { id: 'nvidia', name: 'NVIDIA', icon: 'nvidia', hasNew: true },
 };
 
 export interface Model {
@@ -131,6 +133,23 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 16000,
+    provider: 'xai',
+  },
+  {
+    // grok-4.20-multi-agent-beta-latest
+    value: 'grok-4.20-multi-agent-beta-latest',
+    label: 'Grok 4.20 Multi Agent Beta',
+    description: "xAI's experimental beta multi-agent model",
+    vision: true,
+    reasoning: true,
+    experimental: true,
+    category: 'Pro',
+    pdf: false,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 30000,
+    isNew: true,
     provider: 'xai',
   },
   {
@@ -416,6 +435,21 @@ export const models: Model[] = [
       minP: 0,
     },
     provider: 'alibaba',
+  },
+  {
+    value: 'scira-nemotron-3-super',
+    label: 'Nemotron 3 Super',
+    description: "NVIDIA's powerful Nemotron 3 model",
+    vision: false,
+    reasoning: false,
+    experimental: false,
+    category: 'Free',
+    pdf: false,
+    pro: false,
+    requiresAuth: false,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+    provider: 'nvidia',
   },
   {
     value: 'scira-qwen-4b',
@@ -1960,6 +1994,28 @@ export const models: Model[] = [
     provider: 'minimax',
   },
   {
+    value: 'scira-minimax-m2.7',
+    label: 'MiniMax M2.7',
+    description: "MiniMax's latest high-speed reasoning LLM",
+    vision: false,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: false,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 10000,
+    fast: true,
+    isNew: true,
+    parameters: {
+      temperature: 1.0,
+      topP: 0.95,
+      topK: 40,
+    },
+    provider: 'minimax',
+  },
+  {
     value: 'scira-minimax-m2.5',
     label: 'Minimax M2.5',
     description: "Minimax's most capable reasoning LLM",
@@ -1972,7 +2028,7 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 10000,
-    isNew: true,
+    isNew: false,
     parameters: {
       temperature: 1.0,
       topP: 0.95,
@@ -2306,9 +2362,10 @@ export const models: Model[] = [
     vision: true,
     reasoning: false,
     experimental: false,
-    category: 'Pro',
+    category: 'Max',
     pdf: true,
     pro: true,
+    max: true,
     requiresAuth: true,
     freeUnlimited: false,
     extreme: true,
@@ -2473,6 +2530,22 @@ export const models: Model[] = [
     value: 'scira-mimo-v2-flash',
     label: 'Mimo V2 Flash',
     description: "Xiaomi's fast Mimo V2 Flash model via OpenRouter (thinking disabled)",
+    vision: false,
+    reasoning: true,
+    experimental: false,
+    category: 'Pro',
+    pdf: false,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+    isNew: true,
+    provider: 'xiaomi',
+  },
+  {
+    value: 'scira-mimo-v2-pro',
+    label: 'Mimo V2 Pro',
+    description: "Xiaomi's advanced Mimo V2 Pro model",
     vision: false,
     reasoning: true,
     experimental: false,

@@ -19,6 +19,7 @@ import {
   Chart03Icon,
   CanvasIcon,
 } from '@hugeicons/core-free-icons';
+import { AgentNetworkIcon } from '@/components/icons/agent-network-icon';
 import { AppsIcon } from '@/components/icons/apps-icon';
 
 export function cn(...inputs: ClassValue[]) {
@@ -31,8 +32,7 @@ export function normalizeError(err: unknown): string {
     return 'Connection lost. Please check your internet and try again.';
   if (/oauth|authoriz|token|forbidden|403/i.test(msg))
     return 'Authorization failed. The app may have rejected the request.';
-  if (/timeout|timed? ?out/i.test(msg))
-    return 'This took too long. Please try again.';
+  if (/timeout|timed? ?out/i.test(msg)) return 'This took too long. Please try again.';
   if (/network|fetch failed|ECONNREFUSED|ENOTFOUND/i.test(msg))
     return 'Could not connect. Please check your internet and try again.';
   return 'Something went wrong. Please try again.';
@@ -54,6 +54,7 @@ export type SearchGroupId =
   | 'code'
   | 'connectors'
   | 'mcp'
+  | 'multi-agent'
   | 'prediction'
   | 'canvas';
 
@@ -61,7 +62,6 @@ export type SearchGroupId =
 export const searchProviderInfo = {
   parallel: 'Parallel AI',
   exa: 'Exa, one of the best web search APIs for AI',
-  tavily: 'Tavily',
   firecrawl: 'Firecrawl',
 } as const;
 
@@ -119,6 +119,15 @@ export function getSearchGroups(searchProvider: SearchProvider = 'exa') {
       description: 'Use tools from your connected apps',
       icon: AppsIcon,
       show: process.env.NEXT_PUBLIC_MCP_ENABLED === 'true',
+      requireAuth: true,
+      requirePro: true,
+    },
+    {
+      id: 'multi-agent' as const,
+      name: 'Multi-agent',
+      description: 'High-agency research with xAI web and X search plus grouped sources',
+      icon: AgentNetworkIcon,
+      show: true,
       requireAuth: true,
       requirePro: true,
     },

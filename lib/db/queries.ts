@@ -10,7 +10,10 @@ import {
   type Message,
   stream,
   extremeSearchUsage,
+  anthropicUsage,
+  googleUsage,
   messageUsage,
+  agentModeUsageEvents,
   customInstructions,
   userPreferences,
   dodosubscription,
@@ -729,6 +732,165 @@ export async function getExtremeSearchCount({ userId }: { userId: string }): Pro
   }
 }
 
+export async function getAnthropicUsageByUserId({ userId }: { userId: string }) {
+  try {
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    const day = startOfWeek.getDay();
+    startOfWeek.setDate(startOfWeek.getDate() - day);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const startOfNextWeek = new Date(startOfWeek);
+    startOfNextWeek.setDate(startOfNextWeek.getDate() + 7);
+    startOfNextWeek.setHours(0, 0, 0, 0);
+
+    const [usage] = await maindb
+      .select()
+      .from(anthropicUsage)
+      .where(
+        and(
+          eq(anthropicUsage.userId, userId),
+          gte(anthropicUsage.date, startOfWeek),
+          lt(anthropicUsage.date, startOfNextWeek),
+        ),
+      )
+      .limit(1);
+
+    return usage;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get anthropic usage');
+  }
+}
+
+export async function incrementAnthropicUsage({ userId, model }: { userId: string; model?: string | null }) {
+  try {
+    const startOfWeek = new Date();
+    const day = startOfWeek.getDay();
+    startOfWeek.setDate(startOfWeek.getDate() - day);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 7);
+    endOfWeek.setHours(0, 0, 0, 0);
+
+    db.delete(anthropicUsage)
+      .where(and(eq(anthropicUsage.userId, userId), lt(anthropicUsage.date, startOfWeek)))
+      .catch((err) => console.error('Failed to clean up old anthropic usage:', err));
+
+    const [result] = await db
+      .insert(anthropicUsage)
+      .values({
+        userId,
+        usageCount: 1,
+        date: startOfWeek,
+        resetAt: endOfWeek,
+        metadata: model ? { lastModel: model } : null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [anthropicUsage.userId, anthropicUsage.date],
+        set: {
+          usageCount: sql`${anthropicUsage.usageCount} + 1`,
+          metadata: model ? { lastModel: model } : sql`${anthropicUsage.metadata}`,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+
+    return result;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to increment anthropic usage');
+  }
+}
+
+export async function getAnthropicUsageCount({ userId }: { userId: string }): Promise<number> {
+  try {
+    const usage = await getAnthropicUsageByUserId({ userId });
+    return usage?.usageCount || 0;
+  } catch (error) {
+    console.error('Error getting anthropic usage count:', error);
+    return 0;
+  }
+}
+
+export async function getGoogleUsageByUserId({ userId }: { userId: string }) {
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    startOfNextMonth.setHours(0, 0, 0, 0);
+
+    const [usage] = await maindb
+      .select()
+      .from(googleUsage)
+      .where(
+        and(
+          eq(googleUsage.userId, userId),
+          gte(googleUsage.date, startOfMonth),
+          lt(googleUsage.date, startOfNextMonth),
+        ),
+      )
+      .limit(1);
+
+    return usage;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get google usage');
+  }
+}
+
+export async function incrementGoogleUsage({ userId, model }: { userId: string; model?: string | null }) {
+  try {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const startOfNextMonth = new Date(startOfMonth.getFullYear(), startOfMonth.getMonth() + 1, 1);
+    startOfNextMonth.setHours(0, 0, 0, 0);
+
+    db.delete(googleUsage)
+      .where(and(eq(googleUsage.userId, userId), lt(googleUsage.date, startOfMonth)))
+      .catch((err) => console.error('Failed to clean up old google usage:', err));
+
+    const [result] = await db
+      .insert(googleUsage)
+      .values({
+        userId,
+        usageCount: 1,
+        date: startOfMonth,
+        resetAt: startOfNextMonth,
+        metadata: model ? { lastModel: model } : null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .onConflictDoUpdate({
+        target: [googleUsage.userId, googleUsage.date],
+        set: {
+          usageCount: sql`${googleUsage.usageCount} + 1`,
+          metadata: model ? { lastModel: model } : sql`${googleUsage.metadata}`,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+
+    return result;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to increment google usage');
+  }
+}
+
+export async function getGoogleUsageCount({ userId }: { userId: string }): Promise<number> {
+  try {
+    const usage = await getGoogleUsageByUserId({ userId });
+    return usage?.usageCount || 0;
+  } catch (error) {
+    console.error('Error getting google usage count:', error);
+    return 0;
+  }
+}
+
 export async function getMessageUsageByUserId({ userId }: { userId: string }) {
   try {
     const now = new Date();
@@ -806,16 +968,16 @@ export async function getMessageCount({ userId }: { userId: string }): Promise<n
 }
 
 /**
- * Fetches message count (daily) and extreme search count (monthly) in one parallel round-trip.
- * Use for critical-checks path to avoid sequential awaits.
+ * Fetches message count (daily), extreme search count (monthly), and anthropic count (daily)
+ * in one parallel round-trip. Use for critical-checks path to avoid sequential awaits.
  */
 export async function getMessageCountAndExtremeSearchByUserId({
   userId,
 }: {
   userId: string;
-}): Promise<{ messageCount: number; extremeSearchCount: number }> {
+}): Promise<{ messageCount: number; extremeSearchCount: number; anthropicCount: number; googleCount: number }> {
   try {
-    const { messageUsageRow, extremeUsageRow } = await all(
+    const { messageUsageRow, extremeUsageRow, anthropicUsageRow, googleUsageRow } = await all(
       {
         async messageUsageRow() {
           return getMessageUsageByUserId({ userId });
@@ -823,16 +985,24 @@ export async function getMessageCountAndExtremeSearchByUserId({
         async extremeUsageRow() {
           return getExtremeSearchUsageByUserId({ userId });
         },
+        async anthropicUsageRow() {
+          return getAnthropicUsageByUserId({ userId });
+        },
+        async googleUsageRow() {
+          return getGoogleUsageByUserId({ userId });
+        },
       },
       getBetterAllOptions(),
     );
     return {
       messageCount: messageUsageRow?.messageCount ?? 0,
       extremeSearchCount: extremeUsageRow?.searchCount ?? 0,
+      anthropicCount: anthropicUsageRow?.usageCount ?? 0,
+      googleCount: googleUsageRow?.usageCount ?? 0,
     };
   } catch (error) {
     console.error('Error getting batched usage counts:', error);
-    return { messageCount: 0, extremeSearchCount: 0 };
+    return { messageCount: 0, extremeSearchCount: 0, anthropicCount: 0, googleCount: 0 };
   }
 }
 
@@ -872,6 +1042,69 @@ export async function getHistoricalUsageData({ userId, months = 6 }: { userId: s
   } catch (error) {
     console.error('Error getting historical usage data:', error);
     return [];
+  }
+}
+
+export async function getAgentModeRequestCountForCurrentMonth({ userId }: { userId: string }): Promise<number> {
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    startOfNextMonth.setHours(0, 0, 0, 0);
+
+    const [row] = await maindb
+      .select({
+        requestCount: sql<number>`COUNT(*)::int`.as('request_count'),
+      })
+      .from(agentModeUsageEvents)
+      .where(
+        and(
+          eq(agentModeUsageEvents.userId, userId),
+          gte(agentModeUsageEvents.date, startOfMonth),
+          lt(agentModeUsageEvents.date, startOfNextMonth),
+        ),
+      );
+
+    return row?.requestCount ?? 0;
+  } catch (error) {
+    console.error('Error getting agent mode request count:', error);
+    return 0;
+  }
+}
+
+export async function trackAgentModeUsageEventForMessage({
+  userId,
+  messageId,
+}: {
+  userId: string;
+  messageId: string;
+}): Promise<void> {
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    startOfMonth.setHours(0, 0, 0, 0);
+
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    startOfNextMonth.setHours(0, 0, 0, 0);
+
+    await maindb
+      .insert(agentModeUsageEvents)
+      .values({
+        userId,
+        messageId,
+        date: startOfMonth,
+        resetAt: startOfNextMonth,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .onConflictDoNothing({
+        target: [agentModeUsageEvents.messageId],
+      });
+  } catch (error) {
+    // Usage tracking should never break builds; swallow and log.
+    console.error('Error tracking agent mode usage event:', error);
   }
 }
 
@@ -959,7 +1192,7 @@ export async function upsertUserPreferences({
 }: {
   userId: string;
   preferences: Partial<{
-    'scira-search-provider'?: 'exa' | 'parallel' | 'tavily' | 'firecrawl';
+    'scira-search-provider'?: 'exa' | 'parallel' | 'firecrawl';
     'scira-extreme-search-model'?:
       | 'scira-ext-1'
       | 'scira-ext-2'
@@ -1551,7 +1784,7 @@ export async function createBuildSession({
       .returning();
     return created;
   } catch (error) {
-    console.error('Failed to create build session:', error);
+    console.error('Failed to create agent session:', error);
     return null;
   }
 }
@@ -1591,7 +1824,7 @@ export async function updateBuildSession({
 
     await maindb.update(buildSession).set(updates).where(eq(buildSession.chatId, chatId));
   } catch (error) {
-    console.error('Failed to update build session:', error);
+    console.error('Failed to update agent session:', error);
   }
 }
 
@@ -1600,7 +1833,7 @@ export async function getBuildSessionByChatId({ chatId }: { chatId: string }) {
     const [result] = await maindb.select().from(buildSession).where(eq(buildSession.chatId, chatId)).limit(1);
     return result ?? null;
   } catch (error) {
-    console.error('Failed to get build session:', error);
+    console.error('Failed to get agent session:', error);
     return null;
   }
 }
@@ -1637,7 +1870,7 @@ export async function getBuildSessionsByUserId({ userId, limit = 20 }: { userId:
 
     return results;
   } catch (error) {
-    console.error('Failed to get build sessions:', error);
+    console.error('Failed to get agent sessions:', error);
     return [];
   }
 }

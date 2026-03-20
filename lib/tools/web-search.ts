@@ -6,7 +6,6 @@ import { UIMessageStreamWriter } from 'ai';
 import { ChatMessage } from '../types';
 import Parallel from 'parallel-web';
 import FirecrawlApp, { SearchResultWeb, SearchResultNews, SearchResultImages, Document } from '@mendable/firecrawl-js';
-import { tavily, type TavilyClient } from '@tavily/core';
 import { all } from 'better-all';
 import { getBetterAllOptions } from '@/lib/better-all';
 
@@ -15,7 +14,6 @@ let _searchClients: {
   exa: Exa;
   parallel: Parallel;
   firecrawl: FirecrawlApp;
-  tvly: TavilyClient;
 } | null = null;
 
 function getSearchClients() {
@@ -24,7 +22,6 @@ function getSearchClients() {
       exa: new Exa(serverEnv.EXA_API_KEY),
       parallel: new Parallel({ apiKey: serverEnv.PARALLEL_API_KEY }),
       firecrawl: new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY }),
-      tvly: tavily({ apiKey: serverEnv.TAVILY_API_KEY }),
     };
   }
   return _searchClients;
@@ -90,26 +87,6 @@ const processDomains = (domains?: (string | null)[]): string[] | undefined => {
   return processedDomains.length === 0 ? undefined : processedDomains;
 };
 
-// Helper functions for Tavily image processing
-const sanitizeUrl = (url: string): string => {
-  try {
-    // Remove any additional URL parameters that might cause issues
-    const urlObj = new URL(url);
-    return urlObj.href;
-  } catch {
-    return url;
-  }
-};
-
-const isValidImageUrl = async (url: string): Promise<{ valid: boolean; redirectedUrl?: string }> => {
-  try {
-    // Just return valid for now - we can add more sophisticated validation later
-    return { valid: true, redirectedUrl: url };
-  } catch {
-    return { valid: false };
-  }
-};
-
 // Search provider strategy interface
 interface SearchStrategy {
   search(
@@ -171,7 +148,6 @@ class ParallelSearchStrategy implements SearchStrategy {
 
     try {
       const perQueryPromises = limitedQueries.map(async (query, index) => {
-        const currentQuality = options.quality[index] || options.quality[0] || 'default';
         const currentMaxResults = options.maxResults[index] || options.maxResults[0] || 10;
         const currentStartDate = options.startDates?.[index] || options.startDates?.[0] || null;
         const parallel = this.parallel;
@@ -183,7 +159,7 @@ class ParallelSearchStrategy implements SearchStrategy {
               singleResponse: async function () {
                 return parallel.beta.search({
                   objective: query,
-                  mode: currentQuality === 'best' ? 'agentic' : 'fast' as any,
+                  mode: 'fast',
                   max_results: Math.max(currentMaxResults, 10),
                   excerpts: {
                     max_chars_per_result: 5000,
@@ -304,161 +280,6 @@ class ParallelSearchStrategy implements SearchStrategy {
         searches: limitedQueries.map((query) => ({ query, results: [], images: [] })),
       };
     }
-  }
-}
-
-// Tavily search strategy
-class TavilySearchStrategy implements SearchStrategy {
-  constructor(private tvly: TavilyClient) {}
-
-  async search(
-    queries: string[],
-    options: {
-      maxResults: number[];
-      topics: ('general' | 'news')[];
-      quality: ('default' | 'best')[];
-      startDates?: (string | null)[];
-      dataStream?: UIMessageStreamWriter<ChatMessage>;
-    },
-  ) {
-    const searchPromises = queries.map(async (query, index) => {
-      const currentTopic = options.topics[index] || options.topics[0] || 'general';
-      const currentMaxResults = options.maxResults[index] || options.maxResults[0] || 10;
-      const currentQuality = options.quality[index] || options.quality[0] || 'default';
-      const currentStartDate = options.startDates?.[index] || options.startDates?.[0] || null;
-      const tvly = this.tvly;
-
-      // Format date as YYYY-MM-DD for Tavily
-      const formatDateForTavily = (dateStr: string): string => {
-        const date = new Date(dateStr);
-        return date.toISOString().split('T')[0];
-      };
-
-      // Get today's date in YYYY-MM-DD format
-      const getTodayForTavily = (): string => {
-        return new Date().toISOString().split('T')[0];
-      };
-
-      try {
-        options.dataStream?.write({
-          type: 'data-query_completion',
-          data: {
-            query,
-            index,
-            total: queries.length,
-            status: 'started',
-            resultsCount: 0,
-            imagesCount: 0,
-          },
-        });
-
-        const { results, images } = await all(
-          {
-            tavilyData: async function () {
-              return tvly.search(query, {
-                topic: currentTopic || 'general',
-                ...(currentStartDate
-                  ? {
-                      startDate: formatDateForTavily(currentStartDate),
-                      endDate: getTodayForTavily(),
-                    }
-                  : currentTopic === 'news'
-                    ? { days: 7 }
-                    : {}),
-                maxResults: currentMaxResults,
-                searchDepth: currentQuality === 'best' ? 'advanced' : ('ultra-fast' as any),
-                includeAnswer: true,
-                includeImages: true,
-                includeImageDescriptions: true,
-              });
-            },
-            results: async function () {
-              const tavilyData = await this.$.tavilyData;
-              return deduplicateByDomainAndUrl(tavilyData.results).map((obj: any) => ({
-                url: obj.url,
-                title: cleanTitle(obj.title || ''),
-                content: obj.content,
-                published_date: currentTopic === 'news' ? obj.published_date : undefined,
-                author: undefined,
-              }));
-            },
-            images: async function () {
-              const tavilyData = await this.$.tavilyData;
-              const imagePromises = deduplicateByDomainAndUrl(tavilyData.images || []).map(
-                async ({ url, description }: { url: string; description?: string }) => {
-                  const sanitizedUrl = sanitizeUrl(url);
-                  const imageValidation = await isValidImageUrl(sanitizedUrl);
-                  return imageValidation.valid
-                    ? {
-                        url: imageValidation.redirectedUrl || sanitizedUrl,
-                        description: description || '',
-                      }
-                    : null;
-                },
-              );
-              const imageMap = await all(
-                Object.fromEntries(imagePromises.map((promise, index) => [`img:${index}`, async () => promise])),
-                getBetterAllOptions(),
-              );
-              const validated = imagePromises.map((_, index) => imageMap[`img:${index}`]);
-              return validated.filter(
-                (image): image is { url: string; description: string } =>
-                  image !== null &&
-                  typeof image === 'object' &&
-                  typeof image.description === 'string' &&
-                  image.description !== '',
-              );
-            },
-          },
-          getBetterAllOptions(),
-        );
-
-        options.dataStream?.write({
-          type: 'data-query_completion',
-          data: {
-            query,
-            index,
-            total: queries.length,
-            status: 'completed',
-            resultsCount: results.length,
-            imagesCount: images.length,
-          },
-        });
-
-        return {
-          query,
-          results,
-          images: images.filter((img) => img.url && img.description),
-        };
-      } catch (error) {
-        console.error(`Tavily search error for query "${query}":`, error);
-
-        options.dataStream?.write({
-          type: 'data-query_completion',
-          data: {
-            query,
-            index,
-            total: queries.length,
-            status: 'error',
-            resultsCount: 0,
-            imagesCount: 0,
-          },
-        });
-
-        return {
-          query,
-          results: [],
-          images: [],
-        };
-      }
-    });
-
-    const searchMap = await all(
-      Object.fromEntries(searchPromises.map((promise, index) => [`q:${index}`, async () => promise])),
-      getBetterAllOptions(),
-    );
-    const searchResults = queries.map((_, index) => searchMap[`q:${index}`]);
-    return { searches: searchResults };
   }
 }
 
@@ -772,18 +593,26 @@ class ExaSearchStrategy implements SearchStrategy {
 }
 
 // Search provider factory
+const WEB_SEARCH_PROVIDERS = ['exa', 'parallel', 'firecrawl'] as const;
+type WebSearchProvider = (typeof WEB_SEARCH_PROVIDERS)[number];
+
+const normalizeWebSearchProvider = (provider: string): WebSearchProvider => {
+  if (provider === 'parallel' || provider === 'firecrawl' || provider === 'exa') {
+    return provider;
+  }
+  return 'exa';
+};
+
 const createSearchStrategy = (
-  provider: 'exa' | 'parallel' | 'tavily' | 'firecrawl',
+  provider: WebSearchProvider,
   clients: {
     exa: Exa;
     parallel: Parallel;
     firecrawl: FirecrawlApp;
-    tvly: TavilyClient;
   },
 ): SearchStrategy => {
   const strategies = {
     parallel: () => new ParallelSearchStrategy(clients.parallel, clients.firecrawl),
-    tavily: () => new TavilySearchStrategy(clients.tvly),
     firecrawl: () => new FirecrawlSearchStrategy(clients.firecrawl),
     exa: () => new ExaSearchStrategy(clients.exa, clients.firecrawl),
   };
@@ -793,7 +622,7 @@ const createSearchStrategy = (
 
 export function webSearchTool(
   dataStream?: UIMessageStreamWriter<ChatMessage> | undefined,
-  searchProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl' = 'exa',
+  searchProvider: WebSearchProvider = 'exa',
 ) {
   return tool({
     description: `This is the default tool of the app to be used to search the web for information with multiple queries(5-10), max results(15-20), topics, and quality.
@@ -879,7 +708,8 @@ export function webSearchTool(
       console.log('Search Provider:', searchProvider);
 
       // Create and use the appropriate search strategy
-      const strategy = createSearchStrategy(searchProvider, clients);
+      const normalizedProvider = normalizeWebSearchProvider(searchProvider);
+      const strategy = createSearchStrategy(normalizedProvider, clients);
       if (!maxResults) {
         maxResults = new Array(queries.length).fill(10);
       }
@@ -898,8 +728,8 @@ export function webSearchTool(
       };
       let result = await strategy.search(queries, searchOptions);
       const hasNoResults = result.searches.every((s) => s.results.length === 0);
-      if (hasNoResults && searchProvider !== 'firecrawl') {
-        console.log(`${searchProvider} returned no results, falling back to Firecrawl`);
+      if (hasNoResults && normalizedProvider !== 'firecrawl') {
+        console.log(`${normalizedProvider} returned no results, falling back to Firecrawl`);
         const fallbackStrategy = createSearchStrategy('firecrawl', clients);
         result = await fallbackStrategy.search(queries, searchOptions);
       }

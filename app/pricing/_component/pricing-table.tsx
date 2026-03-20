@@ -71,7 +71,9 @@ interface PricingTableProps {
 const comparisonFeatures = [
   { name: 'Daily searches', free: `${SEARCH_LIMITS.DAILY_SEARCH_LIMIT} per day`, pro: 'Unlimited', max: 'Unlimited' },
   { name: 'Base AI models', free: 'Basic models', pro: 'All base models', max: 'All base models' },
-  { name: 'Max AI models (Anthropic Claude 4.5/4.6)', free: false, pro: false, max: true },
+  { name: 'Max AI models (Anthropic Claude 4.5/4.6, Gemini 3.1 Pro)', free: false, pro: false, max: true },
+  { name: 'Anthropic usage limit', free: false, pro: false, max: '60 requests per week' },
+  { name: 'Gemini 3.1 Pro usage limit', free: false, pro: false, max: '80 requests per month' },
   { name: 'Search modes', free: '13 modes', pro: 'All 18 modes', max: 'All 18 modes' },
   { name: 'Web, Chat, X, Reddit', free: true, pro: true, max: true },
   { name: 'Academic, GitHub, Code', free: true, pro: true, max: true },
@@ -734,7 +736,9 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
             <div className="flex items-center gap-3 mb-2">
               <h3 className="text-lg font-semibold text-foreground">Max</h3>
             </div>
-            <p className="text-sm text-muted-foreground mb-6">All paid features + Anthropic Claude models</p>
+            <p className="text-sm text-muted-foreground mb-6">
+              All paid features + Anthropic Claude (60/week) & Gemini 3.1 Pro (80/month)
+            </p>
 
             <div className="mb-8">
               <div className="space-y-1">
@@ -754,12 +758,8 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                 All standard paid features
               </li>
               {[
-                'Claude 4.6 Sonnet',
-                'Claude 4.6 Sonnet Thinking',
-                'Claude 4.6 Opus',
-                'Claude 4.6 Opus Thinking',
-                'Claude 4.5 Opus',
-                'Claude 4.5 Opus Thinking',
+                'All Anthropic Models (60/week)',
+                'Gemini 3.1 Pro (80/month)',
               ].map((item) => (
                 <li key={item} className="flex items-center gap-3 text-sm text-foreground/80">
                   <Check className="w-3.5 h-3.5 text-primary shrink-0" />

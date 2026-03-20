@@ -38,11 +38,14 @@ class PerformanceCache<T> {
 
     // Single shared cleanup timer for all cache instances
     if (!PerformanceCache.cleanupTimer) {
-      const timer = setInterval(() => {
-        for (const instance of PerformanceCache.instances) {
-          instance.cleanup();
-        }
-      }, 5 * 60 * 1000);
+      const timer = setInterval(
+        () => {
+          for (const instance of PerformanceCache.instances) {
+            instance.cleanup();
+          }
+        },
+        5 * 60 * 1000,
+      );
       // Avoid keeping the event loop alive in serverless/idle contexts
       if (typeof (timer as any).unref === 'function') {
         (timer as any).unref();
@@ -200,6 +203,9 @@ export const createUserKey = (token: string) => `user:${token}`;
 export const createSubscriptionKey = (userId: string) => `subscription:${userId}`;
 export const createMessageCountKey = (userId: string) => `msg-count:${userId}`;
 export const createExtremeCountKey = (userId: string) => `extreme-count:${userId}`;
+export const createAnthropicCountKey = (userId: string) => `anthropic-count:${userId}`;
+export const createGoogleCountKey = (userId: string) => `google-count:${userId}`;
+export const createAgentModeCountKey = (userId: string) => `agent-mode-count:${userId}`;
 export const createProUserKey = (userId: string) => `pro-user:${userId}`;
 
 // Dodo Subscriptions cache key generators
@@ -270,6 +276,7 @@ export function invalidateUserCaches(userId: string) {
   subscriptionCache.delete(createSubscriptionKey(userId));
   usageCountCache.delete(createMessageCountKey(userId));
   usageCountCache.delete(createExtremeCountKey(userId));
+  usageCountCache.delete(createAgentModeCountKey(userId));
   proUserStatusCache.delete(createProUserKey(userId));
   // Invalidate Dodo Subscription caches
   dodoSubscriptionCache.delete(createDodoSubscriptionKey(userId));

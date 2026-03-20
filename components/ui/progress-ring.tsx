@@ -29,9 +29,9 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
 
   const colorClasses = {
     primary: 'stroke-primary',
-    warning: 'stroke-orange-500',
-    success: 'stroke-green-500',
-    danger: 'stroke-red-500',
+    warning: 'stroke-destructive',
+    success: 'stroke-secondary',
+    danger: 'stroke-destructive',
   };
 
   return (

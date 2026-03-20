@@ -21,7 +21,12 @@ import {
   getExtremeSearchCount,
   getMessageCountAndExtremeSearchByUserId,
   incrementMessageUsage,
+  incrementAnthropicUsage,
+  incrementGoogleUsage,
   getMessageCount,
+  getAnthropicUsageCount,
+  getGoogleUsageCount,
+  getAgentModeRequestCountForCurrentMonth,
   getHistoricalUsageData,
   getCustomInstructionsByUserId,
   createCustomInstructions,
@@ -47,7 +52,14 @@ import { GroqProviderOptions, groq } from '@ai-sdk/groq';
 import { Client } from '@upstash/qstash';
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js';
 import type { CharacterAlignmentResponseModel } from '@elevenlabs/elevenlabs-js/api/types/CharacterAlignmentResponseModel';
-import { usageCountCache, createMessageCountKey, createExtremeCountKey } from '@/lib/performance-cache';
+import {
+  usageCountCache,
+  createMessageCountKey,
+  createExtremeCountKey,
+  createAnthropicCountKey,
+  createGoogleCountKey,
+  createAgentModeCountKey,
+} from '@/lib/performance-cache';
 import { CronExpressionParser } from 'cron-parser';
 import {
   getComprehensiveUserData,
@@ -802,18 +814,44 @@ export async function previewMaxUpgrade() {
     }
 
     const activeDodoProSub = await maindb.query.dodosubscription.findFirst({
-      where: and(eq(dodosubscription.userId, user.id), eq(dodosubscription.productId, dodoProProductId)),
-      orderBy: (table, { desc }) => [desc(table.createdAt)],
+      where: and(
+        eq(dodosubscription.userId, user.id),
+        eq(dodosubscription.productId, dodoProProductId),
+        eq(dodosubscription.status, 'active'),
+      ),
+      orderBy: (table, { desc }) => [desc(table.updatedAt), desc(table.createdAt)],
     });
 
     if (!activeDodoProSub?.id) {
       return { success: false, error: 'Active Dodo Pro subscription not found' };
     }
 
+    console.log('ℹ️ [UPGRADE] previewMaxUpgrade selected subscription:', {
+      userId: user.id,
+      subscriptionId: activeDodoProSub.id,
+      productId: activeDodoProSub.productId,
+      status: activeDodoProSub.status,
+      amount: activeDodoProSub.amount,
+      currency: activeDodoProSub.currency,
+      interval: activeDodoProSub.interval,
+      currentPeriodStart: activeDodoProSub.currentPeriodStart,
+      currentPeriodEnd: activeDodoProSub.currentPeriodEnd,
+      targetProductId: maxProductId,
+    });
+
     const preview = await dodoPayments.subscriptions.previewChangePlan(activeDodoProSub.id, {
       product_id: maxProductId,
       quantity: 1,
       proration_billing_mode: 'prorated_immediately',
+    });
+
+    console.log('ℹ️ [UPGRADE] previewMaxUpgrade Dodo preview summary:', {
+      subscriptionId: activeDodoProSub.id,
+      totalAmount: preview.immediate_charge.summary.total_amount,
+      currency: preview.immediate_charge.summary.currency,
+      settlementAmount: preview.immediate_charge.summary.settlement_amount,
+      settlementCurrency: preview.immediate_charge.summary.settlement_currency,
+      lineItems: preview.immediate_charge.line_items,
     });
 
     return {
@@ -865,13 +903,30 @@ export async function upgradeToMax() {
       }
 
       const activeDodoProSub = await maindb.query.dodosubscription.findFirst({
-        where: and(eq(dodosubscription.userId, user.id), eq(dodosubscription.productId, dodoProProductId)),
-        orderBy: (table, { desc }) => [desc(table.createdAt)],
+        where: and(
+          eq(dodosubscription.userId, user.id),
+          eq(dodosubscription.productId, dodoProProductId),
+          eq(dodosubscription.status, 'active'),
+        ),
+        orderBy: (table, { desc }) => [desc(table.updatedAt), desc(table.createdAt)],
       });
 
       if (!activeDodoProSub?.id) {
         return { success: false, error: 'Active Dodo Pro subscription not found' };
       }
+
+      console.log('ℹ️ [UPGRADE] upgradeToMax selected subscription:', {
+        userId: user.id,
+        subscriptionId: activeDodoProSub.id,
+        productId: activeDodoProSub.productId,
+        status: activeDodoProSub.status,
+        amount: activeDodoProSub.amount,
+        currency: activeDodoProSub.currency,
+        interval: activeDodoProSub.interval,
+        currentPeriodStart: activeDodoProSub.currentPeriodStart,
+        currentPeriodEnd: activeDodoProSub.currentPeriodEnd,
+        targetProductId: maxProductId,
+      });
 
       await dodoPayments.subscriptions.changePlan(activeDodoProSub.id, {
         product_id: maxProductId,
@@ -1160,37 +1215,213 @@ export async function getExtremeSearchCountByUserId(userId: string) {
 }
 
 /**
- * Get message count and extreme search count in one parallel DB round-trip.
- * Updates both usage caches. Use in search critical-checks to run usage fetch
+ * Get anthropic usage count by userId directly - avoids getUser() overhead.
+ * Uses the same cache strategy as other usage counters for consistency.
+ */
+export async function getAnthropicUsageCountByUserId(userId: string) {
+  const cacheKey = createAnthropicCountKey(userId);
+  const cached = usageCountCache.get(cacheKey);
+  if (cached !== null) return { count: cached, error: null };
+
+  const count = await getAnthropicUsageCount({ userId });
+  usageCountCache.set(cacheKey, count);
+  return { count, error: null };
+}
+
+export async function getAnthropicUsageCountAction(providedUser?: User | null) {
+  'use server';
+
+  try {
+    const user = providedUser || (await getUser());
+    if (!user) {
+      return { count: 0, error: 'User not found' };
+    }
+
+    const cacheKey = createAnthropicCountKey(user.id);
+    const cached = usageCountCache.get(cacheKey);
+    if (cached !== null) {
+      console.log('⏱️ [USAGE] getAnthropicUsageCountAction: cache hit');
+      return { count: cached, error: null };
+    }
+
+    const start = Date.now();
+    const count = await getAnthropicUsageCount({
+      userId: user.id,
+    });
+    const durationMs = Date.now() - start;
+    console.log(`⏱️ [USAGE] getAnthropicUsageCountAction: DB usage lookup took ${durationMs}ms`);
+
+    usageCountCache.set(cacheKey, count);
+
+    return { count, error: null };
+  } catch (error) {
+    console.error('Error getting anthropic usage count:', error);
+    return { count: 0, error: 'Failed to get anthropic usage count' };
+  }
+}
+
+export async function getAgentModeUsageCountAction(providedUser?: User | null) {
+  'use server';
+
+  try {
+    const user = providedUser || (await getUser());
+    if (!user) {
+      return { count: 0, error: 'User not found' };
+    }
+
+    const cacheKey = createAgentModeCountKey(user.id);
+    const cached = usageCountCache.get(cacheKey);
+    if (cached !== null) {
+      console.log('⏱️ [USAGE] getAgentModeUsageCountAction: cache hit');
+      return { count: cached, error: null };
+    }
+
+    const start = Date.now();
+    const count = await getAgentModeRequestCountForCurrentMonth({
+      userId: user.id,
+    });
+    const durationMs = Date.now() - start;
+    console.log(`⏱️ [USAGE] getAgentModeUsageCountAction: DB usage lookup took ${durationMs}ms`);
+
+    usageCountCache.set(cacheKey, count);
+
+    return { count, error: null };
+  } catch (error) {
+    console.error('Error getting agent mode usage count:', error);
+    return { count: 0, error: 'Failed to get agent mode usage count' };
+  }
+}
+
+export async function incrementAnthropicUsageAction(model?: string | null) {
+  'use server';
+
+  try {
+    const user = await getUser();
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
+    await incrementAnthropicUsage({
+      userId: user.id,
+      model,
+    });
+
+    const cacheKey = createAnthropicCountKey(user.id);
+    usageCountCache.delete(cacheKey);
+
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error incrementing anthropic usage count:', error);
+    return { success: false, error: 'Failed to increment anthropic usage count' };
+  }
+}
+
+export async function getGoogleUsageCountByUserId(userId: string) {
+  const cacheKey = createGoogleCountKey(userId);
+  const cached = usageCountCache.get(cacheKey);
+  if (cached !== null) return { count: cached, error: null };
+
+  const count = await getGoogleUsageCount({ userId });
+  usageCountCache.set(cacheKey, count);
+  return { count, error: null };
+}
+
+export async function getGoogleUsageCountAction(providedUser?: User | null) {
+  'use server';
+
+  try {
+    const user = providedUser || (await getUser());
+    if (!user) {
+      return { count: 0, error: 'User not found' };
+    }
+
+    const cacheKey = createGoogleCountKey(user.id);
+    const cached = usageCountCache.get(cacheKey);
+    if (cached !== null) {
+      console.log('⏱️ [USAGE] getGoogleUsageCountAction: cache hit');
+      return { count: cached, error: null };
+    }
+
+    const start = Date.now();
+    const count = await getGoogleUsageCount({ userId: user.id });
+    const durationMs = Date.now() - start;
+    console.log(`⏱️ [USAGE] getGoogleUsageCountAction: DB usage lookup took ${durationMs}ms`);
+
+    usageCountCache.set(cacheKey, count);
+    return { count, error: null };
+  } catch (error) {
+    console.error('Error getting google usage count:', error);
+    return { count: 0, error: 'Failed to get google usage count' };
+  }
+}
+
+export async function incrementGoogleUsageAction(model?: string | null) {
+  'use server';
+
+  try {
+    const user = await getUser();
+    if (!user) {
+      return { success: false, error: 'User not found' };
+    }
+
+    await incrementGoogleUsage({ userId: user.id, model });
+
+    const cacheKey = createGoogleCountKey(user.id);
+    usageCountCache.delete(cacheKey);
+
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error incrementing google usage count:', error);
+    return { success: false, error: 'Failed to increment google usage count' };
+  }
+}
+
+/**
+ * Get message count, extreme search count, and anthropic usage count in one parallel DB round-trip.
+ * Updates usage caches. Use in search critical-checks to run usage fetch
  * in parallel with chat validation instead of after it.
  */
 export async function getMessageCountAndExtremeSearchByUserIdAction(userId: string): Promise<{
   messageCountResult: { count: number; error: null } | { count: undefined; error: Error };
   extremeSearchUsage: { count: number; error: null } | { count: undefined; error: Error };
+  anthropicUsageResult: { count: number; error: null } | { count: undefined; error: Error };
 }> {
   const messageCacheKey = createMessageCountKey(userId);
   const extremeCacheKey = createExtremeCountKey(userId);
+  const anthropicCacheKey = createAnthropicCountKey(userId);
+
   const messageCached = usageCountCache.get(messageCacheKey);
   const extremeCached = usageCountCache.get(extremeCacheKey);
-  if (messageCached !== null && extremeCached !== null) {
+  const anthropicCached = usageCountCache.get(anthropicCacheKey);
+
+  if (messageCached !== null && extremeCached !== null && anthropicCached !== null) {
     return {
       messageCountResult: { count: messageCached, error: null },
       extremeSearchUsage: { count: extremeCached, error: null },
+      anthropicUsageResult: { count: anthropicCached, error: null },
     };
   }
+
   try {
-    const { messageCount, extremeSearchCount } = await getMessageCountAndExtremeSearchByUserId({ userId });
+    const { messageCount, extremeSearchCount, anthropicCount } = await getMessageCountAndExtremeSearchByUserId({
+      userId,
+    });
+
     if (messageCached === null) usageCountCache.set(messageCacheKey, messageCount);
     if (extremeCached === null) usageCountCache.set(extremeCacheKey, extremeSearchCount);
+    if (anthropicCached === null) usageCountCache.set(anthropicCacheKey, anthropicCount);
+
     return {
       messageCountResult: { count: messageCount, error: null },
       extremeSearchUsage: { count: extremeSearchCount, error: null },
+      anthropicUsageResult: { count: anthropicCount, error: null },
     };
   } catch (err) {
     const error = err instanceof Error ? err : new Error('Failed to verify usage limits');
     return {
       messageCountResult: { count: undefined, error },
       extremeSearchUsage: { count: undefined, error },
+      anthropicUsageResult: { count: undefined, error },
     };
   }
 }
@@ -1375,7 +1606,7 @@ export async function getUserPreferences(providedUser?: User | null) {
 
 export async function saveUserPreferences(
   preferences: Partial<{
-    'scira-search-provider'?: 'exa' | 'parallel' | 'tavily' | 'firecrawl';
+    'scira-search-provider'?: 'exa' | 'parallel' | 'firecrawl';
     'scira-extreme-search-model'?:
       | 'scira-ext-1'
       | 'scira-ext-2'

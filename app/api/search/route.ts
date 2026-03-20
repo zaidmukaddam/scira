@@ -7,6 +7,7 @@ import {
   pruneMessages,
   NoSuchToolError,
   createUIMessageStream,
+  tool,
   stepCountIs,
   JsonToSseTransformStream,
   TextPart,
@@ -25,21 +26,25 @@ import {
   getModelParameters,
   getMaxOutputTokens,
   hasVisionSupport,
+  getModelProvider,
 } from '@/ai/providers';
 import {
   createStreamId,
   getChatByIdForValidation,
   getLatestStreamIdByChatId,
   getLatestUserMessageIdByChatId,
+  getMessagesByChatId,
   saveNewChatWithStream,
   saveMessages,
   incrementExtremeSearchUsage,
   incrementMessageUsage,
+  incrementAnthropicUsage,
+  incrementGoogleUsage,
   updateChatTitleById,
 } from '@/lib/db/queries';
 import { ChatSDKError } from '@/lib/errors';
 import { after } from 'next/server';
-import { CustomInstructions } from '@/lib/db/schema';
+import { CustomInstructions, Message as DbMessage } from '@/lib/db/schema';
 import { v7 as uuidv7 } from 'uuid';
 import { geolocation } from '@vercel/functions';
 import { all } from 'better-all';
@@ -60,6 +65,7 @@ import { GoogleGenerativeAIProviderOptions, GoogleLanguageModelOptions } from '@
 import { unauthenticatedRateLimit, getClientIdentifier } from '@/lib/rate-limit';
 import { loadConfiguredTools } from '@/lib/search/tool-loader';
 import { CohereChatModelOptions } from '@ai-sdk/cohere';
+import { xai } from '@ai-sdk/xai';
 
 interface CriticalChecksResult {
   canProceed: boolean;
@@ -148,9 +154,8 @@ function initializeChatAndChecks({
       });
     } else {
       criticalChecksPromise = (async () => {
-        const { messageCountResult, extremeSearchUsage } = await getMessageCountAndExtremeSearchByUserIdAction(
-          lightweightUser.userId,
-        );
+        const { messageCountResult, extremeSearchUsage, anthropicUsageResult, googleUsageResult } =
+          await getMessageCountAndExtremeSearchByUserIdAction(lightweightUser.userId);
 
         if (messageCountResult.error) {
           throw new ChatSDKError('bad_request:api', 'Failed to verify usage limits');
@@ -158,10 +163,33 @@ function initializeChatAndChecks({
         if (extremeSearchUsage.error) {
           throw new ChatSDKError('bad_request:api', 'Failed to verify extreme search usage limits');
         }
+        if (anthropicUsageResult.error) {
+          throw new ChatSDKError('bad_request:api', 'Failed to verify anthropic usage limits');
+        }
+        if (googleUsageResult.error) {
+          throw new ChatSDKError('bad_request:api', 'Failed to verify google usage limits');
+        }
 
         const shouldBypassLimits = shouldBypassRateLimits(model, lightweightUser);
+        const isAnthropicModel = getModelProvider(model) === 'anthropic';
+        const isMaxGoogleModel = getModelProvider(model) === 'google' && lightweightUser.isMaxUser;
         if (!shouldBypassLimits && messageCountResult.count !== undefined && messageCountResult.count >= 100) {
           throw new ChatSDKError('rate_limit:chat', 'Daily search limit reached');
+        }
+        if (
+          isAnthropicModel &&
+          lightweightUser.isMaxUser &&
+          anthropicUsageResult.count !== undefined &&
+          anthropicUsageResult.count >= 60
+        ) {
+          throw new ChatSDKError('rate_limit:model', 'Daily Anthropic limit reached for Max users.');
+        }
+        if (
+          isMaxGoogleModel &&
+          googleUsageResult.count !== undefined &&
+          googleUsageResult.count >= 80
+        ) {
+          throw new ChatSDKError('rate_limit:model', 'Monthly Gemini limit reached for Max users.');
         }
 
         return {
@@ -170,6 +198,7 @@ function initializeChatAndChecks({
           isMaxUser: false,
           messageCount: messageCountResult.count,
           extremeSearchUsage: extremeSearchUsage.count,
+          anthropicUsage: anthropicUsageResult.count,
           subscriptionData: { hasSubscription: false },
           shouldBypassLimits,
         };
@@ -231,17 +260,40 @@ function initializeChatAndChecks({
         throw new ChatSDKError('forbidden:chat', 'This chat belongs to another user');
       }
 
-      const { messageCountResult, extremeSearchUsage } = usageResult;
+      const { messageCountResult, extremeSearchUsage, anthropicUsageResult, googleUsageResult } = usageResult;
       if (messageCountResult.error) {
         throw new ChatSDKError('bad_request:api', 'Failed to verify usage limits');
       }
       if (extremeSearchUsage.error) {
         throw new ChatSDKError('bad_request:api', 'Failed to verify extreme search usage limits');
       }
+      if (anthropicUsageResult.error) {
+        throw new ChatSDKError('bad_request:api', 'Failed to verify anthropic usage limits');
+      }
+      if (googleUsageResult.error) {
+        throw new ChatSDKError('bad_request:api', 'Failed to verify google usage limits');
+      }
 
       const shouldBypassLimits = shouldBypassRateLimits(model, lightweightUser);
+      const isAnthropicModel = getModelProvider(model) === 'anthropic';
+      const isMaxGoogleModel = getModelProvider(model) === 'google' && lightweightUser.isMaxUser;
       if (!shouldBypassLimits && messageCountResult.count !== undefined && messageCountResult.count >= 100) {
         throw new ChatSDKError('rate_limit:chat', 'Daily search limit reached');
+      }
+      if (
+        isAnthropicModel &&
+        lightweightUser.isMaxUser &&
+        anthropicUsageResult.count !== undefined &&
+        anthropicUsageResult.count >= 60
+      ) {
+        throw new ChatSDKError('rate_limit:model', 'Daily Anthropic limit reached for Max users.');
+      }
+      if (
+        isMaxGoogleModel &&
+        googleUsageResult.count !== undefined &&
+        googleUsageResult.count >= 80
+      ) {
+        throw new ChatSDKError('rate_limit:model', 'Monthly Gemini limit reached for Max users.');
       }
 
       return {
@@ -250,6 +302,7 @@ function initializeChatAndChecks({
         isMaxUser: false,
         messageCount: messageCountResult.count,
         extremeSearchUsage: extremeSearchUsage.count,
+        anthropicUsage: anthropicUsageResult.count,
         subscriptionData: { hasSubscription: false },
         shouldBypassLimits,
       };
@@ -349,7 +402,7 @@ export async function POST(req: Request) {
 
   let opStart = Date.now();
   const {
-    messages,
+    messages: requestMessages,
     model: requestedModel,
     group,
     timezone,
@@ -366,8 +419,15 @@ export async function POST(req: Request) {
   } = await req.json();
   recordTiming('parse_request_body', opStart);
 
-  if (!Array.isArray(messages) || messages.length === 0) {
+  if (!Array.isArray(requestMessages) || requestMessages.length === 0) {
     return new ChatSDKError('bad_request:api', 'Messages array is required and cannot be empty').toResponse();
+  }
+
+  const incomingMessages = requestMessages as ChatMessage[];
+  const requestLastUserMessage = [...incomingMessages].reverse().find((message) => message.role === 'user');
+
+  if (!requestLastUserMessage) {
+    return new ChatSDKError('bad_request:api', 'A user message is required').toResponse();
   }
 
   opStart = Date.now();
@@ -395,6 +455,8 @@ export async function POST(req: Request) {
   const lightweightUserPromise = getLightweightUser();
   // Use lightweight validation query - only fetches id and userId
   const chatQueryPromise = isTemporaryChat ? Promise.resolve(null) : getChatByIdForValidation({ id });
+  const persistedMessagesPromise =
+    isTemporaryChat || incomingMessages.length > 1 ? Promise.resolve<ChatMessage[]>([]) : getMessagesByChatId({ id });
   const isDev = process.env.NODE_ENV === 'development';
   const rateLimitPromise = lightweightUserPromise.then((user) => {
     if (user || isDev) return null;
@@ -411,6 +473,7 @@ export async function POST(req: Request) {
   // Start full user fetch immediately (doesn't block early exits)
   const isProUser = lightweightUser?.isProUser ?? false;
   const isMaxUser = lightweightUser?.isMaxUser ?? false;
+  const shouldUseXaiMultiAgent = group === 'multi-agent' && isProUser;
   opStart = Date.now();
   const fullUserPromise = lightweightUser ? getCurrentUser() : Promise.resolve(null);
   recordTiming('create_full_user_promise', opStart);
@@ -481,7 +544,7 @@ export async function POST(req: Request) {
     id,
     streamId,
     selectedVisibilityType,
-    messages,
+    messages: incomingMessages,
     model,
     isTemporaryChat: Boolean(isTemporaryChat),
     enableDetailedTiming: shouldLogTimings,
@@ -492,26 +555,30 @@ export async function POST(req: Request) {
 
   // Wait for critical checks, config, and chat initialization in parallel
   // Chat initialization is critical: for new chats it must complete before streaming (FK constraint)
-  const { criticalResult, config, customInstructionsResult, chatInitResult, userPreferencesResult } = await all(
-    {
-      async criticalResult() {
-        return criticalChecksPromise;
+  const { criticalResult, config, customInstructionsResult, chatInitResult, userPreferencesResult, persistedMessages } =
+    await all(
+      {
+        async criticalResult() {
+          return criticalChecksPromise;
+        },
+        async config() {
+          return configPromise;
+        },
+        async customInstructionsResult() {
+          return customInstructionsPromise;
+        },
+        async chatInitResult() {
+          return chatInitializationPromise; // Must complete before streaming (especially for new chats)
+        },
+        async userPreferencesResult() {
+          return userPreferencesPromise;
+        },
+        async persistedMessages() {
+          return persistedMessagesPromise;
+        },
       },
-      async config() {
-        return configPromise;
-      },
-      async customInstructionsResult() {
-        return customInstructionsPromise;
-      },
-      async chatInitResult() {
-        return chatInitializationPromise; // Must complete before streaming (especially for new chats)
-      },
-      async userPreferencesResult() {
-        return userPreferencesPromise;
-      },
-    },
-    getBetterAllOptions(),
-  );
+      getBetterAllOptions(),
+    );
   const { tools: activeTools, instructions } = config;
   recordTiming('await_parallel_setup', opStart);
 
@@ -521,27 +588,52 @@ export async function POST(req: Request) {
 
   customInstructions = customInstructionsResult;
 
+  const persistedDbMessages = persistedMessages as DbMessage[];
+  const persistedMessageIds = new Set(persistedDbMessages.map((message) => message.id));
+  const newIncomingMessages = incomingMessages.filter((message) => !persistedMessageIds.has(message.id));
+  const normalizedPersistedMessages: ChatMessage[] = persistedDbMessages.map((message) => ({
+    id: message.id,
+    role: message.role as 'user' | 'assistant' | 'system',
+    parts: (message.parts as ChatMessage['parts']) ?? [],
+    metadata: {
+      createdAt: message.createdAt.toISOString(),
+      model: message.model ?? '',
+      completionTime: message.completionTime ?? null,
+      inputTokens: message.inputTokens ?? null,
+      outputTokens: message.outputTokens ?? null,
+      totalTokens: message.totalTokens ?? null,
+    },
+  }));
+  const hydratedMessages =
+    !isTemporaryChat && normalizedPersistedMessages.length > 0 && incomingMessages.length === 1
+      ? [...normalizedPersistedMessages, ...newIncomingMessages]
+      : incomingMessages;
+
   // Save user message (chat is guaranteed to exist now) - await synchronously (no background)
-  if (lightweightUser && !isTemporaryChat) {
-    opStart = Date.now();
-    await saveMessages({
-      messages: [
-        {
-          chatId: id,
-          id: messages[messages.length - 1].id,
-          role: 'user',
-          parts: messages[messages.length - 1].parts,
-          attachments: messages[messages.length - 1].experimental_attachments ?? [],
-          createdAt: new Date(),
-          model: model,
-          inputTokens: 0,
-          outputTokens: 0,
-          totalTokens: 0,
-          completionTime: 0,
-        },
-      ],
-    });
-    recordTiming('save_user_message', opStart);
+  if (lightweightUser && !isTemporaryChat && newIncomingMessages.length > 0) {
+    const latestIncomingUserMessage = [...newIncomingMessages].reverse().find((message) => message.role === 'user');
+
+    if (latestIncomingUserMessage) {
+      opStart = Date.now();
+      await saveMessages({
+        messages: [
+          {
+            chatId: id,
+            id: latestIncomingUserMessage.id,
+            role: 'user',
+            parts: latestIncomingUserMessage.parts,
+            attachments: [],
+            createdAt: new Date(),
+            model: model,
+            inputTokens: 0,
+            outputTokens: 0,
+            totalTokens: 0,
+            completionTime: 0,
+          },
+        ],
+      });
+      recordTiming('save_user_message', opStart);
+    }
   }
 
   const setupTimeMs = Date.now() - requestStartTime;
@@ -551,19 +643,20 @@ export async function POST(req: Request) {
   }
 
   const streamStartTime = Date.now();
-  const initialMessageIds = new Set(messages.map((message: any) => message.id));
-  const requestLastUserMessage = [...messages].reverse().find((message: any) => message.role === 'user');
+  const initialMessageIds = new Set(hydratedMessages.map((message: any) => message.id));
   const requestLastUserMessageId: string | null = requestLastUserMessage?.id ?? null;
 
-  const userMessageCount = messages.filter((message: any) => message.role === 'user').length;
+  const userMessageCount = hydratedMessages.filter((message: any) => message.role === 'user').length;
   const shouldPrune = userMessageCount > 10;
 
   const prunedMessages = shouldPrune
     ? await (async () => {
-        console.log(`🔧 Pruning messages: ${userMessageCount} user messages (${messages.length} total messages)`);
+        console.log(
+          `🔧 Pruning messages: ${userMessageCount} user messages (${hydratedMessages.length} total messages)`,
+        );
         const pruned = pruneMessages({
           reasoning: 'all',
-          messages: await convertToModelMessages(messages, {
+          messages: await convertToModelMessages(hydratedMessages, {
             ignoreIncompleteToolCalls: true,
           }),
           toolCalls: 'before-last-5-messages',
@@ -571,7 +664,7 @@ export async function POST(req: Request) {
         console.log(`✂️ Pruned to ${pruned.length} messages`);
         return pruned;
       })()
-    : await convertToModelMessages(messages, {
+    : await convertToModelMessages(hydratedMessages, {
         ignoreIncompleteToolCalls: true,
       });
 
@@ -589,7 +682,7 @@ export async function POST(req: Request) {
   const contextFiles: Array<{ url: string; contentType: string; name?: string }> = [];
   const seenUrls = new Set<string>();
 
-  for (const msg of messages) {
+  for (const msg of hydratedMessages) {
     const parts = (msg.parts as (TextPart | ImagePart | FilePart)[]) ?? [];
     for (const part of parts) {
       if (part.type === 'file') {
@@ -652,7 +745,7 @@ export async function POST(req: Request) {
   }
 
   // Detect images in last user message for auto-routing
-  const lastUserMessage = [...messages].reverse().find((msg) => msg.role === 'user');
+  const lastUserMessage = [...hydratedMessages].reverse().find((msg) => msg.role === 'user');
   const lastUserParts = (lastUserMessage?.parts as (TextPart | ImagePart | FilePart)[]) ?? [];
   const hasImages = lastUserParts.some((part) => part.type === 'file' && (part as any).mediaType?.startsWith('image/'));
 
@@ -660,8 +753,8 @@ export async function POST(req: Request) {
   if (isAutoRouted && autoRouterEnabled && requestedModel === 'scira-auto') {
     // Extract last user query for routing
     let query = '';
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const msg = messages[i];
+    for (let i = hydratedMessages.length - 1; i >= 0; i--) {
+      const msg = hydratedMessages[i];
       if (msg.role === 'user') {
         const parts = (msg.parts as (TextPart | ImagePart | FilePart)[]) ?? [];
         for (let j = parts.length - 1; j >= 0; j--) {
@@ -766,6 +859,14 @@ export async function POST(req: Request) {
         selectedConnectors,
       });
 
+      const streamTools = shouldUseXaiMultiAgent
+        ? {
+            ...loadedTools,
+            xai_web_search: xai.tools.webSearch(),
+            xai_x_search: xai.tools.xSearch(),
+          }
+        : loadedTools;
+
       function setUsageMetadataFromUsage(
         usage:
           | {
@@ -857,22 +958,24 @@ export async function POST(req: Request) {
       }
 
       const result = streamText({
-        model: scira.languageModel(model),
+        model: shouldUseXaiMultiAgent ? xai.responses('grok-4.20-multi-agent') : scira.languageModel(model),
         messages: processedMessages,
-        ...getModelParameters(model),
-        stopWhen: stepCountIs(group === 'mcp' ? 50 : 5),
-        ...(model === 'scira-default' ||
-        model === 'scira-grok4.1-fast-thinking' ||
-        model === 'scira-glm-4.6' ||
-        model === 'scira-glm-4.6v-flash' ||
-        model === 'scira-glm-4.6v'
-          ? {
-              maxOutputTokens: getMaxOutputTokens(model),
-            }
-          : {}),
+        ...getModelParameters(shouldUseXaiMultiAgent ? 'grok-4.20-multi-agent' : model),
+        stopWhen: stepCountIs(shouldUseXaiMultiAgent ? 5 : group === 'mcp' ? 50 : 5),
+        ...(shouldUseXaiMultiAgent
+          ? {}
+          : model === 'scira-default' ||
+              model === 'scira-grok4.1-fast-thinking' ||
+              model === 'scira-glm-4.6' ||
+              model === 'scira-glm-4.6v-flash' ||
+              model === 'scira-glm-4.6v'
+            ? {
+                maxOutputTokens: getMaxOutputTokens(model),
+              }
+            : {}),
         maxRetries: 10,
         abortSignal: abortController.signal,
-        activeTools: streamActiveTools,
+        activeTools: shouldUseXaiMultiAgent ? ['xai_web_search', 'xai_x_search'] : streamActiveTools,
         experimental_transform: markdownJoinerTransform(),
         system:
           instructions +
@@ -881,8 +984,12 @@ export async function POST(req: Request) {
             : '\n') +
           (latitude && longitude && userPreferencesResult?.preferences?.['scira-location-metadata-enabled'] === true
             ? `\n\nThe user's location is ${latitude}, ${longitude}.`
+            : '') +
+          (shouldUseXaiMultiAgent
+            ? '\n\nWhen multi-agent mode is enabled, you are operating in a high-agency research workflow. Use only the xAI server-side web search and X search tools available in this environment. Do not call any other research or search tools.\n\nYour job is to behave like a rigorous research analyst:\n- Break the request into sub-questions when useful.\n- Search broadly first, then narrow based on what you find.\n- Use multiple searches when the topic is ambiguous, fast-moving, comparative, or requires validation.\n- Cross-check important claims across multiple sources whenever possible.\n- Prefer recent and primary sources for news, releases, product changes, pricing, benchmarks, and policy updates.\n- Use X search when social signals, firsthand announcements, or fast-moving discourse are relevant.\n- Use web search when you need official documentation, articles, product pages, blogs, papers, or other published sources.\n- If both web and X are relevant, use both.\n\nOutput requirements:\n- Synthesize findings into a clear, direct answer instead of narrating every search step.\n- Be concise but complete.\n- Include uncertainty when evidence is mixed, incomplete, or time-sensitive.\n- Do not fabricate facts, sources, timelines, quotes, or consensus.\n- If you cannot verify a claim well enough, say so plainly.\n- Ground the final answer in the sources you found and make sure the answer actually reflects them.\n\nResponse structure guidelines:\n- Start with a direct answer or conclusion in 1-3 sentences.\n- Then present the most important findings as short sections or bullet points.\n- For comparative questions, explicitly compare the options point-by-point.\n- For fast-moving topics, clearly separate confirmed facts from tentative signals.\n- End with a brief takeaway, recommendation, or next step when useful.\n- Keep the response skimmable and avoid long, repetitive paragraphs.\n\nTool behavior requirements:\n- Do not mention internal tool limitations unless necessary.\n- Do not ask for permission to search.\n- Do not stop after a single weak search if the question clearly needs deeper verification.\n- Avoid redundant searches that do not add evidence.\n- Prefer quality of evidence over quantity of searches.'
             : ''),
         toolChoice: 'auto',
+        tools: streamTools,
         ...(model === 'scira-anthropic' ||
         model === 'scira-anthropic-think' ||
         model === 'scira-anthropic-sonnet-4.6' ||
@@ -911,6 +1018,7 @@ export async function POST(req: Request) {
               'fireworks',
               'bedrock',
               'vercel',
+              'xai',
               'xai',
               'bytedance',
               'moonshotai',
@@ -948,6 +1056,11 @@ export async function POST(req: Request) {
                   order: ['fireworks'],
                 }
               : {}),
+          },
+          'workersai.chat': {
+            chat_template_kwargs: {
+              enable_thinking: false,
+            },
           },
           sarvam: {
             reasoning_effort: 'high',
@@ -1088,12 +1201,20 @@ export async function POST(req: Request) {
             structuredOutputs: true,
             serviceTier: 'auto',
           } satisfies GroqProviderOptions,
-          xai: {
-            parallel_function_calling: false,
-            parallel_tool_calls: false,
-            parallelToolCalls: false,
-            paralelFunctionCalling: false,
-          },
+          xai: shouldUseXaiMultiAgent
+            ? {
+                reasoningEffort: 'high',
+                parallel_function_calling: true,
+                parallel_tool_calls: true,
+                parallelToolCalls: true,
+                paralelFunctionCalling: true,
+              }
+            : {
+                parallel_function_calling: false,
+                parallel_tool_calls: false,
+                parallelToolCalls: false,
+                paralelFunctionCalling: false,
+              },
           anannas: {
             parallel_function_calling: false,
             parallel_tool_calls: false,
@@ -1265,7 +1386,7 @@ export async function POST(req: Request) {
         },
         experimental_context: (() => {
           // Extract images and files from the last user message's attachments
-          const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user');
+          const lastUserMessage = [...hydratedMessages].reverse().find((m) => m.role === 'user');
           const attachments = (lastUserMessage?.parts as (TextPart | ImagePart | FilePart)[]) ?? [];
           const images = attachments
             .filter((att): att is FilePart => att.type === 'file' && (att as any).mediaType?.startsWith('image/'))
@@ -1339,9 +1460,14 @@ export async function POST(req: Request) {
           const latestStepHasToolRoundTrip =
             Boolean(latestStep) && latestStep.toolCalls.length > 0 && latestStep.toolResults.length > 0;
 
-          // MCP mode: keep tools available across steps.
-          if (group === 'mcp') {
-            return undefined;
+          // MCP mode and xAI multi-agent mode: keep tools available across steps.
+          if (group === 'mcp' || shouldUseXaiMultiAgent) {
+            return shouldUseXaiMultiAgent
+              ? {
+                  toolChoice: 'auto' as const,
+                  activeTools: ['xai_web_search', 'xai_x_search'],
+                }
+              : undefined;
           }
 
           // Other modes: disable tool calls after first completed tool round.
@@ -1360,7 +1486,7 @@ export async function POST(req: Request) {
             activeTools: streamActiveTools,
           };
         },
-        tools: loadedTools,
+
         experimental_repairToolCall: async ({ toolCall, tools, inputSchema, error }) => {
           if (NoSuchToolError.isInstance(error)) {
             return null;
@@ -1431,8 +1557,16 @@ export async function POST(req: Request) {
                   event.steps?.some((step) =>
                     step.toolCalls?.some((toolCall) => toolCall && toolCall.toolName === 'extreme_search'),
                   );
+                const shouldTrackAnthropicUsage = getModelProvider(model) === 'anthropic' && lightweightUser.isMaxUser;
+                const shouldTrackGoogleUsage =
+                  getModelProvider(model) === 'google' && lightweightUser.isMaxUser;
 
-                if (shouldTrackMessageUsage || shouldTrackExtremeSearchUsage) {
+                if (
+                  shouldTrackMessageUsage ||
+                  shouldTrackExtremeSearchUsage ||
+                  shouldTrackAnthropicUsage ||
+                  shouldTrackGoogleUsage
+                ) {
                   await all(
                     {
                       async messageUsage() {
@@ -1443,6 +1577,16 @@ export async function POST(req: Request) {
                       async extremeSearchUsage() {
                         if (!shouldTrackExtremeSearchUsage) return false;
                         await incrementExtremeSearchUsage({ userId: lightweightUser.userId });
+                        return true;
+                      },
+                      async anthropicUsage() {
+                        if (!shouldTrackAnthropicUsage) return false;
+                        await incrementAnthropicUsage({ userId: lightweightUser.userId, model });
+                        return true;
+                      },
+                      async googleUsage() {
+                        if (!shouldTrackGoogleUsage) return false;
+                        await incrementGoogleUsage({ userId: lightweightUser.userId, model });
                         return true;
                       },
                     },
@@ -1470,10 +1614,12 @@ export async function POST(req: Request) {
 
       const uiMessageStream = result.toUIMessageStream({
         sendReasoning: true,
+        sendSources: true,
         messageMetadata: ({ part }) => {
           const baseMetadata = {
             model: model as string,
             createdAt: assistantMessageCreatedAt,
+            multiAgentMode: shouldUseXaiMultiAgent,
           };
 
           if (part.type === 'finish') {

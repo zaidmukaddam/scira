@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ButtonGroup } from '@/components/ui/button-group';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import { ProgressRing } from '@/components/ui/progress-ring';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs as KumoTabs } from '@cloudflare/kumo';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,6 +27,9 @@ import {
   getUserMessageCount,
   getSubDetails,
   getExtremeSearchUsageCount,
+  getAgentModeUsageCountAction,
+  getAnthropicUsageCountAction,
+  getGoogleUsageCountAction,
   getHistoricalUsage,
   getCustomInstructions,
   saveCustomInstructions,
@@ -36,7 +40,7 @@ import {
   manualSyncConnectorAction,
   getConnectorSyncStatusAction,
 } from '@/app/actions';
-import { SEARCH_LIMITS } from '@/lib/constants';
+import { AGENT_MODE_MONTHLY_LIMIT, SEARCH_LIMITS } from '@/lib/constants';
 import { authClient, betterauthClient } from '@/lib/auth-client';
 import { all } from 'better-all';
 import { getBetterAllOptions } from '@/lib/better-all';
@@ -63,7 +67,7 @@ import {
   Save,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef, type ComponentType } from 'react';
 import { allSettled as betterAllSettled } from 'better-all';
 import { sileo } from 'sileo';
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query';
@@ -224,10 +228,6 @@ const ExaIcon = ({ className }: { className?: string }) => (
   <Image src="/exa-color.svg" alt="Exa" width={16} height={16} className={className} />
 );
 
-const TavilyIcon = ({ className }: { className?: string }) => (
-  <Image src="/tavily-color.svg" alt="Tavily" width={16} height={16} className={className} />
-);
-
 const FirecrawlIcon = ({ className }: { className?: string }) => (
   <span className={cn('text-base sm:text-lg mb-3! pr-1!', className)}>🔥</span>
 );
@@ -253,13 +253,6 @@ const searchProviders = [
     label: 'Parallel AI',
     description: 'Base and premium web search along with Firecrawl image search support',
     icon: ParallelIcon,
-    default: false,
-  },
-  {
-    value: 'tavily',
-    label: 'Tavily',
-    description: 'Wide web search with comprehensive results and analysis',
-    icon: TavilyIcon,
     default: false,
   },
 ] as const;
@@ -314,7 +307,7 @@ export function PreferencesSection({
   isCustomInstructionsEnabled?: boolean;
   setIsCustomInstructionsEnabledAction?: (value: boolean | ((val: boolean) => boolean)) => void;
 }) {
-  const [searchProvider, setSearchProvider] = useSyncedPreferences<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
+  const [searchProvider, setSearchProvider] = useSyncedPreferences<'exa' | 'parallel' | 'firecrawl'>(
     'scira-search-provider',
     'exa',
   );
@@ -400,7 +393,7 @@ export function PreferencesSection({
   const enabled = isCustomInstructionsEnabled ?? true;
   const setEnabled = setIsCustomInstructionsEnabledAction ?? (() => {});
 
-  const handleSearchProviderChange = (newProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl') => {
+  const handleSearchProviderChange = (newProvider: 'exa' | 'parallel' | 'firecrawl') => {
     setSearchProvider(newProvider);
     sileo.success({
       title: `Search provider changed to ${
@@ -408,9 +401,7 @@ export function PreferencesSection({
           ? 'Exa'
           : newProvider === 'parallel'
             ? 'Parallel AI'
-            : newProvider === 'tavily'
-              ? 'Tavily'
-              : 'Firecrawl'
+            : 'Firecrawl'
       }`,
       description: 'This will be used for all future searches',
       icon: <Search className="h-4 w-4" />,
@@ -572,7 +563,7 @@ export function PreferencesSection({
           variant="segmented"
           value={preferencesTab}
           onValueChange={(v) => setPreferencesTab(v as 'general' | 'customize')}
-          className="w-full [--color-kumo-tint:var(--muted)] [--text-color-kumo-strong:var(--muted-foreground)] [--text-color-kumo-default:var(--foreground)] [--color-kumo-overlay:var(--background)] [--color-kumo-fill-hover:var(--border)]"
+          className="w-full [--color-kumo-tint:var(--accent)] [--color-kumo-base:var(--background)] [--color-kumo-recessed:var(--muted)] [--color-kumo-surface:var(--card)] [--text-color-kumo-default:var(--foreground)] [--text-color-kumo-strong:var(--muted-foreground)] [--text-color-kumo-subtle:var(--muted-foreground)] [--color-kumo-ring:var(--border)]"
           listClassName="w-full [&>button]:flex-1 [&>button]:justify-center"
           tabs={[
             { value: 'general', label: 'General' },
@@ -897,6 +888,12 @@ export function PreferencesSection({
               <div className="rounded-xl border border-border/60 divide-y divide-border/40 max-h-[300px] overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted-foreground/20">
                 {sortedGroups.map((group, index) => {
                   const isVisible = visibleModes.length === 0 || visibleModes.includes(group.id);
+                  const GroupIcon = group.icon as unknown as ComponentType<{
+                    width?: number;
+                    height?: number;
+                    className?: string;
+                  }>;
+                  const isComponentIcon = typeof group.icon === 'function';
                   return (
                     <div
                       key={group.id}
@@ -928,8 +925,8 @@ export function PreferencesSection({
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
                         <GripVertical size={14} className="shrink-0 text-muted-foreground/40" />
-                        {group.id === 'mcp' ? (
-                          <group.icon width={14} height={14} className="shrink-0 text-muted-foreground" />
+                        {isComponentIcon ? (
+                          <GroupIcon width={14} height={14} className="shrink-0 text-muted-foreground" />
                         ) : (
                           <HugeiconsIcon
                             icon={group.icon as any}
@@ -1127,13 +1124,29 @@ export function UsageSection({ user }: any) {
   } = useQuery({
     queryKey: ['usageData'],
     queryFn: async () => {
-      const { searchCount, extremeSearchCount, subscriptionDetails } = await all(
+      const {
+        searchCount,
+        extremeSearchCount,
+        agentModeUsageCount,
+        anthropicUsageCount,
+        googleUsageCount,
+        subscriptionDetails,
+      } = await all(
         {
           async searchCount() {
             return getUserMessageCount();
           },
           async extremeSearchCount() {
             return getExtremeSearchUsageCount();
+          },
+          async agentModeUsageCount() {
+            return getAgentModeUsageCountAction();
+          },
+          async anthropicUsageCount() {
+            return getAnthropicUsageCountAction();
+          },
+          async googleUsageCount() {
+            return getGoogleUsageCountAction();
           },
           async subscriptionDetails() {
             return getSubDetails();
@@ -1145,6 +1158,9 @@ export function UsageSection({ user }: any) {
       return {
         searchCount,
         extremeSearchCount,
+        agentModeUsageCount,
+        anthropicUsageCount,
+        googleUsageCount,
         subscriptionDetails,
       };
     },
@@ -1165,6 +1181,9 @@ export function UsageSection({ user }: any) {
 
   const searchCount = usageData?.searchCount;
   const extremeSearchCount = usageData?.extremeSearchCount;
+  const agentModeUsageCount = usageData?.agentModeUsageCount;
+  const anthropicUsageCount = usageData?.anthropicUsageCount;
+  const googleUsageCount = usageData?.googleUsageCount;
 
   // Transform historical data for chart (Date objects for visx)
   const chartData = useMemo(() => {
@@ -1243,6 +1262,9 @@ export function UsageSection({ user }: any) {
     ? 0
     : Math.min(((extremeSearchCount?.count || 0) / SEARCH_LIMITS.EXTREME_SEARCH_LIMIT) * 100, 100);
 
+  const anthropicPercentage = user?.isMaxUser ? Math.min(((anthropicUsageCount?.count || 0) / 60) * 100, 100) : 0;
+  const googlePercentage = user?.isMaxUser ? Math.min(((googleUsageCount?.count || 0) / 80) * 100, 100) : 0;
+
   return (
     <div className="space-y-4">
       {/* Stat cards + limits in one card */}
@@ -1261,9 +1283,9 @@ export function UsageSection({ user }: any) {
           </Button>
         </div>
 
-        {/* Stat row: searches + extreme side by side */}
-        <div className="grid grid-cols-2 divide-x divide-border/40">
-          <div className="px-4 py-3">
+        {/* Stat row: searches + extreme + anthropic + google */}
+        <div className={cn('divide-border/40', user?.isMaxUser ? 'grid grid-cols-4' : 'grid grid-cols-2')}>
+          <div className="px-4 py-3 border-r border-border/40">
             <div className="flex items-center gap-1.5 mb-1">
               <MagnifyingGlassIcon className="h-3 w-3 text-muted-foreground/40" />
               <span className="text-[11px] text-muted-foreground">Searches</span>
@@ -1279,7 +1301,7 @@ export function UsageSection({ user }: any) {
               </div>
             )}
           </div>
-          <div className="px-4 py-3">
+          <div className={cn('px-4 py-3', user?.isMaxUser && 'border-r border-border/40')}>
             <div className="flex items-center gap-1.5 mb-1">
               <LightningIcon className="h-3 w-3 text-muted-foreground/40" />
               <span className="text-[11px] text-muted-foreground">Extreme</span>
@@ -1295,29 +1317,120 @@ export function UsageSection({ user }: any) {
               </div>
             )}
           </div>
+          {user?.isMaxUser && (
+            <div className="px-4 py-3 border-r border-border/40">
+              <div className="flex items-center gap-1.5 mb-1">
+                <RobotIcon className="h-3 w-3 text-muted-foreground/40" />
+                <span className="text-[11px] text-muted-foreground">Anthropic</span>
+              </div>
+              {usageLoading ? (
+                <Skeleton className="h-6 w-12" />
+              ) : (
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xl font-semibold tabular-nums">{anthropicUsageCount?.count || 0}</span>
+                  <span className="text-[10px] text-muted-foreground">/ 60 wk</span>
+                </div>
+              )}
+            </div>
+          )}
+          {user?.isMaxUser && (
+            <div className="px-4 py-3">
+              <div className="flex items-center gap-1.5 mb-1">
+                <RobotIcon className="h-3 w-3 text-muted-foreground/40" />
+                <span className="text-[11px] text-muted-foreground">Gemini</span>
+              </div>
+              {usageLoading ? (
+                <Skeleton className="h-6 w-12" />
+              ) : (
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-xl font-semibold tabular-nums">{googleUsageCount?.count || 0}</span>
+                  <span className="text-[10px] text-muted-foreground">/ 80 mo</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
-        {/* Limit bars (free users only) */}
-        {!isProUser && !usageLoading && (
+        {/* Limit bars */}
+        {!usageLoading && ((!isProUser && !user?.isMaxUser) || user?.isMaxUser) && (
           <div className="px-4 py-3 space-y-3">
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-[11px]">
-                <span className="text-muted-foreground">Daily limit</span>
-                <span className="text-muted-foreground tabular-nums">
-                  {Math.max(0, SEARCH_LIMITS.DAILY_SEARCH_LIMIT - (searchCount?.count || 0))} left
-                </span>
+            {!isProUser && !user?.isMaxUser && (
+              <>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Daily limit</span>
+                    <span className="text-muted-foreground tabular-nums">
+                      {Math.max(0, SEARCH_LIMITS.DAILY_SEARCH_LIMIT - (searchCount?.count || 0))} left
+                    </span>
+                  </div>
+                  <Progress value={usagePercentage} className="h-1 [&>div]:transition-none" />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Monthly extreme</span>
+                    <span className="text-muted-foreground tabular-nums">
+                      {Math.max(0, SEARCH_LIMITS.EXTREME_SEARCH_LIMIT - (extremeSearchCount?.count || 0))} left
+                    </span>
+                  </div>
+                  <Progress value={extremePercentage} className="h-1 [&>div]:transition-none" />
+                </div>
+              </>
+            )}
+
+            {user?.isMaxUser && (
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-[11px]">
+                  <span className="text-muted-foreground">Anthropic weekly limit</span>
+                  <span className="text-muted-foreground tabular-nums">
+                    {Math.max(0, 60 - (anthropicUsageCount?.count || 0))} left
+                  </span>
+                </div>
+                <Progress value={anthropicPercentage} className="h-1 [&>div]:transition-none" />
+                <div className="flex justify-between text-[11px] pt-1">
+                  <span className="text-muted-foreground">Gemini monthly limit</span>
+                  <span className="text-muted-foreground tabular-nums">
+                    {Math.max(0, 80 - (googleUsageCount?.count || 0))} left
+                  </span>
+                </div>
+                <Progress value={googlePercentage} className="h-1 [&>div]:transition-none" />
+
+                {/* Agent mode monthly limit — hidden for now
+                {(() => {
+                  const agentUsed = agentModeUsageCount?.count || 0;
+                  const agentLeft = Math.max(0, AGENT_MODE_MONTHLY_LIMIT - agentUsed);
+                  const dangerThreshold = 10;
+                  const warningThreshold = 25;
+                  const ringColor: 'primary' | 'warning' | 'success' | 'danger' =
+                    agentLeft <= dangerThreshold
+                      ? 'danger'
+                      : agentLeft <= warningThreshold
+                        ? 'warning'
+                        : 'success';
+
+                  return (
+                    <div className="pt-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[11px] text-muted-foreground">Agent mode monthly limit</span>
+                        <span className="text-[11px] text-muted-foreground tabular-nums">{agentLeft} left</span>
+                      </div>
+
+                      <div className="flex items-center justify-center">
+                        <ProgressRing
+                          value={agentUsed}
+                          max={AGENT_MODE_MONTHLY_LIMIT}
+                          size={56}
+                          strokeWidth={5}
+                          showLabel
+                          label={`${agentLeft} left`}
+                          color={ringColor}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()} */}
+
               </div>
-              <Progress value={usagePercentage} className="h-1 [&>div]:transition-none" />
-            </div>
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-[11px]">
-                <span className="text-muted-foreground">Monthly extreme</span>
-                <span className="text-muted-foreground tabular-nums">
-                  {Math.max(0, SEARCH_LIMITS.EXTREME_SEARCH_LIMIT - (extremeSearchCount?.count || 0))} left
-                </span>
-              </div>
-              <Progress value={extremePercentage} className="h-1 [&>div]:transition-none" />
-            </div>
+            )}
           </div>
         )}
 

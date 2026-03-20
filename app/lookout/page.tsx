@@ -396,7 +396,7 @@ export default function LookoutPage() {
                     variant="segmented"
                     value={activeTab}
                     onValueChange={setActiveTab}
-                    className="w-full [--color-kumo-tint:var(--muted)] [--text-color-kumo-strong:var(--muted-foreground)] [--text-color-kumo-default:var(--foreground)] [--color-kumo-overlay:var(--background)] [--color-kumo-fill-hover:var(--border)]"
+                    className="w-full [--color-kumo-tint:var(--accent)] [--color-kumo-base:var(--background)] [--color-kumo-recessed:var(--muted)] [--color-kumo-surface:var(--card)] [--text-color-kumo-default:var(--foreground)] [--text-color-kumo-strong:var(--muted-foreground)] [--text-color-kumo-subtle:var(--muted-foreground)] [--color-kumo-ring:var(--border)]"
                     listClassName="w-full [&>button]:flex-1 [&>button]:justify-center"
                     tabs={[
                       { value: 'active', label: 'Active' },
@@ -411,7 +411,7 @@ export default function LookoutPage() {
                     variant="segmented"
                     value={activeTab}
                     onValueChange={setActiveTab}
-                    className="[--color-kumo-tint:var(--muted)] [--text-color-kumo-strong:var(--muted-foreground)] [--text-color-kumo-default:var(--foreground)] [--color-kumo-overlay:var(--background)] [--color-kumo-fill-hover:var(--border)]"
+                    className="[--color-kumo-tint:var(--accent)] [--color-kumo-base:var(--background)] [--color-kumo-recessed:var(--muted)] [--color-kumo-surface:var(--card)] [--text-color-kumo-default:var(--foreground)] [--text-color-kumo-strong:var(--muted-foreground)] [--text-color-kumo-subtle:var(--muted-foreground)] [--color-kumo-ring:var(--border)]"
                     tabs={[
                       { value: 'active', label: 'Active' },
                       { value: 'archived', label: 'Archived' },

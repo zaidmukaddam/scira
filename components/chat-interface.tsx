@@ -176,6 +176,7 @@ const ChatInterface = memo(
       groupParam ? (groupParam as unknown as SearchGroupId) : selectedGroup
     ) as SearchGroupId;
     const [selectedConnectors, setSelectedConnectors] = useState<ConnectorProvider[]>([]);
+    const [isMultiAgentModeEnabled, setIsMultiAgentModeEnabled] = useLocalStorage('scira-multi-agent-enabled', false);
     const [isCustomInstructionsEnabled, setIsCustomInstructionsEnabled] = useLocalStorage(
       'scira-custom-instructions-enabled',
       true,
@@ -225,7 +226,7 @@ const ChatInterface = memo(
       false,
     );
 
-    const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'tavily' | 'firecrawl'>(
+    const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'firecrawl'>(
       'scira-search-provider',
       'firecrawl',
     );
@@ -565,6 +566,7 @@ const ChatInterface = memo(
     const extremeSearchProviderRef = useRef<'exa'>('exa');
     const extremeSearchModelRef = useRef(extremeSearchModel);
     const selectedConnectorsRef = useRef(selectedConnectors);
+    const isMultiAgentModeEnabledRef = useRef(isMultiAgentModeEnabled);
     const isTemporaryChatRef = useRef(isTemporaryChat);
 
     // Update refs whenever state changes - this ensures we always have current values
@@ -575,6 +577,7 @@ const ChatInterface = memo(
     extremeSearchProviderRef.current = 'exa';
     extremeSearchModelRef.current = extremeSearchModel;
     selectedConnectorsRef.current = selectedConnectors;
+    isMultiAgentModeEnabledRef.current = isMultiAgentModeEnabled;
     isTemporaryChatRef.current = isTemporaryChat;
 
     const [activeElicitation, setActiveElicitation] = useState<ElicitationData | null>(null);
@@ -598,12 +601,18 @@ const ChatInterface = memo(
       transport: new DefaultChatTransport({
         api: '/api/search',
         prepareSendMessagesRequest({ messages, body }) {
+          const latestUserMessage = [...messages].reverse().find((message) => message.role === 'user');
+          const shouldTrimRequestHistory = Boolean(user && !isTemporaryChatRef.current && latestUserMessage);
+
           return {
             body: {
               id: chatId,
-              messages,
+              messages: shouldTrimRequestHistory && latestUserMessage ? [latestUserMessage] : messages,
               model: selectedModelRef.current,
-              group: selectedGroupRef.current,
+              group:
+                isUserPro && isMultiAgentModeEnabledRef.current
+                  ? ('multi-agent' as SearchGroupId)
+                  : selectedGroupRef.current,
               timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
               isCustomInstructionsEnabled: isCustomInstructionsEnabledRef.current,
               searchProvider: searchProviderRef.current,
@@ -1654,6 +1663,16 @@ const ChatInterface = memo(
                       onOpenSettings={handleOpenSettings}
                       selectedConnectors={selectedConnectors}
                       setSelectedConnectors={setSelectedConnectors}
+                      isMultiAgentModeEnabled={Boolean(isMultiAgentModeEnabled)}
+                      setIsMultiAgentModeEnabled={
+                        user
+                          ? (value: boolean | ((prev: boolean) => boolean)) => {
+                              const next =
+                                typeof value === 'function' ? value(Boolean(isMultiAgentModeEnabled)) : value;
+                              setIsMultiAgentModeEnabled(Boolean(next));
+                            }
+                          : undefined
+                      }
                       usageData={
                         usageData
                           ? {

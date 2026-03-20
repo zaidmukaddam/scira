@@ -66,6 +66,7 @@ import {
   ConnectIcon,
   StarIcon,
 } from '@hugeicons/core-free-icons';
+import { AgentNetworkIcon } from '@/components/icons/agent-network-icon';
 import { AudioLinesIcon } from '@/components/ui/audio-lines';
 import { GripIcon } from '@/components/ui/grip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -76,6 +77,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import TextRotate from '@/components/ui/text-rotate';
 import { AppsIcon } from '@/components/icons/apps-icon';
 import { SarvamLogo } from '@/components/logos/sarvam-logo';
+import type { SVGProps } from 'react';
 import { UseChatHelpers } from '@ai-sdk/react';
 import { ChatMessage } from '@/lib/types';
 import { useLocation } from '@/hooks/use-location';
@@ -90,6 +92,19 @@ import { useWebHaptics } from 'web-haptics/react';
 
 type SvgIconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
 type HugeiconsIconProp = React.ComponentProps<typeof HugeiconsIcon>['icon'];
+
+const NVIDIA = (props: SVGProps<SVGSVGElement>) => (
+  <svg {...props} xmlSpace="preserve" viewBox="35.188 31.512 351.46 258.785">
+    <path
+      fill="currentColor"
+      d="M384.195 282.109c0 3.771-2.769 6.302-6.047 6.302v-.023c-3.371.023-6.089-2.508-6.089-6.278 0-3.769 2.718-6.293 6.089-6.293 3.279-.001 6.047 2.523 6.047 6.292zm2.453 0c0-5.175-4.02-8.179-8.5-8.179-4.511 0-8.531 3.004-8.531 8.179 0 5.172 4.021 8.188 8.531 8.188 4.481 0 8.5-3.016 8.5-8.188m-9.91.692h.91l2.109 3.703h2.316l-2.336-3.859c1.207-.086 2.2-.661 2.2-2.286 0-2.019-1.392-2.668-3.75-2.668h-3.411v8.813h1.961v-3.703m.001-1.492v-2.122h1.364c.742 0 1.753.06 1.753.965 0 .985-.523 1.157-1.398 1.157h-1.719M329.406 237.027l10.598 28.993H318.48l10.926-28.993zm-11.35-11.289-24.423 61.88h17.246l3.863-10.934h28.903l3.656 10.934h18.722l-24.605-61.888-23.362.008zm-49.033 61.903h17.497v-61.922l-17.5-.004.003 61.926zm-121.467-61.926-14.598 49.078-13.984-49.074-18.879-.004 19.972 61.926h25.207l20.133-61.926h-17.851zm70.725 13.484h7.52c10.91 0 17.966 4.898 17.966 17.609 0 12.714-7.056 17.613-17.966 17.613h-7.52v-35.222zm-17.35-13.484v61.926h28.366c15.113 0 20.048-2.512 25.384-8.148 3.769-3.957 6.207-12.641 6.207-22.134 0-8.707-2.063-16.468-5.66-21.304-6.481-8.649-15.817-10.34-29.75-10.34h-24.547zm-165.743-.086v62.012h17.645v-47.086l13.672.004c4.527 0 7.754 1.128 9.934 3.457 2.765 2.945 3.894 7.699 3.894 16.395v27.23h17.098v-34.262c0-24.453-15.586-27.75-30.836-27.75H35.188zm137.583.086.007 61.926h17.489v-61.926h-17.496z"
+    />
+    <path
+      fill="currentColor"
+      d="M82.211 102.414s22.504-33.203 67.437-36.638V53.73c-49.769 3.997-92.867 46.149-92.867 46.149s24.41 70.565 92.867 77.026v-12.804c-50.237-6.32-67.437-61.687-67.437-61.687zm67.437 36.223v11.726c-37.968-6.769-48.507-46.237-48.507-46.237s18.23-20.195 48.507-23.47v12.867c-.023 0-.039-.007-.058-.007-15.891-1.907-28.305 12.938-28.305 12.938s6.958 24.991 28.363 32.183m0-107.125V53.73c1.461-.112 2.922-.207 4.391-.257 56.582-1.907 93.449 46.406 93.449 46.406s-42.343 51.488-86.457 51.488c-4.043 0-7.828-.375-11.383-1.005v13.739c3.04.386 6.192.613 9.481.613 41.051 0 70.738-20.965 99.484-45.778 4.766 3.817 24.278 13.103 28.289 17.168-27.332 22.883-91.031 41.329-127.144 41.329-3.481 0-6.824-.211-10.11-.528v19.306H305.68V31.512H149.648zm0 49.144V65.777c1.446-.101 2.903-.179 4.391-.226 40.688-1.278 67.382 34.965 67.382 34.965s-28.832 40.043-59.746 40.043c-4.449 0-8.438-.715-12.028-1.922V93.523c15.84 1.914 19.028 8.911 28.551 24.786l21.18-17.859s-15.461-20.277-41.524-20.277c-2.833-.001-5.544.198-8.206.483"
+    />
+  </svg>
+);
 
 function FlexibleIcon({
   icon,
@@ -322,6 +337,8 @@ const ProviderIcon = ({
           <path d="M14.767 1H7.884L1 7.883v6.884h6.884V7.883h6.883V1zM9.234 23h6.882L23 16.116V9.233h-6.884v6.883H9.234V23z" />
         </svg>
       );
+    case 'nvidia':
+      return <NVIDIA {...iconProps} />;
     default:
       return (
         <svg {...iconProps} viewBox="0 0 24 24" fill="currentColor">
@@ -340,6 +357,7 @@ const PROVIDER_ORDER: (ModelProvider | 'all')[] = [
   'anthropic',
   'google',
   'sarvam',
+  'nvidia',
   'inception',
   'alibaba',
   'bytedance',
@@ -876,12 +894,13 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       [availableModels, selectedModel],
     );
 
-    // Auto-switch away from restricted or pro models when necessary
+    // Auto-switch away from restricted or paid models when necessary
     useEffect(() => {
       if (user === undefined) return;
       if (isSubscriptionLoading) return;
 
       const currentModelRequiresPro = requiresProSubscription(selectedModel);
+      const currentModelRequiresMax = requiresMaxSubscription(selectedModel);
       const currentModelExists = availableModels.find((m) => m.value === selectedModel);
       const isCurrentModelRestricted = isModelRestrictedInRegion(selectedModel, countryCode || undefined);
 
@@ -894,13 +913,27 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         return;
       }
 
-      // If current model requires pro but user is not pro, switch to default
-      // Also prevent infinite loops by ensuring we're not already on the default model
-      if (user && currentModelExists && currentModelRequiresPro && !isProUser && selectedModel !== 'scira-default') {
+      // If current model requires max but user is not max, switch to default
+      if (user && currentModelExists && currentModelRequiresMax && !isMaxUser && selectedModel !== 'scira-default') {
+        console.log(`Auto-switching from max model '${selectedModel}' to 'scira-default' - user lost max access`);
+        setSelectedModel('scira-default');
+        return;
+      }
+
+      // If current model requires pro but user is not pro, switch to default.
+      // Skip this branch for Max-only models because those are handled above.
+      if (
+        user &&
+        currentModelExists &&
+        currentModelRequiresPro &&
+        !currentModelRequiresMax &&
+        !isProUser &&
+        selectedModel !== 'scira-default'
+      ) {
         console.log(`Auto-switching from pro model '${selectedModel}' to 'scira-default' - user lost pro access`);
         setSelectedModel('scira-default');
       }
-    }, [selectedModel, isProUser, isSubscriptionLoading, setSelectedModel, availableModels, countryCode, user]);
+    }, [selectedModel, isProUser, isMaxUser, isSubscriptionLoading, setSelectedModel, countryCode, user, currentModel]);
 
     const handleModelChange = useCallback(
       (value: string) => {
@@ -1064,22 +1097,19 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
               if (needsAuth) {
                 setSelectedAuthModel(model);
-                setOpen(false);
-                setTimeout(() => setShowSignInDialog(true), 200);
+                setShowSignInDialog(true);
                 return;
               }
 
               if (needsMax) {
                 setSelectedProModel(model);
-                setOpen(false);
-                setTimeout(() => setShowUpgradeDialog(true), 200);
+                setShowUpgradeDialog(true);
                 return;
               }
 
               if (needsPro) {
                 setSelectedProModel(model);
-                setOpen(false);
-                setTimeout(() => setShowUpgradeDialog(true), 200);
+                setShowUpgradeDialog(true);
                 return;
               }
 
@@ -1129,22 +1159,19 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
         if (requiresAuth) {
           setSelectedAuthModel(model);
-          setOpen(false);
-          setTimeout(() => setShowSignInDialog(true), 200);
+          setShowSignInDialog(true);
           return;
         }
 
         if (requiresMax) {
           setSelectedProModel(model);
-          setOpen(false);
-          setTimeout(() => setShowUpgradeDialog(true), 200);
+          setShowUpgradeDialog(true);
           return;
         }
 
         if (requiresPro) {
           setSelectedProModel(model);
-          setOpen(false);
-          setTimeout(() => setShowUpgradeDialog(true), 200);
+          setShowUpgradeDialog(true);
           return;
         }
 
@@ -1488,8 +1515,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
             {!isProUser && (
               <div
                 onClick={() => {
-                  setOpen(false);
-                  setTimeout(() => setShowUpgradeDialog(true), 200);
+                  setShowUpgradeDialog(true);
                 }}
                 className="mx-2 mb-1 p-2 rounded-lg bg-linear-to-r from-primary/6 via-secondary/4 to-accent/6 border border-primary/15 cursor-pointer hover:border-primary/30 transition-colors duration-200 shrink-0"
               >
@@ -1653,11 +1679,9 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
           <Popover open={open} onOpenChange={handlePopoverOpenChange}>
             <Tooltip delayDuration={300}>
               <TooltipTrigger asChild>
-                <div>
-                  <PopoverTrigger asChild>
-                    <TriggerButton />
-                  </PopoverTrigger>
-                </div>
+                <PopoverTrigger asChild>
+                  <TriggerButton />
+                </PopoverTrigger>
               </TooltipTrigger>
               {!open && (
                 <TooltipContent
@@ -1677,6 +1701,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               sideOffset={6}
               avoidCollisions={true}
               collisionPadding={12}
+              onOpenAutoFocus={(e) => e.preventDefault()}
               onCloseAutoFocus={(e) => {
                 e.preventDefault();
                 externalInputRef?.current?.focus();
@@ -2179,6 +2204,8 @@ interface FormComponentProps {
   isTemporaryChat: boolean;
   isTemporaryChatLocked: boolean;
   setIsTemporaryChatEnabled: (value: boolean | ((prev: boolean) => boolean)) => void;
+  isMultiAgentModeEnabled?: boolean;
+  setIsMultiAgentModeEnabled?: (value: boolean | ((prev: boolean) => boolean)) => void;
   autoRoutedModel?: { model: string; route: string } | null;
   onBeforeSubmit?: () => void;
 }
@@ -2724,11 +2751,6 @@ const WEB_SEARCH_PROVIDERS: Array<{
     value: 'parallel',
     label: 'Parallel AI',
     description: 'Base and premium web search with Parallel’s Firecrawl image support.',
-  },
-  {
-    value: 'tavily',
-    label: 'Tavily',
-    description: 'Wide-reaching search with comprehensive summaries and analysis.',
   },
 ];
 
@@ -3370,6 +3392,8 @@ const FormComponent: React.FC<FormComponentProps> = ({
   isTemporaryChat,
   isTemporaryChatLocked,
   setIsTemporaryChatEnabled,
+  isMultiAgentModeEnabled = false,
+  setIsMultiAgentModeEnabled,
   autoRoutedModel,
   onBeforeSubmit,
 }) => {
@@ -3517,18 +3541,29 @@ const FormComponent: React.FC<FormComponentProps> = ({
     return applyModeOrder(allVisible);
   }, [dynamicSearchGroups, visibleModesOuter, user, applyModeOrder]);
 
-  // Base groups for / trigger (extreme, canvas, connectors)
+  // Base groups for / trigger (extreme, apps, multi-agent, canvas)
   const modeGroups = useMemo(() => {
-    const modeIds = new Set(['extreme', 'connectors']);
+    const modeIds = new Set(['extreme', 'multi-agent']);
     if (canvasEnabled) modeIds.add('canvas');
     if (mcpEnabled) modeIds.add('mcp');
     const filtered = dynamicSearchGroups.filter((group) => {
       if (!group.show) return false;
       return modeIds.has(group.id);
     });
-    const order = ['extreme', 'mcp', 'canvas', 'connectors'];
+    const order = ['extreme', 'mcp', 'multi-agent', 'canvas'];
     return filtered.sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
   }, [dynamicSearchGroups, canvasEnabled, mcpEnabled]);
+
+  useEffect(() => {
+    if (!setIsMultiAgentModeEnabled) return;
+    if (selectedGroup === 'multi-agent') {
+      if (!isEnhancing && !isTypewriting) {
+        setIsMultiAgentModeEnabled(true);
+      }
+      return;
+    }
+    setIsMultiAgentModeEnabled(false);
+  }, [selectedGroup, isEnhancing, isTypewriting, setIsMultiAgentModeEnabled]);
 
   // Active group list based on which trigger is open
   const triggerBaseGroups = triggerPopup === '/' ? modeGroups : sourceGroups;
@@ -3548,7 +3583,18 @@ const FormComponent: React.FC<FormComponentProps> = ({
     return 'temporary'.includes(lower) || 'private'.includes(lower);
   }, [triggerPopup, user, hasInteracted, triggerFilter]);
 
-  const triggerTotalItems = filteredTriggerGroups.length + (showTempInTrigger ? 1 : 0);
+  const showMultiAgentInTrigger = useMemo(() => {
+    if (triggerPopup !== '/') return false;
+    if (!user || !setIsMultiAgentModeEnabled) return false;
+    const isAlreadyInModeGroups = filteredTriggerGroups.some((group) => group.id === 'multi-agent');
+    if (isAlreadyInModeGroups) return false;
+    if (!triggerFilter) return true;
+    const lower = triggerFilter.toLowerCase();
+    return 'multi-agent'.includes(lower) || 'multi agent'.includes(lower) || 'research'.includes(lower);
+  }, [triggerPopup, user, setIsMultiAgentModeEnabled, triggerFilter, filteredTriggerGroups]);
+
+  const triggerTotalItems =
+    filteredTriggerGroups.length + (showMultiAgentInTrigger ? 1 : 0) + (showTempInTrigger ? 1 : 0);
 
   // Reset highlight when filter or trigger changes
   useEffect(() => {
@@ -4125,6 +4171,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
     (group: SearchGroup) => {
       if (!isEnhancing && !isTypewriting) {
         setSelectedGroup(group.id);
+        setIsMultiAgentModeEnabled?.(group.id === 'multi-agent');
+
+        if (group.id === 'multi-agent') {
+          return;
+        }
 
         // Auto-switch to extreme-enabled model when extreme mode is selected
         if (group.id === 'extreme' && !supportsExtremeMode(selectedModel)) {
@@ -4255,6 +4306,52 @@ const FormComponent: React.FC<FormComponentProps> = ({
     setTriggerPopup(null);
     setTriggerFilter('');
   }, [isTemporaryChatLocked, setIsTemporaryChatEnabled, triggerPopup, inputRef, setInput]);
+
+  const handleTriggerMultiAgentSelect = useCallback(() => {
+    if (!setIsMultiAgentModeEnabled) return;
+
+    if (!isProUser) {
+      setTriggerPopup(null);
+      setTriggerFilter('');
+      setShowUpgradeDialog(true);
+      return;
+    }
+
+    const isTurningOff = selectedGroup === 'multi-agent' || isMultiAgentModeEnabled;
+    setSelectedGroup(isTurningOff ? 'web' : 'multi-agent');
+    setIsMultiAgentModeEnabled(!isTurningOff);
+
+    const trigger = triggerPopup;
+    const textarea = inputRef.current;
+    if (textarea && trigger) {
+      const val = textarea.value;
+      const cursorPos = textarea.selectionStart ?? val.length;
+      let tPos = -1;
+      for (let i = cursorPos - 1; i >= 0; i--) {
+        if (val[i] === trigger) {
+          tPos = i;
+          break;
+        }
+        if (val[i] === ' ' || val[i] === '\n') break;
+      }
+      if (tPos !== -1) {
+        const before = val.slice(0, tPos);
+        const after = val.slice(cursorPos);
+        const newVal = (before + after).trimStart();
+        setInput(newVal);
+        requestAnimationFrame(() => {
+          if (inputRef.current) {
+            const newPos = Math.min(tPos, newVal.length);
+            inputRef.current.setSelectionRange(newPos, newPos);
+            inputRef.current.focus();
+          }
+        });
+      }
+    }
+
+    setTriggerPopup(null);
+    setTriggerFilter('');
+  }, [setIsMultiAgentModeEnabled, isProUser, triggerPopup, inputRef, setInput, setShowUpgradeDialog, setSelectedGroup]);
 
   const handleConnectorToggle = useCallback(
     (provider: ConnectorProvider) => {
@@ -4873,6 +4970,16 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
     const shouldBypassLimitsForThisModel = shouldBypassRateLimits(selectedModel, user);
 
+    if (isMultiAgentModeEnabled && !isProUser) {
+      haptics.trigger('warning');
+      sileo.error({
+        title: 'Multi-agent research requires Pro',
+        description: 'Upgrade to Pro to use xAI multi-agent research',
+        icon: <Lock className="h-4 w-4" />,
+      });
+      return;
+    }
+
     if (isLimitBlocked && !shouldBypassLimitsForThisModel) {
       haptics.trigger('warning');
       sileo.error({
@@ -5075,19 +5182,29 @@ const FormComponent: React.FC<FormComponentProps> = ({
         }
         if (event.key === 'Enter' && !isCompositionActive.current) {
           event.preventDefault();
-          if (triggerHighlightIndex >= filteredTriggerGroups.length && showTempInTrigger) {
-            handleTriggerTempSelect();
-          } else {
+          if (triggerHighlightIndex < filteredTriggerGroups.length) {
             handleTriggerSelect(filteredTriggerGroups[triggerHighlightIndex]);
+          } else if (showMultiAgentInTrigger && triggerHighlightIndex === filteredTriggerGroups.length) {
+            handleTriggerMultiAgentSelect();
+          } else if (
+            showTempInTrigger &&
+            triggerHighlightIndex === filteredTriggerGroups.length + (showMultiAgentInTrigger ? 1 : 0)
+          ) {
+            handleTriggerTempSelect();
           }
           return;
         }
         if (event.key === 'Tab') {
           event.preventDefault();
-          if (triggerHighlightIndex >= filteredTriggerGroups.length && showTempInTrigger) {
-            handleTriggerTempSelect();
-          } else {
+          if (triggerHighlightIndex < filteredTriggerGroups.length) {
             handleTriggerSelect(filteredTriggerGroups[triggerHighlightIndex]);
+          } else if (showMultiAgentInTrigger && triggerHighlightIndex === filteredTriggerGroups.length) {
+            handleTriggerMultiAgentSelect();
+          } else if (
+            showTempInTrigger &&
+            triggerHighlightIndex === filteredTriggerGroups.length + (showMultiAgentInTrigger ? 1 : 0)
+          ) {
+            handleTriggerTempSelect();
           }
           return;
         }
@@ -5127,8 +5244,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
       triggerHighlightIndex,
       triggerTotalItems,
       showTempInTrigger,
+      showMultiAgentInTrigger,
       handleTriggerSelect,
       handleTriggerTempSelect,
+      handleTriggerMultiAgentSelect,
       showSuggestions,
       suggestions,
       suggestionIndex,
@@ -5320,7 +5439,10 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 <div ref={triggerPopupScrollRef} className="px-1 pb-1 max-h-[260px] overflow-y-auto scrollbar-thin">
                   {filteredTriggerGroups.map((group, index) => {
                     const isHighlighted = index === triggerHighlightIndex;
-                    const isCurrentGroup = selectedGroup === group.id;
+                    const isCurrentGroup =
+                      group.id === 'multi-agent'
+                        ? isMultiAgentModeEnabled || selectedGroup === 'multi-agent'
+                        : selectedGroup === group.id;
                     const isProOnly = 'requirePro' in group && group.requirePro && !isProUser;
 
                     return (
@@ -5360,40 +5482,88 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       </button>
                     );
                   })}
-                  {showTempInTrigger && (
+                  {(showTempInTrigger || showMultiAgentInTrigger) && (
                     <>
-                      {filteredTriggerGroups.length > 0 && <div className="my-1 mx-2 border-t border-border/30" />}
-                      <button
-                        data-at-index={filteredTriggerGroups.length}
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          handleTriggerTempSelect();
-                        }}
-                        onMouseEnter={() => setTriggerHighlightIndex(filteredTriggerGroups.length)}
-                        className={cn(
-                          'flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg text-left transition-colors duration-100',
-                          triggerHighlightIndex === filteredTriggerGroups.length ? 'bg-accent/80' : 'bg-transparent',
-                        )}
-                        disabled={isTemporaryChatLocked}
-                      >
-                        <div
+                      {showMultiAgentInTrigger && (
+                        <button
+                          data-at-index={filteredTriggerGroups.length}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleTriggerMultiAgentSelect();
+                          }}
+                          onMouseEnter={() => setTriggerHighlightIndex(filteredTriggerGroups.length)}
                           className={cn(
-                            'flex items-center justify-center size-7 rounded-md shrink-0',
-                            isTemporaryChat ? 'bg-primary/10 text-primary' : 'bg-muted/80 text-muted-foreground',
+                            'flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg text-left transition-colors duration-100',
+                            triggerHighlightIndex === filteredTriggerGroups.length ? 'bg-accent/80' : 'bg-transparent',
                           )}
                         >
-                          <Ghost size={16} strokeWidth={1.8} />
-                        </div>
-                        <span className="flex-1 text-[13px] font-medium text-foreground truncate">
-                          {isTemporaryChat ? 'Temporary' : 'Private'}
-                        </span>
-                        {isTemporaryChat && (
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <span className="text-[10px] font-medium text-primary/70">Active</span>
-                            <CheckIcon className="size-3 text-primary" />
+                          <div
+                            className={cn(
+                              'flex items-center justify-center size-7 rounded-md shrink-0',
+                              isMultiAgentModeEnabled
+                                ? 'bg-primary/10 text-primary'
+                                : 'bg-muted/80 text-muted-foreground',
+                            )}
+                          >
+                            <AgentNetworkIcon width={16} height={16} />
                           </div>
-                        )}
-                      </button>
+                          <span className="flex-1 text-[13px] font-medium text-foreground truncate">
+                            Multi-agent mode
+                          </span>
+                          {isMultiAgentModeEnabled ? (
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <span className="text-[10px] font-medium text-primary/70">Active</span>
+                              <CheckIcon className="size-3 text-primary" />
+                            </div>
+                          ) : !isProUser ? (
+                            <span className="shrink-0 text-[9px] font-semibold uppercase tracking-wide text-primary/70 bg-primary/8 px-1.5 py-0.5 rounded">
+                              Pro
+                            </span>
+                          ) : null}
+                        </button>
+                      )}
+                      {showTempInTrigger && (
+                        <>
+                          {(showMultiAgentInTrigger || filteredTriggerGroups.length > 0) && (
+                            <div className="my-1 mx-2 border-t border-border/30" />
+                          )}
+                          <button
+                            data-at-index={filteredTriggerGroups.length + (showMultiAgentInTrigger ? 1 : 0)}
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              handleTriggerTempSelect();
+                            }}
+                            onMouseEnter={() =>
+                              setTriggerHighlightIndex(filteredTriggerGroups.length + (showMultiAgentInTrigger ? 1 : 0))
+                            }
+                            className={cn(
+                              'flex items-center gap-2.5 w-full px-2 py-1.5 rounded-lg text-left transition-colors duration-100',
+                              triggerHighlightIndex === filteredTriggerGroups.length + (showMultiAgentInTrigger ? 1 : 0)
+                                ? 'bg-accent/80'
+                                : 'bg-transparent',
+                            )}
+                            disabled={isTemporaryChatLocked}
+                          >
+                            <div
+                              className={cn(
+                                'flex items-center justify-center size-7 rounded-md shrink-0',
+                                isTemporaryChat ? 'bg-primary/10 text-primary' : 'bg-muted/80 text-muted-foreground',
+                              )}
+                            >
+                              <Ghost size={16} strokeWidth={1.8} />
+                            </div>
+                            <span className="flex-1 text-[13px] font-medium text-foreground truncate">
+                              {isTemporaryChat ? 'Temporary' : 'Private'}
+                            </span>
+                            {isTemporaryChat && (
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className="text-[10px] font-medium text-primary/70">Active</span>
+                                <CheckIcon className="size-3 text-primary" />
+                              </div>
+                            )}
+                          </button>
+                        </>
+                      )}
                     </>
                   )}
                 </div>
@@ -5559,24 +5729,32 @@ const FormComponent: React.FC<FormComponentProps> = ({
                             />
                             <span className="flex-1 text-[13px]">Upload files or images</span>
                           </button>
-                          {user && (
+
+                          {user && setIsMultiAgentModeEnabled && (
                             <button
-                              className={cn(
-                                'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-accent transition-colors',
-                                selectedGroup === 'connectors' && 'bg-accent',
-                              )}
-                              onClick={async () => {
-                                const g = dynamicSearchGroups.find((g) => g.id === 'connectors');
-                                if (g) await handlePlusMenuGroupSelect(g);
+                              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-accent transition-colors"
+                              onClick={() => {
+                                haptics.trigger('selection');
+                                if (!isProUser) {
+                                  setShowUpgradeDialog(true);
+                                  return;
+                                }
+                                const isTurningOff = selectedGroup === 'multi-agent' || isMultiAgentModeEnabled;
+                                setSelectedGroup(isTurningOff ? 'web' : 'multi-agent');
+                                setIsMultiAgentModeEnabled(!isTurningOff);
                               }}
                             >
-                              <HugeiconsIcon icon={ConnectIcon} size={16} color="currentColor" strokeWidth={1.5} />
-                              <span className="flex-1 text-[13px]">Connectors</span>
-                              {!isProUser && (
+                              <AgentNetworkIcon width={16} height={16} />
+                              <span className="flex-1 text-[13px]">Multi-agent mode</span>
+                              {isMultiAgentModeEnabled ? (
+                                <span className="text-[9px] px-1 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                                  Active
+                                </span>
+                              ) : !isProUser ? (
                                 <span className="text-[9px] px-1 py-0.5 rounded bg-primary/10 text-primary font-medium">
                                   Pro
                                 </span>
-                              )}
+                              ) : null}
                             </button>
                           )}
                           {user && mcpEnabled && (
@@ -5748,30 +5926,43 @@ const FormComponent: React.FC<FormComponentProps> = ({
                             </span>
                           </TooltipContent>
                         </Tooltip>
-                        {user && (
+
+                        {user && setIsMultiAgentModeEnabled && (
                           <Tooltip delayDuration={200}>
                             <TooltipTrigger asChild>
                               <button
                                 className={cn(
                                   'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-left hover:bg-accent transition-colors',
-                                  selectedGroup === 'connectors' && 'bg-accent',
+                                  isMultiAgentModeEnabled && 'bg-accent',
                                 )}
-                                onClick={async () => {
-                                  const g = dynamicSearchGroups.find((g) => g.id === 'connectors');
-                                  if (g) await handlePlusMenuGroupSelect(g);
+                                onClick={() => {
+                                  haptics.trigger('selection');
+                                  if (!isProUser) {
+                                    setShowUpgradeDialog(true);
+                                    return;
+                                  }
+                                  const isTurningOff = selectedGroup === 'multi-agent' || isMultiAgentModeEnabled;
+                                  setSelectedGroup(isTurningOff ? 'web' : 'multi-agent');
+                                  setIsMultiAgentModeEnabled(!isTurningOff);
                                 }}
                               >
-                                <HugeiconsIcon icon={ConnectIcon} size={16} color="currentColor" strokeWidth={1.5} />
-                                <span className="flex-1 text-[13px]">Connectors</span>
-                                {!isProUser && (
+                                <AgentNetworkIcon width={16} height={16} />
+                                <span className="flex-1 text-[13px]">Multi-agent mode</span>
+                                {isMultiAgentModeEnabled ? (
+                                  <span className="text-[9px] px-1 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                                    Active
+                                  </span>
+                                ) : !isProUser ? (
                                   <span className="text-[9px] px-1 py-0.5 rounded bg-primary/10 text-primary font-medium">
                                     Pro
                                   </span>
-                                )}
+                                ) : null}
                               </button>
                             </TooltipTrigger>
                             <TooltipContent side="right" sideOffset={8} className="max-w-48 py-1.5 px-2.5">
-                              <span className="text-[10px] leading-snug">Search Google Drive, Notion and OneDrive</span>
+                              <span className="text-[10px] leading-snug">
+                                Use xAI multi-agent mode with web and X tool calls plus sources
+                              </span>
                             </TooltipContent>
                           </Tooltip>
                         )}
@@ -5939,9 +6130,55 @@ const FormComponent: React.FC<FormComponentProps> = ({
                       !activeGroup ||
                       selectedGroup === 'web' ||
                       selectedGroup === 'connectors' ||
-                      selectedGroup === 'mcp'
-                    )
-                      return null;
+                      selectedGroup === 'mcp' ||
+                      selectedGroup === 'multi-agent'
+                    ) {
+                      if (!isMultiAgentModeEnabled) return null;
+                      return (
+                        <Tooltip delayDuration={300}>
+                          <TooltipTrigger asChild>
+                            <div
+                              className="group relative flex items-center gap-1.5 px-2.5 h-8 rounded-full bg-primary/8! text-primary/80 border border-primary/15 text-[12px] font-medium hover:bg-primary/12 hover:text-primary transition-colors cursor-pointer"
+                              onClick={() => {
+                                haptics.trigger('light');
+                                setPlusMenuOpen(true);
+                              }}
+                            >
+                              <div className="relative size-3.5">
+                                <AgentNetworkIcon
+                                  width={14}
+                                  height={14}
+                                  className="absolute inset-0 group-hover:opacity-0 transition-opacity"
+                                />
+                                <button
+                                  className="absolute -inset-0.5 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 group-hover:bg-foreground/10 transition-all"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    haptics.trigger('selection');
+                                    setSelectedGroup('web');
+                                    setIsMultiAgentModeEnabled?.(false);
+                                  }}
+                                  aria-label="Clear multi-agent mode"
+                                >
+                                  <X className="size-3.5" strokeWidth={2} />
+                                </button>
+                              </div>
+                              <span>Multi-agent Mode</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="bottom"
+                            sideOffset={6}
+                            className="border-0 backdrop-blur-xs py-2 px-3 shadow-none!"
+                          >
+                            <div className="flex flex-col gap-0.5">
+                              <span className="font-medium text-[11px]">Click to switch mode</span>
+                              <span className="text-[10px] text-background/50">Hover ✕ to clear</span>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      );
+                    }
                     return (
                       <Tooltip delayDuration={300}>
                         <TooltipTrigger asChild>

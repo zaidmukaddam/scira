@@ -217,14 +217,17 @@ function extractFilenameFromHref(href: string, fallbackText?: string): string {
 
 function getFilePreviewDefinition(href: string, fallbackText?: string): FilePreviewDefinition | null {
   const url = parseUrlLike(href);
+  const pathname = url?.pathname ?? '';
   const filename = extractFilenameFromHref(href, fallbackText);
   const ext = filename.includes('.') ? (filename.split('.').pop()?.toLowerCase() ?? '') : '';
-  const hasBuildDownloadPath = url?.pathname.includes('/scira/builds/') ?? false;
-  const isLikelyFile =
-    hasBuildDownloadPath ||
-    Boolean(ext && !NON_DOWNLOADABLE_EXTENSIONS.has(ext)) ||
-    Boolean(url?.searchParams.get('download')) ||
-    Boolean(url?.searchParams.get('filename'));
+  const hasBuildDownloadPath = pathname.includes('/scira/builds/');
+  const hasKnownDownloadExtension = Boolean(ext && FILE_TYPE_MAP[ext] && !NON_DOWNLOADABLE_EXTENSIONS.has(ext));
+  const hasDownloadHint =
+    url?.searchParams.get('download') === '1' ||
+    url?.searchParams.get('download') === 'true' ||
+    url?.searchParams.has('filename');
+
+  const isLikelyFile = hasBuildDownloadPath || hasKnownDownloadExtension || Boolean(hasDownloadHint);
 
   if (!isLikelyFile) return null;
 

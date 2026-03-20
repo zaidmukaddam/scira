@@ -97,7 +97,7 @@ export const scira = customProvider({
     }),
     'scira-ext-2': createRetryable({
       model: openai('gpt-5.4'),
-      retries: [openai_2('gpt-5.4'), gateway('openai/gpt-5.4')],
+      retries: [openai_2('gpt-5.4')],
     }),
     // 'scira-ext-3': gateway('anthropic/claude-sonnet-4.6'),
     'scira-ext-4': createRetryable({
@@ -119,8 +119,8 @@ export const scira = customProvider({
     'scira-grok-3-mini': xai('grok-3-mini'),
     'scira-grok-3': xai('grok-3'),
     'scira-grok-4': xai('grok-4'),
-    'scira-grok-4.20-experimental-beta-0304': xai('grok-4.20-beta-0309-non-reasoning'),
-    'scira-grok-4.20-experimental-beta-0304-thinking': xai('grok-4.20-beta-0309-reasoning'),
+    'scira-grok-4.20-experimental-beta-0304': xai('grok-4.20-non-reasoning-latest'),
+    'scira-grok-4.20-experimental-beta-0304-thinking': xai('grok-4.20-reasoning-latest'),
     'scira-grok-4-fast': xai('grok-4-fast-non-reasoning'),
     'scira-grok-4-fast-think': xai('grok-4-fast-reasoning'),
     'scira-code': xai('grok-code-fast-1'),
@@ -254,6 +254,7 @@ export const scira = customProvider({
       model: groq('openai/gpt-oss-20b'),
       middleware,
     }),
+    'scira-nemotron-3-super': workersai('@cf/nvidia/nemotron-3-120b-a12b'),
     'scira-gpt-oss-120': wrapLanguageModel({
       model: baseten('openai/gpt-oss-120b'),
       middleware,
@@ -374,6 +375,10 @@ export const scira = customProvider({
       model: gateway('minimax/minimax-m2.1-lightning'),
       middleware,
     }),
+    'scira-minimax-m2.7': wrapLanguageModel({
+      model: minimax.chatModel('MiniMax-M2.7-highspeed'),
+      middleware,
+    }),
     'scira-minimax-m2.5': createRetryable({
       model: baseten.chatModel('MiniMaxAI/MiniMax-M2.5'),
       retries: [
@@ -434,19 +439,23 @@ export const scira = customProvider({
       model: google('gemini-3.1-pro-preview'),
       retries: [gateway('google/gemini-3.1-pro-preview')],
     }),
-    'scira-anthropic-small': gateway('anthropic/claude-haiku-4-5'),
-    'scira-anthropic': gateway('anthropic/claude-sonnet-4-5'),
-    'scira-anthropic-think': gateway('anthropic/claude-sonnet-4-5'),
-    'scira-anthropic-sonnet-4.6': gateway('anthropic/claude-sonnet-4-6'),
-    'scira-anthropic-sonnet-4.6-think': gateway('anthropic/claude-sonnet-4-6'),
+    'scira-anthropic-small': anthropic('claude-haiku-4-5'),
+    'scira-anthropic': anthropic('claude-sonnet-4-5'),
+    'scira-anthropic-think': anthropic('claude-sonnet-4-5'),
+    'scira-anthropic-sonnet-4.6': anthropic('claude-sonnet-4-6'),
+    'scira-anthropic-sonnet-4.6-think': anthropic('claude-sonnet-4-6'),
     'scira-mimo-v2-flash': wrapLanguageModel({
       model: gateway('xiaomi/mimo-v2-flash'),
       middleware,
     }),
-    'scira-anthropic-opus': gateway('anthropic/claude-opus-4-5'),
-    'scira-anthropic-opus-think': gateway('anthropic/claude-opus-4-5'),
-    'scira-anthropic-opus-4.6': gateway('anthropic/claude-opus-4-6'),
-    'scira-anthropic-opus-4.6-think': gateway('anthropic/claude-opus-4-6'),
+    'scira-mimo-v2-pro': wrapLanguageModel({
+      model: gateway('xiaomi/mimo-v2-pro'),
+      middleware,
+    }),
+    'scira-anthropic-opus': anthropic('claude-opus-4-5'),
+    'scira-anthropic-opus-think': anthropic('claude-opus-4-5'),
+    'scira-anthropic-opus-4.6': anthropic('claude-opus-4-6'),
+    'scira-anthropic-opus-4.6-think': anthropic('claude-opus-4-6'),
     'scira-nova-2-lite': gateway('amazon/nova-2-lite'),
     'scira-seed-1.6': wrapLanguageModel({
       model: ark('seed-1-6-250915'),

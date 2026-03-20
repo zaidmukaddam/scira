@@ -77,20 +77,20 @@ function inferLanguage(path: string): string {
 export function StatusBadge({ status }: { status: string }) {
   if (status === 'completed') {
     return (
-      <span className="inline-flex items-center gap-1 font-pixel text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-        <Check className="size-2.5" /> Done
+      <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+        <Check className="size-2.5" strokeWidth={2.5} /> Done
       </span>
     );
   }
   if (status === 'error') {
     return (
-      <span className="inline-flex items-center gap-1 font-pixel text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-destructive/10 text-destructive">
-        <X className="size-2.5" /> Error
+      <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-destructive/10 text-destructive">
+        <X className="size-2.5" strokeWidth={2.5} /> Error
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 font-pixel text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-primary/10 text-primary">
+    <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded-md bg-primary/8 text-primary">
       <Loader2 className="size-2.5 animate-spin" /> Running
     </span>
   );
@@ -114,22 +114,22 @@ export function CollapsibleCard({
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className="rounded-xl border border-border overflow-hidden shadow-none my-2">
+    <div className="rounded-lg border border-border/70 overflow-hidden my-1.5">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-muted/50 transition-colors"
+        className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/40 transition-colors"
       >
         {isOpen ? (
-          <ChevronDown className="size-3 text-muted-foreground/60 shrink-0" />
+          <ChevronDown className="size-3 text-muted-foreground/50 shrink-0" />
         ) : (
-          <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
+          <ChevronRight className="size-3 text-muted-foreground/50 shrink-0" />
         )}
         {header ? (
           header(isOpen)
         ) : (
           <>
-            <span className="text-muted-foreground shrink-0">{icon}</span>
-            <span className="text-xs font-medium truncate flex-1 text-foreground">{title}</span>
+            <span className="text-muted-foreground/70 shrink-0">{icon}</span>
+            <span className="text-xs font-medium truncate flex-1 text-foreground/90">{title}</span>
             {badge}
           </>
         )}
@@ -143,7 +143,7 @@ export function CollapsibleCard({
             transition={{ duration: 0.15 }}
             className="overflow-hidden"
           >
-            <div className="border-t border-border">{children}</div>
+            <div className="border-t border-border/60">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -396,17 +396,17 @@ export const BoxInitResult = memo(function BoxInitResult({
   const isDone = state === 'output-available' || state === 'result' || !!result;
 
   return (
-    <div className="flex items-center gap-2 py-1 my-1">
-      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border bg-muted text-xs font-mono font-medium text-foreground">
+    <div className="flex items-center gap-2 py-1 my-0.5">
+      <span className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-border/70 bg-muted/60 text-[11px] font-mono font-medium text-foreground/80">
         {isDone ? (
-          <Check className="size-3 text-emerald-500" />
+          <Check className="size-3 text-emerald-500 shrink-0" strokeWidth={2.5} />
         ) : (
-          <Loader2 className="size-3 animate-spin text-primary" />
+          <Loader2 className="size-3 animate-spin text-primary shrink-0" />
         )}
         <RuntimeLogo runtime={runtime} />
         <span>{runtime}</span>
       </span>
-      {reason && <span className="text-xs text-muted-foreground/60 truncate">{reason}</span>}
+      {reason && <span className="text-[11px] text-muted-foreground/60 truncate">{reason}</span>}
     </div>
   );
 });
@@ -435,13 +435,16 @@ export const BoxExecResult = memo(function BoxExecResult({
       title={command || 'Shell command'}
       badge={<StatusBadge status={status} />}
     >
-      <div className="bg-card p-3 text-xs font-mono overflow-x-auto max-h-[300px] overflow-y-auto">
-        <div className="text-muted-foreground/60 mb-1.5 select-all">$ {command}</div>
-        {stdout && <pre className="text-foreground/90 whitespace-pre-wrap">{stdout}</pre>}
-        {stderr && <pre className="text-destructive/80 whitespace-pre-wrap mt-1">{stderr}</pre>}
+      <div className="bg-muted/30 p-3 text-[11px] font-mono overflow-x-auto max-h-[300px] overflow-y-auto">
+        <div className="text-muted-foreground/70 mb-2 select-all flex items-center gap-1">
+          <span className="text-primary/50">$</span>
+          <span>{command}</span>
+        </div>
+        {stdout && <pre className="text-foreground/80 whitespace-pre-wrap leading-relaxed">{stdout}</pre>}
+        {stderr && <pre className="text-destructive/70 whitespace-pre-wrap mt-1.5 leading-relaxed">{stderr}</pre>}
         {!stdout && !stderr && status === 'running' && (
-          <div className="text-muted-foreground flex items-center gap-2">
-            <Loader2 className="size-3 animate-spin" /> Running...
+          <div className="text-muted-foreground/60 flex items-center gap-1.5">
+            <Loader2 className="size-3 animate-spin" /> Running…
           </div>
         )}
       </div>
@@ -473,11 +476,13 @@ export const BoxWriteResult = memo(function BoxWriteResult({
       badge={<StatusBadge status={ann?.status ?? (state === 'result' ? 'completed' : 'running')} />}
       defaultOpen={preview.length < 500}
     >
-      <div className="bg-card p-3 text-xs font-mono overflow-x-auto max-h-[400px] overflow-y-auto">
-        <pre className="text-foreground/90 whitespace-pre-wrap">{preview}</pre>
+      <div className="bg-muted/30 p-3 text-[11px] font-mono overflow-x-auto max-h-[400px] overflow-y-auto">
+        <pre className="text-foreground/80 whitespace-pre-wrap leading-relaxed">{preview}</pre>
       </div>
-      <div className="px-3 py-1.5 font-pixel text-[9px] text-muted-foreground/50 uppercase tracking-wider bg-muted/30">
-        {lang} &middot; {content.length.toLocaleString()} chars
+      <div className="px-3 py-1.5 text-[10px] text-muted-foreground/50 bg-muted/20 flex items-center gap-1.5">
+        <span className="font-medium">{lang}</span>
+        <span className="opacity-40">·</span>
+        <span>{content.length.toLocaleString()} chars</span>
       </div>
     </CollapsibleCard>
   );
@@ -856,27 +861,25 @@ function BoxAgentResultInner({
         const todoAllDone = todos.length > 0 && todoDoneCount === todos.length;
 
         return (
-          <div className="rounded-xl border border-border overflow-hidden shadow-none my-2">
+          <div className="rounded-lg border border-border/70 overflow-hidden my-1.5">
             {/* Header / trigger */}
             <button
               onClick={() => setIsAgentOpen(!isAgentOpen)}
-              className="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-muted/50 transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-muted/40 transition-colors"
             >
               {isAgentOpen ? (
-                <ChevronDown className="size-3 text-muted-foreground/60 shrink-0" />
+                <ChevronDown className="size-3 text-muted-foreground/50 shrink-0" />
               ) : (
-                <ChevronRight className="size-3 text-muted-foreground/60 shrink-0" />
+                <ChevronRight className="size-3 text-muted-foreground/50 shrink-0" />
               )}
               <div className="flex-1 min-w-0 flex items-center gap-2">
-                <ClaudeAI className="size-5 shrink-0 opacity-80" />
+                <ClaudeAI className="size-4 shrink-0 opacity-70" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-pixel-grid font-bold text-primary/50 uppercase tracking-wider leading-none">
-                      Claude Code
-                    </span>
+                    <span className="text-[11px] font-medium text-foreground/70 leading-none">Claude Code</span>
                     <StatusBadge status={status} />
                   </div>
-                  {prompt && <p className="text-xs text-foreground/80 truncate mt-0.5 leading-snug">{prompt}</p>}
+                  {prompt && <p className="text-[11px] text-muted-foreground/60 truncate mt-0.5 leading-snug">{prompt}</p>}
                 </div>
                 {prompt && (
                   <Tooltip>
@@ -886,7 +889,7 @@ function BoxAgentResultInner({
                           e.stopPropagation();
                           setPromptDialogOpen(true);
                         }}
-                        className="shrink-0 p-1 rounded-md hover:bg-muted-foreground/10 text-muted-foreground/40 hover:text-muted-foreground/70 transition-colors"
+                        className="shrink-0 p-1 rounded-md hover:bg-muted-foreground/10 text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors"
                         aria-label="View full prompt"
                       >
                         <Maximize2 className="size-3" />
@@ -902,19 +905,19 @@ function BoxAgentResultInner({
 
             {/* Todo list — always visible regardless of accordion state */}
             {todos.length > 0 && (
-              <div className="border-t border-border/40">
+              <div className="border-t border-border/50">
                 <div className="px-3 py-2 flex items-center gap-2">
                   <ListChecks
-                    className={cn('size-3.5 shrink-0', todoAllDone ? 'text-emerald-500' : 'text-primary/70')}
+                    className={cn('size-3.5 shrink-0', todoAllDone ? 'text-emerald-500' : 'text-primary/60')}
                   />
-                  <span className="text-[11px] font-medium text-foreground/80 flex-1 min-w-0 truncate">
+                  <span className="text-[11px] font-medium text-foreground/70 flex-1 min-w-0 truncate">
                     {todoAllDone ? 'All tasks complete' : (todoActiveItem?.activeForm ?? 'Working…')}
                   </span>
-                  <span className="text-[9px] font-pixel text-muted-foreground/50 uppercase tracking-wider shrink-0">
+                  <span className="text-[10px] tabular-nums text-muted-foreground/50 shrink-0">
                     {todoDoneCount}/{todos.length}
                   </span>
                 </div>
-                <div className="px-3 pb-2.5 space-y-1">
+                <div className="px-3 pb-2.5 space-y-1.5">
                   {todos.map((todo, ti) => (
                     <div key={ti} className="flex items-start gap-2">
                       {todo.status === 'completed' ? (
@@ -922,14 +925,14 @@ function BoxAgentResultInner({
                       ) : todo.status === 'in_progress' ? (
                         <Loader2 className="size-3.5 mt-0.5 shrink-0 text-primary animate-spin" />
                       ) : (
-                        <CircleDashed className="size-3.5 mt-0.5 shrink-0 text-muted-foreground/40" />
+                        <CircleDashed className="size-3.5 mt-0.5 shrink-0 text-muted-foreground/30" />
                       )}
                       <span
                         className={cn(
                           'text-[11px] leading-snug',
-                          todo.status === 'completed' && 'text-muted-foreground/50 line-through',
-                          todo.status === 'in_progress' && 'text-foreground font-medium',
-                          todo.status === 'pending' && 'text-muted-foreground/60',
+                          todo.status === 'completed' && 'text-muted-foreground/40 line-through',
+                          todo.status === 'in_progress' && 'text-foreground/90 font-medium',
+                          todo.status === 'pending' && 'text-muted-foreground/50',
                         )}
                       >
                         {todo.content}
@@ -950,8 +953,8 @@ function BoxAgentResultInner({
                   transition={{ duration: 0.15 }}
                   className="overflow-hidden"
                 >
-                  <div className="border-t border-border">
-                    <div ref={containerRef} className="max-h-125 overflow-y-auto divide-y divide-border/50">
+                  <div className="border-t border-border/60">
+                    <div ref={containerRef} className="max-h-125 overflow-y-auto divide-y divide-border/40">
                       {timeline.length > 0 ? (
                         timeline.map((entry, i) => {
                           if (entry.type === 'tool') {
@@ -959,14 +962,13 @@ function BoxAgentResultInner({
                             const prefix = TOOL_ICONS[entry.toolName] || '> ';
                             const summary = formatToolInput(entry.toolName, entry.input);
                             return (
-                              <div key={i} className="flex items-start gap-2 px-3 py-1.5 bg-muted/20">
-                                <Wrench className="size-3 text-muted-foreground/50 mt-0.5 shrink-0" />
-                                <div className="min-w-0 text-xs font-mono">
-                                  <span className="font-semibold text-foreground/70">{entry.toolName}</span>
+                              <div key={i} className="flex items-start gap-2 px-3 py-1.5 bg-muted/15">
+                                <Wrench className="size-3 text-muted-foreground/40 mt-0.5 shrink-0" />
+                                <div className="min-w-0 text-[11px] font-mono">
+                                  <span className="font-medium text-foreground/60">{entry.toolName}</span>
                                   {summary && (
-                                    <span className="text-muted-foreground/60 ml-1.5 truncate block">
-                                      {prefix}
-                                      {summary}
+                                    <span className="text-muted-foreground/50 ml-1.5 truncate block">
+                                      {prefix}{summary}
                                     </span>
                                   )}
                                 </div>
@@ -981,18 +983,18 @@ function BoxAgentResultInner({
                           );
                         })
                       ) : status !== 'completed' && status !== 'error' ? (
-                        <div className="px-3 py-4 text-xs text-muted-foreground flex items-center gap-2">
+                        <div className="px-3 py-4 text-[11px] text-muted-foreground/60 flex items-center gap-2">
                           <Loader2 className="size-3 animate-spin" />
                           {state === 'input-streaming'
-                            ? 'Preparing prompt...'
+                            ? 'Preparing prompt…'
                             : state === 'input-available'
-                              ? 'Starting Claude Code...'
-                              : 'Claude Code is working...'}
+                              ? 'Starting Claude Code…'
+                              : 'Claude Code is working…'}
                         </div>
                       ) : null}
                     </div>
                     {cost && (
-                      <div className="px-3 py-1.5 font-pixel text-[9px] text-muted-foreground/40 uppercase tracking-wider bg-muted/30 border-t border-border flex items-center gap-3">
+                      <div className="px-3 py-1.5 text-[10px] text-muted-foreground/40 bg-muted/20 border-t border-border/40 flex items-center gap-3">
                         {cost.inputTokens != null && <span>{cost.inputTokens.toLocaleString()} in</span>}
                         {cost.outputTokens != null && <span>{cost.outputTokens.toLocaleString()} out</span>}
                         {cost.totalUsd != null && <span>${cost.totalUsd.toFixed(4)}</span>}
@@ -1082,29 +1084,30 @@ export const BuildWebSearchResult = memo(function BuildWebSearchResult({
 
   return (
     <div className="relative ml-4">
+      {/* Pulsing/solid dot aligned with the stepper stem */}
       <div
         className={cn(
           'absolute rounded-full transition-colors duration-300 z-10',
-          !isDone ? 'bg-primary/80 animate-[pulse_0.8s_ease-in-out_infinite]' : 'bg-primary',
+          !isDone ? 'bg-primary/70 animate-[pulse_1s_ease-in-out_infinite]' : 'bg-primary',
         )}
-        style={{ left: '-0.6rem', top: '5px', width: '8px', height: '8px', transform: 'translateX(-50%)' }}
+        style={{ left: '-0.6rem', top: '6px', width: '6px', height: '6px', transform: 'translateX(-50%)' }}
       />
 
       <div
-        className="flex items-center gap-1.5 py-1 px-1.5 cursor-pointer hover:bg-accent/50 rounded-md transition-colors"
+        className="flex items-center gap-1.5 py-0.5 px-1.5 cursor-pointer hover:bg-accent/50 rounded-md transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <Search className="size-3 text-muted-foreground shrink-0" />
-        <span className="text-foreground text-[11px] leading-snug flex-1 truncate">{actionTitle ?? 'Searching'}</span>
+        <Search className="size-3 text-muted-foreground/70 shrink-0" />
+        <span className="text-foreground/80 text-[11px] leading-snug flex-1 truncate">{actionTitle ?? 'Searching'}</span>
         {allSources.length > 0 && (
-          <span className="text-[8.5px] text-muted-foreground px-1 rounded-full bg-muted border border-border/50 shrink-0">
+          <span className="text-[10px] tabular-nums text-muted-foreground/60 px-1.5 py-px rounded-full bg-muted/70 border border-border/50 shrink-0">
             {allSources.length} sources
           </span>
         )}
         {isOpen ? (
-          <ChevronDown className="size-3 text-muted-foreground shrink-0" />
+          <ChevronDown className="size-3 text-muted-foreground/50 shrink-0" />
         ) : (
-          <ChevronRight className="size-3 text-muted-foreground shrink-0" />
+          <ChevronRight className="size-3 text-muted-foreground/50 shrink-0" />
         )}
       </div>
 
@@ -1123,16 +1126,16 @@ export const BuildWebSearchResult = memo(function BuildWebSearchResult({
                   {queryChips.map((q, i) => (
                     <span
                       key={i}
-                      className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted px-2 py-0.5 text-[10px] text-foreground"
+                      className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-muted/60 px-2 py-0.5 text-[10px] text-foreground/80"
                     >
-                      <Search className="size-2.5 text-muted-foreground" />
+                      <Search className="size-2.5 text-muted-foreground/50 shrink-0" />
                       <span className="truncate max-w-[220px]">{q}</span>
                     </span>
                   ))}
                 </div>
               )}
               {allSources.length > 0 && (
-                <div className="rounded-lg bg-card border border-border/50 p-2 max-h-[240px] overflow-y-auto">
+                <div className="rounded-lg bg-card border border-border/50 overflow-hidden max-h-[240px] overflow-y-auto">
                   {allSources.map((source, si) => {
                     let hostname = '';
                     try {
@@ -1146,7 +1149,7 @@ export const BuildWebSearchResult = memo(function BuildWebSearchResult({
                         href={source.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2.5 px-2 py-1.5 text-[12px] hover:bg-accent/50 rounded-sm transition-colors"
+                        className="flex items-center gap-2 px-2.5 py-1.5 text-[11px] hover:bg-accent/50 transition-colors border-b border-border/30 last:border-0"
                       >
                         <img
                           src={
@@ -1154,15 +1157,15 @@ export const BuildWebSearchResult = memo(function BuildWebSearchResult({
                             `https://www.google.com/s2/favicons?sz=128&domain=${encodeURIComponent(hostname)}`
                           }
                           alt=""
-                          className="size-4 rounded shrink-0"
+                          className="size-3.5 rounded shrink-0"
                           onError={(e) => {
                             (e.currentTarget as HTMLImageElement).src =
                               'https://www.google.com/s2/favicons?sz=128&domain=example.com';
                             (e.currentTarget as HTMLImageElement).style.filter = 'grayscale(100%)';
                           }}
                         />
-                        <div className="flex-1 min-w-0 text-foreground truncate">{source.title || hostname}</div>
-                        <div className="text-[11px] text-muted-foreground shrink-0">{hostname}</div>
+                        <span className="flex-1 min-w-0 text-foreground/80 truncate">{source.title || hostname}</span>
+                        <span className="text-[10px] text-muted-foreground/50 shrink-0">{hostname}</span>
                       </a>
                     );
                   })}
@@ -1255,16 +1258,16 @@ export const BoxCodeResult = memo(function BoxCodeResult({
       title={`Run ${lang}`}
       badge={<StatusBadge status={status} />}
     >
-      <div className="bg-card p-3 text-xs font-mono overflow-x-auto max-h-[200px] overflow-y-auto">
-        <pre className="text-foreground/80 whitespace-pre-wrap">{code}</pre>
+      <div className="bg-muted/30 p-3 text-[11px] font-mono overflow-x-auto max-h-[200px] overflow-y-auto">
+        <pre className="text-foreground/80 whitespace-pre-wrap leading-relaxed">{code}</pre>
       </div>
       {(output || state === 'result') && (
-        <div className="border-t border-border bg-card p-3 text-xs font-mono overflow-x-auto max-h-[200px] overflow-y-auto">
-          <div className="font-pixel text-[9px] text-muted-foreground/40 uppercase tracking-wider mb-1.5">Output</div>
+        <div className="border-t border-border/60 bg-muted/20 p-3 text-[11px] font-mono overflow-x-auto max-h-[200px] overflow-y-auto">
+          <div className="text-[10px] text-muted-foreground/40 uppercase tracking-wide mb-1.5">Output</div>
           <pre
             className={cn(
-              'whitespace-pre-wrap',
-              exitCode !== 0 ? 'text-destructive/80' : 'text-emerald-600 dark:text-emerald-400',
+              'whitespace-pre-wrap leading-relaxed',
+              exitCode !== 0 ? 'text-destructive/70' : 'text-emerald-600 dark:text-emerald-400',
             )}
           >
             {output || '(no output)'}
@@ -1272,8 +1275,9 @@ export const BoxCodeResult = memo(function BoxCodeResult({
         </div>
       )}
       {exitCode != null && (
-        <div className="px-3 py-1.5 font-pixel text-[9px] text-muted-foreground/40 uppercase tracking-wider bg-muted/30">
-          exit {exitCode}
+        <div className="px-3 py-1 text-[10px] text-muted-foreground/40 bg-muted/20 flex items-center gap-1">
+          <span>exit</span>
+          <span className={cn('font-medium', exitCode !== 0 ? 'text-destructive/60' : 'text-emerald-500/70')}>{exitCode}</span>
         </div>
       )}
     </CollapsibleCard>

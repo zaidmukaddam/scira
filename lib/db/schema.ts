@@ -11,6 +11,7 @@ import {
   real,
   index,
   uniqueIndex,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 import { generateId } from 'ai';
 import { InferSelectModel } from 'drizzle-orm';
@@ -235,6 +236,84 @@ export const messageUsage = pgTable(
   ],
 );
 
+// Anthropic daily usage tracking table
+export const anthropicUsage = pgTable(
+  'anthropic_usage',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    usageCount: integer('usage_count').notNull().default(0),
+    date: timestamp('date').notNull().defaultNow(),
+    resetAt: timestamp('reset_at').notNull(),
+    metadata: jsonb('metadata').$type<{
+      lastModel?: string;
+    } | null>(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('anthropicUsage_userId_idx').on(table.userId),
+    index('anthropicUsage_userId_date_idx').on(table.userId, table.date),
+    uniqueIndex('anthropicUsage_userId_date_unique').on(table.userId, table.date),
+  ],
+);
+
+// Google (Gemini Max) monthly usage tracking table
+export const googleUsage = pgTable(
+  'google_usage',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    usageCount: integer('usage_count').notNull().default(0),
+    date: timestamp('date').notNull().defaultNow(),
+    resetAt: timestamp('reset_at').notNull(),
+    metadata: jsonb('metadata').$type<{
+      lastModel?: string;
+    } | null>(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('googleUsage_userId_idx').on(table.userId),
+    index('googleUsage_userId_date_idx').on(table.userId, table.date),
+    uniqueIndex('googleUsage_userId_date_unique').on(table.userId, table.date),
+  ],
+);
+
+// Agent mode monthly usage tracking (append-only events keyed by user message id)
+// This prevents usage from being bypassed by deleting sessions/chats.
+export const agentModeUsageEvents = pgTable(
+  'agent_mode_usage_events',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => generateId()),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    // The agent request's latest user message id (idempotency key).
+    messageId: text('message_id').notNull(),
+    date: timestamp('date').notNull().defaultNow(), // month start
+    resetAt: timestamp('reset_at').notNull(),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  },
+  (table) => [
+    index('agentModeUsageEvents_userId_idx').on(table.userId),
+    index('agentModeUsageEvents_userId_date_idx').on(table.userId, table.date),
+    uniqueIndex('agentModeUsageEvents_messageId_unique').on(table.messageId),
+    uniqueIndex('agentModeUsageEvents_userId_date_messageId_unique').on(table.userId, table.date, table.messageId),
+  ],
+);
+
 // Custom instructions table
 export const customInstructions = pgTable(
   'custom_instructions',
@@ -263,7 +342,7 @@ export const userPreferences = pgTable('user_preferences', {
     .references(() => user.id, { onDelete: 'cascade' }),
   preferences: json('preferences')
     .$type<{
-      'scira-search-provider'?: 'exa' | 'parallel' | 'tavily' | 'firecrawl';
+      'scira-search-provider'?: 'exa' | 'parallel' | 'firecrawl';
       'scira-extreme-search-model'?:
         | 'scira-ext-1'
         | 'scira-ext-2'
@@ -461,6 +540,9 @@ export const userRelations = relations(user, ({ many }) => ({
   chats: many(chat),
   extremeSearchUsages: many(extremeSearchUsage),
   messageUsages: many(messageUsage),
+  anthropicUsages: many(anthropicUsage),
+  googleUsages: many(googleUsage),
+  agentModeUsageEvents: many(agentModeUsageEvents),
   customInstructions: many(customInstructions),
   userPreferences: many(userPreferences),
   payments: many(payment),
@@ -574,6 +656,9 @@ export type Payment = InferSelectModel<typeof payment>;
 export type DodoSubscription = InferSelectModel<typeof dodosubscription>;
 export type ExtremeSearchUsage = InferSelectModel<typeof extremeSearchUsage>;
 export type MessageUsage = InferSelectModel<typeof messageUsage>;
+export type AnthropicUsage = InferSelectModel<typeof anthropicUsage>;
+export type GoogleUsage = InferSelectModel<typeof googleUsage>;
+export type AgentModeUsageEvents = InferSelectModel<typeof agentModeUsageEvents>;
 export type CustomInstructions = InferSelectModel<typeof customInstructions>;
 export type UserPreferences = InferSelectModel<typeof userPreferences>;
 export type Lookout = InferSelectModel<typeof lookout>;

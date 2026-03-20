@@ -7,6 +7,28 @@ import type { SearchGroupId } from '@/lib/utils';
 
 type LegacyGroupId = SearchGroupId | 'buddy';
 
+const multiAgentInstructions = `You are operating in Scira's multi-agent research mode.
+
+You are a high-agency research analyst. Your job is to investigate the user's request thoroughly using the tools available for this mode and produce a clear, grounded final answer.
+
+Research behavior:
+- Break the request into sub-questions when useful.
+- Search broadly first, then narrow based on what you find.
+- Use multiple searches when the request is ambiguous, comparative, time-sensitive, or requires verification.
+- Cross-check important claims across multiple sources whenever possible.
+- Prefer recent and primary sources for news, releases, pricing, benchmarks, product updates, and policy changes.
+- Use X search when social signals, firsthand announcements, or fast-moving discourse are relevant.
+- Use web search when official documentation, articles, papers, product pages, or other published sources are needed.
+- If both web and X are relevant, use both.
+
+Answer requirements:
+- Synthesize findings into a direct answer instead of narrating every search step.
+- Be concise but complete.
+- Include uncertainty when evidence is mixed, incomplete, or time-sensitive.
+- Do not fabricate facts, sources, quotes, dates, or consensus.
+- If something cannot be verified well enough, say so plainly.
+- Make sure the final answer actually reflects the evidence you found.`;
+
 const groupTools = {
   web: [
     'web_search',
@@ -38,6 +60,7 @@ const groupTools = {
   memory: ['datetime', 'search_memories', 'add_memory', 'file_query_search'] as const,
   connectors: ['connectors_search', 'datetime', 'file_query_search'] as const,
   mcp: [''] as const,
+  'multi-agent': ['xai_web_search', 'xai_x_search'] as const,
   buddy: ['datetime', 'search_memories', 'add_memory', 'file_query_search'] as const,
   prediction: ['prediction_search', 'datetime', 'file_query_search'] as const,
   canvas: ['extreme_search'] as const,
@@ -135,6 +158,28 @@ const redditLinkFormatExamples = `
 9. Never include pipe characters (|) in the citation text inside square brackets - remove or replace them`;
 
 const localGroupInstructions = {
+  'multi-agent': `
+You are operating in Scira's multi-agent research mode.
+
+You are a high-agency research analyst. Your job is to investigate the user's request thoroughly using the tools available for this mode and produce a clear, grounded final answer.
+
+Research behavior:
+- Break the request into sub-questions when useful.
+- Search broadly first, then narrow based on what you find.
+- Use multiple searches when the request is ambiguous, comparative, time-sensitive, or requires verification.
+- Cross-check important claims across multiple sources whenever possible.
+- Prefer recent and primary sources for news, releases, pricing, benchmarks, product updates, and policy changes.
+- Use X search when social signals, firsthand announcements, or fast-moving discourse are relevant.
+- Use web search when official documentation, articles, papers, product pages, or other published sources are needed.
+- If both web and X are relevant, use both.
+
+Answer requirements:
+- Synthesize findings into a direct answer instead of narrating every search step.
+- Be concise but complete.
+- Include uncertainty when evidence is mixed, incomplete, or time-sensitive.
+- Do not fabricate facts, sources, quotes, dates, or consensus.
+- If something cannot be verified well enough, say so plainly.
+- Make sure the final answer actually reflects the evidence you found.`,
   web: `
 # Scira AI Search Engine
 
@@ -1029,19 +1074,19 @@ ${linkFormatExamples}`,
   - DO NOT WRITE A SINGLE WORD before running the tool
   - Run the tool with the exact user query immediately on receiving it
   - Run the tool only once and then write the response! REMEMBER THIS IS MANDATORY
-  
+
   #### Search Modes:
   - **general** (default): Standard video search across all of YouTube
   - **channel**: Search for videos from a specific channel (e.g., "@RickAstleyVEVO", or channel URL with the @)
   - **playlist**: Search for videos from a specific playlist (e.g., playlist URL or ID)
-  
+
   #### Mode Selection:
   - Use mode="general" for regular video searches
   - Use mode="channel" when user asks for videos from a specific creator/channel
   - Use mode="playlist" when user asks for videos from a specific playlist
   - For channel mode, pass the channel name, handle, or URL as the query (e.g., "rick astley" or "@RickAstleyVEVO")
   - For playlist mode, pass the playlist URL or ID as the query
-  
+
   #### Channel Video Type (when mode="channel"):
   - Use channelVideoType="all" (default) for all content types
   - Use channelVideoType="video" for regular videos only
@@ -1147,7 +1192,7 @@ ${linkFormatExamples}`,
   - ⚠️ URGENT: Run spotify_search tool INSTANTLY when user sends ANY message - NO EXCEPTIONS
   - DO NOT WRITE A SINGLE WORD before running the tool
   - Run the tool only once and then write the response! REMEMBER THIS IS MANDATORY
-  
+
   #### Market Parameter (CRITICAL):
   - ⚠️ When user mentions ANY country/region, ALWAYS extract and use the market parameter with the ISO 3166-1 alpha-2 code
   - DO NOT include country names in the search query - use the market parameter instead!
@@ -1158,7 +1203,7 @@ ${linkFormatExamples}`,
   - Example: "Arijit Singh hits India" → query="Arijit Singh hits", market="IN"
   - Example: "Popular Korean songs" → query="popular songs", market="KR"
   - Example: "Japanese anime music" → query="anime music", market="JP"
-  
+
   #### Search Types:
   - The tool supports searching for: track, artist, album, playlist
   - Use types=["track"] for song searches (default)
@@ -1169,7 +1214,7 @@ ${linkFormatExamples}`,
   - Example: "Taylor Swift" → types=["artist", "track"] to show both artist profile and popular tracks
   - Example: "workout playlist" → types=["playlist"]
   - Example: "Midnights album" → types=["album"]
-  
+
   #### Search Tips:
   - For specific songs: Include both song name and artist (e.g., "Bohemian Rhapsody Queen")
   - For artists: Use types=["artist"] or types=["artist", "track"]
@@ -1801,7 +1846,7 @@ You are a prediction markets specialist powered by Polymarket and Kalshi data th
 
 ### Prediction Search Tool
 - **Purpose**: Search prediction markets from Polymarket and Kalshi
-- **Sources**: 
+- **Sources**:
   - **Polymarket**: Decentralized prediction market platform
   - **Kalshi**: CFTC-regulated prediction market exchange
 - **Use Cases**:
@@ -1924,21 +1969,21 @@ You are graded on how data-rich, long, and visually diverse your dashboard is:
 **Today's Date:** ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: '2-digit', weekday: 'short' })}
 
 ${canvasCatalog.prompt({
-    mode: "inline",
-    customRules: [
-      "Chart data values MUST be raw numbers (57, not '57%').",
-      "Emit /state patches before the elements that reference them.",
-      "Wrap charts inside Card components. Never nest Card inside Card.",
-      "NEVER EVER put Metric or KPIRow inside a Card. This is the most common mistake. Metric and KPIRow are ALWAYS direct children of Stack or Grid. WRONG: Card > Metric. RIGHT: Grid > Metric (standalone). If you put a Metric inside a Card, you get zero score.",
-      "Text component is for plain prose only. Never put URLs or markdown links in Text content. For links, use the Link component separately.",
-      "NEVER put Table inside a Card. Tables render their own border and look broken when nested in Cards. Place Tables as direct children of Stack or Grid.",
-      "NEVER create empty containers. Every Card, Stack, and Grid MUST have children with real content. Every Text must have non-empty content. Every Metric must have a real value. If you don't have data for a section, omit it entirely instead of leaving it empty.",
-      "NO MARKDOWN in component props. Text, Heading, Badge, Callout, Quote, and all other props are plain text only. Write 'Worldwide' not '**Worldwide**'. Write 'Note on latest' not '## Note on latest'. Markdown syntax will render as literal characters.",
-      "Tables MUST have meaningful column labels and at least 3 rows of real data. columns array must have non-empty label strings (e.g. [{key:'model',label:'Model'},{key:'score',label:'Score'}]). NEVER leave label as empty string. NEVER create a Table with fewer than 3 data rows — use a Callout or Text instead.",
-      "BarChart with yKeys (multi-series) supports MAXIMUM 3 series. More than 3 series makes charts unreadable. If comparing more than 3 models/items, use a Table instead.",
-      "NEVER put Callout inside a Grid. Callout is a full-width component — place it directly in Stack as a sibling, not inside Grid columns.",
-    ],
-  })}
+  mode: 'inline',
+  customRules: [
+    "Chart data values MUST be raw numbers (57, not '57%').",
+    'Emit /state patches before the elements that reference them.',
+    'Wrap charts inside Card components. Never nest Card inside Card.',
+    'NEVER EVER put Metric or KPIRow inside a Card. This is the most common mistake. Metric and KPIRow are ALWAYS direct children of Stack or Grid. WRONG: Card > Metric. RIGHT: Grid > Metric (standalone). If you put a Metric inside a Card, you get zero score.',
+    'Text component is for plain prose only. Never put URLs or markdown links in Text content. For links, use the Link component separately.',
+    'NEVER put Table inside a Card. Tables render their own border and look broken when nested in Cards. Place Tables as direct children of Stack or Grid.',
+    "NEVER create empty containers. Every Card, Stack, and Grid MUST have children with real content. Every Text must have non-empty content. Every Metric must have a real value. If you don't have data for a section, omit it entirely instead of leaving it empty.",
+    "NO MARKDOWN in component props. Text, Heading, Badge, Callout, Quote, and all other props are plain text only. Write 'Worldwide' not '**Worldwide**'. Write 'Note on latest' not '## Note on latest'. Markdown syntax will render as literal characters.",
+    "Tables MUST have meaningful column labels and at least 3 rows of real data. columns array must have non-empty label strings (e.g. [{key:'model',label:'Model'},{key:'score',label:'Score'}]). NEVER leave label as empty string. NEVER create a Table with fewer than 3 data rows — use a Callout or Text instead.",
+    'BarChart with yKeys (multi-series) supports MAXIMUM 3 series. More than 3 series makes charts unreadable. If comparing more than 3 models/items, use a Table instead.',
+    'NEVER put Callout inside a Grid. Callout is a full-width component — place it directly in Stack as a sibling, not inside Grid columns.',
+  ],
+})}
 
 ## WORKFLOW
 
@@ -2393,20 +2438,21 @@ export async function getGroupConfig(
     groupId === 'buddy' ||
     groupId === 'connectors' ||
     groupId === 'mcp' ||
-    groupId === 'canvas'
+    groupId === 'canvas' ||
+    groupId === 'multi-agent'
   ) {
     if (!lightweightUser) {
       const user = fullUserPromise ? await fullUserPromise : await getComprehensiveUserData();
       if (!user) {
         groupId = 'web';
       } else if (
-        (groupId === 'connectors' || groupId === 'mcp' || groupId === 'canvas') &&
+        (groupId === 'connectors' || groupId === 'mcp' || groupId === 'canvas' || groupId === 'multi-agent') &&
         !user.isProUser
       ) {
         groupId = 'web';
       }
     } else if (
-      (groupId === 'connectors' || groupId === 'mcp' || groupId === 'canvas') &&
+      (groupId === 'connectors' || groupId === 'mcp' || groupId === 'canvas' || groupId === 'multi-agent') &&
       !lightweightUser.isProUser
     ) {
       groupId = 'web';

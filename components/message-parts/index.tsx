@@ -17,8 +17,58 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/comp
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { ShareButton } from '@/components/share';
 import { HugeiconsIcon } from '@/components/ui/hugeicons';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { CpuIcon, SplitIcon, Chart03Icon } from '@hugeicons/core-free-icons';
-import { ChatMessage, CustomUIDataTypes, DataQueryCompletionPart, DataExtremeSearchPart, DataBuildSearchPart } from '@/lib/types';
+import {
+  ChatMessage,
+  CustomUIDataTypes,
+  DataQueryCompletionPart,
+  DataExtremeSearchPart,
+  DataBuildSearchPart,
+} from '@/lib/types';
+
+type SourceUIPart = {
+  type: 'source-url';
+  sourceType?: string;
+  id?: string;
+  url?: string;
+  title?: string;
+};
+
+type SourceItem = {
+  id: string;
+  url: string;
+  title: string;
+  hostname: string;
+  favicon: string;
+  displayTitle: string;
+};
+
+type SourceMetadata = {
+  title?: string;
+  description?: string;
+  siteName?: string;
+  image?: string;
+  favicon?: string;
+};
+
+const sourceDialogTriggerClassName =
+  'h-8 rounded-full border border-border/60 bg-background/70 px-2.5 text-xs font-medium text-foreground shadow-none backdrop-blur-sm transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 supports-[backdrop-filter]:bg-background/50';
+
+const sourceCardClassName =
+  'group block overflow-hidden rounded-xl border border-border/60 bg-card/30 p-3 transition-colors hover:bg-accent/40 hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30';
+
+const sourcePanelBodyClassName = 'overflow-y-auto pb-1';
+const sourcePanelListClassName = 'grid gap-2.5';
+
+type XaiMultiAgentToolPart = {
+  type: 'tool-xai_web_search' | 'tool-xai_x_search';
+  state: 'input-streaming' | 'input-available' | 'output-available' | 'output-error';
+  input?: Record<string, unknown>;
+  output?: unknown;
+  errorText?: string;
+};
 import {
   BoxExecResult,
   BoxWriteResult,
@@ -42,7 +92,26 @@ import {
 
 // Tool-specific components (eagerly loaded for better UX)
 import { SearchLoadingState } from '@/components/tool-invocation-list-view';
-import { MapPin, Film, Tv, Cloud, DollarSign, TrendingUpIcon, Plane, User2, Loader2, Clock, Globe, YoutubeIcon, Info, Code, Copy, Check, X, AlertCircle } from 'lucide-react';
+import {
+  MapPin,
+  Film,
+  Tv,
+  Cloud,
+  DollarSign,
+  TrendingUpIcon,
+  Plane,
+  User2,
+  Loader2,
+  Clock,
+  Globe,
+  YoutubeIcon,
+  Info,
+  Code,
+  Copy,
+  Check,
+  X,
+  AlertCircle,
+} from 'lucide-react';
 import {
   ClockIcon as PhosphorClockIcon,
   MemoryIcon,
@@ -72,6 +141,17 @@ function isToolPartType(partType: string) {
   return partType.startsWith('tool-') || partType === 'dynamic-tool';
 }
 
+function isSourcePartType(partType: string) {
+  return partType === 'source-url';
+}
+
+function isXaiMultiAgentToolPart(part: ChatMessage['parts'][number]) {
+  return part.type === 'tool-xai_web_search' || part.type === 'tool-xai_x_search';
+}
+
+function getXaiMultiAgentToolLabel(partType: XaiMultiAgentToolPart['type']) {
+  return partType === 'tool-xai_x_search' ? 'X Search' : 'Web Search';
+}
 
 function CopyIcon(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -104,6 +184,7 @@ import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { getModelConfig } from '@/ai/models';
 import { ComprehensiveUserData } from '@/lib/user-data-server';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Spinner } from '../ui/spinner';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
@@ -170,8 +251,12 @@ const StockChartLoader = ({ title, input }: { title?: string; input?: any }) => 
             <HugeiconsIcon icon={Chart03Icon} className="size-3.5 text-primary animate-pulse" strokeWidth={2} />
           </div>
           <div className="flex flex-col items-start gap-0.5 min-w-0">
-            <span className="font-pixel text-[10px] text-muted-foreground/50 uppercase tracking-wider">Stock Analysis</span>
-            <span className="text-xs font-medium text-foreground/80 truncate max-w-[280px]">{title || 'Preparing financial analysis...'}</span>
+            <span className="font-pixel text-[10px] text-muted-foreground/50 uppercase tracking-wider">
+              Stock Analysis
+            </span>
+            <span className="text-xs font-medium text-foreground/80 truncate max-w-[280px]">
+              {title || 'Preparing financial analysis...'}
+            </span>
           </div>
         </div>
         <Spinner className="size-4 text-primary/60" />
@@ -206,12 +291,21 @@ const StockChartLoader = ({ title, input }: { title?: string; input?: any }) => 
             {companies.slice(0, 6).map((company: string, i: number) => (
               <div key={i} className="flex items-center justify-between px-3.5 py-2.5">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/15 animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
+                  <div
+                    className="w-2 h-2 rounded-full bg-muted-foreground/15 animate-pulse"
+                    style={{ animationDelay: `${i * 100}ms` }}
+                  />
                   <span className="text-xs font-medium text-muted-foreground/50">{company}</span>
                 </div>
                 <div className="flex items-center gap-3">
-                  <div className="h-4 w-16 rounded bg-muted/35 animate-pulse" style={{ animationDelay: `${i * 100 + 50}ms` }} />
-                  <div className="h-3 w-12 rounded bg-muted/25 animate-pulse" style={{ animationDelay: `${i * 100 + 80}ms` }} />
+                  <div
+                    className="h-4 w-16 rounded bg-muted/35 animate-pulse"
+                    style={{ animationDelay: `${i * 100 + 50}ms` }}
+                  />
+                  <div
+                    className="h-3 w-12 rounded bg-muted/25 animate-pulse"
+                    style={{ animationDelay: `${i * 100 + 80}ms` }}
+                  />
                 </div>
               </div>
             ))}
@@ -226,7 +320,8 @@ const StockChartLoader = ({ title, input }: { title?: string; input?: any }) => 
 const ToolErrorDisplay = (_: { errorText: string; toolName: string }) => null;
 
 function formatDynamicToolName(partType: string, dynamicToolName?: string) {
-  const normalizedName = partType === 'dynamic-tool' ? (dynamicToolName || 'dynamic_tool') : partType.replace(/^tool-/, '');
+  const normalizedName =
+    partType === 'dynamic-tool' ? dynamicToolName || 'dynamic_tool' : partType.replace(/^tool-/, '');
   if (normalizedName.startsWith('mcp_')) {
     // Strip mcp_<server_slug>_ prefix, keep just the tool name
     const withoutMcp = normalizedName.replace(/^mcp_[^_]+_/, '');
@@ -282,7 +377,10 @@ const McpInputPill = ({ input }: { input: Record<string, unknown> }) => {
   return (
     <div className="flex items-center gap-1.5 flex-wrap mt-1.5 mb-2">
       {entries.map(([key, val]) => (
-        <span key={key} className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[10px] text-foreground max-w-[220px] truncate">
+        <span
+          key={key}
+          className="inline-flex items-center gap-1 rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[10px] text-foreground max-w-[220px] truncate"
+        >
           <span className="text-muted-foreground">{key}</span>
           <span className="truncate">{formatValue(val).slice(0, 60)}</span>
         </span>
@@ -293,9 +391,15 @@ const McpInputPill = ({ input }: { input: Record<string, unknown> }) => {
 
 const STRUCTURED_CONTENT_BLOCKLIST = new Set([
   '__scira_mcp_app',
-  'SYSTEM_MESSAGE', 'system_message', 'systemMessage',
-  '_meta', '__meta', '__internal',
-  'requiresApproval', 'approvalToken', 'instructions',
+  'SYSTEM_MESSAGE',
+  'system_message',
+  'systemMessage',
+  '_meta',
+  '__meta',
+  '__internal',
+  'requiresApproval',
+  'approvalToken',
+  'instructions',
 ]);
 
 function extractStructuredContent(output: unknown): Record<string, unknown> | null {
@@ -336,7 +440,12 @@ const StructuredContentTable = ({ rows }: { rows: Record<string, unknown>[] }) =
         <thead>
           <tr className="bg-muted/40 border-b border-border/50">
             {cols.map((col) => (
-              <th key={col} className="px-2.5 py-1.5 text-left font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap">{col}</th>
+              <th
+                key={col}
+                className="px-2.5 py-1.5 text-left font-medium text-muted-foreground uppercase tracking-wide whitespace-nowrap"
+              >
+                {col}
+              </th>
             ))}
           </tr>
         </thead>
@@ -345,9 +454,12 @@ const StructuredContentTable = ({ rows }: { rows: Record<string, unknown>[] }) =
             <tr key={i} className={cn('border-b border-border/30 last:border-0', i % 2 === 0 ? '' : 'bg-muted/20')}>
               {cols.map((col) => {
                 const val = row[col];
-                const display = val === null || val === undefined ? '—' : typeof val === 'object' ? JSON.stringify(val) : String(val);
+                const display =
+                  val === null || val === undefined ? '—' : typeof val === 'object' ? JSON.stringify(val) : String(val);
                 return (
-                  <td key={col} className="px-2.5 py-1.5 text-foreground/80 max-w-[200px] truncate">{display}</td>
+                  <td key={col} className="px-2.5 py-1.5 text-foreground/80 max-w-[200px] truncate">
+                    {display}
+                  </td>
                 );
               })}
             </tr>
@@ -404,7 +516,10 @@ const StructuredContentView = ({ data }: { data: Record<string, unknown> }) => {
               <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{key}</span>
               <div className="flex flex-wrap gap-1">
                 {(val as unknown[]).slice(0, 30).map((item, i) => (
-                  <span key={i} className="inline-flex items-center rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[10px] text-foreground/80 max-w-[180px] truncate">
+                  <span
+                    key={i}
+                    className="inline-flex items-center rounded-sm border border-border bg-muted px-1.5 py-0.5 text-[10px] text-foreground/80 max-w-[180px] truncate"
+                  >
                     {typeof item === 'object' ? JSON.stringify(item) : String(item)}
                   </span>
                 ))}
@@ -420,11 +535,14 @@ const StructuredContentView = ({ data }: { data: Record<string, unknown> }) => {
           return (
             <div key={key} className="flex items-center gap-2">
               <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">{key}</span>
-              <span className={cn(
-                'text-[10px] font-medium rounded px-1.5 py-0.5 border',
-                val ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
-                    : 'text-muted-foreground bg-muted/50 border-border/50'
-              )}>
+              <span
+                className={cn(
+                  'text-[10px] font-medium rounded px-1.5 py-0.5 border',
+                  val
+                    ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                    : 'text-muted-foreground bg-muted/50 border-border/50',
+                )}
+              >
                 {String(val)}
               </span>
             </div>
@@ -434,7 +552,9 @@ const StructuredContentView = ({ data }: { data: Record<string, unknown> }) => {
         if (typeof val === 'number') {
           return (
             <div key={key} className="flex items-baseline gap-2">
-              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide shrink-0">{key}</span>
+              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide shrink-0">
+                {key}
+              </span>
               <span className="text-[12px] font-medium text-amber-600 dark:text-amber-400 tabular-nums">{val}</span>
             </div>
           );
@@ -455,7 +575,9 @@ const StructuredContentView = ({ data }: { data: Record<string, unknown> }) => {
         const display = val === null || val === undefined ? '—' : String(val);
         return (
           <div key={key} className="flex gap-3 items-start">
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide shrink-0 pt-px min-w-[80px]">{key}</span>
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide shrink-0 pt-px min-w-[80px]">
+              {key}
+            </span>
             <span className="text-[12px] text-foreground/85 break-all">{display}</span>
           </div>
         );
@@ -468,10 +590,7 @@ const McpOutputBlock = ({ output }: { output: unknown }) => {
   const [showRaw, setShowRaw] = useState(false);
   const structuredContent = useMemo(() => extractStructuredContent(output), [output]);
 
-  const codeString = useMemo(
-    () => (typeof output === 'string' ? output : JSON.stringify(output, null, 2)),
-    [output],
-  );
+  const codeString = useMemo(() => (typeof output === 'string' ? output : JSON.stringify(output, null, 2)), [output]);
 
   if (structuredContent && !showRaw) {
     return (
@@ -536,12 +655,17 @@ function extractApprovalData(output: unknown): McpApprovalData | null {
   // Try structuredContent directly
   const check = (obj: any): McpApprovalData | null => {
     if (obj?.requiresApproval === true && obj?.approvalToken) return obj as McpApprovalData;
-    if (obj?.structuredContent?.requiresApproval === true && obj?.structuredContent?.approvalToken) return obj.structuredContent as McpApprovalData;
+    if (obj?.structuredContent?.requiresApproval === true && obj?.structuredContent?.approvalToken)
+      return obj.structuredContent as McpApprovalData;
     return null;
   };
   if (typeof output === 'object') return check(output);
   if (typeof output === 'string') {
-    try { return check(JSON.parse(output)); } catch { return null; }
+    try {
+      return check(JSON.parse(output));
+    } catch {
+      return null;
+    }
   }
   return null;
 }
@@ -587,16 +711,13 @@ function extractMcpAppRenderData(output: unknown): McpAppRenderData | null {
     if (!obj || typeof obj !== 'object') return null;
 
     // Direct URL-style app outputs
-    const directUrl = obj?.structuredContent?.appUrl
-      || obj?.structuredContent?.ui?.url
-      || obj?.appUrl
-      || obj?.url;
+    const directUrl = obj?.structuredContent?.appUrl || obj?.structuredContent?.ui?.url || obj?.appUrl || obj?.url;
     const stampedAppMeta = obj?.structuredContent?.__scira_mcp_app;
     if (
-      stampedAppMeta
-      && typeof stampedAppMeta === 'object'
-      && typeof stampedAppMeta?.resourceUri === 'string'
-      && stampedAppMeta.resourceUri.startsWith('ui://')
+      stampedAppMeta &&
+      typeof stampedAppMeta === 'object' &&
+      typeof stampedAppMeta?.resourceUri === 'string' &&
+      stampedAppMeta.resourceUri.startsWith('ui://')
     ) {
       return {
         kind: 'ui-resource',
@@ -613,9 +734,8 @@ function extractMcpAppRenderData(output: unknown): McpAppRenderData | null {
 
     // Prefer the SDK helper so we stay compatible with both current and
     // legacy tool metadata formats while still supporting our stamped fallback.
-    const uiResourceUri = getSafeToolUiResourceUri(obj)
-      || getSafeToolUiResourceUri({ _meta: obj?.meta })
-      || obj?.resourceUri;
+    const uiResourceUri =
+      getSafeToolUiResourceUri(obj) || getSafeToolUiResourceUri({ _meta: obj?.meta }) || obj?.resourceUri;
     if (typeof uiResourceUri === 'string' && uiResourceUri.startsWith('ui://')) {
       return { kind: 'ui-resource', resourceUri: uiResourceUri };
     }
@@ -642,12 +762,18 @@ function extractMcpAppRenderData(output: unknown): McpAppRenderData | null {
 
   if (typeof output === 'object') return check(output);
   if (typeof output === 'string') {
-    try { return check(JSON.parse(output)); } catch { return null; }
+    try {
+      return check(JSON.parse(output));
+    } catch {
+      return null;
+    }
   }
   return null;
 }
 
-function normalizeMcpAppToolResult(output: unknown): { content: Array<Record<string, unknown>>; [key: string]: unknown } | null {
+function normalizeMcpAppToolResult(
+  output: unknown,
+): { content: Array<Record<string, unknown>>; [key: string]: unknown } | null {
   if (output === null || output === undefined) return null;
 
   if (typeof output === 'string') {
@@ -670,13 +796,9 @@ function normalizeMcpAppToolResult(output: unknown): { content: Array<Record<str
     };
   }
 
-  if (
-    Array.isArray(record.content)
-    || 'structuredContent' in record
-    || 'isError' in record
-    || '_meta' in record
-  ) {
-    if (Array.isArray(record.content)) return record as { content: Array<Record<string, unknown>>; [key: string]: unknown };
+  if (Array.isArray(record.content) || 'structuredContent' in record || 'isError' in record || '_meta' in record) {
+    if (Array.isArray(record.content))
+      return record as { content: Array<Record<string, unknown>>; [key: string]: unknown };
     return {
       ...record,
       content: [],
@@ -714,12 +836,18 @@ function McpAppOutputBlock({
   // Stable refs for callbacks and data — prevents bridge from rebuilding on every render
   const sendMessageRef = useRef(sendMessage);
   const closeFullscreenRef = useRef<() => void>(() => {});
-  useEffect(() => { sendMessageRef.current = sendMessage; }, [sendMessage]);
-  const [resolvedHtml, setResolvedHtml] = useState<string | null>(app.kind === 'iframe-html' ? app.html ?? null : null);
+  useEffect(() => {
+    sendMessageRef.current = sendMessage;
+  }, [sendMessage]);
+  const [resolvedHtml, setResolvedHtml] = useState<string | null>(
+    app.kind === 'iframe-html' ? (app.html ?? null) : null,
+  );
   const [resourceMeta, setResourceMeta] = useState<McpUiResourceMeta | null>(null);
   // resourceMeta ref — read at call time in bridge so it doesn't re-trigger the bridge effect
   const resourceMetaRef = useRef<McpUiResourceMeta | null>(null);
-  useEffect(() => { resourceMetaRef.current = resourceMeta; }, [resourceMeta]);
+  useEffect(() => {
+    resourceMetaRef.current = resourceMeta;
+  }, [resourceMeta]);
   const [isBridgeReady, setIsBridgeReady] = useState(false);
   const [iframeHeight, setIframeHeight] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(app.kind === 'ui-resource');
@@ -738,8 +866,13 @@ function McpAppOutputBlock({
     }, 180);
   }, []);
 
-  useEffect(() => { closeFullscreenRef.current = closeFullscreen; }, [closeFullscreen]);
-  const sandboxUrl = useMemo(() => app.kind === 'ui-resource' && app.resourceUri ? getSandboxUrl(app.resourceUri) : null, [app.kind, app.resourceUri]);
+  useEffect(() => {
+    closeFullscreenRef.current = closeFullscreen;
+  }, [closeFullscreen]);
+  const sandboxUrl = useMemo(
+    () => (app.kind === 'ui-resource' && app.resourceUri ? getSandboxUrl(app.resourceUri) : null),
+    [app.kind, app.resourceUri],
+  );
   const useSandbox = !!sandboxUrl;
   const buildHostContext = useCallback((): McpUiHostContext => {
     const inlineHeight = iframeHeight ? Math.max(320, iframeHeight - 2) : 420;
@@ -759,34 +892,39 @@ function McpAppOutputBlock({
           : undefined,
       toolInfo: app.toolName
         ? {
-          tool: {
-            name: app.toolName,
-            title: app.toolName,
-            inputSchema: { type: 'object', additionalProperties: true },
-          } as NonNullable<McpUiHostContext['toolInfo']>['tool'],
-        }
+            tool: {
+              name: app.toolName,
+              title: app.toolName,
+              inputSchema: { type: 'object', additionalProperties: true },
+            } as NonNullable<McpUiHostContext['toolInfo']>['tool'],
+          }
         : undefined,
     };
   }, [app.toolName, iframeHeight, isFullscreen, resolvedTheme]);
-  useEffect(() => { buildHostContextRef.current = buildHostContext; }, [buildHostContext]);
+  useEffect(() => {
+    buildHostContextRef.current = buildHostContext;
+  }, [buildHostContext]);
 
-  const proxyBridgeRequest = useCallback(async (method: string, params: Record<string, unknown> = {}) => {
-    if (!app.serverId) throw new Error('Missing MCP server metadata for app bridge');
-    const response = await fetch('/api/mcp/apps/bridge', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        serverId: app.serverId,
-        method,
-        params,
-      }),
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      throw new Error(payload?.cause || payload?.message || `Bridge request failed: ${method}`);
-    }
-    return payload?.result;
-  }, [app.serverId]);
+  const proxyBridgeRequest = useCallback(
+    async (method: string, params: Record<string, unknown> = {}) => {
+      if (!app.serverId) throw new Error('Missing MCP server metadata for app bridge');
+      const response = await fetch('/api/mcp/apps/bridge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          serverId: app.serverId,
+          method,
+          params,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(payload?.cause || payload?.message || `Bridge request failed: ${method}`);
+      }
+      return payload?.result;
+    },
+    [app.serverId],
+  );
 
   useEffect(() => {
     if (app.kind === 'iframe-html') {
@@ -869,7 +1007,9 @@ function McpAppOutputBlock({
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [app.kind, app.resourceUri, app.serverId, app.html]);
 
   useEffect(() => {
@@ -907,11 +1047,11 @@ function McpAppOutputBlock({
         logging: {},
         ...(resourceMetaRef.current
           ? {
-            sandbox: {
-              csp: resourceMetaRef.current.csp,
-              permissions: resourceMetaRef.current.permissions,
-            },
-          }
+              sandbox: {
+                csp: resourceMetaRef.current.csp,
+                permissions: resourceMetaRef.current.permissions,
+              },
+            }
           : {}),
       },
       {
@@ -955,7 +1095,10 @@ function McpAppOutputBlock({
       const sm = sendMessageRef.current;
       if (role !== 'user' || !sm || !Array.isArray(content)) return {};
       const text = content
-        .filter((part) => part && typeof part === 'object' && (part as any).type === 'text' && typeof (part as any).text === 'string')
+        .filter(
+          (part) =>
+            part && typeof part === 'object' && (part as any).type === 'text' && typeof (part as any).text === 'string',
+        )
         .map((part) => (part as any).text as string)
         .join('\n')
         .trim();
@@ -972,11 +1115,12 @@ function McpAppOutputBlock({
         const resource = item?.resource ?? item;
         const filename = typeof resource?.name === 'string' ? resource.name : 'mcp-app-download';
         const mimeType = typeof resource?.mimeType === 'string' ? resource.mimeType : 'application/octet-stream';
-        const hrefData = typeof resource?.text === 'string'
-          ? `data:${mimeType};charset=utf-8,${encodeURIComponent(resource.text)}`
-          : typeof resource?.blob === 'string'
-            ? `data:${mimeType};base64,${resource.blob}`
-            : null;
+        const hrefData =
+          typeof resource?.text === 'string'
+            ? `data:${mimeType};charset=utf-8,${encodeURIComponent(resource.text)}`
+            : typeof resource?.blob === 'string'
+              ? `data:${mimeType};base64,${resource.blob}`
+              : null;
 
         if (!hrefData) return { isError: true };
         const anchor = document.createElement('a');
@@ -1000,7 +1144,8 @@ function McpAppOutputBlock({
     bridge.oncalltool = async (params) => proxyBridgeRequest('tools/call', params as Record<string, unknown>);
     bridge.onlistresources = async (params) => proxyBridgeRequest('resources/list', params as Record<string, unknown>);
     bridge.onreadresource = async (params) => proxyBridgeRequest('resources/read', params as Record<string, unknown>);
-    bridge.onlistresourcetemplates = async (params) => proxyBridgeRequest('resources/templates/list', params as Record<string, unknown>);
+    bridge.onlistresourcetemplates = async (params) =>
+      proxyBridgeRequest('resources/templates/list', params as Record<string, unknown>);
     bridge.onlistprompts = async (params) => proxyBridgeRequest('prompts/list', params as Record<string, unknown>);
 
     bridgeRef.current = bridge;
@@ -1021,23 +1166,26 @@ function McpAppOutputBlock({
           hasCsp: !!resourceMetaRef.current?.csp,
           hasPermissions: !!resourceMetaRef.current?.permissions,
         });
-        void bridge.sendSandboxResourceReady({
-          html: resolvedHtml,
-          sandbox: 'allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads',
-          csp: resourceMetaRef.current?.csp,
-          permissions: resourceMetaRef.current?.permissions,
-        }).then(() => {
-          logMcpAppDebug('sandbox-resource-ready-sent', {
-            toolName: app.toolName,
-            sandboxUrl,
+        void bridge
+          .sendSandboxResourceReady({
+            html: resolvedHtml,
+            sandbox: 'allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads',
+            csp: resourceMetaRef.current?.csp,
+            permissions: resourceMetaRef.current?.permissions,
+          })
+          .then(() => {
+            logMcpAppDebug('sandbox-resource-ready-sent', {
+              toolName: app.toolName,
+              sandboxUrl,
+            });
+          })
+          .catch((error) => {
+            logMcpAppDebug('sandbox-resource-ready-error', {
+              toolName: app.toolName,
+              sandboxUrl,
+              error: error instanceof Error ? error.message : String(error),
+            });
           });
-        }).catch((error) => {
-          logMcpAppDebug('sandbox-resource-ready-error', {
-            toolName: app.toolName,
-            sandboxUrl,
-            error: error instanceof Error ? error.message : String(error),
-          });
-        });
       };
 
       void (async () => {
@@ -1123,9 +1271,11 @@ function McpAppOutputBlock({
     const serializedInput = JSON.stringify(toolInput ?? {});
     if (sentInputRef.current === serializedInput) return;
     sentInputRef.current = serializedInput;
-    void bridgeRef.current.sendToolInput({
-      arguments: (toolInput ?? {}) as Record<string, unknown>,
-    }).catch(() => {});
+    void bridgeRef.current
+      .sendToolInput({
+        arguments: (toolInput ?? {}) as Record<string, unknown>,
+      })
+      .catch(() => {});
   }, [isBridgeReady, toolInput]);
 
   useEffect(() => {
@@ -1155,23 +1305,24 @@ function McpAppOutputBlock({
     const permissionAllow = buildAllowAttribute(resourceMeta?.permissions);
     const resolvedHeight = iframeHeight ? iframeHeight - 2 : 420;
 
-    const iframeProps: Record<string, unknown> = useSandbox && sandboxUrl
-      ? { src: sandboxUrl }
-      : { srcDoc: resolvedHtml! };
+    const iframeProps: Record<string, unknown> =
+      useSandbox && sandboxUrl ? { src: sandboxUrl } : { srcDoc: resolvedHtml! };
 
     if (!useSandbox) {
       iframeProps.sandbox = 'allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads';
     }
 
     return (
-      <div className={cn(
-        'bg-background relative group',
-        isFullscreen
-          ? isClosingFullscreen
-            ? 'fixed inset-0 z-50 flex flex-col overflow-hidden animate-out fade-out zoom-out-95 duration-180'
-            : 'fixed inset-0 z-50 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200'
-          : 'w-full overflow-hidden',
-      )}>
+      <div
+        className={cn(
+          'bg-background relative group',
+          isFullscreen
+            ? isClosingFullscreen
+              ? 'fixed inset-0 z-50 flex flex-col overflow-hidden animate-out fade-out zoom-out-95 duration-180'
+              : 'fixed inset-0 z-50 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200'
+            : 'w-full overflow-hidden',
+        )}
+      >
         {/* Fullscreen close button */}
         {isFullscreen && (
           <button
@@ -1197,9 +1348,10 @@ function McpAppOutputBlock({
             });
           }}
           className="block w-full border-0"
-          style={isFullscreen
-            ? { height: '100%', flex: '1 1 0%', minHeight: 0 }
-            : { height: `${resolvedHeight}px`, transition: 'height 150ms' }
+          style={
+            isFullscreen
+              ? { height: '100%', flex: '1 1 0%', minHeight: 0 }
+              : { height: `${resolvedHeight}px`, transition: 'height 150ms' }
           }
           {...iframeProps}
         />
@@ -1212,7 +1364,15 @@ function McpAppOutputBlock({
             className="absolute top-2 right-2 z-20 p-1.5 rounded-lg bg-background/80 border border-border/60 text-muted-foreground hover:text-foreground hover:bg-background opacity-0 group-hover:opacity-100 transition-all shadow-sm"
             title="Open fullscreen"
           >
-            <svg className="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg
+              className="size-3.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
             </svg>
           </button>
@@ -1250,11 +1410,15 @@ function McpAppOutputBlock({
     <div className="px-3.5 py-2.5">
       <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5 text-[11px] text-muted-foreground space-y-1.5">
         <p className="text-foreground/90 font-medium">MCP App detected</p>
-        {loadError
-          ? <p>Failed to load MCP App resource: {loadError}</p>
-          : <p>Server returned a UI resource reference. Missing server metadata prevented loading.</p>}
+        {loadError ? (
+          <p>Failed to load MCP App resource: {loadError}</p>
+        ) : (
+          <p>Server returned a UI resource reference. Missing server metadata prevented loading.</p>
+        )}
         {app.serverName && <p className="text-[10px] text-muted-foreground/80">Server: {app.serverName}</p>}
-        {app.resourceUri && <code className="block text-[10px] text-muted-foreground/80 break-all">{app.resourceUri}</code>}
+        {app.resourceUri && (
+          <code className="block text-[10px] text-muted-foreground/80 break-all">{app.resourceUri}</code>
+        )}
       </div>
     </div>
   );
@@ -1321,10 +1485,14 @@ const McpApprovalCard = ({
 
       {/* Action buttons */}
       {isDone ? (
-        <div className={cn(
-          'rounded-lg px-3 py-2 text-[11px] font-medium',
-          sent ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400' : 'bg-muted/50 border border-border/50 text-muted-foreground'
-        )}>
+        <div
+          className={cn(
+            'rounded-lg px-3 py-2 text-[11px] font-medium',
+            sent
+              ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400'
+              : 'bg-muted/50 border border-border/50 text-muted-foreground',
+          )}
+        >
           {sent ? '✓ Confirmed — action sent' : '✕ Cancelled'}
         </div>
       ) : (
@@ -1371,10 +1539,17 @@ const DynamicToolInvocationCard = ({
 
   if (isStreaming) {
     return (
-      <div className={cn('rounded-xl border border-border/60 overflow-hidden bg-card/30', compact ? 'mt-1' : 'w-full my-3')}>
+      <div
+        className={cn(
+          'rounded-xl border border-border/60 overflow-hidden bg-card/30',
+          compact ? 'mt-1' : 'w-full my-3',
+        )}
+      >
         <div className="px-4 py-2.5 flex items-center gap-2">
           <AppsIcon className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0 animate-pulse" />
-          <span className="font-pixel text-[10px] text-muted-foreground/70 uppercase tracking-wider truncate">{toolLabel}</span>
+          <span className="font-pixel text-[10px] text-muted-foreground/70 uppercase tracking-wider truncate">
+            {toolLabel}
+          </span>
           <Spinner className="h-3 w-3 text-muted-foreground/40 shrink-0 ml-auto" />
         </div>
         {part.input && Object.keys(part.input).length > 0 && (
@@ -1387,16 +1562,13 @@ const DynamicToolInvocationCard = ({
   }
 
   if (isError) {
-    return (
-      <ToolErrorDisplay
-        errorText={part.errorText || 'Dynamic tool execution failed'}
-        toolName={toolLabel}
-      />
-    );
+    return <ToolErrorDisplay errorText={part.errorText || 'Dynamic tool execution failed'} toolName={toolLabel} />;
   }
 
   return (
-    <div className={cn('rounded-xl border border-border/60 overflow-hidden bg-card/30', compact ? 'mt-1' : 'w-full my-3')}>
+    <div
+      className={cn('rounded-xl border border-border/60 overflow-hidden bg-card/30', compact ? 'mt-1' : 'w-full my-3')}
+    >
       {/* Header row */}
       <button
         type="button"
@@ -1409,22 +1581,34 @@ const DynamicToolInvocationCard = ({
             {toolLabel}
           </span>
           {approval && (
-            <span className={cn(
-              'text-[10px] font-medium rounded px-1.5 py-0.5 shrink-0 border transition-colors duration-300',
-              approvalStatus === 'confirmed'
-                ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+            <span
+              className={cn(
+                'text-[10px] font-medium rounded px-1.5 py-0.5 shrink-0 border transition-colors duration-300',
+                approvalStatus === 'confirmed'
+                  ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20'
+                  : approvalStatus === 'cancelled'
+                    ? 'text-muted-foreground bg-muted/50 border-border/50'
+                    : 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20',
+              )}
+            >
+              {approvalStatus === 'confirmed'
+                ? '✓ Confirmed'
                 : approvalStatus === 'cancelled'
-                  ? 'text-muted-foreground bg-muted/50 border-border/50'
-                  : 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20'
-            )}>
-              {approvalStatus === 'confirmed' ? '✓ Confirmed' : approvalStatus === 'cancelled' ? '✕ Cancelled' : 'Awaiting approval'}
+                  ? '✕ Cancelled'
+                  : 'Awaiting approval'}
             </span>
           )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <svg
-            className={cn('h-3 w-3 text-muted-foreground/60 transition-transform duration-200', isExpanded && 'rotate-180')}
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
+            className={cn(
+              'h-3 w-3 text-muted-foreground/60 transition-transform duration-200',
+              isExpanded && 'rotate-180',
+            )}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
           >
             <path d="M6 9l6 6 6-6" />
           </svg>
@@ -1434,7 +1618,12 @@ const DynamicToolInvocationCard = ({
       {isExpanded && (
         <div className="border-t border-border/40 overflow-hidden">
           {appOutput ? (
-            <McpAppOutputBlock app={appOutput} toolInput={part.input} toolOutput={part.output} sendMessage={sendMessage} />
+            <McpAppOutputBlock
+              app={appOutput}
+              toolInput={part.input}
+              toolOutput={part.output}
+              sendMessage={sendMessage}
+            />
           ) : (
             <>
               {/* Input pills */}
@@ -1444,11 +1633,17 @@ const DynamicToolInvocationCard = ({
                 </div>
               )}
               {/* Approval card or raw output */}
-              {hasRawOutput && (
-                approval
-                  ? <McpApprovalCard approval={approval} toolLabel={toolLabel} sendMessage={sendMessage} onStatusChange={setApprovalStatus} />
-                  : <McpOutputBlock output={part.output} />
-              )}
+              {hasRawOutput &&
+                (approval ? (
+                  <McpApprovalCard
+                    approval={approval}
+                    toolLabel={toolLabel}
+                    sendMessage={sendMessage}
+                    onStatusChange={setApprovalStatus}
+                  />
+                ) : (
+                  <McpOutputBlock output={part.output} />
+                ))}
             </>
           )}
         </div>
@@ -1571,9 +1766,7 @@ function McpInlineElicitationCard({
   const [values, setValues] = useState<Record<string, unknown>>({});
 
   useEffect(() => {
-    const nextValues = Object.fromEntries(
-      Object.entries(properties).map(([k, p]) => [k, getInlineDefaultValue(p)]),
-    );
+    const nextValues = Object.fromEntries(Object.entries(properties).map(([k, p]) => [k, getInlineDefaultValue(p)]));
     setValues(nextValues);
   }, [elicitation.elicitationId, properties]);
 
@@ -1584,9 +1777,10 @@ function McpInlineElicitationCard({
       if (action === 'accept' && elicitation.mode === 'url' && elicitation.url) {
         window.open(elicitation.url, '_blank', 'noopener,noreferrer');
       }
-      const content = action === 'accept' && elicitation.mode === 'form'
-        ? buildInlineElicitationContent(values, properties)
-        : undefined;
+      const content =
+        action === 'accept' && elicitation.mode === 'form'
+          ? buildInlineElicitationContent(values, properties)
+          : undefined;
       const response = await fetch('/api/mcp/elicitation/respond', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1631,13 +1825,18 @@ function McpInlineElicitationCard({
 
             if (prop.type === 'boolean') {
               return (
-                <div key={name} className="flex items-center justify-between gap-3 rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5">
+                <div
+                  key={name}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border/50 bg-muted/20 px-3 py-2.5"
+                >
                   <div className="min-w-0">
                     <p className="text-[12px] font-medium text-foreground/90 leading-snug">
                       {label}
                       {requiredFields.includes(name) ? <span className="text-destructive ml-1">*</span> : null}
                     </p>
-                    {prop.description ? <p className="text-[11px] text-muted-foreground text-pretty mt-0.5">{prop.description}</p> : null}
+                    {prop.description ? (
+                      <p className="text-[11px] text-muted-foreground text-pretty mt-0.5">{prop.description}</p>
+                    ) : null}
                   </div>
                   <Switch
                     checked={Boolean(value ?? false)}
@@ -1678,11 +1877,14 @@ function McpInlineElicitationCard({
               );
             }
 
-            const inputType = prop.type === 'number' || prop.type === 'integer'
-              ? 'number'
-              : prop.format === 'email' ? 'email'
-              : prop.format === 'uri' ? 'url'
-              : 'text';
+            const inputType =
+              prop.type === 'number' || prop.type === 'integer'
+                ? 'number'
+                : prop.format === 'email'
+                  ? 'email'
+                  : prop.format === 'uri'
+                    ? 'url'
+                    : 'text';
 
             return (
               <div key={name} className="space-y-1.5">
@@ -1690,7 +1892,9 @@ function McpInlineElicitationCard({
                   {label}
                   {requiredFields.includes(name) ? <span className="text-destructive ml-1">*</span> : null}
                 </p>
-                {prop.description ? <p className="text-[11px] text-muted-foreground/60 text-pretty">{prop.description}</p> : null}
+                {prop.description ? (
+                  <p className="text-[11px] text-muted-foreground/60 text-pretty">{prop.description}</p>
+                ) : null}
                 <Input
                   type={inputType}
                   className="h-7 text-[12px] bg-background/60"
@@ -1708,11 +1912,22 @@ function McpInlineElicitationCard({
       )}
 
       <div className="flex items-center gap-1.5 pt-0.5">
-        <Button size="sm" className="h-7 px-3 text-[11px] rounded-lg" disabled={Boolean(submitting)} onClick={() => respond('accept')}>
+        <Button
+          size="sm"
+          className="h-7 px-3 text-[11px] rounded-lg"
+          disabled={Boolean(submitting)}
+          onClick={() => respond('accept')}
+        >
           {submitting === 'accept' ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
           {elicitation.mode === 'url' ? 'Open' : hasFields ? 'Submit' : 'Approve'}
         </Button>
-        <Button size="sm" variant="outline" className="h-7 px-3 text-[11px] rounded-lg" disabled={Boolean(submitting)} onClick={() => respond('decline')}>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 px-3 text-[11px] rounded-lg"
+          disabled={Boolean(submitting)}
+          onClick={() => respond('decline')}
+        >
           {submitting === 'decline' ? <Loader2 className="size-3 animate-spin" /> : null}
           Decline
         </Button>
@@ -1849,8 +2064,7 @@ const DynamicToolStepper = ({
     for (let index = entries.length - 1; index >= 0; index -= 1) {
       const entry = entries[index];
       if (
-        (entry.kind === 'tool' &&
-          (entry.part.state === 'input-streaming' || entry.part.state === 'input-available')) ||
+        (entry.kind === 'tool' && (entry.part.state === 'input-streaming' || entry.part.state === 'input-available')) ||
         (entry.kind === 'reasoning' && entry.state === 'streaming')
       ) {
         return index;
@@ -1865,14 +2079,17 @@ const DynamicToolStepper = ({
     scrollStepperToTarget('smooth');
   }, [entries, lastLoadingEntryIndex, scrollStepperToTarget]);
 
-  const toolEntries = entries.filter((entry): entry is Extract<McpTimelineEntry, { kind: 'tool' }> => entry.kind === 'tool');
+  const toolEntries = entries.filter(
+    (entry): entry is Extract<McpTimelineEntry, { kind: 'tool' }> => entry.kind === 'tool',
+  );
   const isAnyLoading = entries.some(
     (entry) =>
-      (entry.kind === 'tool' &&
-        (entry.part.state === 'input-streaming' || entry.part.state === 'input-available')) ||
+      (entry.kind === 'tool' && (entry.part.state === 'input-streaming' || entry.part.state === 'input-available')) ||
       (entry.kind === 'reasoning' && entry.state === 'streaming'),
   );
-  const doneCount = toolEntries.filter((entry) => entry.part.state === 'output-available' || entry.part.state === 'output-error').length;
+  const doneCount = toolEntries.filter(
+    (entry) => entry.part.state === 'output-available' || entry.part.state === 'output-error',
+  ).length;
   const hasErrors = toolEntries.some((entry) => entry.part.state === 'output-error');
 
   // Collect ALL completed tool entries that have an app UI — shown stacked in the App tab
@@ -1898,20 +2115,23 @@ const DynamicToolStepper = ({
   return (
     <div key={`${messageIndex}-${startIndex}-dynamic-stepper`} className="w-full my-3">
       <Accordion type="single" collapsible value={accordionValue} onValueChange={setAccordionValue}>
-        <AccordionItem value="steps" className="rounded-xl border border-border/60 bg-card/30 overflow-hidden border-b!">
+        <AccordionItem
+          value="steps"
+          className="rounded-xl border border-border/60 bg-card/30 overflow-hidden border-b!"
+        >
           {/* Trigger */}
           <AccordionTrigger className="px-4 py-2.5 hover:bg-muted/20 hover:no-underline transition-colors [&>svg]:hidden">
             <div className="flex items-center justify-between w-full gap-3">
               <div className="flex items-center gap-2 min-w-0">
-                <AppsIcon className={cn(
-                  'h-3.5 w-3.5 shrink-0 transition-colors',
-                  isAnyLoading && 'text-muted-foreground/60 animate-pulse',
-                  hasErrors && !isAnyLoading && 'text-red-500',
-                  !isAnyLoading && !hasErrors && 'text-foreground/70',
-                )} />
-                <span className="font-pixel text-[10px] text-muted-foreground/80 uppercase tracking-wider">
-                  Apps
-                </span>
+                <AppsIcon
+                  className={cn(
+                    'h-3.5 w-3.5 shrink-0 transition-colors',
+                    isAnyLoading && 'text-muted-foreground/60 animate-pulse',
+                    hasErrors && !isAnyLoading && 'text-red-500',
+                    !isAnyLoading && !hasErrors && 'text-foreground/70',
+                  )}
+                />
+                <span className="font-pixel text-[10px] text-muted-foreground/80 uppercase tracking-wider">Apps</span>
                 <span className="text-[10px] text-muted-foreground/50 tabular-nums">
                   {`${toolEntries.length} ${toolEntries.length === 1 ? 'step' : 'steps'}`}
                 </span>
@@ -1919,7 +2139,10 @@ const DynamicToolStepper = ({
               <div className="flex items-center gap-1.5 shrink-0">
                 <svg
                   className="h-3 w-3 text-muted-foreground/60 transition-transform duration-200 group-data-[state=open]:rotate-180"
-                  viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
                 >
                   <path d="M6 9l6 6 6-6" />
                 </svg>
@@ -1935,7 +2158,7 @@ const DynamicToolStepper = ({
                   variant="segmented"
                   value={activeTab}
                   onValueChange={setActiveTab}
-                  className="w-full [--color-kumo-tint:var(--muted)] [--text-color-kumo-strong:var(--muted-foreground)] [--text-color-kumo-default:var(--foreground)] [--color-kumo-overlay:var(--background)] [--color-kumo-fill-hover:var(--border)]"
+                  className="w-full [--color-kumo-tint:var(--accent)] [--color-kumo-base:var(--background)] [--color-kumo-recessed:var(--muted)] [--color-kumo-surface:var(--card)] [--text-color-kumo-default:var(--foreground)] [--text-color-kumo-strong:var(--muted-foreground)] [--text-color-kumo-subtle:var(--muted-foreground)] [--color-kumo-ring:var(--border)]"
                   listClassName="w-full [&>button]:flex-1 [&>button]:justify-center"
                   tabs={[
                     {
@@ -1945,7 +2168,9 @@ const DynamicToolStepper = ({
                           <AppsIcon className="h-3 w-3 shrink-0" />
                           <span>App</span>
                           {appEntries.length > 1 && (
-                            <span className="text-[10px] opacity-60 translate-y-px tabular-nums">{appEntries.length}</span>
+                            <span className="text-[10px] opacity-60 translate-y-px tabular-nums">
+                              {appEntries.length}
+                            </span>
                           )}
                         </span>
                       ),
@@ -1954,11 +2179,19 @@ const DynamicToolStepper = ({
                       value: 'steps',
                       label: (
                         <span className="inline-flex items-center gap-1.5 leading-none">
-                          <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                          <svg
+                            className="h-3 w-3 shrink-0"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                          >
                             <path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                           </svg>
                           <span>Steps</span>
-                          <span className="text-[10px] opacity-60 translate-y-px tabular-nums">{toolEntries.length}</span>
+                          <span className="text-[10px] opacity-60 translate-y-px tabular-nums">
+                            {toolEntries.length}
+                          </span>
                         </span>
                       ),
                     },
@@ -1984,43 +2217,59 @@ const DynamicToolStepper = ({
 
             {/* Steps tab (or only content when no app) */}
             {(!hasApp || activeTab === 'steps') && (
-              <div ref={scrollContainerRef} className={cn('border-t border-border/40 px-4 py-3 max-h-[62vh] overflow-y-auto overscroll-contain', hasApp && 'border-t-0')}>
+              <div
+                ref={scrollContainerRef}
+                className={cn(
+                  'border-t border-border/40 px-4 py-3 max-h-[62vh] overflow-y-auto overscroll-contain',
+                  hasApp && 'border-t-0',
+                )}
+              >
                 <div className="flex flex-col">
                   {entries.map((entry, index) => {
-                    const stepState = entry.kind === 'tool'
-                      ? getDynamicStepState(entry.part)
-                      : entry.kind === 'reasoning'
-                        ? (entry.state === 'streaming' ? 'loading' : 'done')
-                        : 'done';
-                    const isLast = index === entries.length - 1 && !(inlineElicitations?.length);
+                    const stepState =
+                      entry.kind === 'tool'
+                        ? getDynamicStepState(entry.part)
+                        : entry.kind === 'reasoning'
+                          ? entry.state === 'streaming'
+                            ? 'loading'
+                            : 'done'
+                          : 'done';
+                    const isLast = index === entries.length - 1 && !inlineElicitations?.length;
                     const isLastLoadingEntry = index === lastLoadingEntryIndex;
 
                     return (
                       <div key={entry.id} className="flex gap-2.5 w-full min-w-0">
                         {/* Left: dot + line */}
                         <div className={cn('relative flex flex-col items-center shrink-0 pt-[3px]', !isLast && 'pb-3')}>
-                          <div className={cn(
-                            'relative z-10 size-4 rounded-full border flex items-center justify-center shrink-0',
-                            stepState === 'error' && 'border-red-500 bg-red-50 dark:bg-red-950',
-                            stepState === 'loading' && 'border-border bg-muted',
-                            stepState === 'done' && 'border-border bg-muted',
-                          )}>
+                          <div
+                            className={cn(
+                              'relative z-10 size-4 rounded-full border flex items-center justify-center shrink-0',
+                              stepState === 'error' && 'border-red-500 bg-red-50 dark:bg-red-950',
+                              stepState === 'loading' && 'border-border bg-muted',
+                              stepState === 'done' && 'border-border bg-muted',
+                            )}
+                          >
                             {stepState === 'loading' && <Spinner className="h-2.5 w-2.5 text-muted-foreground" />}
                             {stepState === 'done' && <Check className="h-2.5 w-2.5 text-foreground/70" />}
                             {stepState === 'error' && <X className="h-2.5 w-2.5 text-red-500" />}
                           </div>
                           {!isLast && (
-                            <div className="absolute left-1/2 -translate-x-1/2 w-px bg-border/60" style={{ top: '19px', bottom: '-4px' }} />
+                            <div
+                              className="absolute left-1/2 -translate-x-1/2 w-px bg-border/60"
+                              style={{ top: '19px', bottom: '-4px' }}
+                            />
                           )}
                         </div>
                         {/* Right: label + content */}
                         <div className={cn('flex-1 min-w-0', !isLast && 'pb-3')}>
-                          <span className={cn(
-                            'font-pixel! text-[10px] uppercase tracking-wider truncate block leading-[1.6]',
-                            stepState === 'error' && 'text-red-600 dark:text-red-400',
-                            stepState === 'loading' && 'text-muted-foreground',
-                            stepState === 'done' && 'text-foreground',
-                          )}>
+                          <span
+                            className={cn(
+                              'font-pixel! text-[10px] uppercase tracking-wider truncate block leading-[1.6]',
+                              stepState === 'error' && 'text-red-600 dark:text-red-400',
+                              stepState === 'loading' && 'text-muted-foreground',
+                              stepState === 'done' && 'text-foreground',
+                            )}
+                          >
                             {entry.kind === 'tool'
                               ? formatDynamicToolName(entry.part.type, entry.part.toolName)
                               : entry.kind === 'reasoning'
@@ -2029,13 +2278,13 @@ const DynamicToolStepper = ({
                           </span>
                           <div className="mt-1 min-w-0">
                             {entry.kind === 'tool' ? (
-                              <DynamicToolInvocationCard
-                                part={entry.part}
-                                compact={true}
-                                sendMessage={sendMessage}
-                              />
+                              <DynamicToolInvocationCard part={entry.part} compact={true} sendMessage={sendMessage} />
                             ) : entry.kind === 'reasoning' ? (
-                              <Accordion type="single" collapsible defaultValue={stepState === 'loading' ? 'reasoning' : undefined}>
+                              <Accordion
+                                type="single"
+                                collapsible
+                                defaultValue={stepState === 'loading' ? 'reasoning' : undefined}
+                              >
                                 <AccordionItem value="reasoning" className="border-0">
                                   <AccordionTrigger className="py-1 text-[10px] text-muted-foreground/70 hover:no-underline hover:text-muted-foreground font-pixel! uppercase tracking-wider">
                                     Details
@@ -2058,32 +2307,45 @@ const DynamicToolStepper = ({
                       </div>
                     );
                   })}
-                  {inlineElicitations && inlineElicitations.length > 0 && onInlineElicitationResolved && inlineElicitations.map((elicitation, eli) => {
-                    const isLastElicitation = eli === inlineElicitations.length - 1;
-                    return (
-                      <div key={elicitation.elicitationId} className="flex gap-2.5 w-full min-w-0">
-                        <div className={cn('relative flex flex-col items-center shrink-0 pt-[3px]', !isLastElicitation && 'pb-3')}>
-                          <div className="relative z-10 size-4 rounded-full border flex items-center justify-center shrink-0 border-border bg-muted">
-                            <AlertCircle className="h-2.5 w-2.5 text-amber-500" />
+                  {inlineElicitations &&
+                    inlineElicitations.length > 0 &&
+                    onInlineElicitationResolved &&
+                    inlineElicitations.map((elicitation, eli) => {
+                      const isLastElicitation = eli === inlineElicitations.length - 1;
+                      return (
+                        <div key={elicitation.elicitationId} className="flex gap-2.5 w-full min-w-0">
+                          <div
+                            className={cn(
+                              'relative flex flex-col items-center shrink-0 pt-[3px]',
+                              !isLastElicitation && 'pb-3',
+                            )}
+                          >
+                            <div className="relative z-10 size-4 rounded-full border flex items-center justify-center shrink-0 border-border bg-muted">
+                              <AlertCircle className="h-2.5 w-2.5 text-amber-500" />
+                            </div>
+                            {!isLastElicitation && (
+                              <div
+                                className="absolute left-1/2 -translate-x-1/2 w-px bg-border/60"
+                                style={{ top: '19px', bottom: '-4px' }}
+                              />
+                            )}
                           </div>
-                          {!isLastElicitation && (
-                            <div className="absolute left-1/2 -translate-x-1/2 w-px bg-border/60" style={{ top: '19px', bottom: '-4px' }} />
-                          )}
-                        </div>
-                        <div className={cn('flex-1 min-w-0', !isLastElicitation ? 'pb-3' : 'pb-3')}>
-                          <span className="font-pixel! text-[10px] uppercase tracking-wider truncate block leading-[1.6] text-foreground">
-                            {inlineElicitations.length > 1 ? `Approval needed · ${elicitation.serverName}` : 'Approval needed'}
-                          </span>
-                          <div className="mt-1 min-w-0">
-                            <McpInlineElicitationCard
-                              elicitation={elicitation}
-                              onResolved={onInlineElicitationResolved}
-                            />
+                          <div className={cn('flex-1 min-w-0', !isLastElicitation ? 'pb-3' : 'pb-3')}>
+                            <span className="font-pixel! text-[10px] uppercase tracking-wider truncate block leading-[1.6] text-foreground">
+                              {inlineElicitations.length > 1
+                                ? `Approval needed · ${elicitation.serverName}`
+                                : 'Approval needed'}
+                            </span>
+                            <div className="mt-1 min-w-0">
+                              <McpInlineElicitationCard
+                                elicitation={elicitation}
+                                onResolved={onInlineElicitationResolved}
+                              />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                   <div ref={bottomRef} />
                 </div>
               </div>
@@ -2167,10 +2429,173 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
     const ignoredInlineElicitationIdsRef = useRef<Set<string>>(new Set());
     const router = useRouter();
     const queryClient = useQueryClient();
+    const isMobile = useIsMobile();
     const inlineElicitations = useMemo(
       () => getPendingInlineElicitations(dataStream ?? [], ignoredInlineElicitationIdsRef.current),
       [dataStream, inlineElicitationVersion],
     );
+    const meta = message?.metadata;
+    const modelConfig = meta?.model ? getModelConfig(meta.model) : null;
+    const modelLabel = modelConfig?.label ?? meta?.model ?? null;
+    const tokenTotal = (meta?.totalTokens ?? (meta?.inputTokens ?? 0) + (meta?.outputTokens ?? 0)) || null;
+    const inputCount = meta?.inputTokens ?? null;
+    const outputCount = meta?.outputTokens ?? null;
+    const sourceItems = useMemo(
+      () =>
+        parts.reduce<SourceItem[]>((acc, messagePart, sourceIndex) => {
+          if (messagePart.type !== 'source-url') return acc;
+          const sourcePart = messagePart as SourceUIPart;
+          const url = sourcePart.url?.trim();
+          if (!url) return acc;
+
+          let hostname = url;
+          try {
+            hostname = new URL(url).hostname.replace(/^www\./, '');
+          } catch {}
+
+          const favicon = `/api/proxy-image?url=${encodeURIComponent(
+            `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`,
+          )}`;
+
+          const rawTitle = sourcePart.title?.trim() || '';
+          const displayTitle =
+            rawTitle && !/^\d+$/.test(rawTitle) && rawTitle !== url
+              ? rawTitle
+              : hostname
+                  .split('.')
+                  .filter(Boolean)
+                  .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+                  .join(' · ');
+
+          if (acc.some((existing) => existing.url === url)) {
+            return acc;
+          }
+
+          acc.push({
+            id: sourcePart.id?.trim() || `source-${messageIndex}-${sourceIndex}`,
+            url,
+            title: rawTitle || hostname,
+            hostname,
+            favicon,
+            displayTitle,
+          });
+          return acc;
+        }, []),
+      [parts, messageIndex],
+    );
+    const [sourceMetadataMap, setSourceMetadataMap] = useState<Record<string, SourceMetadata>>({});
+    const renderSourceEntry = useCallback(
+      (source: SourceItem, index: number) => {
+        const metadata = sourceMetadataMap[source.url];
+        const title = metadata?.title?.trim() || metadata?.siteName?.trim() || source.displayTitle;
+        const description = metadata?.description?.trim() || '';
+        const favicon = metadata?.favicon?.trim()
+          ? `/api/proxy-image?url=${encodeURIComponent(metadata.favicon)}`
+          : source.favicon;
+        const siteName = metadata?.siteName?.trim() || source.hostname;
+
+        return (
+          <a
+            key={source.id}
+            href={source.url}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`Open source ${index + 1}: ${title}`}
+            className={sourceCardClassName}
+          >
+            <div className="flex items-start gap-2.5">
+              <div className="flex h-6 min-w-6 items-center justify-center rounded-md bg-muted text-[11px] font-medium text-muted-foreground tabular-nums">
+                {index + 1}
+              </div>
+              <div className="flex h-7 w-7 items-center justify-center rounded-md border border-border/50 bg-background/80 shrink-0 overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={favicon}
+                  alt=""
+                  className="size-4 rounded shrink-0"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="line-clamp-2 text-sm font-medium leading-snug text-foreground">{title}</div>
+                    <div className="mt-1 flex items-center gap-1.5 min-w-0 text-[11px] text-muted-foreground">
+                      <span className="truncate">{siteName}</span>
+                      <span aria-hidden="true">•</span>
+                      <span className="truncate tabular-nums">{source.hostname}</span>
+                    </div>
+                  </div>
+                  <div className="shrink-0 text-[10px] font-medium text-muted-foreground opacity-70 transition-opacity group-hover:opacity-100">
+                    Open
+                  </div>
+                </div>
+
+                {description && description !== siteName && description !== source.hostname && (
+                  <div className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{description}</div>
+                )}
+
+                <div className="mt-2 truncate text-[11px] text-muted-foreground/80" title={source.url}>
+                  {source.url}
+                </div>
+              </div>
+            </div>
+          </a>
+        );
+      },
+      [sourceMetadataMap],
+    );
+
+    useEffect(() => {
+      if (sourceItems.length === 0) {
+        setSourceMetadataMap({});
+        return;
+      }
+
+      let cancelled = false;
+
+      const loadSourceMetadata = async () => {
+        const entries = await Promise.all(
+          sourceItems.map(async (source) => {
+            try {
+              const response = await fetch(`https://metadata.scira.app/?url=${encodeURIComponent(source.url)}`, {
+                cache: 'force-cache',
+              });
+
+              if (!response.ok) {
+                return [source.url, {} satisfies SourceMetadata] as const;
+              }
+
+              const payload = (await response.json()) as SourceMetadata;
+              return [source.url, payload] as const;
+            } catch {
+              return [source.url, {} satisfies SourceMetadata] as const;
+            }
+          }),
+        );
+
+        if (cancelled) return;
+
+        setSourceMetadataMap(Object.fromEntries(entries));
+      };
+
+      void loadSourceMetadata();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [sourceItems]);
+
+    const xaiToolParts = useMemo(() => parts.filter(isXaiMultiAgentToolPart) as XaiMultiAgentToolPart[], [parts]);
+    const firstXaiToolIndex = useMemo(() => parts.findIndex(isXaiMultiAgentToolPart), [parts]);
+    const lastXaiToolIndex = useMemo(() => parts.findLastIndex(isXaiMultiAgentToolPart), [parts]);
+    const isWithinXaiToolRun =
+      firstXaiToolIndex !== -1 &&
+      lastXaiToolIndex !== -1 &&
+      partIndex >= firstXaiToolIndex &&
+      partIndex <= lastXaiToolIndex;
 
     // Handle text parts
     if (part.type === 'text') {
@@ -2217,35 +2642,44 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
         return <div key={`${messageIndex}-${partIndex}-empty`}></div>;
       }
 
-      // Pre-compute metadata presentation values
-      const meta = message?.metadata;
-      const modelConfig = meta?.model ? getModelConfig(meta.model) : null;
-      const modelLabel = modelConfig?.label ?? meta?.model ?? null;
-      const tokenTotal = (meta?.totalTokens ?? (meta?.inputTokens ?? 0) + (meta?.outputTokens ?? 0)) || null;
-      const inputCount = meta?.inputTokens ?? null;
-      const outputCount = meta?.outputTokens ?? null;
-
-      // Detect text sandwiched between step-start and tool-invocation
+      // Detect text sandwiched between step-start and tool/source-invocation
       const prevPart = parts[partIndex - 1];
       const nextPart = parts[partIndex + 1];
-      if (prevPart?.type === 'step-start' && nextPart && isToolPartType(nextPart.type)) {
+      if (
+        prevPart?.type === 'step-start' &&
+        nextPart &&
+        (isToolPartType(nextPart.type) || isSourcePartType(nextPart.type))
+      ) {
         return null;
       }
 
-      // Detect text sandwiched between reasoning and tool-invocation
-      if (prevPart?.type === 'reasoning' && nextPart && isToolPartType(nextPart.type)) {
+      if (
+        part.type === 'text' &&
+        isWithinXaiToolRun &&
+        (!part.text || part.text.trim() === '' || part.text.trim() === '<|im_end|>')
+      ) {
         return null;
       }
 
-      // Skip text parts that are ONLY <|im_end|> after a tool call
-      const hasToolInvocationBefore = parts.slice(0, partIndex).some((p) => isToolPartType(p.type));
+      // Detect text sandwiched between reasoning and tool/source-invocation
+      if (
+        prevPart?.type === 'reasoning' &&
+        nextPart &&
+        (isToolPartType(nextPart.type) || isSourcePartType(nextPart.type))
+      ) {
+        return null;
+      }
+
+      // Skip text parts that are ONLY <|im_end|> after a tool call/source
+      const hasToolInvocationBefore = parts
+        .slice(0, partIndex)
+        .some((p) => isToolPartType(p.type) || isSourcePartType(p.type));
       if (hasToolInvocationBefore && part.text.trim() === '<|im_end|>') {
         return null;
       }
 
       // Determine if this is the last assistant message
       const isLastAssistantMessage = messageIndex === messages.length - 1 && message.role === 'assistant';
-
       // Show action buttons when:
       // 1. Status is ready (no streaming happening), OR
       // 2. This is NOT the last assistant message (previous messages keep their buttons)
@@ -2337,7 +2771,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                           <TryAgainIcon className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent side="bottom" sideOffset={4}>Try Again</TooltipContent>
+                      <TooltipContent side="bottom" sideOffset={4}>
+                        Try Again
+                      </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 )}
@@ -2370,7 +2806,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                           sileo.success({
                             title: 'Copied to clipboard',
                             description: 'You can now paste it anywhere',
-                            icon: <Copy className="h-4 w-4" />
+                            icon: <Copy className="h-4 w-4" />,
                           });
                         }}
                         className={actionIconButtonClassName}
@@ -2378,7 +2814,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                         <CopyIcon className="h-[18px] w-[18px]" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="bottom" sideOffset={4}>Copy</TooltipContent>
+                    <TooltipContent side="bottom" sideOffset={4}>
+                      Copy
+                    </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
 
@@ -2453,7 +2891,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                             )}
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom" sideOffset={4}>Branch Out</TooltipContent>
+                        <TooltipContent side="bottom" sideOffset={4}>
+                          Branch Out
+                        </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   )}
@@ -2465,16 +2905,14 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className={actionIconButtonClassName}
-                            >
+                            <Button variant="ghost" size="icon" className={actionIconButtonClassName}>
                               <IconArrowInbox className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
                         </TooltipTrigger>
-                        <TooltipContent side="bottom" sideOffset={4}>Export</TooltipContent>
+                        <TooltipContent side="bottom" sideOffset={4}>
+                          Export
+                        </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                     <DropdownMenuContent className="min-w-[140px]" align="start" sideOffset={4}>
@@ -2491,7 +2929,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               sileo.error({
                                 title: 'Nothing to export',
                                 description: 'No content found in this message',
-                                icon: <AlertCircle className="h-4 w-4" />
+                                icon: <AlertCircle className="h-4 w-4" />,
                               });
                               return;
                             }
@@ -2526,14 +2964,14 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                             sileo.success({
                               title: 'PDF downloaded',
                               description: 'Your PDF file is ready',
-                              icon: <FilePdf className="h-4 w-4" />
+                              icon: <FilePdf className="h-4 w-4" />,
                             });
                           } catch (e) {
                             console.error('Export PDF error:', e);
                             sileo.error({
                               title: 'Failed to export PDF',
                               description: 'Please try again',
-                              icon: <X className="h-4 w-4" />
+                              icon: <X className="h-4 w-4" />,
                             });
                           }
                         }}
@@ -2554,7 +2992,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               sileo.error({
                                 title: 'Nothing to export',
                                 description: 'No content found in this message',
-                                icon: <AlertCircle className="h-4 w-4" />
+                                icon: <AlertCircle className="h-4 w-4" />,
                               });
                               return;
                             }
@@ -2589,14 +3027,14 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                             sileo.success({
                               title: 'Word document downloaded',
                               description: 'Your Word file is ready',
-                              icon: <FileDoc className="h-4 w-4" />
+                              icon: <FileDoc className="h-4 w-4" />,
                             });
                           } catch (e) {
                             console.error('Export Word error:', e);
                             sileo.error({
                               title: 'Failed to export Word document',
                               description: 'Please try again',
-                              icon: <X className="h-4 w-4" />
+                              icon: <X className="h-4 w-4" />,
                             });
                           }
                         }}
@@ -2617,7 +3055,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                               sileo.error({
                                 title: 'Nothing to export',
                                 description: 'No content found in this message',
-                                icon: <AlertCircle className="h-4 w-4" />
+                                icon: <AlertCircle className="h-4 w-4" />,
                               });
                               return;
                             }
@@ -2664,14 +3102,14 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                             sileo.success({
                               title: 'Markdown downloaded',
                               description: 'Your Markdown file is ready',
-                              icon: <FileMd className="h-4 w-4" />
+                              icon: <FileMd className="h-4 w-4" />,
                             });
                           } catch (e) {
                             console.error('Export Markdown error:', e);
                             sileo.error({
                               title: 'Failed to export Markdown',
                               description: 'Please try again',
-                              icon: <X className="h-4 w-4" />
+                              icon: <X className="h-4 w-4" />,
                             });
                           }
                         }}
@@ -2685,94 +3123,148 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               </div>
 
               {/* Right side - Message metadata */}
-              {meta && (
-                <HoverCard openDelay={0} closeDelay={100}>
-                  <HoverCardTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        actionIconButtonClassName,
-                        'touch-manipulation lg:pointer-events-auto',
-                      )}
-                      onTouchStart={() => { }}
-                    >
-                      <Info className="h-4 w-4" />
-                    </Button>
-                  </HoverCardTrigger>
-                  <HoverCardContent
-                    className="w-72 max-w-[calc(100vw-2rem)]"
-                    side="top"
-                    align="end"
-                    sideOffset={8}
-                    alignOffset={-8}
-                    avoidCollisions={true}
-                    collisionPadding={16}
-                  >
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                {sourceItems.length > 0 &&
+                  (isMobile ? (
+                    <Drawer>
+                      <DrawerTrigger asChild>
+                        <Button variant="ghost" className={cn(sourceDialogTriggerClassName, 'w-auto gap-1.5')}>
+                          <Globe className="h-3.5 w-3.5" />
+                          <span>Sources</span>
+                          <span className="text-[11px] text-muted-foreground tabular-nums">{sourceItems.length}</span>
+                        </Button>
+                      </DrawerTrigger>
+                      <DrawerContent className="max-h-[85vh]">
+                        <DrawerHeader>
+                          <DrawerTitle className="flex items-center gap-2 text-base">
+                            <Globe className="h-4 w-4 text-muted-foreground" />
+                            Sources
+                          </DrawerTitle>
+                          <p className="text-sm text-muted-foreground text-pretty">
+                            References used to generate this response.
+                          </p>
+                        </DrawerHeader>
+                        <div className={cn(sourcePanelBodyClassName, 'px-4')}>
+                          <div className={sourcePanelListClassName}>
+                            {sourceItems.map((source, index) => renderSourceEntry(source, index))}
+                          </div>
+                        </div>
+                      </DrawerContent>
+                    </Drawer>
+                  ) : (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" className={cn(sourceDialogTriggerClassName, 'w-auto gap-1.5')}>
+                          <Globe className="h-3.5 w-3.5" />
+                          <span>Sources</span>
+                          <span className="text-[11px] text-muted-foreground tabular-nums">{sourceItems.length}</span>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-xl">
+                        <DialogHeader>
+                          <DialogTitle className="flex items-center gap-2 text-base">
+                            <Globe className="h-4 w-4 text-muted-foreground" />
+                            Sources
+                          </DialogTitle>
+                          <p className="text-sm text-muted-foreground text-pretty">
+                            References used to generate this response.
+                          </p>
+                        </DialogHeader>
+                        <div className={cn(sourcePanelBodyClassName, 'max-h-[60vh] pr-1')}>
+                          <div className={sourcePanelListClassName}>
+                            {sourceItems.map((source, index) => renderSourceEntry(source, index))}
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  ))}
+
+                {meta && (
+                  <HoverCard openDelay={0} closeDelay={100}>
+                    <HoverCardTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(actionIconButtonClassName, 'touch-manipulation lg:pointer-events-auto')}
+                        onTouchStart={() => {}}
+                      >
                         <Info className="h-4 w-4" />
-                        <h4 className="font-semibold text-sm">Response Info</h4>
-                      </div>
-
-                      {modelLabel && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Model</span>
-                          <div className="flex items-center gap-1 text-xs bg-primary text-primary-foreground rounded-lg px-2 py-1">
-                            <HugeiconsIcon icon={CpuIcon} size={12} />
-                            {modelLabel}
-                          </div>
+                      </Button>
+                    </HoverCardTrigger>
+                    <HoverCardContent
+                      className="w-72 max-w-[calc(100vw-2rem)]"
+                      side="top"
+                      align="end"
+                      sideOffset={8}
+                      alignOffset={-8}
+                      avoidCollisions={true}
+                      collisionPadding={16}
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Info className="h-4 w-4" />
+                          <h4 className="font-semibold text-sm">Response Info</h4>
                         </div>
-                      )}
 
-                      {typeof meta.completionTime === 'number' && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-muted-foreground">Generation Time</span>
-                          <div className="flex items-center gap-1 text-xs">
-                            <Clock className="h-3 w-3" />
-                            {meta.completionTime.toFixed(1)}s
-                          </div>
-                        </div>
-                      )}
-
-                      {(inputCount != null || outputCount != null) && (
-                        <div className="space-y-2">
-                          <span className="text-sm text-muted-foreground">Token Usage</span>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            {inputCount != null && (
-                              <div className="flex items-center justify-between bg-muted rounded-lg px-2 py-1">
-                                <span className="flex items-center gap-1">
-                                  <ArrowLeftIcon weight="regular" className="h-3 w-3" />
-                                  Input
-                                </span>
-                                <span className="font-medium">{inputCount.toLocaleString()}</span>
-                              </div>
-                            )}
-                            {outputCount != null && (
-                              <div className="flex items-center justify-between bg-muted rounded-lg px-2 py-1">
-                                <span className="flex items-center gap-1">
-                                  <ArrowRightIcon weight="regular" className="h-3 w-3" />
-                                  Output
-                                </span>
-                                <span className="font-medium">{outputCount.toLocaleString()}</span>
-                              </div>
-                            )}
-                          </div>
-                          {tokenTotal != null && (
-                            <div className="flex items-center justify-between bg-accent rounded-lg px-2 py-1 text-xs">
-                              <span className="flex items-center gap-1 font-medium">
-                                <SigmaIcon className="h-3 w-3" weight="regular" />
-                                Total
-                              </span>
-                              <span className="font-semibold">{tokenTotal.toLocaleString()}</span>
+                        {modelLabel && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">Model</span>
+                            <div className="flex items-center gap-1 text-xs bg-primary text-primary-foreground rounded-lg px-2 py-1">
+                              <HugeiconsIcon icon={CpuIcon} size={12} />
+                              {modelLabel}
                             </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
-              )}
+                          </div>
+                        )}
+
+                        {typeof meta.completionTime === 'number' && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-muted-foreground">Generation Time</span>
+                            <div className="flex items-center gap-1 text-xs">
+                              <Clock className="h-3 w-3" />
+                              {meta.completionTime.toFixed(1)}s
+                            </div>
+                          </div>
+                        )}
+
+                        {(inputCount != null || outputCount != null) && (
+                          <div className="space-y-2">
+                            <span className="text-sm text-muted-foreground">Token Usage</span>
+                            <div className="grid grid-cols-2 gap-2 text-xs">
+                              {inputCount != null && (
+                                <div className="flex items-center justify-between bg-muted rounded-lg px-2 py-1">
+                                  <span className="flex items-center gap-1">
+                                    <ArrowLeftIcon weight="regular" className="h-3 w-3" />
+                                    Input
+                                  </span>
+                                  <span className="font-medium">{inputCount.toLocaleString()}</span>
+                                </div>
+                              )}
+                              {outputCount != null && (
+                                <div className="flex items-center justify-between bg-muted rounded-lg px-2 py-1">
+                                  <span className="flex items-center gap-1">
+                                    <ArrowRightIcon weight="regular" className="h-3 w-3" />
+                                    Output
+                                  </span>
+                                  <span className="font-medium">{outputCount.toLocaleString()}</span>
+                                </div>
+                              )}
+                            </div>
+                            {tokenTotal != null && (
+                              <div className="flex items-center justify-between bg-accent rounded-lg px-2 py-1 text-xs">
+                                <span className="flex items-center gap-1 font-medium">
+                                  <SigmaIcon className="h-3 w-3" weight="regular" />
+                                  Total
+                                </span>
+                                <span className="font-semibold">{tokenTotal.toLocaleString()}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </HoverCardContent>
+                  </HoverCard>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -2783,9 +3275,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
     if (part.type === 'reasoning') {
       const mcpDynamicToolIndices = parts
         .map((messagePart, index) =>
-          messagePart.type === 'dynamic-tool' && (messagePart as any).toolName?.startsWith('mcp_')
-            ? index
-            : -1,
+          messagePart.type === 'dynamic-tool' && (messagePart as any).toolName?.startsWith('mcp_') ? index : -1,
         )
         .filter((index) => index >= 0);
 
@@ -2811,8 +3301,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             typeof (messagePart as any).text === 'string' &&
             (messagePart as any).text.trim().length > 50,
         );
-        const mcpTimelineEndIndex =
-          finalTextIndex === -1 ? parts.length - 1 : finalTextIndex - 1;
+        const mcpTimelineEndIndex = finalTextIndex === -1 ? parts.length - 1 : finalTextIndex - 1;
 
         if (partIndex >= mcpTimelineStartIndex && partIndex <= mcpTimelineEndIndex) {
           return null;
@@ -2839,8 +3328,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
         nextIndex += 1;
       }
 
-      const mergedState: ReasoningUIPart['state'] =
-        reasoningStates.includes('streaming') ? 'streaming' : reasoningStates.includes('done') ? 'done' : undefined;
+      const mergedState: ReasoningUIPart['state'] = reasoningStates.includes('streaming')
+        ? 'streaming'
+        : reasoningStates.includes('done')
+          ? 'done'
+          : undefined;
 
       // Detect whether this provider streams token-by-token or in whole chunks.
       // BPE tokens are virtually never longer than ~15 chars; if any part exceeds
@@ -2851,7 +3343,6 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       const isChunkBased = mergedTexts.some((t) => t.length > 30);
       const mergedText = mergedTexts.join(isChunkBased ? '\n\n' : '');
 
-
       const mergedPart: ReasoningUIPart = {
         ...(part as ReasoningUIPart),
         text: mergedText,
@@ -2861,16 +3352,16 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       const sectionKey = `${messageIndex}-${partIndex}`;
       const hasParallelToolInvocation = parts.some((p: ChatMessage['parts'][number]) => isToolPartType(p.type));
       const hasFollowingOutput = parts.some(
-        (p: ChatMessage['parts'][number], i: number) =>
-          i > partIndex && (p.type === 'text' || isToolPartType(p.type)),
+        (p: ChatMessage['parts'][number], i: number) => i > partIndex && (p.type === 'text' || isToolPartType(p.type)),
       );
       const parallelTool = hasParallelToolInvocation
         ? (() => {
-          const firstToolPart = parts.find((p: ChatMessage['parts'][number]) => isToolPartType(p.type)) as any;
-          if (!firstToolPart) return null;
-          if (firstToolPart.type === 'dynamic-tool') return formatDynamicToolName('dynamic-tool', firstToolPart.toolName);
-          return firstToolPart.type.split('-')[1] ?? null;
-        })()
+            const firstToolPart = parts.find((p: ChatMessage['parts'][number]) => isToolPartType(p.type)) as any;
+            if (!firstToolPart) return null;
+            if (firstToolPart.type === 'dynamic-tool')
+              return formatDynamicToolName('dynamic-tool', firstToolPart.toolName);
+            return firstToolPart.type.split('-')[1] ?? null;
+          })()
         : null;
 
       // "Done reasoning" is controlled by the reasoning part state (if present),
@@ -2906,9 +3397,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
     if (part.type === 'step-start') {
       const firstStepStartIndex = parts.findIndex((p) => p.type === 'step-start');
       if (partIndex === firstStepStartIndex) {
-        return (
-          <div key={`${messageIndex}-${partIndex}-step-start-logo`} className="p-0 py-1.5" />
-        );
+        return <div key={`${messageIndex}-${partIndex}-step-start-logo`} className="p-0 py-1.5" />;
       }
       return <div key={`${messageIndex}-${partIndex}-step-start`}></div>;
     }
@@ -2918,12 +3407,14 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       return null;
     }
 
+    if (part.type === 'source-url') {
+      return null;
+    }
+
     if (part.type === 'dynamic-tool') {
       const mcpDynamicToolIndices = parts
         .map((messagePart, index) =>
-          messagePart.type === 'dynamic-tool' && (messagePart as any).toolName?.startsWith('mcp_')
-            ? index
-            : -1,
+          messagePart.type === 'dynamic-tool' && (messagePart as any).toolName?.startsWith('mcp_') ? index : -1,
         )
         .filter((index) => index >= 0);
 
@@ -2949,16 +3440,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             typeof (messagePart as any).text === 'string' &&
             (messagePart as any).text.trim().length > 50,
         );
-        const mcpTimelineEndIndex =
-          finalTextIndex === -1 ? parts.length - 1 : finalTextIndex - 1;
+        const mcpTimelineEndIndex = finalTextIndex === -1 ? parts.length - 1 : finalTextIndex - 1;
         const currentPartIsMcpTool = (part as any).toolName?.startsWith('mcp_');
 
         if (!currentPartIsMcpTool) {
-          return (
-            <DynamicToolInvocationCard
-              part={part}
-            />
-          );
+          return <DynamicToolInvocationCard part={part} />;
         }
 
         if (partIndex !== firstMcpToolIndex) {
@@ -3001,12 +3487,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             if (reasoningTexts.length > 0) {
               const isChunkBased = reasoningTexts.some((text) => text.length > 30);
               const mergedText = reasoningTexts.join(isChunkBased ? '\n\n' : '');
-              const mergedState: ReasoningUIPart['state'] =
-                reasoningStates.includes('streaming')
-                  ? 'streaming'
-                  : reasoningStates.includes('done')
-                    ? 'done'
-                    : undefined;
+              const mergedState: ReasoningUIPart['state'] = reasoningStates.includes('streaming')
+                ? 'streaming'
+                : reasoningStates.includes('done')
+                  ? 'done'
+                  : undefined;
 
               entries.push({
                 kind: 'reasoning',
@@ -3037,9 +3522,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
               cursor += 1;
             }
 
-            const isBetweenTools =
-              textStartIndex > firstMcpToolIndex &&
-              textStartIndex < lastMcpToolIndex;
+            const isBetweenTools = textStartIndex > firstMcpToolIndex && textStartIndex < lastMcpToolIndex;
 
             if (isBetweenTools && textChunks.length > 0) {
               entries.push({
@@ -3074,12 +3557,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
         const onlyEntry = entries[0];
         if (onlyEntry?.kind === 'tool') {
-          return (
-            <DynamicToolInvocationCard
-              part={onlyEntry.part}
-              sendMessage={sendMessage}
-            />
-          );
+          return <DynamicToolInvocationCard part={onlyEntry.part} sendMessage={sendMessage} />;
         }
 
         if (onlyEntry?.kind === 'reasoning') {
@@ -3112,11 +3590,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
         .map((messagePart, index) =>
           messagePart.type === 'dynamic-tool'
             ? {
-              kind: 'tool' as const,
-              part: messagePart,
-              originalIndex: index,
-              id: (messagePart as any).toolCallId || `dynamic-tool-${messageIndex}-${index}`,
-            }
+                kind: 'tool' as const,
+                part: messagePart,
+                originalIndex: index,
+                id: (messagePart as any).toolCallId || `dynamic-tool-${messageIndex}-${index}`,
+              }
             : null,
         )
         .filter((entry): entry is { kind: 'tool'; part: any; originalIndex: number; id: string } => Boolean(entry));
@@ -3132,12 +3610,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
         );
       }
 
-      return (
-        <DynamicToolInvocationCard
-          part={part}
-          sendMessage={sendMessage}
-        />
-      );
+      return <DynamicToolInvocationCard part={part} sendMessage={sendMessage} />;
     }
 
     // Handle tool parts with new granular states system
@@ -3604,6 +4077,58 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
 
+          case 'tool-xai_web_search':
+          case 'tool-xai_x_search': {
+            const mergedXaiToolParts = parts.filter(isXaiMultiAgentToolPart) as XaiMultiAgentToolPart[];
+            const mergedFirstXaiToolIndex = parts.findIndex(isXaiMultiAgentToolPart);
+
+            if (partIndex !== mergedFirstXaiToolIndex) {
+              return null;
+            }
+
+            const labels = mergedXaiToolParts.map((toolPart: XaiMultiAgentToolPart) =>
+              getXaiMultiAgentToolLabel(toolPart.type),
+            );
+            const hasError = mergedXaiToolParts.some(
+              (toolPart: XaiMultiAgentToolPart) => toolPart.state === 'output-error',
+            );
+            const errorText = mergedXaiToolParts.find(
+              (toolPart: XaiMultiAgentToolPart) => toolPart.state === 'output-error',
+            )?.errorText;
+            const counts = labels.reduce<Record<string, number>>((acc: Record<string, number>, label: string) => {
+              acc[label] = (acc[label] ?? 0) + 1;
+              return acc;
+            }, {});
+            const summary = Object.entries(counts)
+              .map(([label, count]) => {
+                const pluralLabel = label === 'Web Search' ? 'Web Searches' : label;
+                return count > 1 ? `${count} ${pluralLabel}` : label;
+              })
+              .join(' · ');
+            const activityLabel = hasError ? summary : `Running ${summary}`;
+
+            return (
+              <div key={`${messageIndex}-${partIndex}-tool`} className="my-1.5">
+                <div
+                  className={cn(
+                    'inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] bg-background/70',
+                    hasError
+                      ? 'border-red-500/20 text-red-600 dark:text-red-300'
+                      : 'border-border/60 text-muted-foreground',
+                  )}
+                >
+                  <Globe className="h-3 w-3 shrink-0" />
+                  <span className="font-medium">{activityLabel}</span>
+                  {hasError && errorText ? (
+                    <span className="max-w-[200px] truncate text-[11px]" title={errorText}>
+                      {errorText}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            );
+          }
+
           case 'tool-extreme_search':
             switch (part.state) {
               case 'input-streaming':
@@ -3880,7 +4405,10 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     return { url: citation, title: citation, description: '' };
                   }
                   const url = typeof citation.url === 'string' ? citation.url : '';
-                  const title = typeof citation.title === 'string' && citation.title.length > 0 ? citation.title : url || 'Citation';
+                  const title =
+                    typeof citation.title === 'string' && citation.title.length > 0
+                      ? citation.title
+                      : url || 'Citation';
                   return { ...citation, url, title };
                 };
 
@@ -3890,17 +4418,18 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     result={
                       xSearchOutput
                         ? {
-                          ...xSearchOutput,
-                          searches:
-                            xSearchOutput.searches?.map((search: any) => ({
-                              ...search,
-                              query: search.query || '',
-                              sources: search.sources?.filter((s: any): s is NonNullable<typeof s> => s !== null) || [],
-                              citations: (search.citations ?? []).map(normalizeCitation).filter(Boolean),
-                            })) || [],
-                          dateRange: xSearchOutput.dateRange || '',
-                          handles: xSearchOutput.handles || [],
-                        }
+                            ...xSearchOutput,
+                            searches:
+                              xSearchOutput.searches?.map((search: any) => ({
+                                ...search,
+                                query: search.query || '',
+                                sources:
+                                  search.sources?.filter((s: any): s is NonNullable<typeof s> => s !== null) || [],
+                                citations: (search.citations ?? []).map(normalizeCitation).filter(Boolean),
+                              })) || [],
+                            dateRange: xSearchOutput.dateRange || '',
+                            handles: xSearchOutput.handles || [],
+                          }
                         : null
                     }
                     args={xSearchInput}
@@ -3938,23 +4467,23 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
 
                 const normalizedResults = Array.isArray(part.output?.results)
                   ? part.output.results.map((video: any) => {
-                    if (!video) return video;
-                    if (video.stats) return video;
-                    const views = parseLegacyCount(video.views);
-                    const likes = parseLegacyCount(video.likes);
+                      if (!video) return video;
+                      if (video.stats) return video;
+                      const views = parseLegacyCount(video.views);
+                      const likes = parseLegacyCount(video.likes);
 
-                    if (views == null && likes == null) {
-                      return video;
-                    }
+                      if (views == null && likes == null) {
+                        return video;
+                      }
 
-                    return {
-                      ...video,
-                      stats: {
-                        ...(views != null ? { views } : {}),
-                        ...(likes != null ? { likes } : {}),
-                      },
-                    };
-                  })
+                      return {
+                        ...video,
+                        stats: {
+                          ...(views != null ? { views } : {}),
+                          ...(likes != null ? { likes } : {}),
+                        },
+                      };
+                    })
                   : [];
 
                 return (
@@ -3977,17 +4506,21 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 return (
                   <SpotifySearchResults
                     key={`${messageIndex}-${partIndex}-tool`}
-                    result={{ success: true, query: part.input?.query || '', searchTypes: ['track'], tracks: [], artists: [], albums: [], playlists: [], totals: { tracks: 0, artists: 0, albums: 0, playlists: 0 } }}
+                    result={{
+                      success: true,
+                      query: part.input?.query || '',
+                      searchTypes: ['track'],
+                      tracks: [],
+                      artists: [],
+                      albums: [],
+                      playlists: [],
+                      totals: { tracks: 0, artists: 0, albums: 0, playlists: 0 },
+                    }}
                     isLoading={true}
                   />
                 );
               case 'output-available':
-                return (
-                  <SpotifySearchResults
-                    key={`${messageIndex}-${partIndex}-tool`}
-                    result={part.output}
-                  />
-                );
+                return <SpotifySearchResults key={`${messageIndex}-${partIndex}-tool`} result={part.output} />;
             }
             break;
 
@@ -4261,7 +4794,11 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 return (
                   <CurrencyConverter
                     key={`${messageIndex}-${partIndex}-tool`}
-                    toolInvocation={{ toolName: 'currency_converter', input: part.input || {}, result: part.output || null }}
+                    toolInvocation={{
+                      toolName: 'currency_converter',
+                      input: part.input || {},
+                      result: part.output || null,
+                    }}
                     result={part.output}
                   />
                 );
@@ -4312,7 +4849,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                     {/* Header */}
                     <div className="px-4 py-2.5 border-b border-border/40 flex items-center gap-2">
                       <Globe className="h-3.5 w-3.5 text-muted-foreground/40 animate-pulse" />
-                      <span className="font-pixel text-xs text-muted-foreground/80 uppercase tracking-wider">Retrieving</span>
+                      <span className="font-pixel text-xs text-muted-foreground/80 uppercase tracking-wider">
+                        Retrieving
+                      </span>
                       <Spinner className="size-3 text-muted-foreground/40 ml-auto" />
                     </div>
                     <div className="p-4">
@@ -4323,12 +4862,24 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                         <div className="flex-1 min-w-0 space-y-2.5">
                           <div className="h-4 w-3/4 bg-muted/30 animate-pulse rounded" />
                           <div className="flex gap-2">
-                            <div className="h-3 w-20 bg-muted/20 animate-pulse rounded" style={{ animationDelay: '50ms' }} />
-                            <div className="h-3 w-28 bg-muted/20 animate-pulse rounded" style={{ animationDelay: '100ms' }} />
+                            <div
+                              className="h-3 w-20 bg-muted/20 animate-pulse rounded"
+                              style={{ animationDelay: '50ms' }}
+                            />
+                            <div
+                              className="h-3 w-28 bg-muted/20 animate-pulse rounded"
+                              style={{ animationDelay: '100ms' }}
+                            />
                           </div>
                           <div className="space-y-1">
-                            <div className="h-2.5 w-full bg-muted/20 animate-pulse rounded" style={{ animationDelay: '150ms' }} />
-                            <div className="h-2.5 w-4/5 bg-muted/15 animate-pulse rounded" style={{ animationDelay: '200ms' }} />
+                            <div
+                              className="h-2.5 w-full bg-muted/20 animate-pulse rounded"
+                              style={{ animationDelay: '150ms' }}
+                            />
+                            <div
+                              className="h-2.5 w-4/5 bg-muted/15 animate-pulse rounded"
+                              style={{ animationDelay: '200ms' }}
+                            />
                           </div>
                         </div>
                       </div>
@@ -4351,7 +4902,9 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                           <div className="text-red-700 dark:text-red-300 text-sm font-medium">
                             Error retrieving content
                           </div>
-                          <div className="text-red-600/80 dark:text-red-400/80 text-xs mt-1">{String(part.output.error)}</div>
+                          <div className="text-red-600/80 dark:text-red-400/80 text-xs mt-1">
+                            {String(part.output.error)}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -4482,9 +5035,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
             }
             break;
           case 'tool-box_exec': {
-            const buildAnnotations = (annotations?.filter(
-              (a) => a.type === 'data-build_search',
-            ) as DataBuildSearchPart[]) || [];
+            const buildAnnotations =
+              (annotations?.filter((a) => a.type === 'data-build_search') as DataBuildSearchPart[]) || [];
             const execAnns = buildAnnotations.filter((a) => a.data.kind === 'exec');
             const latestAnn = execAnns[execAnns.length - 1]?.data;
             return (
@@ -4499,9 +5051,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
           }
 
           case 'tool-box_write': {
-            const buildAnnotations = (annotations?.filter(
-              (a) => a.type === 'data-build_search',
-            ) as DataBuildSearchPart[]) || [];
+            const buildAnnotations =
+              (annotations?.filter((a) => a.type === 'data-build_search') as DataBuildSearchPart[]) || [];
             const writeAnns = buildAnnotations.filter((a) => a.data.kind === 'write');
             const latestAnn = writeAnns[writeAnns.length - 1]?.data;
             return (
@@ -4516,9 +5067,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
           }
 
           case 'tool-box_read': {
-            const buildAnnotations = (annotations?.filter(
-              (a) => a.type === 'data-build_search',
-            ) as DataBuildSearchPart[]) || [];
+            const buildAnnotations =
+              (annotations?.filter((a) => a.type === 'data-build_search') as DataBuildSearchPart[]) || [];
             const readAnns = buildAnnotations.filter((a) => a.data.kind === 'read');
             const latestAnn = readAnns[readAnns.length - 1]?.data;
             return (
@@ -4533,9 +5083,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
           }
 
           case 'tool-box_list_files': {
-            const buildAnnotations = (annotations?.filter(
-              (a) => a.type === 'data-build_search',
-            ) as DataBuildSearchPart[]) || [];
+            const buildAnnotations =
+              (annotations?.filter((a) => a.type === 'data-build_search') as DataBuildSearchPart[]) || [];
             const listAnns = buildAnnotations.filter((a) => a.data.kind === 'list');
             const latestAnn = listAnns[listAnns.length - 1]?.data;
             return (
@@ -4550,9 +5099,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
           }
 
           case 'tool-box_download': {
-            const buildAnnotations = (annotations?.filter(
-              (a) => a.type === 'data-build_search',
-            ) as DataBuildSearchPart[]) || [];
+            const buildAnnotations =
+              (annotations?.filter((a) => a.type === 'data-build_search') as DataBuildSearchPart[]) || [];
             const dlAnns = buildAnnotations.filter((a) => a.data.kind === 'download');
             const latestAnn = dlAnns[dlAnns.length - 1]?.data;
             return (
@@ -4567,9 +5115,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
           }
 
           case 'tool-box_agent': {
-            const buildAnnotations = (annotations?.filter(
-              (a) => a.type === 'data-build_search',
-            ) as DataBuildSearchPart[]) || [];
+            const buildAnnotations =
+              (annotations?.filter((a) => a.type === 'data-build_search') as DataBuildSearchPart[]) || [];
             const agentAnns = buildAnnotations.filter((a) => a.data.kind === 'agent');
             return (
               <BoxAgentResult
@@ -4583,9 +5130,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
           }
 
           case 'tool-box_code': {
-            const buildAnnotations = (annotations?.filter(
-              (a) => a.type === 'data-build_search',
-            ) as DataBuildSearchPart[]) || [];
+            const buildAnnotations =
+              (annotations?.filter((a) => a.type === 'data-build_search') as DataBuildSearchPart[]) || [];
             const codeAnns = buildAnnotations.filter((a) => a.data.kind === 'code');
             const latestAnn = codeAnns[codeAnns.length - 1]?.data;
             return (
@@ -4611,12 +5157,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
           }
 
           default:
-            return (
-              <DynamicToolInvocationCard
-                part={part}
-                compact={true}
-              />
-            );
+            return <DynamicToolInvocationCard part={part} compact={true} />;
         }
       } else {
         // Legacy tool invocation without state - show as loading or fallback
