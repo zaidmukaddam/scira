@@ -18,8 +18,23 @@ export async function createConnectorAction(provider: ConnectorProvider) {
     const authLink = await createConnection(provider, user.id);
     return { success: true, authLink };
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
     console.error('Error creating connector:', error);
-    return { success: false, error: 'Failed to create connector' };
+    return { success: false, error: message || 'Failed to create connector' };
+  }
+}
+
+export async function autoSyncConnectorAction(provider: ConnectorProvider) {
+  try {
+    const user = await getComprehensiveUserData();
+    if (!user) return { success: false, error: 'Authentication required' };
+
+    const result = await manualSync(provider, user.id);
+    return result ? { success: true } : { success: false, error: 'Failed to start sync' };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error('Error auto-syncing connector:', error);
+    return { success: false, error: message || 'Failed to start sync' };
   }
 }
 

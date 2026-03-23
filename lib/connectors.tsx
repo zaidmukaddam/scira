@@ -99,6 +99,10 @@ export const CONNECTOR_CONFIGS: Record<ConnectorProvider, ConnectorConfig> = {
 };
 
 function getBaseUrl() {
+  // Allow explicit override via env var (required for preview/staging deployments)
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '');
+  }
   if (process.env.NODE_ENV === 'development') {
     return process.env.NGROK_URL || 'http://localhost:3000';
   }
@@ -242,7 +246,7 @@ export async function manualSync(provider: ConnectorProvider, userId: string) {
     console.log(`🏷️ Syncing with container tags: [${userId}, ${config.syncTag}]`);
 
     const result = await client.connections.import(provider, {
-      containerTags: [userId],
+      containerTags: [userId, config.syncTag],
     });
 
     console.log(`✅ Manual sync initiated successfully for ${config.name}`);

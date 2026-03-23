@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CONNECTOR_CONFIGS, CONNECTOR_ICONS, type ConnectorProvider } from '@/lib/connectors';
 import { getCurrentUser } from '@/app/actions';
+import { autoSyncConnectorAction } from '@/lib/server-actions/connectors';
 
 export default function ConnectorCallbackPage() {
   const router = useRouter();
@@ -26,7 +27,6 @@ export default function ConnectorCallbackPage() {
           return;
         }
 
-        // Get current user to verify authentication
         const user = await getCurrentUser();
         if (!user) {
           setStatus('error');
@@ -36,14 +36,21 @@ export default function ConnectorCallbackPage() {
 
         setMessage(`Connecting to ${providerConfig.name}...`);
 
-        // Check if connection was successful by querying the connection status
-        // The OAuth flow should have completed by now
+        // Give Supermemory a moment to finalise the OAuth token exchange
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        setStatus('success');
-        setMessage(`${providerConfig.name} connected successfully!`);
+        // Automatically start syncing — no manual click needed
+        setMessage(`Syncing ${providerConfig.name} documents...`);
+        try {
+          await autoSyncConnectorAction(provider);
+        } catch {
+          // Sync failure is non-fatal; connection itself succeeded
+          console.warn('[Callback] Auto-sync failed, user can retry manually');
+        }
 
-        // Redirect to settings connectors tab after a short delay
+        setStatus('success');
+        setMessage(`${providerConfig.name} connected and sync started!`);
+
         setTimeout(() => {
           router.push('/?tab=connectors#settings');
         }, 2000);
