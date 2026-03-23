@@ -543,10 +543,11 @@ const ChatInterface = memo(
       onFinish: async ({ message }) => {
         console.log('onFinish<Client>', message.parts);
 
-        // If this is a new chat started from the home page, navigate to the permanent chat URL.
-        // We do this AFTER streaming completes so that both the user message and assistant
-        // response are already saved in the DB — the new page will load with full history.
-        if (!initialChatId && typeof window !== 'undefined' && window.location.pathname === '/') {
+        // If this is a new chat, do the proper Next.js navigation to /search/[chatId].
+        // The URL was already updated via replaceState when the first message was sent,
+        // but we still need router.replace so Next.js loads server components and
+        // initialMessages from DB (for future remounts, resumable-stream, etc.).
+        if (!initialChatId) {
           const navigateToChat = () => {
             router.replace(`/search/${chatId}`);
             // Still invalidate queries so the sidebar refreshes on the new page
@@ -701,6 +702,38 @@ const ChatInterface = memo(
         console.log('[status]:', status);
       }
     }, [status]);
+
+    // As soon as the first message appears for a new chat, silently update the URL
+    // to /search/[chatId] via replaceState (no React remount, no stream interruption).
+    // This means if the browser discards the tab or the user closes the window, a
+    // reload will come back to the correct URL — not the blank home page.
+    useEffect(() => {
+      if (
+        !initialChatId &&
+        messages.length > 0 &&
+        typeof window !== 'undefined' &&
+        window.location.pathname === '/'
+      ) {
+        window.history.replaceState(null, '', `/search/${chatId}`);
+      }
+    }, [initialChatId, messages.length, chatId]);
+
+    // When the user returns to the tab, try to reconnect an interrupted stream.
+    // The browser suspends SSE connections in backgrounded tabs; on resume the
+    // hook is stuck in 'streaming'/'submitted' but receiving no data.
+    // Calling resumeStream() re-establishes the connection so the response
+    // continues (or replays the finished response from the resumable-stream store).
+    useEffect(() => {
+      const handleVisibilityChange = () => {
+        if (document.hidden) return;
+        if (status === 'streaming' || status === 'submitted') {
+          console.log('[visibility] Tab restored with stuck status:', status, '— attempting resume');
+          resumeStream();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [status, resumeStream]);
 
     // Watchdog: if status stays 'submitted' or 'streaming' for more than 90 seconds
     // without transitioning to 'ready' (e.g. silent TCP disconnect, Vercel timeout),
