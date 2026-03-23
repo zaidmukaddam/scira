@@ -44,7 +44,8 @@ const nextConfig: NextConfig = {
     },
   },
   // Ensure MathJax packages are treated as externals for server bundling
-  serverExternalPackages: ['@aws-sdk/client-s3', 'prettier'],
+  // pdf-parse ships bundled legacy pdf.js that uses node-ensure — must not be bundled by Turbopack
+  serverExternalPackages: ['@aws-sdk/client-s3', 'prettier', 'pdf-parse'],
   transpilePackages: [
     'geist',
     '@daytonaio/sdk',

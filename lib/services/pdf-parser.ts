@@ -1,5 +1,6 @@
-// PDF parser wrapper for pdf-parse v2.x (class-based PDFParse API)
-// v2 exports PDFParse class — not a callable function like v1 did.
+// Safe wrapper for pdf-parse v1.x to avoid the test file loading issue.
+// This works around a bug where pdf-parse@1.x tries to load a test PDF on import.
+// Uses require() + fs-cache patching so it runs correctly in Next.js server context.
 
 export interface PDFParseResult {
   numpages: number;
@@ -12,35 +13,44 @@ export interface PDFParseResult {
 
 export async function parsePDF(buffer: Buffer): Promise<PDFParseResult | null> {
   try {
-    // pdf-parse v2 exports a named PDFParse class, not a default function
-    const pdfParseMod = await import('pdf-parse');
-    // Handle both ESM default-wrapping and direct named export
-    const PDFParse: any =
-      (pdfParseMod as any).PDFParse ??
-      (pdfParseMod as any).default?.PDFParse ??
-      (pdfParseMod as any).default;
-
-    if (typeof PDFParse !== 'function') {
-      throw new Error(
-        `[PDFParser] PDFParse is not a constructor — got ${typeof PDFParse}. Check pdf-parse version/API.`,
-      );
-    }
-
-    const parser = new PDFParse({ data: buffer });
-
-    const [textResult, infoResult] = await Promise.all([
-      parser.getText(),
-      parser.getInfo().catch(() => null),
-    ]);
-
-    return {
-      numpages: textResult.total,
-      numrender: textResult.total,
-      info: infoResult?.info ?? {},
-      metadata: infoResult?.metadata ?? null,
-      text: textResult.text ?? '',
-      version: '2.x',
+    // Create a minimal mock fs module to prevent the test file loading
+    const mockFs = {
+      readFileSync: (path: string) => {
+        // If it's trying to read the test file, return empty buffer
+        if (path.includes('test/data')) {
+          return Buffer.alloc(0);
+        }
+        // Otherwise throw to maintain normal behavior
+        throw new Error(`Mock fs: file not found: ${path}`);
+      },
     };
+
+    // Temporarily override require cache for fs
+    const originalFs = require.cache[require.resolve('fs')];
+    require.cache[require.resolve('fs')] = {
+      id: require.resolve('fs'),
+      filename: require.resolve('fs'),
+      loaded: true,
+      exports: { ...require('fs'), ...mockFs },
+    } as any;
+
+    try {
+      // Clear the module cache for pdf-parse so it picks up the patched fs
+      delete require.cache[require.resolve('pdf-parse')];
+
+      // pdf-parse v1.x exports a function directly
+      const pdfParse = require('pdf-parse');
+
+      // Parse the PDF
+      const result = await pdfParse(buffer);
+
+      return result;
+    } finally {
+      // Restore original fs
+      if (originalFs) {
+        require.cache[require.resolve('fs')] = originalFs;
+      }
+    }
   } catch (error) {
     console.error('[PDFParser] Error parsing PDF:', error);
     return null;
