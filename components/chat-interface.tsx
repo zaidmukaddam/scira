@@ -19,6 +19,7 @@ import { v7 as uuidv7 } from 'uuid';
 // Internal app imports
 import { suggestQuestions, updateChatVisibility, getChatMeta, hasAcceptedTerms/*, getHomeSuggestions*/ } from '@/app/actions';
 import { ExamplePrompts } from '@/components/chat-interface-components';
+import { ExampleCategories } from '@/components/example-categories';
 
 // Component imports
 import { ChatDialogs } from '@/components/chat-dialogs';
@@ -1281,54 +1282,53 @@ const ChatInterface = memo(
             >
               <div className={`w-full max-w-[95%] sm:max-w-2xl space-y-6 p-0 mx-auto transition-all duration-300`}>
                 {status === 'ready' && messages.length === 0 && (
-                  <div className="text-center m-0 mb-2">
-                    {/* Mobile sidebar trigger for main page */}
-                    <div className="md:hidden absolute top-4 left-4 z-10">
+                  <div className="text-center m-0 mb-4 relative">
+                    {/* Mobile sidebar trigger */}
+                    <div className="md:hidden absolute top-0 left-0 z-10">
                       <SidebarTrigger />
                     </div>
-                    {/* Mobile New Chat button for initial state */}
-                    <div className="md:hidden absolute top-4 right-4 z-10">
+                    {/* Mobile New Chat button */}
+                    <div className="md:hidden absolute top-0 right-0 z-10">
                       <Link href="/new">
                         <Button
                           type="button"
                           variant="secondary"
                           size="sm"
-                          className="rounded-lg bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto"
+                          className="rounded-lg bg-muted hover:bg-primary/10 hover:border-primary/30 border border-border group transition-all duration-150 pointer-events-auto"
                         >
-                          <PlusIcon size={16} className="group-hover:rotate-90 transition-all" />
-                          <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">
-                            New
-                          </span>
+                          <PlusIcon size={16} className="group-hover:rotate-90 transition-transform duration-200 group-hover:text-primary" />
                         </Button>
                       </Link>
                     </div>
-                    <div className="inline-flex items-center gap-3">
-                      <h1 className="text-4xl sm:text-5xl mb-0! text-foreground dark:text-foreground font-be-vietnam-pro! font-light tracking-tighter">
+
+                    {/* Ambient glow */}
+                    <div aria-hidden className="pointer-events-none absolute inset-x-0 -top-20 -z-10 flex justify-center">
+                      <div className="h-56 w-[480px] rounded-full bg-primary/7 blur-3xl dark:bg-primary/10" />
+                    </div>
+
+                    {/* Badge pill */}
+                    <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/6 px-3.5 py-1 text-[11px] font-medium text-primary mb-6 tracking-wide">
+                      <span className="size-1.5 rounded-full bg-primary animate-pulse" />
+                      Sovereign Australian AI
+                      <span className="text-primary/40">·</span>
+                      Powered by MAGPiE
+                    </div>
+
+                    {/* Title */}
+                    <div className="flex items-center justify-center gap-3 mb-4">
+                      <h1 className="text-5xl sm:text-[3.75rem] font-extralight tracking-[-0.04em] text-foreground font-be-vietnam-pro! neon-glow leading-none">
                         SCX.ai
                       </h1>
                       {isUserPro && (
-                        <h1 className="text-2xl font-baumans! leading-4 inline-block px-3! pt-1! pb-2.5! rounded-xl shadow-sm m-0! mt-2! bg-linear-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground ring-1 ring-ring/35 ring-offset-1 ring-offset-background dark:bg-linear-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
+                        <span className="text-[10px] font-semibold tracking-widest uppercase px-2 py-0.5 rounded border border-primary/30 bg-primary/10 text-primary self-end mb-2 dark:neon-glow-box">
                           pro
-                        </h1>
+                        </span>
                       )}
                     </div>
+
                   </div>
                 )}
 
-                {/* Example prompts — temporarily disabled
-                {status === 'ready' &&
-                  messages.length === 0 &&
-                  ((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&
-                  !isLimitBlocked && (
-                    <ExamplePrompts
-                      selectedModel={selectedModel}
-                      isProUser={isUserPro}
-                      onPromptSelect={(text) => handleExampleSelect(text)}
-                      suggestions={null}
-                      suggestionsLoading={false}
-                    />
-                  )}
-                */}
 
                 {/* Show initial limit exceeded message */}
                 {status === 'ready' && messages.length === 0 && isLimitBlocked && (
@@ -1478,6 +1478,7 @@ const ChatInterface = memo(
 
                   </div>
                 )}
+
 
               {/* Form backdrop overlay - hides content below form when in submitted mode */}
               {((user && isOwner) || !initialChatId || (!user && chatState.selectedVisibilityType === 'private')) &&

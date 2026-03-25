@@ -76,16 +76,17 @@ const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon,
   return (
     <button
       className={`
-        relative w-full h-12 text-sm
+        relative w-full h-12 text-sm cursor-pointer
         bg-background
-        border border-border
-        hover:bg-muted/50 hover:border-foreground/20
+        border transition-all duration-150
         active:scale-[0.99]
-        transition-all duration-200
         disabled:opacity-50 disabled:cursor-not-allowed
         flex items-center justify-center gap-3
         group
-        ${isLastUsed ? 'ring-1 ring-foreground/10' : ''}
+        ${isLastUsed
+          ? 'border-primary/40 hover:border-primary/70 hover:bg-primary/5 ring-1 ring-primary/20'
+          : 'border-border hover:border-foreground/20 hover:bg-muted/50'
+        }
       `}
       disabled={loading}
       onClick={async () => {
@@ -102,14 +103,14 @@ const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon,
         );
       }}
     >
-      <div className="w-5 h-5 flex items-center justify-center">
+      <div className="w-5 h-5 flex items-center justify-center shrink-0">
         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : icon}
       </div>
-      <span className="font-medium text-foreground/80 group-hover:text-foreground transition-colors">
+      <span className={`font-medium transition-colors duration-150 ${isLastUsed ? 'text-foreground' : 'text-foreground/80 group-hover:text-foreground'}`}>
         {title}
       </span>
       {isLastUsed && (
-        <span className="absolute right-3 text-[10px] uppercase tracking-wider text-muted-foreground">
+        <span className="absolute right-3 text-[10px] uppercase tracking-wider font-medium text-primary">
           Last used
         </span>
       )}
@@ -129,7 +130,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
     <div className="w-full max-w-sm mx-auto">
       {/* Header */}
       <div className="text-center mb-10">
-        <h1 className="text-3xl font-light tracking-tight text-foreground font-be-vietnam-pro mb-3">
+        <h1 className="text-3xl font-light tracking-tight text-foreground font-be-vietnam-pro mb-3 neon-glow">
           {title}
         </h1>
         <p className="text-sm text-muted-foreground leading-relaxed">
@@ -138,7 +139,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
       </div>
 
       {/* Auth Buttons */}
-      <div className="space-y-3">
+      <div className="space-y-2.5">
         <SignInButton
           title="Google"
           provider="google"
@@ -184,7 +185,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
         </span>
         <Link
           href={mode === 'sign-in' ? '/sign-up' : '/sign-in'}
-          className="text-sm font-medium text-foreground hover:underline underline-offset-4 transition-colors"
+          className="text-sm font-medium text-primary hover:text-primary/80 underline-offset-4 hover:underline transition-colors duration-150"
         >
           {mode === 'sign-in' ? 'Sign up' : 'Sign in'}
         </Link>

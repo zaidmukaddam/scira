@@ -3673,11 +3673,11 @@ const FormComponent: React.FC<FormComponentProps> = ({
 
           {/* Form container */}
           <div className="relative">
-            {/* Shadow-like background blur effect */}
-            <div className="absolute -inset-1 rounded-2xl bg-primary/3 dark:bg-primary/3 blur-sm! pointer-events-none z-9999 shadow" />
+            {/* Ambient glow behind the form — skill: OLED neon glow */}
+            <div className="absolute -inset-1 rounded-2xl bg-primary/5 dark:bg-primary/8 blur-md pointer-events-none z-9999" />
             <div
               className={cn(
-                'relative rounded-xl bg-muted! border border-ring/10 focus-within:border-ring/5 transition-all duration-200',
+                'relative rounded-xl bg-muted! border border-border focus-within:border-primary/40 focus-within:shadow-[0_0_0_1px_color-mix(in_oklab,var(--primary)_20%,transparent)] transition-all duration-200',
                 (isEnhancing || isTypewriting) && 'bg-muted!',
               )}
             >

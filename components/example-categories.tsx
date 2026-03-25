@@ -151,17 +151,18 @@ export const ExampleCategories = memo(({ onSelectExample, className }: ExampleCa
             key={category.id}
             onClick={() => handleCategoryClick(category.id)}
             className={cn(
-              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium',
+              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium cursor-pointer',
               'border border-border bg-background text-muted-foreground',
-              'hover:bg-secondary hover:text-secondary-foreground hover:border-secondary',
-              'transition-colors duration-150',
+              'hover:bg-primary/5 hover:text-foreground hover:border-primary/30',
+              'active:scale-[0.97]',
+              'transition-all duration-150',
             )}
             whileTap={{ scale: 0.97 }}
           >
-            <HugeiconsIcon icon={category.icon} size={14} strokeWidth={1.5} />
+            <HugeiconsIcon icon={category.icon} size={14} strokeWidth={1.5} className="shrink-0" />
             <span>{category.name}</span>
             {category.badge && (
-              <span className="px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide rounded bg-secondary text-secondary-foreground">
+              <span className="px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider rounded-sm bg-primary/10 text-primary border border-primary/20">
                 {category.badge}
               </span>
             )}
@@ -175,22 +176,22 @@ export const ExampleCategories = memo(({ onSelectExample, className }: ExampleCa
           <motion.div
             ref={cardRef}
             key={activeCategory.id}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: 0.15 }}
-            className="absolute inset-x-0 top-0 z-10 border rounded-md bg-card"
+            initial={{ opacity: 0, y: -4, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            transition={{ duration: 0.12, ease: 'easeOut' }}
+            className="absolute inset-x-0 top-0 z-10 border border-primary/20 rounded-md bg-card shadow-md"
           >
             {/* Header - clickable to dismiss */}
             <button
               onClick={handleDismiss}
-              className="flex items-center justify-between w-full px-3 sm:px-4 py-2.5 sm:py-3"
+              className="flex items-center justify-between w-full px-3 sm:px-4 py-2.5 sm:py-3 cursor-pointer hover:bg-muted/30 transition-colors duration-150 rounded-t-md"
             >
               <div className="flex items-center gap-2">
-                <HugeiconsIcon icon={activeCategory.icon} size={16} className="sm:size-[18px]" strokeWidth={1.5} />
+                <HugeiconsIcon icon={activeCategory.icon} size={16} className="sm:size-[18px] text-primary" strokeWidth={1.5} />
                 <span className="text-sm sm:text-base font-medium">{activeCategory.name}</span>
                 {activeCategory.badge && (
-                  <span className="px-1.5 py-0.5 text-[9px] sm:text-[10px] font-medium uppercase tracking-wide rounded bg-secondary text-secondary-foreground">
+                  <span className="px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider rounded-sm bg-primary/10 text-primary border border-primary/20">
                     {activeCategory.badge}
                   </span>
                 )}
@@ -198,8 +199,8 @@ export const ExampleCategories = memo(({ onSelectExample, className }: ExampleCa
               <div
                 className={cn(
                   'flex items-center justify-center h-6 w-6 sm:h-7 sm:w-7 rounded-md',
-                  'text-muted-foreground',
-                  'bg-muted/50',
+                  'text-muted-foreground hover:text-foreground',
+                  'bg-muted/50 hover:bg-muted transition-colors duration-100',
                 )}
               >
                 <HugeiconsIcon icon={Cancel01Icon} size={12} className="sm:size-[14px]" strokeWidth={2} />
@@ -213,16 +214,17 @@ export const ExampleCategories = memo(({ onSelectExample, className }: ExampleCa
                   key={example.text}
                   onClick={() => handleExampleSelect(example.text, example.group)}
                   className={cn(
-                    'group flex items-center justify-between w-full px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-sm',
-                    'text-left text-xs sm:text-sm transition-colors',
-                    'text-muted-foreground hover:text-foreground hover:bg-accent',
+                    'group flex items-center justify-between w-full px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-sm cursor-pointer',
+                    'text-left text-xs sm:text-sm',
+                    'text-muted-foreground hover:text-foreground hover:bg-primary/5',
+                    'transition-all duration-100',
                   )}
                 >
                   <span className="line-clamp-1">{example.text}</span>
                   <HugeiconsIcon
                     icon={ArrowRight01Icon}
                     size={12}
-                    className="sm:size-[14px] shrink-0 ml-2 opacity-0 -translate-x-1 transition-all group-hover:opacity-50 group-hover:translate-x-0"
+                    className="sm:size-[14px] shrink-0 ml-2 opacity-0 -translate-x-1 transition-all duration-100 group-hover:opacity-60 group-hover:translate-x-0 text-primary"
                     strokeWidth={2}
                   />
                 </button>

@@ -82,10 +82,10 @@ const Navbar = memo(
                 type="button"
                 variant="secondary"
                 size="sm"
-                className="rounded-lg bg-accent hover:bg-accent/80 group transition-all hover:scale-105 pointer-events-auto"
+                className="rounded-lg bg-muted hover:bg-primary/10 hover:border-primary/30 border border-border group transition-all duration-150 hover:scale-[1.03] active:scale-[0.98] pointer-events-auto"
               >
-                <PlusIcon size={16} className="group-hover:rotate-90 transition-all" />
-                <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-300">New</span>
+                <PlusIcon size={16} className="group-hover:rotate-90 transition-transform duration-200 group-hover:text-primary" />
+                <span className="text-sm ml-1.5 group-hover:block hidden animate-in fade-in duration-200">New</span>
               </Button>
             </Link>
 
@@ -110,15 +110,15 @@ const Navbar = memo(
                 isDialogOpen ? 'pointer-events-auto' : '',
               )}
             >
-              <div className="flex items-center bg-muted/50 rounded-lg border border-border">
-                <span className="px-2 py-1.5 text-sm font-medium text-muted-foreground">Free Plan</span>
+              <div className="flex items-center bg-card rounded-lg border border-border overflow-hidden">
+                <span className="px-3 py-1.5 text-xs font-medium text-muted-foreground tracking-wide">Free Plan</span>
                 <Button
                   variant="default"
                   size="sm"
-                  className="rounded-md mr-1.5 h-6"
+                  className="rounded-none rounded-r-lg mr-0 h-8 px-3 text-xs bg-primary text-primary-foreground hover:bg-primary/90 active:scale-[0.98] transition-all duration-150 neon-glow-box"
                   onClick={() => router.push('/pricing')}
                 >
-                  Upgrade
+                  Upgrade →
                 </Button>
               </div>
             </div>
@@ -189,8 +189,8 @@ const Navbar = memo(
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="pointer-events-auto mr-1 shrink-0">
-                        <span className="font-baumans! px-2.5 pt-0.5 pb-1.75 sm:pt-1 leading-4 inline-flex items-center gap-1 rounded-lg shadow-sm border-transparent ring-1 ring-ring/35 ring-offset-1 ring-offset-background bg-gradient-to-br from-secondary/25 via-primary/20 to-accent/25 text-foreground  dark:bg-gradient-to-br dark:from-primary dark:via-secondary dark:to-primary dark:text-foreground">
-                          <span>pro</span>
+                        <span className="font-baumans! px-2.5 pt-0.5 pb-1.5 sm:pt-1 leading-4 inline-flex items-center gap-1 rounded-md shadow-sm border border-primary/30 bg-primary/10 text-primary dark:neon-glow-box">
+                          <span className="text-xs font-semibold tracking-wider uppercase">pro</span>
                         </span>
                       </div>
                     </TooltipTrigger>
