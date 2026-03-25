@@ -130,7 +130,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
     <div className="w-full max-w-sm mx-auto">
       {/* Header */}
       <div className="text-center mb-10">
-        <h1 className="text-3xl font-light tracking-tight text-foreground mb-3 neon-glow">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground mb-3 neon-glow leading-[1.08]">
           {title}
         </h1>
         <p className="text-sm text-muted-foreground leading-relaxed">

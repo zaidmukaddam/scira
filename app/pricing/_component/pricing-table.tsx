@@ -232,7 +232,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
             <span className="size-1.5 rounded-full bg-primary" />
             Plans
           </div>
-          <h1 className="text-3xl sm:text-4xl font-light tracking-tight text-foreground mb-3 neon-glow">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground mb-3 neon-glow leading-[1.08]">
             Pricing
           </h1>
           <p className="text-sm text-muted-foreground max-w-xs mx-auto">
@@ -251,7 +251,7 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
               <p className="text-xs text-muted-foreground">Get started with essential features</p>
             </div>
             <div className="flex items-baseline mb-8">
-              <span className="text-5xl font-light tracking-tight text-foreground">$0</span>
+              <span className="text-5xl font-semibold tracking-tight text-foreground">$0</span>
               <span className="text-sm text-muted-foreground ml-2">/month</span>
             </div>
 
@@ -312,12 +312,12 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
               {hasProAccess() ? (
                 getProAccessSource() === 'dodo' ? (
                   <div className="flex items-baseline">
-                    <span className="text-5xl font-light tracking-tight text-foreground">₹{PRICING.PRO_MONTHLY_INR}</span>
+                    <span className="text-5xl font-semibold tracking-tight text-foreground">₹{PRICING.PRO_MONTHLY_INR}</span>
                     <span className="text-sm text-muted-foreground ml-2">(excl. GST)/month</span>
                   </div>
                 ) : (
                   <div className="flex items-baseline">
-                    <span className="text-5xl font-light tracking-tight text-foreground ">${PRICING.PRO_MONTHLY}</span>
+                    <span className="text-5xl font-semibold tracking-tight text-foreground ">${PRICING.PRO_MONTHLY}</span>
                     <span className="text-sm text-muted-foreground ml-2">/month</span>
                   </div>
                 )
@@ -327,10 +327,10 @@ export default function PricingTable({ subscriptionDetails, user }: PricingTable
                     {getStudentPrice(false) ? (
                       <>
                         <span className="text-xl text-muted-foreground line-through mr-2">${PRICING.PRO_MONTHLY}</span>
-                        <span className="text-5xl font-light tracking-tight text-foreground ">${getStudentPrice(false)}</span>
+                        <span className="text-5xl font-semibold tracking-tight text-foreground ">${getStudentPrice(false)}</span>
                       </>
                     ) : (
-                      <span className="text-5xl font-light tracking-tight text-foreground ">${PRICING.PRO_MONTHLY}</span>
+                      <span className="text-5xl font-semibold tracking-tight text-foreground ">${PRICING.PRO_MONTHLY}</span>
                     )}
                     <span className="text-sm text-muted-foreground ml-2">/month</span>
                   </div>

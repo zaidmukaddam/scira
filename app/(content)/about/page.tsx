@@ -89,7 +89,7 @@ export default function AboutPage() {
             <Zap className="size-3" />
             Sovereign Australian AI
           </div>
-          <h1 className="text-4xl sm:text-5xl font-light tracking-tight text-foreground mb-5 leading-[1.15]">
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground mb-5 leading-[1.08]">
             Built for Australia,{' '}
             <span className="text-primary neon-glow">open to the world</span>
           </h1>
