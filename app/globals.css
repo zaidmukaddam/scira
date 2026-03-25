@@ -50,6 +50,16 @@
   }
 }
 
+@keyframes blink {
+  from, to { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .animate-shimmer {
   position: relative;
   overflow: hidden;

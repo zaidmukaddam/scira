@@ -20,6 +20,7 @@ import { v7 as uuidv7 } from 'uuid';
 import { suggestQuestions, updateChatVisibility, getChatMeta, hasAcceptedTerms/*, getHomeSuggestions*/ } from '@/app/actions';
 import { ExamplePrompts } from '@/components/chat-interface-components';
 import { ExampleCategories } from '@/components/example-categories';
+import { DynamicGreeting } from '@/components/dynamic-greeting';
 
 // Component imports
 import { ChatDialogs } from '@/components/chat-dialogs';
@@ -1314,10 +1315,21 @@ const ChatInterface = memo(
                       Powered by MAGPiE
                     </div>
 
-                    {/* Title */}
+                    {/* Title — dynamic, context-aware greeting */}
                     <div className="flex items-center justify-center gap-3 mb-4">
-                      <h1 className="text-5xl sm:text-[3.75rem] font-bold tracking-tight text-foreground neon-glow leading-[1.08]">
-                        SCX.ai
+                      <h1
+                        className={[
+                          'font-bold tracking-tight text-foreground neon-glow leading-[1.08]',
+                          user?.name
+                            ? 'text-3xl sm:text-4xl md:text-[2.75rem]'
+                            : 'text-5xl sm:text-[3.75rem]',
+                        ].join(' ')}
+                      >
+                        <DynamicGreeting
+                          user={{ name: user?.name ?? undefined }}
+                          showEmoji={false}
+                          animated
+                        />
                       </h1>
                       {isUserPro && (
                         <span className="text-[10px] font-semibold tracking-widest uppercase px-2 py-0.5 rounded border border-primary/30 bg-primary/10 text-primary self-end mb-2 dark:neon-glow-box">
