@@ -563,6 +563,27 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                   const requiresPro = requiresProSubscription(model.value) && !isProUser;
                   const isLocked = requiresAuth || requiresPro;
 
+                  if (model.comingSoon) {
+                    return (
+                      <div
+                        key={model.value}
+                        className={cn(
+                          'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
+                          'opacity-40 cursor-not-allowed select-none',
+                        )}
+                      >
+                        <div className="flex items-center gap-1 min-w-0 flex-1">
+                          <div className={cn('font-medium truncate flex-1', isMobile ? 'text-sm' : 'text-[11px]')}>
+                            {model.label}
+                          </div>
+                        </div>
+                        <span className={cn('text-muted-foreground font-medium shrink-0 ml-2', isMobile ? 'text-xs' : 'text-[10px]')}>
+                          Coming soon
+                        </span>
+                      </div>
+                    );
+                  }
+
                   if (isLocked) {
                     return (
                       <div
@@ -777,6 +798,27 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                     const requiresAuth = requiresAuthentication(model.value) && !user;
                     const requiresPro = requiresProSubscription(model.value) && !isProUser;
                     const isLocked = requiresAuth || requiresPro;
+
+                    if (model.comingSoon) {
+                      return (
+                        <div
+                          key={model.value}
+                          className={cn(
+                            'flex items-center justify-between px-2 py-1.5 mb-0.5 rounded-lg text-xs',
+                            'opacity-40 cursor-not-allowed select-none',
+                          )}
+                        >
+                          <div className="flex items-center gap-1 min-w-0 flex-1">
+                            <div className={cn('font-medium truncate flex-1', isMobile ? 'text-sm' : 'text-[11px]')}>
+                              {model.label}
+                            </div>
+                          </div>
+                          <span className={cn('text-muted-foreground font-medium shrink-0 ml-2', isMobile ? 'text-xs' : 'text-[10px]')}>
+                            Coming soon
+                          </span>
+                        </div>
+                      );
+                    }
 
                     if (isLocked) {
                       return (

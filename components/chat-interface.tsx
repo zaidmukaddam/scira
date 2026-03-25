@@ -1313,6 +1313,8 @@ const ChatInterface = memo(
                       Sovereign Australian AI
                       <span className="text-primary/40">·</span>
                       Powered by MAGPiE
+                      <span className="text-primary/40">·</span>
+                      <span className="text-[10px] font-semibold tracking-widest uppercase opacity-60">Coming soon</span>
                     </div>
 
                     {/* Title — dynamic, context-aware greeting */}

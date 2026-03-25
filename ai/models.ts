@@ -30,13 +30,15 @@ export interface Model {
   documentSupport?: boolean;
   maxContextTokens?: number;
   toolTokenBudget?: number;
+  comingSoon?: boolean;
 }
 
 // The model used when nothing is stored in localStorage or when the stored
 // value no longer matches any active model (e.g. after a model is removed).
 // Must be a value that exists in the models array below, requires no auth,
 // and has freeUnlimited: true so it works for all users on first visit.
-export const DEFAULT_MODEL = 'magpie';
+// Note: 'magpie' is marked comingSoon and cannot be used yet.
+export const DEFAULT_MODEL = 'gpt-oss-120b';
 
 // Active models shown in the UI
 export const models: Model[] = [
@@ -82,7 +84,8 @@ export const models: Model[] = [
   {
     value: 'magpie',
     label: 'SCX MAGPiE',
-    description: "Australia's first sovereign AI — trained on local laws, culture, and context.",
+    description: "Coming soon — Australia's first sovereign AI, trained on local laws, culture, and context.",
+    comingSoon: true,
     vision: false,
     reasoning: true,
     experimental: true,
