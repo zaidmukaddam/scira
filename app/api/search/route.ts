@@ -28,6 +28,7 @@ import {
   getMaxOutputTokens,
   supportsFunctionCalling,
   supportsParallelToolCalling,
+  supportsCodeInterpreter,
   hasReasoningSupport,
   DEFAULT_MODEL,
   getModelConfig,
@@ -778,6 +779,16 @@ export async function POST(req: Request) {
 
       const modelSupportsFunctionCalling = supportsFunctionCalling(effectiveModel);
       const modelSupportsParallelToolCalling = supportsParallelToolCalling(effectiveModel);
+      const modelSupportsCodeInterpreter = supportsCodeInterpreter(effectiveModel);
+
+      // For models with supportsCodeInterpreter (e.g. scx-coder), always inject
+      // code_interpreter as a silent background tool — no group selector needed.
+      const effectiveActiveTools: string[] = modelSupportsFunctionCalling
+        ? [...activeTools]
+        : modelSupportsCodeInterpreter
+          ? ['code_interpreter']
+          : [];
+      const effectiveToolChoice = effectiveActiveTools.length > 0 ? 'auto' : 'none';
 
       // Build location context string. Browser GPS is precise; IP-based is approximate.
       const locationParts = [geoCity, geoRegion, geoCountry].filter(Boolean);
@@ -790,11 +801,11 @@ export async function POST(req: Request) {
           : '';
 
       // Warning appended when the model has no tools and responds from training data only
-      const noToolsWarning = !modelSupportsFunctionCalling
+      const noToolsWarning = effectiveActiveTools.length === 0
         ? `\n\n⚠️ IMPORTANT: You are operating WITHOUT any search or real-time tools. Your response will be based entirely on your training data, which has a knowledge cutoff date and may be outdated. You MUST clearly state at the beginning of your response that your answer is based on your training data and may not reflect current information. Do not attempt to provide current data, prices, news, or real-time information.`
         : '';
 
-      if (!modelSupportsFunctionCalling) {
+      if (effectiveActiveTools.length === 0) {
         dataStream.write({
           type: 'data-no_tools_warning',
           data: { model: effectiveModel },
@@ -808,8 +819,8 @@ export async function POST(req: Request) {
         maxOutputTokens: getMaxOutputTokens(effectiveModel),
         stopWhen: stepCountIs(20),
         maxRetries: 10,
-        activeTools: modelSupportsFunctionCalling ? [...activeTools] : [],
-        toolChoice: modelSupportsFunctionCalling ? 'auto' : 'none',
+        activeTools: effectiveActiveTools,
+        toolChoice: effectiveToolChoice,
         // experimental_transform: markdownJoinerTransform(), // disabled — flush() emits incomplete chunks that break toUIMessageStream
         system:
           instructions +

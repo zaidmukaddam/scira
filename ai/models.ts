@@ -31,6 +31,8 @@ export interface Model {
   maxContextTokens?: number;
   toolTokenBudget?: number;
   comingSoon?: boolean;
+  /** Always inject code_interpreter (Daytona) regardless of search group */
+  supportsCodeInterpreter?: boolean;
 }
 
 // The model used when nothing is stored in localStorage or when the stored
@@ -98,6 +100,7 @@ export const models: Model[] = [
     // Coding assistant — no web-search or extreme groups needed
     supportsFunctionCalling: false,
     supportsParallelToolCalling: false,
+    supportsCodeInterpreter: true,
     documentSupport: false,
     maxContextTokens: 196608,
     extreme: false,
@@ -209,6 +212,10 @@ export function supportsFunctionCalling(modelValue: string): boolean {
 
 export function supportsParallelToolCalling(modelValue: string): boolean {
   return getModelConfig(modelValue)?.supportsParallelToolCalling ?? false;
+}
+
+export function supportsCodeInterpreter(modelValue: string): boolean {
+  return getModelConfig(modelValue)?.supportsCodeInterpreter ?? false;
 }
 
 export function isExperimentalModel(modelValue: string): boolean {
