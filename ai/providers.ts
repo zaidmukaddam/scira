@@ -60,7 +60,8 @@ type ScxChatModelId =
   | 'Llama-4-Maverick-17B-128E-Instruct'
   | 'Llama-3.3-Swallow-70B-Instruct-v0.4'
   | 'gpt-oss-120b'
-  | 'magpie';
+  | 'coder'
+  | 'MAGPiE';
 
 type ScxEmbeddingModelId = 'E5-Mistral-7B-Instruct';
 
@@ -76,8 +77,9 @@ const scxProvider = createOpenAICompatible<
   includeUsage: true,
 });
 
-// Separate provider for Magpie with the SSE-normalizing fetch
-const magpieProvider = createOpenAICompatible<'magpie', 'magpie', never, never>({
+// Separate provider for MAGPiE with the SSE-normalizing fetch.
+// API model ID is 'MAGPiE' (case-sensitive as returned by /v1/models).
+const magpieProvider = createOpenAICompatible<'MAGPiE', 'MAGPiE', never, never>({
   name: 'scx-magpie',
   baseURL: `${SCX_BASE}/v1`,
   apiKey: SCX_KEY,
@@ -250,8 +252,12 @@ export const scx = customProvider({
       model: scxProvider.languageModel('gpt-oss-120b'),
       middleware: [extractReasoningMiddleware({ tagName: 'think' })],
     }),
+    // 'coder' is the actual API model ID (verified from /v1/models).
+    // It supports tools + json_mode but NOT the reasoning_content field,
+    // so no middleware is needed — content streams directly as text.
+    'scx-coder': scxProvider.languageModel('coder'),
     magpie: wrapLanguageModel({
-      model: magpieProvider.languageModel('magpie'),
+      model: magpieProvider.languageModel('MAGPiE'),
       middleware: [magpieProtocolMiddleware],
     }),
     // Internal utility aliases (follow-up suggestions, chat naming, prompt enhancement)

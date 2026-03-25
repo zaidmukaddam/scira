@@ -37,8 +37,8 @@ export interface Model {
 // value no longer matches any active model (e.g. after a model is removed).
 // Must be a value that exists in the models array below, requires no auth,
 // and has freeUnlimited: true so it works for all users on first visit.
-// Note: 'magpie' is marked comingSoon and cannot be used yet.
-export const DEFAULT_MODEL = 'gpt-oss-120b';
+// Note: 'magpie' is marked comingSoon. Llama 4 is the free default for all users.
+export const DEFAULT_MODEL = 'llama-4';
 
 // Active models shown in the UI
 export const models: Model[] = [
@@ -71,15 +71,36 @@ export const models: Model[] = [
     experimental: false,
     category: 'Aussie Sovereign',
     pdf: false,
-    pro: true,
-    requiresAuth: true,
-    freeUnlimited: false,
+    pro: false,
+    requiresAuth: false,
+    freeUnlimited: true,
     maxOutputTokens: 8000,
     supportsFunctionCalling: true,
     supportsParallelToolCalling: true,
     documentSupport: true,
     extreme: true,
     fast: true,
+  },
+  {
+    value: 'scx-coder',
+    label: 'SCX Coder',
+    description: 'High performance coding assistant with reasoning, optimized for algorithms, debugging, and code review.',
+    vision: false,
+    reasoning: true,
+    experimental: false,
+    isNew: true,
+    category: 'Aussie Sovereign',
+    pdf: false,
+    pro: false,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 4096,
+    supportsFunctionCalling: true,
+    supportsParallelToolCalling: false,
+    documentSupport: false,
+    maxContextTokens: 196608,
+    extreme: false,
+    fast: false,
   },
   {
     value: 'magpie',
@@ -95,13 +116,14 @@ export const models: Model[] = [
     requiresAuth: false,
     freeUnlimited: true,
     maxOutputTokens: 8192,
+    // MAGPiE uses its own <|call|> tool protocol, NOT OpenAI function calling.
+    // Injecting OpenAI-style function schemas breaks its response format.
     supportsFunctionCalling: false,
     supportsParallelToolCalling: false,
-    documentSupport: true,
+    documentSupport: false,
     maxContextTokens: 131072,
-    toolTokenBudget: 25000,
-    extreme: true,
-    fast: true,
+    extreme: false,
+    fast: false,
   },
 ];
 

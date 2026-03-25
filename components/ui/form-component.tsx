@@ -1268,8 +1268,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               <div className="flex items-center gap-4">
                 <CheckIcon className="size-4 text-primary shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">Access better models</p>
-                  <p className="text-xs text-muted-foreground">GPT-5 Nano and more premium models</p>
+                  <p className="text-sm font-medium text-foreground">Access more models</p>
+                  <p className="text-xs text-muted-foreground">GPT-OSS 120B, SCX Coder, and MAGPiE coming soon</p>
                 </div>
               </div>
 
@@ -1285,7 +1285,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                 <CheckIcon className="size-4 text-primary shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-foreground">Free to start</p>
-                  <p className="text-xs text-muted-foreground">No payment required for basic features</p>
+                  <p className="text-xs text-muted-foreground">No payment required — Llama 4 is always free</p>
                 </div>
               </div>
 
@@ -2707,12 +2707,6 @@ const FormComponent: React.FC<FormComponentProps> = ({
       cleanupMediaRecorder();
     } else {
       try {
-        // Check if user is signed in
-        if (!user) {
-          setShowSignInDialog(true);
-          return;
-        }
-
         // Environment and feature checks
         if (typeof window === 'undefined') {
           toast.error('Voice recording is only available in the browser.');
@@ -4254,12 +4248,12 @@ const FormComponent: React.FC<FormComponentProps> = ({
                     </div>
                     <div className="flex flex-col gap-1 min-w-0 flex-1">
                       <span className="text-lg sm:text-xl font-bold">Sign in required</span>
-                      <span className="text-sm text-white/70 truncate">for Voice Input</span>
+                      <span className="text-sm text-white/70 truncate">to access this model</span>
                     </div>
                   </DialogTitle>
                   <DialogDescription className="text-white/90">
                     <p className="text-sm text-white/80 text-left">
-                      Voice input requires an account to access. Create an account to unlock this feature and more.
+                      Create a free account to unlock more models and features.
                     </p>
                   </DialogDescription>
                   <Button
@@ -4278,16 +4272,16 @@ const FormComponent: React.FC<FormComponentProps> = ({
               <div className="flex items-center gap-4">
                 <CheckIcon className="size-4 text-primary shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">Voice Input</p>
-                  <p className="text-xs text-muted-foreground">Record and transcribe voice messages</p>
+                  <p className="text-sm font-medium text-foreground">SCX Coder</p>
+                  <p className="text-xs text-muted-foreground">197k context · reasoning · optimised for code</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-4">
                 <CheckIcon className="size-4 text-primary shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-foreground">Access better models</p>
-                  <p className="text-xs text-muted-foreground">GPT-5 Nano and more premium models</p>
+                  <p className="text-sm font-medium text-foreground">Access more models</p>
+                  <p className="text-xs text-muted-foreground">GPT-OSS 120B, SCX Coder, and MAGPiE coming soon</p>
                 </div>
               </div>
 
@@ -4303,7 +4297,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 <CheckIcon className="size-4 text-primary shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-foreground">Free to start</p>
-                  <p className="text-xs text-muted-foreground">No payment required for basic features</p>
+                  <p className="text-xs text-muted-foreground">No payment required — Llama 4 is always free</p>
                 </div>
               </div>
 

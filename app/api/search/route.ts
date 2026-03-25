@@ -1012,7 +1012,7 @@ export async function POST(req: Request) {
         },
         onFinish: async (event) => {
           const processingTime = (Date.now() - requestStartTime) / 1000;
-          console.log(`✅ Request completed: ${processingTime.toFixed(2)}s (${event.finishReason})`);
+          console.log(`✅ Request completed: ${processingTime.toFixed(2)}s (${event.finishReason}) text=${event.text?.length ?? 0}chars reasoning=${(event as any).reasoning?.length ?? 0}chars`);
 
           if (user?.id && event.finishReason === 'stop') {
             // Track usage in background
