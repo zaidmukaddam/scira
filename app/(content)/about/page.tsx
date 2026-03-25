@@ -69,7 +69,7 @@ export default function AboutPage() {
                 variant="square"
                 className="size-5 transition-transform duration-300 group-hover:scale-110"
               />
-              <span className="text-lg font-light tracking-tighter font-be-vietnam-pro">SCX.ai</span>
+              <span className="text-lg font-light tracking-tighter">SCX.ai</span>
             </Link>
             <Link
               href="/"
@@ -89,7 +89,7 @@ export default function AboutPage() {
             <Zap className="size-3" />
             Sovereign Australian AI
           </div>
-          <h1 className="text-4xl sm:text-5xl font-light tracking-tight text-foreground font-be-vietnam-pro mb-5 leading-[1.15]">
+          <h1 className="text-4xl sm:text-5xl font-light tracking-tight text-foreground mb-5 leading-[1.15]">
             Built for Australia,{' '}
             <span className="text-primary neon-glow">open to the world</span>
           </h1>

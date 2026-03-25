@@ -1316,7 +1316,7 @@ const ChatInterface = memo(
 
                     {/* Title */}
                     <div className="flex items-center justify-center gap-3 mb-4">
-                      <h1 className="text-5xl sm:text-[3.75rem] font-extralight tracking-[-0.04em] text-foreground font-be-vietnam-pro! neon-glow leading-none">
+                      <h1 className="text-5xl sm:text-[3.75rem] font-extralight tracking-[-0.04em] text-foreground neon-glow leading-none">
                         SCX.ai
                       </h1>
                       {isUserPro && (
