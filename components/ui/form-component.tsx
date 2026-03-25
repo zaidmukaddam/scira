@@ -3829,15 +3829,17 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 )}
               >
                 <div className={cn('flex items-center gap-2')}>
-                  <GroupModeToggle
-                    selectedGroup={selectedGroup}
-                    onGroupSelect={handleGroupSelect}
-                    status={status}
-                    onOpenSettings={onOpenSettings}
-                    isProUser={isProUser}
-                    isAuthenticated={!!user}
-                    usageData={usageData}
-                  />
+                  {supportsFunctionCalling(selectedModel) && (
+                    <GroupModeToggle
+                      selectedGroup={selectedGroup}
+                      onGroupSelect={handleGroupSelect}
+                      status={status}
+                      onOpenSettings={onOpenSettings}
+                      isProUser={isProUser}
+                      isAuthenticated={!!user}
+                      usageData={usageData}
+                    />
+                  )}
 
                   {selectedGroup === 'connectors' && setSelectedConnectors && (
                     <ConnectorSelector

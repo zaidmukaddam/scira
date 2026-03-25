@@ -95,7 +95,8 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 4096,
-    supportsFunctionCalling: true,
+    // Coding assistant — no web-search or extreme groups needed
+    supportsFunctionCalling: false,
     supportsParallelToolCalling: false,
     documentSupport: false,
     maxContextTokens: 196608,
