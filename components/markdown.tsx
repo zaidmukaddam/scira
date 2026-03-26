@@ -1752,7 +1752,9 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(
          *   - Game keyboard listeners hijacking the chat input
          */
         html(rawHtml: string) {
-          const key = getElementKey('html', rawHtml);
+          // Re-use the 'blockquote' counter bucket just to get a stable key —
+          // the type constraint on getElementKey doesn't include 'html'.
+          const key = getElementKey('blockquote', rawHtml);
           return (
             <pre
               key={key}
