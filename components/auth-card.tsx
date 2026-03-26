@@ -70,6 +70,8 @@ interface AuthCardProps {
   title: string;
   description: string;
   mode?: 'sign-in' | 'sign-up';
+  /** Where to redirect after successful sign-in. Defaults to '/'. */
+  callbackURL?: string;
 }
 
 const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon, isLastUsed }: SignInButtonProps) => {
@@ -118,7 +120,7 @@ const SignInButton = ({ title, provider, loading, setLoading, callbackURL, icon,
   );
 };
 
-export default function AuthCard({ title, description, mode = 'sign-in' }: AuthCardProps) {
+export default function AuthCard({ title, description, mode = 'sign-in', callbackURL = '/' }: AuthCardProps) {
   const [githubLoading, setGithubLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [twitterLoading, setTwitterLoading] = useState(false);
@@ -145,7 +147,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
           provider="google"
           loading={googleLoading}
           setLoading={setGoogleLoading}
-          callbackURL="/"
+          callbackURL={callbackURL}
           icon={<AuthIcons.Google className="w-4 h-4" />}
           isLastUsed={lastMethod === 'google'}
         />
@@ -154,7 +156,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
           provider="github"
           loading={githubLoading}
           setLoading={setGithubLoading}
-          callbackURL="/"
+          callbackURL={callbackURL}
           icon={<AuthIcons.Github className="w-4 h-4" />}
           isLastUsed={lastMethod === 'github'}
         />
@@ -163,7 +165,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
           provider="twitter"
           loading={twitterLoading}
           setLoading={setTwitterLoading}
-          callbackURL="/"
+          callbackURL={callbackURL}
           icon={<AuthIcons.Twitter className="w-4 h-4" />}
           isLastUsed={lastMethod === 'twitter'}
         />
@@ -172,7 +174,7 @@ export default function AuthCard({ title, description, mode = 'sign-in' }: AuthC
           provider="microsoft"
           loading={microsoftLoading}
           setLoading={setMicrosoftLoading}
-          callbackURL="/"
+          callbackURL={callbackURL}
           icon={<AuthIcons.Microsoft className="w-4 h-4" />}
           isLastUsed={lastMethod === 'microsoft'}
         />

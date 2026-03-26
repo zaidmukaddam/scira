@@ -7,6 +7,7 @@ import { Button } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 import {
   models,
+  DEFAULT_MODEL,
   requiresAuthentication,
   requiresProSubscription,
   hasVisionSupport,
@@ -17,8 +18,7 @@ import {
   isModelRestrictedInRegion,
   supportsExtremeMode,
   supportsFunctionCalling,
-} from '@/ai/providers';
-import { DEFAULT_MODEL } from '@/ai/models';
+} from '@/ai/models';
 import { X, Check, Wand2, Upload, CheckIcon, Zap, Sparkles, ArrowUpRight, Info } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogDescription } from '@/components/ui/dialog';
 import { cn, SearchGroup, SearchGroupId, getSearchGroups, SearchProvider } from '@/lib/utils';

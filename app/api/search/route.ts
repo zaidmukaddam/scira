@@ -519,7 +519,7 @@ export async function POST(req: Request) {
         return {
           city: fallbackGeo.city,
           region: fallbackGeo.region,
-          country: fallbackGeo.country,
+          country: fallbackGeo.countryCode ?? fallbackGeo.country,
           latitude: fallbackGeo.latitude !== undefined ? String(fallbackGeo.latitude) : undefined,
           longitude: fallbackGeo.longitude !== undefined ? String(fallbackGeo.longitude) : undefined,
           source: 'ip',
@@ -800,12 +800,19 @@ export async function POST(req: Request) {
             : `\n\nThe user's approximate location (detected via IP address — may reflect the nearest ISP city, not the user's exact location): ${locationParts.join(', ')}${coordsStr}. When the user asks about their location or requests location-based services, use this location. If they ask "where am I?", tell them this is an IP-based estimate and may not be perfectly accurate — they can allow location access in their browser for a precise result.`
           : '';
 
-      // Warning appended when the model has no tools and responds from training data only
-      const noToolsWarning = effectiveActiveTools.length === 0
+      // Warning appended when the model has no tools and responds from training data only.
+      // Coding-focused models (e.g. scx-coder) intentionally have no web tools — don't
+      // warn them or ask them to caveat responses about being "outdated".
+      const isToollessCodeModel = effectiveActiveTools.length === 0 && effectiveModel === 'scx-coder';
+      const noToolsWarning = effectiveActiveTools.length === 0 && !isToollessCodeModel
         ? `\n\n⚠️ IMPORTANT: You are operating WITHOUT any search or real-time tools. Your response will be based entirely on your training data, which has a knowledge cutoff date and may be outdated. You MUST clearly state at the beginning of your response that your answer is based on your training data and may not reflect current information. Do not attempt to provide current data, prices, news, or real-time information.`
         : '';
 
-      if (effectiveActiveTools.length === 0) {
+      const coderModeInstructions = isToollessCodeModel
+        ? `\n\nYou are SCX Coder, a high-performance coding assistant specialising in algorithms, debugging, and code review. Write clean, well-commented code.\n\nWhen the user explicitly asks to **run**, **execute**, or **test** code, use the code_interpreter tool — it executes Python server-side and returns the output. Only invoke code_interpreter when execution is specifically requested; for all other responses just write the code without calling the tool.\n\nDo NOT invent or guess execution results. If you run code, the actual output will be shown automatically.`
+        : '';
+
+      if (effectiveActiveTools.length === 0 && !isToollessCodeModel) {
         dataStream.write({
           type: 'data-no_tools_warning',
           data: { model: effectiveModel },
@@ -824,6 +831,7 @@ export async function POST(req: Request) {
         // experimental_transform: markdownJoinerTransform(), // disabled — flush() emits incomplete chunks that break toUIMessageStream
         system:
           instructions +
+          coderModeInstructions +
           `\n\n## CONVERSATION CONTEXT\nYou have access to the full conversation history. Always read all prior messages before responding. When a user asks a follow-up question or refers to something discussed earlier (e.g. "it", "that", "what you said", "as mentioned"), use the conversation history to understand what they mean — do NOT search for something new if the information was already covered. Only call a tool again if genuinely new or updated information is needed.` +
           `\n\nIMPORTANT: Provide your final answer directly without showing your reasoning steps or thought process. Do not use numbered steps, "Step 1:", "Step 2:", or similar formatting. Just give the answer.` +
           `\n\nTOOL USAGE RULES:\n- ALWAYS use the dedicated tool for: translation (text_translate), currency conversion (currency_converter), stock prices (stock_price), weather (get_weather_data), maps/places (find_place_on_map, nearby_places_search), movies/TV (movie_or_tv_search, trending_movies, trending_tv), current date/time (datetime). These tools exist specifically for these requests — never use web_search as a substitute.\n- Use web_search or extreme_search only for: news, current events, research questions, or factual queries not covered by a dedicated tool.\n- Do NOT use any tool for: pure knowledge questions, math, code explanations, or anything fully answerable from training data.\n- After receiving tool results, IMMEDIATELY provide your answer — do NOT make additional tool calls.\n- UPLOADED FILES: When a user asks questions about their uploaded files (PDFs, documents, images with text), ALWAYS use rag_search — NEVER use retrieve on Supabase storage URLs. The retrieve tool cannot access private storage URLs and will fail.\n\nCITATION RULES:\n- ONLY add citation links for URLs actually returned by a tool call. NEVER fabricate or invent URLs.\n- If you answered without calling any tool, do NOT add any links or citations at all. A plain answer is correct.` +

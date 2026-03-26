@@ -1,6 +1,8 @@
+import 'server-only';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { customProvider, extractReasoningMiddleware, wrapLanguageModel } from 'ai';
 import { magpieProtocolMiddleware } from '@/ai/magpie-middleware';
+import { coderToolMiddleware } from '@/ai/coder-middleware';
 import type { JSONValue } from 'ai';
 
 // ─── Base URL ────────────────────────────────────────────────────────────────
@@ -254,9 +256,13 @@ export const scx = customProvider({
       middleware: [extractReasoningMiddleware({ tagName: 'think' })],
     }),
     // 'coder' is the actual API model ID (verified from /v1/models).
-    // It supports tools + json_mode but NOT the reasoning_content field,
-    // so no middleware is needed — content streams directly as text.
-    'scx-coder': scxProvider.languageModel('coder'),
+    // It uses a proprietary [TOOL_CALL]...[/TOOL_CALL] text format instead of
+    // OpenAI-style function calling. The coderToolMiddleware intercepts that
+    // format, executes the code in Daytona, and emits clean markdown output.
+    'scx-coder': wrapLanguageModel({
+      model: scxProvider.languageModel('coder'),
+      middleware: [coderToolMiddleware],
+    }),
     magpie: wrapLanguageModel({
       model: magpieProvider.languageModel('MAGPiE'),
       middleware: [magpieProtocolMiddleware],

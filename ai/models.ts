@@ -97,10 +97,12 @@ export const models: Model[] = [
     requiresAuth: true,
     freeUnlimited: false,
     maxOutputTokens: 4096,
-    // Coding assistant — no web-search or extreme groups needed
+    // coder model uses a custom [TOOL_CALL] protocol incompatible with the AI SDK's
+    // standard function-calling. Keeping all tool injection off until a protocol
+    // middleware (similar to magpie-middleware.ts) is written for the coder model.
     supportsFunctionCalling: false,
     supportsParallelToolCalling: false,
-    supportsCodeInterpreter: true,
+    supportsCodeInterpreter: false,
     documentSupport: false,
     maxContextTokens: 196608,
     extreme: false,

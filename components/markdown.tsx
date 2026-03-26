@@ -1744,6 +1744,24 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(
 
           return components.length === 1 ? components[0] : <Fragment>{components}</Fragment>;
         },
+        /**
+         * Never render raw HTML from AI responses as live DOM elements.
+         * Displaying it as an escaped code block prevents:
+         *   - <script> execution
+         *   - Inline event-handler capture (onkeydown, etc.)
+         *   - Game keyboard listeners hijacking the chat input
+         */
+        html(rawHtml: string) {
+          const key = getElementKey('html', rawHtml);
+          return (
+            <pre
+              key={key}
+              className="my-3 rounded-lg bg-muted px-4 py-3 overflow-x-auto text-xs font-mono text-muted-foreground whitespace-pre-wrap"
+            >
+              <code>{rawHtml.trim()}</code>
+            </pre>
+          );
+        },
         hr() {
           return <></>;
         },

@@ -67,8 +67,7 @@ import { useOptimizedScroll } from '@/hooks/use-optimized-scroll';
 import { SEARCH_LIMITS } from '@/lib/constants';
 import { ChatSDKError } from '@/lib/errors';
 import { cn, SearchGroupId } from '@/lib/utils';
-import { requiresProSubscription } from '@/ai/providers';
-import { DEFAULT_MODEL, models } from '@/ai/models';
+import { DEFAULT_MODEL, models, supportsFunctionCalling, requiresProSubscription } from '@/ai/models';
 import { ConnectorProvider } from '@/lib/connectors';
 
 // State management imports
@@ -491,18 +490,21 @@ const ChatInterface = memo(
       transport: new DefaultChatTransport({
         api: '/api/search',
         async prepareSendMessagesRequest({ messages, body }) {
-          // Attempt to get precise browser GPS location — non-blocking, silently falls back
-          // to server-side IP geolocation if permission is denied or unavailable.
+          // Only request browser GPS when the selected model can actually use location-based
+          // tools (e.g. weather, maps, nearby places). Coding/reasoning-only models have no
+          // tools and must never trigger the browser permission dialog.
           let browserLat: number | undefined;
           let browserLon: number | undefined;
-          try {
-            const loc = await requestLocation();
-            if (loc) {
-              browserLat = loc.lat;
-              browserLon = loc.lon;
+          if (supportsFunctionCalling(selectedModelRef.current)) {
+            try {
+              const loc = await requestLocation();
+              if (loc) {
+                browserLat = loc.lat;
+                browserLon = loc.lon;
+              }
+            } catch {
+              // Silently ignore — IP geolocation on server is the fallback
             }
-          } catch {
-            // Silently ignore — IP geolocation on server is the fallback
           }
 
           return {

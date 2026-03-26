@@ -194,9 +194,12 @@ const EnhancedErrorDisplay: React.FC<EnhancedErrorDisplayProps> = ({
   // Handle action clicks
   const handleAction = (action: string) => {
     switch (action) {
-      case 'signin':
-        window.location.href = '/sign-in';
+      case 'signin': {
+        // Preserve the current page so the user is redirected back after signing in
+        const redirectTo = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.href = `/sign-in?redirectTo=${redirectTo}`;
         break;
+      }
       case 'upgrade':
         window.location.href = '/pricing';
         break;
