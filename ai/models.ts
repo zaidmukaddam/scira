@@ -39,7 +39,7 @@ export interface Model {
 // value no longer matches any active model (e.g. after a model is removed).
 // Must be a value that exists in the models array below, requires no auth,
 // and has freeUnlimited: true so it works for all users on first visit.
-// Llama 4 is the free default for all users.
+// Note: MAGPiE uses its own <|call|> protocol — no OpenAI tool calling. Llama 4 is the free default.
 export const DEFAULT_MODEL = 'llama-4';
 
 // Active models shown in the UI
@@ -122,8 +122,9 @@ export const models: Model[] = [
     requiresAuth: false,
     freeUnlimited: true,
     maxOutputTokens: 8192,
-    // MAGPiE supports standard OpenAI function calling + reasoning_content field.
-    supportsFunctionCalling: true,
+    // MAGPiE uses its own <|call|> tool protocol, NOT OpenAI function calling.
+    // Injecting OpenAI-style function schemas breaks its response format.
+    supportsFunctionCalling: false,
     supportsParallelToolCalling: false,
     documentSupport: false,
     maxContextTokens: 131072,
