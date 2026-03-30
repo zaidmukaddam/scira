@@ -6,22 +6,52 @@ import Redis from 'ioredis';
 import * as schema from './schema';
 import { Pool } from 'pg';
 
-// Create Redis client with fail-fast settings so a broken Redis connection
-// never blocks DB queries or causes hanging requests:
-//   • enableOfflineQueue: false  — reject commands immediately when disconnected
-//     instead of queueing them indefinitely (the default true causes 57-min hangs)
-//   • connectTimeout / commandTimeout — bail out quickly rather than waiting forever
-//   • maxRetriesPerRequest: 1     — one retry then throw, not infinite retries
-//   • lazyConnect: true           — don't block the process at startup
-const redis = new Redis(serverEnv.REDIS_URL, {
+// SilentRedis wraps ioredis so that cache GET/SET errors are never propagated
+// to @databuddy/cache (RedisDrizzleCache). Without this wrapper, a Redis blip
+// causes RedisDrizzleCache to throw inside queryWithCache, which in turn makes
+// every Drizzle DB query fail — resulting in blank chats and 500s.
+//
+// Behaviour with this wrapper:
+//   • GET failure  → returns null  (cache miss; @databuddy/cache falls through to DB)
+//   • SETEX failure → returns 'OK' (silently ignored; DB write is unaffected)
+//   • All other commands are passed through unchanged.
+//
+// We also keep enableOfflineQueue:false so that a broken connection never queues
+// commands indefinitely (which caused the original 57-min hang). The wrapper
+// ensures those immediate rejections never escape to callers that don't handle them.
+class SilentRedis extends Redis {
+  async get(key: string): Promise<string | null> {
+    try {
+      return await super.get(key);
+    } catch {
+      return null;
+    }
+  }
+
+  // ioredis overloads: (key, seconds, value) or (key, value, secondsOrExpiry, ...)
+  // @databuddy/cache calls setex(key, ttl, value) — the three-arg form.
+  async setex(key: string, seconds: number, value: string): Promise<'OK'> {
+    try {
+      return await super.setex(key, seconds, value);
+    } catch {
+      return 'OK';
+    }
+  }
+}
+
+const redis = new SilentRedis(serverEnv.REDIS_URL, {
+  // Reject queued commands immediately when disconnected rather than queuing
+  // indefinitely — prevents the 57-minute hang that was the original bug.
   enableOfflineQueue: false,
   connectTimeout: 2_000,
   commandTimeout: 1_500,
   maxRetriesPerRequest: 1,
-  lazyConnect: true,
+  // No lazyConnect: ioredis connects eagerly on module load so the socket is
+  // ready before the first request arrives. lazyConnect + enableOfflineQueue:false
+  // created a race where requests arrived before the connection was established,
+  // causing "Stream isn't writeable" errors that RedisDrizzleCache propagated.
   retryStrategy: (times: number) => {
-    // Exponential back-off up to 10 s, then stop retrying
-    if (times > 5) return null; // null = stop retrying
+    if (times > 5) return null; // stop retrying after 5 attempts
     return Math.min(times * 500, 10_000);
   },
 });
