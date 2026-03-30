@@ -122,12 +122,8 @@ export const models: Model[] = [
     requiresAuth: false,
     freeUnlimited: true,
     maxOutputTokens: 8192,
-    // MAGPiE uses its own <|call|> reasoning protocol, NOT OpenAI function calling.
-    // Injecting OpenAI-style tool schemas into the request breaks MAGPiE's response
-    // format entirely — it emits nothing and no assistant message is saved.
-    // The magpieProtocolMiddleware already strips <|call|> tokens from the text so
-    // MAGPiE's internal reasoning is clean. External tool calling is not supported.
-    supportsFunctionCalling: false,
+    // Uses magpie-small API model: OpenAI-compatible function calling + <think> reasoning.
+    supportsFunctionCalling: true,
     supportsParallelToolCalling: false,
     documentSupport: false,
     maxContextTokens: 131072,

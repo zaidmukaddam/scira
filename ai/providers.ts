@@ -1,7 +1,6 @@
 import 'server-only';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { customProvider, extractReasoningMiddleware, wrapLanguageModel } from 'ai';
-import { magpieProtocolMiddleware } from '@/ai/magpie-middleware';
 import { coderToolMiddleware } from '@/ai/coder-middleware';
 import type { JSONValue } from 'ai';
 
@@ -10,49 +9,6 @@ import type { JSONValue } from 'ai';
 const SCX_BASE = (process.env.SCX_API_URL ?? 'https://api.scx.ai').replace(/\/v1\/?$/, '');
 const SCX_KEY = process.env.SCX_API_KEY ?? '';
 
-// ─── Magpie SSE normalizer ────────────────────────────────────────────────────
-// Magpie streams with multiple `data:` lines per SSE event (no blank-line
-// separator between them). Per the SSE spec those lines are concatenated with
-// "\n", so JSON.parse("{chunk1}\n{chunk2}") fails. This fetch wrapper ensures
-// every `data:` line is flushed as its own standalone SSE event.
-function createMagpieNormalizedFetch(): typeof fetch {
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-  return async (url, init) => {
-    const response = await fetch(url, init);
-    if (!response.body) return response;
-    if (!(response.headers.get('content-type') ?? '').includes('text/event-stream')) return response;
-
-    let buffer = '';
-    const transformedBody = response.body.pipeThrough(
-      new TransformStream<Uint8Array, Uint8Array>({
-        transform(chunk, controller) {
-          buffer += decoder.decode(chunk, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() ?? '';
-          let output = '';
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              output += line + '\n\n'; // each data: line → its own SSE event
-            }
-            // blank lines are dropped; we manage separators ourselves
-          }
-          if (output) controller.enqueue(encoder.encode(output));
-        },
-        flush(controller) {
-          const rem = buffer.trim();
-          if (rem) controller.enqueue(encoder.encode((rem.startsWith('data: ') ? rem + '\n\n' : rem + '\n')));
-        },
-      }),
-    );
-
-    return new Response(transformedBody, {
-      status: response.status,
-      statusText: response.statusText,
-      headers: response.headers,
-    });
-  };
-}
 
 // ─── Chat model IDs (as served by the SCX OpenAI-compatible API) ─────────────
 type ScxChatModelId =
@@ -63,7 +19,7 @@ type ScxChatModelId =
   | 'Llama-3.3-Swallow-70B-Instruct-v0.4'
   | 'gpt-oss-120b'
   | 'coder'
-  | 'MAGPiE';
+  | 'magpie-small';
 
 type ScxEmbeddingModelId = 'E5-Mistral-7B-Instruct';
 
@@ -79,15 +35,9 @@ const scxProvider = createOpenAICompatible<
   includeUsage: true,
 });
 
-// Separate provider for MAGPiE with the SSE-normalizing fetch.
-// API model ID is 'MAGPiE' (case-sensitive as returned by /v1/models).
-const magpieProvider = createOpenAICompatible<'MAGPiE', 'MAGPiE', never, never>({
-  name: 'scx-magpie',
-  baseURL: `${SCX_BASE}/v1`,
-  apiKey: SCX_KEY,
-  includeUsage: true,
-  fetch: createMagpieNormalizedFetch(),
-});
+// magpie-small is the standard OpenAI-compatible variant of MAGPiE — it
+// supports function calling and uses <think>...</think> for reasoning.
+// No custom SSE normalizer or protocol middleware needed.
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
 function buildHeaders(additional?: Record<string, string | undefined>): Record<string, string> {
@@ -263,9 +213,11 @@ export const scx = customProvider({
       model: scxProvider.languageModel('coder'),
       middleware: [coderToolMiddleware],
     }),
+    // magpie-small: standard OpenAI-compatible model, supports function calling
+    // and uses <think>...</think> blocks for reasoning (same as new-chat repo).
     magpie: wrapLanguageModel({
-      model: magpieProvider.languageModel('MAGPiE'),
-      middleware: [magpieProtocolMiddleware],
+      model: scxProvider.languageModel('magpie-small'),
+      middleware: [extractReasoningMiddleware({ tagName: 'think' })],
     }),
     // Internal utility aliases (follow-up suggestions, chat naming, prompt enhancement)
     'scira-follow-up': scxProvider.languageModel('Llama-4-Maverick-17B-128E-Instruct'),
