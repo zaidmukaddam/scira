@@ -740,13 +740,13 @@ export async function POST(req: Request) {
   // Capture user message payload for background save (done inside execute, non-blocking)
   const userMessageToSave = user
     ? {
-        chatId: id,
-        id: messages[messages.length - 1].id,
-        role: 'user' as const,
-        parts: messages[messages.length - 1].parts,
-        attachments: messages[messages.length - 1].experimental_attachments ?? [],
-        createdAt: new Date(),
-      }
+      chatId: id,
+      id: messages[messages.length - 1].id,
+      role: 'user' as const,
+      parts: messages[messages.length - 1].parts,
+      attachments: messages[messages.length - 1].experimental_attachments ?? [],
+      createdAt: new Date(),
+    }
     : null;
 
   const setupTimeMs = Date.now() - requestStartTime;
@@ -772,16 +772,16 @@ export async function POST(req: Request) {
   try {
     prunedMessages = shouldPrune
       ? await (async () => {
-          console.log(`🔧 Pruning messages: ${messages.length} messages`);
-          const pruned = pruneMessages({
-            reasoning: 'none',
-            messages: await convertToModelMessages(preprocessedMessages),
-            toolCalls: 'before-last-3-messages',
-            emptyMessages: 'remove',
-          });
-          console.log(`✂️ Pruned to ${pruned.length} messages`);
-          return pruned;
-        })()
+        console.log(`🔧 Pruning messages: ${messages.length} messages`);
+        const pruned = pruneMessages({
+          reasoning: 'none',
+          messages: await convertToModelMessages(preprocessedMessages),
+          toolCalls: 'before-last-3-messages',
+          emptyMessages: 'remove',
+        });
+        console.log(`✂️ Pruned to ${pruned.length} messages`);
+        return pruned;
+      })()
       : await convertToModelMessages(preprocessedMessages);
   } catch (err) {
     console.error('[search] convertToModelMessages failed:', err);
@@ -816,8 +816,8 @@ export async function POST(req: Request) {
             transient: true,
           });
           // Persist the real title now that we have it
-          await updateChatTitleById({ chatId: id, title }).catch(() => {});
-        }).catch(() => {});
+          await updateChatTitleById({ chatId: id, title }).catch(() => { });
+        }).catch(() => { });
       }
 
       const modelSupportsFunctionCalling = supportsFunctionCalling(effectiveModel);
@@ -938,7 +938,7 @@ Do NOT invent or guess execution results. If you run code, the actual output wil
           return undefined;
         },
         tools: (() => {
-          // Don't pass tools to models that don't support function calling (e.g. magpie, llama-3.3)
+          // Don't pass tools to models that don't support function calling (e.g. llama-3.3)
           // Passing tools to these models causes API errors — they respond fine without tools
           if (!modelSupportsFunctionCalling) {
             return {};

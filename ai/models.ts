@@ -122,7 +122,7 @@ export const models: Model[] = [
     requiresAuth: false,
     freeUnlimited: true,
     maxOutputTokens: 8192,
-    // Uses magpie-small API model: OpenAI-compatible function calling + <think> reasoning.
+    // MAGPiE supports standard OpenAI function calling + reasoning_content field.
     supportsFunctionCalling: true,
     supportsParallelToolCalling: false,
     documentSupport: false,
