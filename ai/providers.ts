@@ -10,15 +10,55 @@ import type { JSONValue } from 'ai';
 const SCX_BASE = (process.env.SCX_API_URL ?? 'https://api.scx.ai').replace(/\/v1\/?$/, '');
 const SCX_KEY = process.env.SCX_API_KEY ?? '';
 
-// ─── Magpie SSE normalizer ────────────────────────────────────────────────────
+// ─── SCX tool type IDs supported by the server-side agent loop ───────────────
+// These are the tools the SCX API can execute server-side for MAGPiE.
+// When Scira sends an OpenAI function-call schema, the MAGPiE fetch wrapper
+// converts it to this format so the SCX agent loop handles execution —
+// mirroring exactly what platform.scx.ai does in its custom fetch.
+const SCX_SUPPORTED_TOOL_TYPES = new Set([
+  'web_search', 'x_search', 'academic_search', 'youtube_search', 'reddit_search',
+  'retrieve', 'mcp_search', 'trove_search',
+  'movie_tv_search', 'trending_movies', 'trending_tv', 'mermaid_diagram',
+  'find_place_on_map', 'nearby_places_search', 'weather',
+  'text_translate', 'code_interpreter',
+  'flight_tracker', 'flight_live_tracker',
+  'stock_price', 'stock_chart', 'currency_converter',
+  'coin_data', 'coin_data_by_contract', 'coin_ohlc',
+  'travel_advisor', 'datetime', 'memory_manager', 'greeting',
+]);
+
+// ─── Magpie SSE normalizer + tool schema converter ───────────────────────────
 // Magpie streams with multiple `data:` lines per SSE event (no blank-line
 // separator between them). Per the SSE spec those lines are concatenated with
 // "\n", so JSON.parse("{chunk1}\n{chunk2}") fails. This fetch wrapper ensures
 // every `data:` line is flushed as its own standalone SSE event.
+//
+// Additionally, the SCX API does NOT accept OpenAI function-call schemas for
+// MAGPiE. Instead it accepts SCX type IDs: [{ type: 'web_search' }, ...].
+// This wrapper converts any OpenAI tools in the request body to that format.
 function createMagpieNormalizedFetch(): typeof fetch {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
   return async (url, init) => {
+    // Convert OpenAI function schemas → SCX type IDs before sending
+    if (init?.body && typeof init.body === 'string') {
+      try {
+        const body = JSON.parse(init.body);
+        if (Array.isArray(body.tools) && body.tools.length > 0) {
+          const scxTools = body.tools
+            .filter((t: { type: string; function?: { name: string } }) =>
+              t.type === 'function' && t.function?.name && SCX_SUPPORTED_TOOL_TYPES.has(t.function.name)
+            )
+            .map((t: { function: { name: string } }) => ({ type: t.function.name }));
+          body.tools = scxTools.length > 0 ? scxTools : undefined;
+          delete body.tool_choice; // SCX agent loop manages tool selection
+          init = { ...init, body: JSON.stringify(body) };
+        }
+      } catch {
+        // If body parsing fails, pass through unchanged
+      }
+    }
+
     const response = await fetch(url, init);
     if (!response.body) return response;
     if (!(response.headers.get('content-type') ?? '').includes('text/event-stream')) return response;
