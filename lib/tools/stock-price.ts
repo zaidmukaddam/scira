@@ -94,7 +94,7 @@ async function fetchYahooChart(symbol: string): Promise<YahooQuote | null> {
 }
 
 export const stockPriceTool = tool({
-  description: 'Get the latest stock price. Supports US and Australian (ASX) stocks.',
+  description: 'Get the current (real-time) stock price for any publicly listed company. Use this for ANY question about share prices, stock value, market price, or ticker symbols — including US stocks (NYSE, NASDAQ) and Australian ASX-listed stocks (e.g. CBA, BHP, NAB, WBC). Always prefer this tool over any search or archive tool when the user asks about a stock price or the value of shares.',
   inputSchema: z.object({
     symbol: z.string().describe('Stock symbol (e.g., AAPL, NVDA, CBA.AX)'),
     preferredExchange: z.string().nullish().describe('Preferred exchange: "ASX" or "NYSE"'),

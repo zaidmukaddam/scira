@@ -50,7 +50,7 @@ interface NewsGroup {
 
 export const stockChartTool = tool({
   description:
-    'Get stock data and news for companies using natural language. Valyu will resolve company names to stock tickers automatically.',
+    'Get detailed stock market data, price charts, financial metrics, and company news. Use for questions about stock performance over time, price history, market cap, earnings, or financial analysis of any publicly traded company (US or ASX). Valyu resolves company names to tickers automatically — you can pass "Commonwealth Bank" or "CBA". Always prefer this over archive or search tools for any stock, share, or financial market query.',
   inputSchema: z.object({
     title: z.string().describe('The title of the chart.'),
     news_queries: z.array(z.string()).describe('The news queries to search for.'),

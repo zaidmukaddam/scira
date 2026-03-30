@@ -1269,7 +1269,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                 <CheckIcon className="size-4 text-primary shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-foreground">Access more models</p>
-                  <p className="text-xs text-muted-foreground">GPT-OSS 120B, SCX Coder, and MAGPiE coming soon</p>
+                  <p className="text-xs text-muted-foreground">GPT-OSS 120B, SCX Coder, MAGPiE and more</p>
                 </div>
               </div>
 
@@ -4283,7 +4283,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
                 <CheckIcon className="size-4 text-primary shrink-0" />
                 <div>
                   <p className="text-sm font-medium text-foreground">Access more models</p>
-                  <p className="text-xs text-muted-foreground">GPT-OSS 120B, SCX Coder, and MAGPiE coming soon</p>
+                  <p className="text-xs text-muted-foreground">GPT-OSS 120B, SCX Coder, MAGPiE and more</p>
                 </div>
               </div>
 

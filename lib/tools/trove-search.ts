@@ -216,7 +216,7 @@ const searchTrove = async (
 
 export const troveSearchTool = tool({
   description:
-    "Search the National Library of Australia's Trove archive for historical Australian content including newspapers, books, images, and more. Best for content before 2020. ALWAYS extract the search terms from the user's message and use them as the query parameter. The query parameter is MANDATORY and cannot be empty.",
+    "Search the National Library of Australia's Trove archive for HISTORICAL Australian cultural content: old newspapers, books, photographs, maps, and archives. Use ONLY for historical research, genealogy, digitised publications, or archival records — content that is typically from before 2020. DO NOT use this tool for stock prices, share prices, financial data, ASX listings, company financials, or any real-time or current market information. For stock or financial queries, always use the stockPrice or stockChart tools instead.",
   inputSchema: z.object({
     query: z
       .string()

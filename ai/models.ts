@@ -39,7 +39,7 @@ export interface Model {
 // value no longer matches any active model (e.g. after a model is removed).
 // Must be a value that exists in the models array below, requires no auth,
 // and has freeUnlimited: true so it works for all users on first visit.
-// Note: 'magpie' is marked comingSoon. Llama 4 is the free default for all users.
+// Llama 4 is the free default for all users.
 export const DEFAULT_MODEL = 'llama-4';
 
 // Active models shown in the UI
@@ -111,8 +111,8 @@ export const models: Model[] = [
   {
     value: 'magpie',
     label: 'SCX MAGPiE',
-    description: "Coming soon — Australia's first sovereign AI, trained on local laws, culture, and context.",
-    comingSoon: true,
+    description: "Australia's first sovereign AI, trained on local laws, culture, and context.",
+    comingSoon: false,
     vision: false,
     reasoning: true,
     experimental: true,
@@ -122,8 +122,11 @@ export const models: Model[] = [
     requiresAuth: false,
     freeUnlimited: true,
     maxOutputTokens: 8192,
-    // MAGPiE uses its own <|call|> tool protocol, NOT OpenAI function calling.
-    // Injecting OpenAI-style function schemas breaks its response format.
+    // MAGPiE uses its own <|call|> reasoning protocol, NOT OpenAI function calling.
+    // Injecting OpenAI-style tool schemas into the request breaks MAGPiE's response
+    // format entirely — it emits nothing and no assistant message is saved.
+    // The magpieProtocolMiddleware already strips <|call|> tokens from the text so
+    // MAGPiE's internal reasoning is clean. External tool calling is not supported.
     supportsFunctionCalling: false,
     supportsParallelToolCalling: false,
     documentSupport: false,
