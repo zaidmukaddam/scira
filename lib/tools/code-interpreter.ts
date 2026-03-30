@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { Daytona } from '@daytonaio/sdk';
 import { serverEnv } from '@/env/server';
 import { SNAPSHOT_NAME } from '@/lib/constants';
+import { getCurrentChatId } from '@/lib/sandbox-context';
+import { getOrCreateSandbox, executeInSandbox } from '@/lib/sandbox-manager';
 
 export const codeInterpreterTool = tool({
   description: 'Write and execute Python code.',
@@ -23,6 +25,15 @@ export const codeInterpreterTool = tool({
     console.log('Title:', title);
     console.log('Icon:', icon);
 
+    const chatId = getCurrentChatId();
+
+    if (chatId) {
+      await getOrCreateSandbox(chatId);
+      const result = await executeInSandbox(chatId, code);
+      const message = result.stdout || result.result;
+      return { message: message.trim(), chart: undefined };
+    }
+
     const daytona = new Daytona({
       apiKey: serverEnv.DAYTONA_API_KEY,
       target: 'us',
@@ -33,9 +44,6 @@ export const codeInterpreterTool = tool({
     });
 
     const execution = await sandbox.process.codeRun(code);
-
-    console.log('Execution:', execution.result);
-    console.log('Execution:', execution.artifacts?.stdout);
 
     let message = '';
 
@@ -49,12 +57,7 @@ export const codeInterpreterTool = tool({
       message += execution.result;
     }
 
-    if (execution.artifacts?.charts) {
-      console.log('Chart:', execution.artifacts.charts[0]);
-    }
-
     let chart;
-
     if (execution.artifacts?.charts) {
       chart = execution.artifacts.charts[0];
     }

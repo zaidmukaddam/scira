@@ -6,8 +6,30 @@ import Redis from 'ioredis';
 import * as schema from './schema';
 import { Pool } from 'pg';
 
-// Create Redis client
-const redis = new Redis(serverEnv.REDIS_URL);
+// Create Redis client with fail-fast settings so a broken Redis connection
+// never blocks DB queries or causes hanging requests:
+//   • enableOfflineQueue: false  — reject commands immediately when disconnected
+//     instead of queueing them indefinitely (the default true causes 57-min hangs)
+//   • connectTimeout / commandTimeout — bail out quickly rather than waiting forever
+//   • maxRetriesPerRequest: 1     — one retry then throw, not infinite retries
+//   • lazyConnect: true           — don't block the process at startup
+const redis = new Redis(serverEnv.REDIS_URL, {
+  enableOfflineQueue: false,
+  connectTimeout: 2_000,
+  commandTimeout: 1_500,
+  maxRetriesPerRequest: 1,
+  lazyConnect: true,
+  retryStrategy: (times: number) => {
+    // Exponential back-off up to 10 s, then stop retrying
+    if (times > 5) return null; // null = stop retrying
+    return Math.min(times * 500, 10_000);
+  },
+});
+
+// Surface ioredis errors instead of crashing with "Unhandled error event"
+redis.on('error', (err: Error) => {
+  console.error('[ioredis] connection error:', err.message);
+});
 
 // Create shared cache instance
 const cache = new RedisDrizzleCache({

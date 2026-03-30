@@ -16,7 +16,18 @@ export async function getRedisClient(): Promise<RedisClientType | null> {
 
   if (!redis) {
     try {
-      redis = createClient({ url: process.env.REDIS_URL });
+      redis = createClient({
+        url: process.env.REDIS_URL,
+        socket: {
+          // Bail out quickly instead of hanging indefinitely
+          connectTimeout: 2_000,
+          // Reconnect with back-off (max 10 s) up to 6 attempts then give up
+          reconnectStrategy: (retries: number) => {
+            if (retries > 5) return new Error('Redis max retries reached');
+            return Math.min(retries * 500, 10_000);
+          },
+        },
+      });
 
       redis.on('error', (err: Error) => {
         console.error('Redis connection error:', err.message);

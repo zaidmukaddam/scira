@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { Check, Copy, WrapText, ArrowLeftRight, Download, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { jsonrepair } from 'jsonrepair';
 
 interface MarkdownRendererProps {
   content: string;
@@ -240,6 +241,62 @@ const SyncCodeBlock: React.FC<CodeBlockProps> = ({ language, children, elementKe
     </div>
   );
 };
+
+function PreviewUrlBlock({ url, title, srcdoc }: { url: string; title: string; srcdoc?: string }) {
+  const hasContent = Boolean(srcdoc || url);
+
+  // Auto-open the side panel as soon as this block mounts (i.e. when the
+  // model finishes generating the code and the preview is ready).
+  useEffect(() => {
+    if (!hasContent) return;
+    window.dispatchEvent(
+      new CustomEvent('scx-open-preview', { detail: { url, title, srcdoc } }),
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only fire once on mount
+
+  const handleReopen = useCallback(() => {
+    window.dispatchEvent(
+      new CustomEvent('scx-open-preview', { detail: { url, title, srcdoc } }),
+    );
+  }, [url, title, srcdoc]);
+
+  const handleOpenTab = useCallback(() => {
+    if (srcdoc) {
+      const blob = new Blob([srcdoc], { type: 'text/html' });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank', 'noopener,noreferrer');
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+    } else if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  }, [url, srcdoc]);
+
+  return (
+    <div className="my-3 flex items-center gap-3 rounded-lg border border-border bg-muted/50 px-4 py-3">
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium truncate">{title || 'Preview'}</p>
+        <p className="text-xs text-muted-foreground">
+          {srcdoc ? 'Running in isolated preview panel' : (url || 'Preparing preview…')}
+        </p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <Button size="sm" variant="default" onClick={handleReopen} className="h-8 text-xs">
+          <Globe className="h-3.5 w-3.5 mr-1.5" />
+          Open Preview
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 text-xs"
+          onClick={handleOpenTab}
+        >
+          New Tab
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 const CodeBlock: React.FC<CodeBlockProps> = React.memo(
   ({ language, children, elementKey }) => {
@@ -1802,10 +1859,30 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(
           );
         },
         code(children, language) {
-          const key = getElementKey('code', String(children));
+          const raw = String(children);
+          const key = getElementKey('code', raw);
+
+          if (language === 'preview-url') {
+            try {
+              const data = JSON.parse(jsonrepair(raw.trim()));
+              if (data.url || data.srcdoc) {
+                return (
+                  <PreviewUrlBlock
+                    key={key}
+                    url={data.url || ''}
+                    title={data.title || 'Preview'}
+                    srcdoc={data.srcdoc}
+                  />
+                );
+              }
+            } catch {
+              // malformed JSON even after repair — fall through to normal code block
+            }
+          }
+
           return (
             <CodeBlock language={language} elementKey={key} key={key}>
-              {String(children)}
+              {raw}
             </CodeBlock>
           );
         },

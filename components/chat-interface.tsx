@@ -21,6 +21,8 @@ import { suggestQuestions, updateChatVisibility, getChatMeta, hasAcceptedTerms/*
 import { ExamplePrompts } from '@/components/chat-interface-components';
 import { ExampleCategories } from '@/components/example-categories';
 import { DynamicGreeting } from '@/components/dynamic-greeting';
+import { CodePreviewProvider, useCodePreview } from '@/hooks/use-code-preview';
+import { CodePreviewPanel } from '@/components/code-preview-panel';
 
 // Component imports
 import { ChatDialogs } from '@/components/chat-dialogs';
@@ -1059,7 +1061,8 @@ const ChatInterface = memo(
     );
 
     return (
-      <>
+      <CodePreviewProvider>
+        <PreviewEventBridge />
         <AppSidebar
           chatId={initialChatId || (messages.length > 0 ? chatId : null)}
           selectedVisibilityType={chatState.selectedVisibilityType}
@@ -1629,10 +1632,32 @@ const ChatInterface = memo(
             </AlertDialogContent>
           </AlertDialog>
         )}
-      </>
+        <CodePreviewPanel />
+      </CodePreviewProvider>
     );
   },
 );
+
+function PreviewEventBridge() {
+  const { openPreview } = useCodePreview();
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as {
+        url?: string;
+        title?: string;
+        srcdoc?: string;
+      };
+      if (detail?.url || detail?.srcdoc) {
+        openPreview(detail.url || '', detail.title, detail.srcdoc);
+      }
+    };
+    window.addEventListener('scx-open-preview', handler);
+    return () => window.removeEventListener('scx-open-preview', handler);
+  }, [openPreview]);
+
+  return null;
+}
 
 // Add a display name for the memoized component for better debugging
 ChatInterface.displayName = 'ChatInterface';
