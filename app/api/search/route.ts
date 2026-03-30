@@ -37,6 +37,7 @@ import {
 import {
   createStreamId,
   getChatByIdForValidation,
+  getStreamIdsByChatId,
   saveChat,
   saveChatAndStreamId,
   saveMessages,
@@ -68,7 +69,7 @@ import {
   trendingMoviesTool,
   trendingTvTool,
   academicSearchTool,
-  // youtubeSearchTool, // commented out
+  youtubeSearchTool,
   retrieveTool,
   weatherTool,
   codeInterpreterTool,
@@ -90,6 +91,7 @@ import {
   travelAdvisorTool,
   ragSearchTool,
   memoryManagerTool,
+  mcpSearchTool,
 } from '@/lib/tools';
 import { generateDocumentTool } from '@/lib/tools/generate-document';
 import { ChatMessage } from '@/lib/types';
@@ -956,21 +958,22 @@ Do NOT invent or guess execution results. If you run code, the actual output wil
             x_search: xSearchTool(dataStream),
             web_search: webSearchTool(dataStream, searchProvider),
             academic_search: academicSearchTool(dataStream),
-            // youtube_search: youtubeSearchTool,
+            youtube_search: youtubeSearchTool,
             reddit_search: redditSearchTool(dataStream),
+            mcp_search: mcpSearchTool,
             retrieve: retrieveTool,
 
-            movie_or_tv_search: movieTvSearchTool,
+            movie_tv_search: movieTvSearchTool,
             trending_movies: trendingMoviesTool,
             trending_tv: trendingTvTool,
 
             find_place_on_map: findPlaceOnMapTool,
             nearby_places_search: nearbyPlacesSearchTool,
-            get_weather_data: weatherTool,
+            weather: weatherTool,
 
             text_translate: textTranslateTool,
             code_interpreter: codeInterpreterTool,
-            track_flight: flightTrackerTool,
+            flight_tracker: flightTrackerTool,
             flight_live_tracker: flightLiveTrackerTool,
             mermaid_diagram: mermaidDiagramTool,
             trove_search: troveSearchTool,
@@ -1219,4 +1222,44 @@ Do NOT invent or guess execution results. If you run code, the actual output wil
     },
   });
   return createUIMessageStreamResponse({ stream });
+}
+
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const chatId = searchParams.get('chatId');
+
+  if (!chatId) {
+    return new Response('Missing chatId', { status: 400 });
+  }
+
+  const lightweightUser = await getLightweightUser();
+  if (!lightweightUser?.userId) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  const streamContext = getStreamContext();
+  if (!streamContext) {
+    return new Response(null, { status: 204 });
+  }
+
+  const streamIds = await getStreamIdsByChatId({ chatId });
+  if (!streamIds.length) {
+    return new Response(null, { status: 204 });
+  }
+
+  const recentStreamId = streamIds.at(-1)!;
+  const stream = await streamContext.resumeExistingStream(recentStreamId);
+
+  if (stream == null) {
+    return new Response(null, { status: 204 });
+  }
+
+  return new Response(stream, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'X-Vercel-AI-Data-Stream': 'v1',
+    },
+  });
 }

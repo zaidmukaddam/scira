@@ -96,10 +96,20 @@ async function fetchYahooChart(symbol: string): Promise<YahooQuote | null> {
 export const stockPriceTool = tool({
   description: 'Get the current (real-time) stock price for any publicly listed company. Use this for ANY question about share prices, stock value, market price, or ticker symbols — including US stocks (NYSE, NASDAQ) and Australian ASX-listed stocks (e.g. CBA, BHP, NAB, WBC). Always prefer this tool over any search or archive tool when the user asks about a stock price or the value of shares.',
   inputSchema: z.object({
-    symbol: z.string().describe('Stock symbol (e.g., AAPL, NVDA, CBA.AX)'),
+    symbol: z.string().optional().describe('Stock symbol (e.g., AAPL, NVDA, CBA.AX)'),
+    ticker: z.string().optional().describe('Alias for symbol — stock ticker (e.g., AAPL, NVDA, CBA.AX)'),
     preferredExchange: z.string().nullish().describe('Preferred exchange: "ASX" or "NYSE"'),
   }),
-  execute: async ({ symbol, preferredExchange }: { symbol: string; preferredExchange?: string | null }) => {
+  execute: async ({ symbol, ticker, preferredExchange }: { symbol?: string; ticker?: string; preferredExchange?: string | null }) => {
+    const resolvedSymbol = symbol ?? ticker ?? '';
+    if (!resolvedSymbol) {
+      return { success: false, error: 'No stock symbol provided', symbol: '' };
+    }
+    return executeStockPrice(resolvedSymbol, preferredExchange);
+  },
+});
+
+async function executeStockPrice(symbol: string, preferredExchange?: string | null) {
     const start = Date.now();
     const displaySymbol = formatSymbolForDisplay(symbol);
     const isASX = isASXStock(symbol) || preferredExchange?.toUpperCase() === 'ASX';
@@ -166,5 +176,4 @@ export const stockPriceTool = tool({
       console.error('Error getting stock price:', errorMessage);
       return { success: false, error: `Failed to retrieve stock price: ${errorMessage}`, symbol: displaySymbol };
     }
-  },
-});
+}

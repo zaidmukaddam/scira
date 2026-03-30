@@ -612,7 +612,7 @@ const ChatInterface = memo(
         // Only generate suggested questions if authenticated user or private chat
         if (message.parts && message.role === 'assistant' && (user || chatState.selectedVisibilityType === 'private')) {
           const lastPart = message.parts[message.parts.length - 1];
-          const lastPartText = lastPart.type === 'text' ? lastPart.text : '';
+          const lastPartText = lastPart?.type === 'text' ? lastPart.text : '';
           const newHistory = [
             { role: 'user', content: lastSubmittedQueryRef.current },
             { role: 'assistant', content: lastPartText },
