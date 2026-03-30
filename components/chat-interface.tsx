@@ -478,6 +478,12 @@ const ChatInterface = memo(
     const extremeSearchProviderRef = useRef(extremeSearchProvider);
     const selectedConnectorsRef = useRef(selectedConnectors);
 
+    // Tracks whether the last message is an assistant response.
+    // Used by the visibilitychange handler to avoid calling resumeStream() when
+    // the response already arrived while the tab was backgrounded — doing so
+    // would fetch a now-empty server-side stream and wipe the rendered messages.
+    const lastMessageRoleRef = useRef<string | undefined>(undefined);
+
     // Update refs whenever state changes - this ensures we always have current values
     selectedModelRef.current = selectedModel;
     selectedGroupRef.current = effectiveSelectedGroup;
@@ -724,22 +730,38 @@ const ChatInterface = memo(
       }
     }, [initialChatId, messages.length, chatId]);
 
+    // Keep the last-message role ref in sync so the visibility handler always
+    // sees the current value without needing messages in its dependency array.
+    useEffect(() => {
+      lastMessageRoleRef.current = (messages as ChatMessage[]).at(-1)?.role;
+    });
+
     // When the user returns to the tab, try to reconnect an interrupted stream.
     // The browser suspends SSE connections in backgrounded tabs; on resume the
-    // hook is stuck in 'streaming'/'submitted' but receiving no data.
-    // Calling resumeStream() re-establishes the connection so the response
-    // continues (or replays the finished response from the resumable-stream store).
+    // hook may be stuck in 'streaming'/'submitted' but receiving no data.
     useEffect(() => {
       const handleVisibilityChange = () => {
         if (document.hidden) return;
-        if (status === 'streaming' || status === 'submitted') {
-          console.log('[visibility] Tab restored with stuck status:', status, '— attempting resume');
-          resumeStream();
+        if (status !== 'streaming' && status !== 'submitted') return;
+
+        // If there is already an assistant message rendered, the stream finished
+        // while the tab was hidden and the response is already on screen.
+        // Calling resumeStream() in this state fetches a completed (empty)
+        // server-side stream, which causes useChat to reset the messages array
+        // and wipe the response the user is about to read.
+        // Instead, just call stop() to clear the stuck status flag.
+        if (lastMessageRoleRef.current === 'assistant') {
+          console.log('[visibility] Response already present — clearing stuck status without resume');
+          stop();
+          return;
         }
+
+        console.log('[visibility] Tab restored with stuck status:', status, '— attempting resume');
+        resumeStream();
       };
       document.addEventListener('visibilitychange', handleVisibilityChange);
       return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-    }, [status, resumeStream]);
+    }, [status, resumeStream, stop]);
 
     // Watchdog: if status stays 'submitted' or 'streaming' for more than 90 seconds
     // without transitioning to 'ready' (e.g. silent TCP disconnect, Vercel timeout),

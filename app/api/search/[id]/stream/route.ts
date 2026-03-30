@@ -87,8 +87,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
     const messageCreatedAt = new Date(mostRecentMessage.createdAt);
 
-    if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) > 15) {
-      console.log('Most recent message is too old');
+    // Use a generous window (5 minutes) so that users who background the tab
+    // while a response is streaming — and come back after the response has
+    // finished saving — still get the message replayed rather than an empty
+    // stream that would wipe the messages already rendered in the browser.
+    if (differenceInSeconds(resumeRequestedAt, messageCreatedAt) > 300) {
+      console.log('Most recent message is too old to replay');
       return new Response(emptyDataStream, { status: 200 });
     }
 
