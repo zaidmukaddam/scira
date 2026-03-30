@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { ChatInterface } from '@/components/chat-interface';
 import { getUser } from '@/lib/auth-utils';
-import { getChatWithUserAndInitialMessages } from '@/lib/db/chat-queries';
+import { getChatWithInitialMessages } from '@/lib/db/chat-queries';
 import { getChatById } from '@/lib/db/queries';
 import { Message, type Chat } from '@/lib/db/schema';
 import { Metadata } from 'next';
@@ -244,40 +244,41 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const { id } = params;
 
-  console.log('🔍 [PAGE] Starting optimized chat page load for:', id);
+  console.log('🔍 [PAGE] Starting chat page load for:', id);
   const pageStartTime = Date.now();
 
-  // Get user first for ownership checks
-  const user = await getUser();
-
-  // Use optimized combined query to get chat, user, and messages in fewer DB calls
-  const { chat, messages: messagesFromDb } = await getChatWithUserAndInitialMessages({
-    id,
-    messageLimit: 20,
-    messageOffset: 0,
-  });
+  // Run user auth and chat existence check in parallel.
+  // fetchChatWithBackoff retries for up to 15 s to handle the race condition
+  // where the client navigates to /search/[id] before POST /api/search has
+  // finished writing the new chat row to the database.
+  const [user, chat] = await Promise.all([getUser(), fetchChatWithBackoff(id)]);
 
   if (!chat) {
+    console.warn('[PAGE] Chat not found after backoff, returning 404 for:', id);
     notFound();
   }
 
-  console.log('Chat: ', chat);
-  console.log('Messages from DB: ', messagesFromDb);
-
-  // Check visibility and ownership
+  // Ownership / visibility gate — evaluated before fetching messages to fail fast.
   if (chat.visibility === 'private') {
-    if (!user) {
-      return notFound();
-    }
-
-    if (user.id !== chat.userId) {
+    if (!user || user.id !== chat.userId) {
       return notFound();
     }
   }
 
-  const initialMessages = convertToUIMessages(messagesFromDb);
+  // Chat is confirmed to exist — now fetch its messages.
+  // If the DB or cache layer is temporarily unhealthy we serve the page with an
+  // empty list so the live SSE stream can still populate the UI.  This prevents
+  // a transient Redis/DB error from bouncing the user to a 404 or error page.
+  let messagesFromDb: Message[] = [];
+  try {
+    const result = await getChatWithInitialMessages({ id, messageLimit: 20 });
+    messagesFromDb = result.messages;
+  } catch (err) {
+    console.error('[PAGE] Failed to fetch initial messages for chat', id, err);
+    // Continue with empty messages — the stream will fill in the response.
+  }
 
-  // Determine if the current user owns this chat
+  const initialMessages = convertToUIMessages(messagesFromDb);
   const isOwner = user ? user.id === chat.userId : false;
 
   const pageLoadTime = (Date.now() - pageStartTime) / 1000;

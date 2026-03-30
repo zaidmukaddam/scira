@@ -31,8 +31,12 @@ export function useAutoResume({
     messagesRef.current = messages;
   });
 
+  // Guard so we only ever call resumeStream() once per component mount,
+  // even if autoResume or resumeStream change reference after the initial render.
+  const hasFiredRef = useRef(false);
+
   useEffect(() => {
-    if (!autoResume) {
+    if (!autoResume || hasFiredRef.current) {
       return;
     }
 
@@ -46,12 +50,12 @@ export function useAutoResume({
     const mostRecentMessage = initialMessages.at(-1);
 
     if (mostRecentMessage?.role === "user") {
+      hasFiredRef.current = true;
       resumeStream();
     }
 
-    // we intentionally run this once
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoResume, initialMessages.at, resumeStream]);
+  }, [autoResume, initialMessages, resumeStream, status]);
 
   useEffect(() => {
     if (!dataStream || dataStream.length === 0) {

@@ -55,7 +55,9 @@ export async function getChatWithInitialMessages({
     };
   } catch (error) {
     console.error('Error in getChatWithInitialMessages:', error);
-    throw new ChatSDKError('bad_request:database', 'Failed to get chat with messages');
+    // Return a safe empty result so callers can decide how to handle the miss
+    // rather than propagating an exception that could cause a 404 / error page.
+    return { chat: null, messages: [], hasMoreMessages: false };
   }
 }
 
@@ -119,7 +121,8 @@ export async function getChatWithUserAndInitialMessages({
     };
   } catch (error) {
     console.error('Error in getChatWithUserAndInitialMessages:', error);
-    throw new ChatSDKError('bad_request:database', 'Failed to get chat with user and messages');
+    // Return a safe empty result so callers can handle the miss gracefully.
+    return { chat: null, user: null, messages: [], hasMoreMessages: false };
   }
 }
 
