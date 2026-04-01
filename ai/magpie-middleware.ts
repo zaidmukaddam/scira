@@ -31,6 +31,37 @@ const CALL_TOKEN = '<|call|>';
 let reasoningSeq = 0;
 
 /**
+ * MAGPiE sometimes prints JSON tool arguments as plain text (e.g. `{"query":"..."}`) instead of
+ * using function-calling only. Those lines are not protocol tokens — strip standalone one-key payloads
+ * that match our web_search / stock_price schemas so users never see them.
+ */
+function isStandaloneToolArgJsonLine(line: string): boolean {
+  const t = line.trim();
+  if (t.length < 8 || !t.startsWith('{')) return false;
+  try {
+    const o = JSON.parse(t) as Record<string, unknown>;
+    if (typeof o !== 'object' || o === null || Array.isArray(o)) return false;
+    const keys = Object.keys(o);
+    if (keys.length !== 1) return false;
+    const k = keys[0];
+    if (k !== 'query' && k !== 'symbol') return false;
+    return typeof o[k] === 'string';
+  } catch {
+    return false;
+  }
+}
+
+function stripSpuriousStandaloneToolJsonLines(text: string): string {
+  if (!text) return text;
+  return text
+    .split('\n')
+    .filter((line) => !isStandaloneToolArgJsonLine(line))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+/**
  * Emit any <thinking>…</thinking> blocks found in `preamble` as reasoning-* stream
  * parts, then emit the cleaned answer text as text-* parts.
  */
@@ -75,6 +106,39 @@ function emitParsedBuffer(
   }
 }
 
+function splitBufferAndEmit(
+  controller: TransformStreamDefaultController | ReadableStreamDefaultController,
+  buffer: string,
+  latestTextId: string,
+  latestTextStartChunk: unknown,
+  logMiddleware: boolean,
+): void {
+  if (logMiddleware) {
+    console.log('[MAGPiE middleware] full buffer:\n', JSON.stringify(buffer));
+  }
+
+  const lastCallIdx = buffer.lastIndexOf(CALL_TOKEN);
+  let preamble: string;
+  let answer: string;
+  if (lastCallIdx !== -1) {
+    preamble = buffer.slice(0, lastCallIdx).replace(PROTOCOL_RE, '');
+    answer = buffer.slice(lastCallIdx + CALL_TOKEN.length).replace(PROTOCOL_RE, '').trim();
+  } else {
+    preamble = '';
+    answer = buffer.replace(PROTOCOL_RE, '').trim();
+  }
+
+  preamble = stripSpuriousStandaloneToolJsonLines(preamble);
+  answer = stripSpuriousStandaloneToolJsonLines(answer);
+
+  if (logMiddleware) {
+    console.log('[MAGPiE middleware] preamble:\n', JSON.stringify(preamble));
+    console.log('[MAGPiE middleware] answer:\n', JSON.stringify(answer));
+  }
+
+  emitParsedBuffer(controller, preamble, answer, latestTextId, latestTextStartChunk);
+}
+
 export const magpieProtocolMiddleware: LanguageModelMiddleware = {
   specificationVersion: 'v3',
 
@@ -89,28 +153,7 @@ export const magpieProtocolMiddleware: LanguageModelMiddleware = {
 
     const emitBuffer = (controller: TransformStreamDefaultController) => {
       if (!latestTextId || !latestTextStartChunk || !buffer) return;
-
-      if (logMiddleware) {
-        console.log('[MAGPiE middleware] full buffer:\n', JSON.stringify(buffer));
-      }
-
-      const lastCallIdx = buffer.lastIndexOf(CALL_TOKEN);
-      let preamble: string;
-      let answer: string;
-      if (lastCallIdx !== -1) {
-        preamble = buffer.slice(0, lastCallIdx).replace(PROTOCOL_RE, '');
-        answer = buffer.slice(lastCallIdx + CALL_TOKEN.length).replace(PROTOCOL_RE, '').trim();
-      } else {
-        preamble = '';
-        answer = buffer.replace(PROTOCOL_RE, '').trim();
-      }
-
-      if (logMiddleware) {
-        console.log('[MAGPiE middleware] preamble:\n', JSON.stringify(preamble));
-        console.log('[MAGPiE middleware] answer:\n', JSON.stringify(answer));
-      }
-
-      emitParsedBuffer(controller, preamble, answer, latestTextId, latestTextStartChunk);
+      splitBufferAndEmit(controller, buffer, latestTextId, latestTextStartChunk, logMiddleware);
     };
 
     const transformed = stream.pipeThrough(
@@ -170,17 +213,7 @@ export const magpieProtocolMiddleware: LanguageModelMiddleware = {
             (err) => {
               // Stream errored — emit whatever we buffered (including any reasoning) before closing
               if (latestTextId && latestTextStartChunk && buffer) {
-                const lastCallIdx = buffer.lastIndexOf(CALL_TOKEN);
-                let preamble: string;
-                let answer: string;
-                if (lastCallIdx !== -1) {
-                  preamble = buffer.slice(0, lastCallIdx).replace(PROTOCOL_RE, '');
-                  answer = buffer.slice(lastCallIdx + CALL_TOKEN.length).replace(PROTOCOL_RE, '').trim();
-                } else {
-                  preamble = '';
-                  answer = buffer.replace(PROTOCOL_RE, '').trim();
-                }
-                emitParsedBuffer(controller, preamble, answer, latestTextId, latestTextStartChunk);
+                splitBufferAndEmit(controller, buffer, latestTextId, latestTextStartChunk, logMiddleware);
               }
               controller.error(err);
             },

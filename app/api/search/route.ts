@@ -1037,7 +1037,7 @@ Do NOT invent or guess execution results. If you run code, the actual output wil
               `You are SCX MAGPiE, Australia's sovereign AI search assistant. Today is ${dateStr}.` +
               `\n\n${toolsLine}` +
               magpieKnowledgeFirst +
-              `\n\n## RULES\n- Use real function-calling only — do not fake tool JSON in the answer text.${webRules}\n- For greetings or questions answerable without tools, respond directly without calling tools.` +
+              `\n\n## RULES\n- Use real function-calling only — do not fake tool JSON in the answer text.${webRules}\n- Never print a line that is only JSON (e.g. \`{"query":"..."}\` or \`{"symbol":"..."}\`) in your reply; those are not visible answers. For greetings or questions answerable without tools, respond directly without calling tools.` +
               (customInstructions && (isCustomInstructionsEnabled ?? true)
                 ? `\n\nUser's custom instructions (follow at all costs): ${customInstructions.content}`
                 : '') +
