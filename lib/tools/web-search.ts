@@ -10,8 +10,11 @@ import { tavily, type TavilyClient } from '@tavily/core';
 
 /** Max queries per tool invocation — fewer = faster (each query may run in parallel). */
 export const WEB_SEARCH_MAX_QUERIES_PER_CALL = 4;
-/** Default results per query when omitted (lower = faster). */
-export const WEB_SEARCH_DEFAULT_MAX_RESULTS_PER_QUERY = 6;
+
+const envMax = Number(process.env.WEB_SEARCH_MAX_RESULTS_PER_QUERY);
+/** Default results per query when omitted (lower = faster). Override with WEB_SEARCH_MAX_RESULTS_PER_QUERY (1–20). */
+export const WEB_SEARCH_DEFAULT_MAX_RESULTS_PER_QUERY =
+  Number.isFinite(envMax) && envMax >= 1 && envMax <= 20 ? Math.floor(envMax) : 5;
 
 const extractDomain = (url: string | null | undefined): string => {
   if (!url || typeof url !== 'string') return '';

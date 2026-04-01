@@ -7,6 +7,7 @@ import {
   getCurrentUser,
   getLightweightUser,
 } from '@/app/actions';
+import { heuristicChatTitleFromMessage } from '@/lib/chat/heuristic-title';
 import {
   convertToModelMessages,
   streamText,
@@ -384,7 +385,7 @@ function initializeChatAndChecks({
   model,
 }: ChatInitializationParams): {
   criticalChecksPromise: Promise<CriticalChecksResult>;
-  chatInitializationPromise: Promise<{ isNewChat: boolean; chatTitle?: string; titlePromise?: Promise<string> }>;
+  chatInitializationPromise: Promise<{ isNewChat: boolean }>;
 } {
   // Unauthenticated users don't need chat validation
   if (!lightweightUser) {
@@ -400,11 +401,6 @@ function initializeChatAndChecks({
       chatInitializationPromise: Promise.resolve({ isNewChat: false }),
     };
   }
-
-  // Start title generation early (only needed for new chats)
-  const titleGenerationPromise = generateTitleFromUserMessage({
-    message: messages[messages.length - 1],
-  }).catch(() => 'New Chat');
 
   // Validate ownership once and get chat data
   const validatedChatPromise = chatQueryPromise.then((existingChat) => {
@@ -501,16 +497,15 @@ function initializeChatAndChecks({
       }
 
       if (!existingChat) {
-        // New chat: create chat + stream ID in a single transaction (one DB round trip instead of two).
-        // Title is filled in asynchronously once the title LLM call resolves.
+        // New chat: provisional title from first message (no extra LLM). Polished title runs after main stream completes.
         await saveChatAndStreamId({
           chatId: id,
           userId: lightweightUser.userId,
-          title: 'New Chat',
+          title: heuristicChatTitleFromMessage(messages[messages.length - 1]),
           visibility: selectedVisibilityType,
           streamId,
         });
-        return { isNewChat: true, titlePromise: titleGenerationPromise };
+        return { isNewChat: true };
       } else {
         // Existing chat: create stream ID (one DB write, unavoidable for resumable streams)
         await createStreamId({ streamId, chatId: id });
@@ -798,7 +793,11 @@ export async function POST(req: Request) {
   let customInstructionsResult: Awaited<typeof customInstructionsPromise>;
   let user: Awaited<typeof fullUserPromise>;
   let chatInitResult: Awaited<typeof chatInitializationPromise>;
-  let userPreferencesResult: Awaited<typeof userPreferencesPromise>;
+
+  // Preferences are not read on the search route; warming cache only — do not block TTFT.
+  if (lightweightUser) {
+    void userPreferencesPromise.catch(() => {});
+  }
 
   try {
     [
@@ -807,14 +806,12 @@ export async function POST(req: Request) {
       customInstructionsResult,
       user,
       chatInitResult,
-      userPreferencesResult,
     ] = await Promise.all([
       criticalChecksPromise,
       configPromise,
       customInstructionsPromise,
       fullUserPromise,
       chatInitializationPromise, // Must complete before streaming (especially for new chats)
-      userPreferencesPromise,
     ]);
   } catch (error) {
     if (error instanceof ChatSDKError) {
@@ -853,14 +850,17 @@ export async function POST(req: Request) {
   // Replace PDF/document file parts with extracted text so providers that don't
   // support raw file URLs (Groq, SCX) don't throw UnsupportedFunctionalityError.
   let preprocessedMessages: any[];
+  opStart = Date.now();
   try {
     preprocessedMessages = await preprocessMessagesForModel(messages);
   } catch (err) {
     console.error('[search] preprocessMessagesForModel failed:', err);
     preprocessedMessages = messages; // fall back to raw messages
   }
+  recordTiming('preprocess_messages', opStart);
 
   let prunedMessages: any[];
+  opStart = Date.now();
   try {
     prunedMessages = shouldPrune
       ? await (async () => {
@@ -878,6 +878,19 @@ export async function POST(req: Request) {
     return new Response(
       JSON.stringify({ error: 'Failed to process message history. Please refresh and try again.' }),
       { status: 400, headers: { 'Content-Type': 'application/json' } },
+    );
+  }
+  recordTiming('convert_prune_messages', opStart);
+
+  if (process.env.LOG_SEARCH_PERF === '1') {
+    const sum = preStreamTimings.reduce((acc, x) => acc + x.durationMs, 0);
+    console.log(
+      JSON.stringify({
+        tag: 'search_perf',
+        chatId: id,
+        pre_stream_phases_ms: preStreamTimings,
+        pre_stream_total_ms: sum,
+      }),
     );
   }
 
@@ -904,20 +917,6 @@ export async function POST(req: Request) {
         saveMessages({ messages: [userMessageToSave] }).catch((err) => {
           console.error('[search] Background user-message save failed:', err);
         });
-      }
-
-      // Stream chat title for new chats — title is generated asynchronously so the
-      // stream can start immediately without waiting for the title AI call to finish.
-      if (chatInitResult.isNewChat && chatInitResult.titlePromise) {
-        chatInitResult.titlePromise.then(async (title) => {
-          dataStream.write({
-            type: 'data-chat_title',
-            data: { title },
-            transient: true,
-          });
-          // Persist the real title now that we have it
-          await updateChatTitleById({ chatId: id, title }).catch(() => { });
-        }).catch(() => { });
       }
 
       const modelSupportsFunctionCalling = supportsFunctionCalling(effectiveModel);
@@ -1060,6 +1059,7 @@ Do NOT invent or guess execution results. If you run code, the actual output wil
         })(),
         providerOptions: {
           openai: {
+            // When supported, independent tool calls run in parallel within a step (lower latency than serial).
             parallelToolCalls: modelSupportsParallelToolCalling,
           },
         },
@@ -1309,6 +1309,32 @@ Do NOT invent or guess execution results. If you run code, the actual output wil
               }
             } catch (error) {
               console.error('Failed to track usage:', error);
+            }
+          }
+
+          if (chatInitResult.isNewChat && lightweightUser && event.finishReason === 'stop') {
+            const titleStart = Date.now();
+            try {
+              const title = await generateTitleFromUserMessage({
+                message: messages[messages.length - 1],
+              });
+              if (process.env.LOG_SEARCH_PERF === '1') {
+                console.log(
+                  JSON.stringify({
+                    tag: 'search_perf',
+                    chatId: id,
+                    title_llm_ms: Date.now() - titleStart,
+                  }),
+                );
+              }
+              dataStream.write({
+                type: 'data-chat_title',
+                data: { title },
+                transient: true,
+              });
+              await updateChatTitleById({ chatId: id, title }).catch(() => {});
+            } catch {
+              /* keep heuristic title */
             }
           }
         },

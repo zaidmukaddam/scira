@@ -14,6 +14,17 @@ const formatSymbolForDisplay = (symbol: string): string => {
   return u;
 };
 
+/** Yahoo expects ASX listings as TICKER.AX; bare "CBA" often returns no quote. */
+function resolveYahooSymbol(symbol: string, preferredExchange?: string | null): string {
+  const d = formatSymbolForDisplay(symbol.trim());
+  if (isASXStock(d)) return d;
+  if (preferredExchange?.toUpperCase() === 'ASX') {
+    const base = d.replace(/\.AX$/i, '').replace(/^ASX:/i, '');
+    if (base.length > 0) return `${base}.AX`;
+  }
+  return d;
+}
+
 const getMarketStatus = (isASX: boolean): { isOpen: boolean; message: string } => {
   const now = new Date();
   if (isASX) {
@@ -44,6 +55,24 @@ interface YahooQuote {
   longName: string;
   fullExchangeName: string;
   currency: string;
+}
+
+function hasNumericPrice(q: YahooQuote | null): q is YahooQuote {
+  return q != null && typeof q.regularMarketPrice === 'number' && !Number.isNaN(q.regularMarketPrice);
+}
+
+async function fetchYahooQuoteWithFallback(primary: string, fallback?: string): Promise<{ quote: YahooQuote | null; usedSymbol: string }> {
+  let quote = await fetchYahooQuote(primary);
+  if (!hasNumericPrice(quote)) quote = await fetchYahooChart(primary);
+  if (hasNumericPrice(quote)) return { quote, usedSymbol: primary };
+
+  if (fallback && fallback !== primary) {
+    let q2 = await fetchYahooQuote(fallback);
+    if (!hasNumericPrice(q2)) q2 = await fetchYahooChart(fallback);
+    if (hasNumericPrice(q2)) return { quote: q2, usedSymbol: fallback };
+  }
+
+  return { quote: null, usedSymbol: primary };
 }
 
 async function fetchYahooQuote(symbol: string): Promise<YahooQuote | null> {
@@ -111,19 +140,25 @@ export const stockPriceTool = tool({
 
 async function executeStockPrice(symbol: string, preferredExchange?: string | null) {
     const start = Date.now();
-    const displaySymbol = formatSymbolForDisplay(symbol);
-    const isASX = isASXStock(symbol) || preferredExchange?.toUpperCase() === 'ASX';
+    const resolved = resolveYahooSymbol(symbol, preferredExchange);
+    const isASX = isASXStock(resolved) || preferredExchange?.toUpperCase() === 'ASX';
     const marketStatus = getMarketStatus(isASX);
+    const displayForErrors = formatSymbolForDisplay(symbol.trim());
+
+    // If Yahoo has no data for bare "CBA", retry CBA.AX (common model mistake / AU tickers).
+    const plain = formatSymbolForDisplay(symbol.trim());
+    const asxFallback =
+      !isASXStock(plain) && /^[A-Z]{3,5}$/i.test(plain) && plain.length <= 5
+        ? `${plain.toUpperCase()}.AX`
+        : undefined;
+    const tryFallback = asxFallback && asxFallback !== resolved ? asxFallback : undefined;
 
     try {
-      // Direct Yahoo Finance API — no web search, no LLM extraction
-      let quote = await fetchYahooQuote(displaySymbol);
-      if (!quote) {
-        quote = await fetchYahooChart(displaySymbol);
-      }
+      const { quote, usedSymbol } = await fetchYahooQuoteWithFallback(resolved, tryFallback);
+      const displaySymbol = usedSymbol;
 
-      if (!quote || !quote.regularMarketPrice) {
-        return { success: false, error: `Could not fetch quote for ${displaySymbol}`, symbol: displaySymbol };
+      if (!hasNumericPrice(quote)) {
+        return { success: false, error: `Could not fetch quote for ${displayForErrors}`, symbol: displayForErrors };
       }
 
       const currency = quote.currency || (isASX ? 'AUD' : 'USD');
@@ -174,6 +209,6 @@ async function executeStockPrice(symbol: string, preferredExchange?: string | nu
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error getting stock price:', errorMessage);
-      return { success: false, error: `Failed to retrieve stock price: ${errorMessage}`, symbol: displaySymbol };
+      return { success: false, error: `Failed to retrieve stock price: ${errorMessage}`, symbol: displayForErrors };
     }
 }

@@ -39,6 +39,7 @@ import {
   searchChatsByTitleQuery,
 } from '@/lib/db/queries';
 import { getChatWithInitialMessages } from '@/lib/db/chat-queries';
+import { heuristicChatTitleFromMessage } from '@/lib/chat/heuristic-title';
 import { extractChatPreview } from '@/lib/search-utils';
 import { getDiscountConfig } from '@/lib/discount';
 import { get } from '@vercel/edge-config';
@@ -378,11 +379,6 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
     - not more than 4 words in the title
     - do not use any other text other than the title`,
     prompt,
-    providerOptions: {
-      gateway: {
-        only: ['google'],
-      },
-    },
   });
 
   return title;
@@ -2544,16 +2540,18 @@ export async function branchOutChat({
     const newUserMessageId = uuidv7();
     const newAssistantMessageId = uuidv7();
 
-    // Generate title from user message
-    const chatTitle = await generateTitleFromUserMessage({ message: userMessage });
+    const provisionalTitle = heuristicChatTitleFromMessage(userMessage);
 
-    // Create the new chat
     await saveChat({
       id: newChatId,
       userId: currentUser.id,
-      title: chatTitle,
+      title: provisionalTitle,
       visibility: 'private',
     });
+
+    void generateTitleFromUserMessage({ message: userMessage })
+      .then((title) => updateChatTitleById({ chatId: newChatId, title }))
+      .catch(() => {});
 
     // Prepare messages for saving
     const messagesToSave = [

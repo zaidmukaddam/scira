@@ -1264,9 +1264,11 @@ function fetchMetadata(url: string) {
   return metadataCache.get(url)!;
 }
 
-// Preload metadata for all citation URLs in the content
+const CITATION_PRELOAD_DEBOUNCE_MS = 400;
+const MAX_CITATION_PRELOAD_URLS = 12;
+
+// Preload metadata for citation URLs (capped and debounced on the caller to limit work while streaming).
 function preloadCitationMetadata(content: string) {
-  // Extract all citation URLs from content
   const citationPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
   const urls = new Set<string>();
   let match;
@@ -1278,10 +1280,10 @@ function preloadCitationMetadata(content: string) {
     }
   }
 
-  // Start fetching metadata for all URLs in the background
-  urls.forEach(url => {
+  const list = Array.from(urls).slice(0, MAX_CITATION_PRELOAD_URLS);
+  for (const url of list) {
     fetchMetadata(url);
-  });
+  }
 }
 
 const LinkPreviewContent = ({ href, title }: { href: string; title?: string }) => {
@@ -1632,11 +1634,11 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = React.memo(
     const { processedContent, citations: extractedCitations, citationGroups, latexBlocks, isProcessing } = useProcessedContent(content);
     const citationLinks = extractedCitations;
 
-    // Preload metadata for all citation URLs as content streams in
+    // Preload citation metadata after a short debounce so rapid streaming chunks do not spawn many parallel fetches.
     useEffect(() => {
-      if (!isUserMessage && content) {
-        preloadCitationMetadata(content);
-      }
+      if (isUserMessage || !content) return;
+      const t = window.setTimeout(() => preloadCitationMetadata(content), CITATION_PRELOAD_DEBOUNCE_MS);
+      return () => clearTimeout(t);
     }, [content, isUserMessage]);
 
     // Optimized element key generation using content hash instead of indices
