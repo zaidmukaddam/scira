@@ -5,32 +5,37 @@ import { serverEnv } from '@/env/server';
 export const weatherTool = tool({
   description: 'Get the weather data for a location using either location name or coordinates with OpenWeather API.',
   inputSchema: z.object({
+    // Models often emit explicit `null` for unused fields; `.optional()` alone rejects null.
     location: z
       .string()
-      .optional()
+      .nullish()
       .describe(
-        'The name of the location to get weather data for (e.g., "London", "New York", "Tokyo"). Required if latitude and longitude are not provided.',
+        'The name of the location to get weather data for (e.g., "London", "New York", "Tokyo"). Omit or null if latitude and longitude are set.',
       ),
-    latitude: z.number().optional().describe('The latitude coordinate. Required if location is not provided.'),
-    longitude: z.number().optional().describe('The longitude coordinate. Required if location is not provided.'),
+    latitude: z.number().nullish().describe('Latitude when known; omit or null if using location name only.'),
+    longitude: z.number().nullish().describe('Longitude when known; omit or null if using location name only.'),
   }),
   execute: async ({
-    location,
-    latitude,
-    longitude,
+    location: locationRaw,
+    latitude: latRaw,
+    longitude: lngRaw,
   }: {
     location?: string | null;
     latitude?: number | null;
     longitude?: number | null;
   }) => {
+    // Coerce null (sent by some models) to undefined so downstream checks work correctly
+    const location = locationRaw === null ? undefined : locationRaw;
+    const latitudeCoerced = latRaw === null ? undefined : latRaw;
+    const longitudeCoerced = lngRaw === null ? undefined : lngRaw;
     try {
-      let lat = latitude;
-      let lng = longitude;
+      let lat = latitudeCoerced;
+      let lng = longitudeCoerced;
       let locationName = location;
       let country: string | undefined;
       let timezone: string | undefined;
 
-      if (!location && (!latitude || !longitude)) {
+      if (!location && (!latitudeCoerced || !longitudeCoerced)) {
         throw new Error('Either location name or both latitude and longitude coordinates must be provided');
       }
 
@@ -78,10 +83,6 @@ export const weatherTool = tool({
         }
       }
 
-      console.log('Latitude:', lat);
-      console.log('Longitude:', lng);
-      console.log('Location:', locationName);
-
       const apiKey = serverEnv.OPENWEATHER_API_KEY;
       const [weatherResponse, airPollutionResponse, dailyForecastResponse] = await Promise.all([
         fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lng}&appid=${apiKey}`),
@@ -102,12 +103,6 @@ export const weatherTool = tool({
         `https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=${lat}&lon=${lng}&appid=${apiKey}`,
       );
       const airPollutionForecastData = await airPollutionForecastResponse.json();
-
-      console.log('Air pollution forecast data:', airPollutionForecastData);
-
-      console.log('Daily forecast data:', dailyForecastData);
-
-      console.log('Weather data:', weatherData);
 
       return {
         ...weatherData,

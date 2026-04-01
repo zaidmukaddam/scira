@@ -560,8 +560,8 @@ export const apiKeys = pgTable('api_keys', {
       'web_search', 'academic_search', 'youtube_search', 'reddit_search', 'x_search', 'extreme_search', 'trove_search',
       'code_interpreter', 'rag_search',
       'stock_price', 'stock_chart', 'stock_chart_simple', 'currency_converter', 'coin_data', 'coin_ohlc', 'coin_data_by_contract',
-      'weather', 'find_place_on_map', 'nearby_places_search', 'flight_tracker', 'flight_live_tracker', 'travel_advisor',
-      'movie_tv_search', 'trending_movies', 'trending_tv',
+      'get_weather_data', 'find_place_on_map', 'nearby_places_search', 'flight_tracker', 'flight_live_tracker', 'travel_advisor',
+      'movie_or_tv_search', 'trending_movies', 'trending_tv',
       'datetime', 'text_translate', 'mermaid_diagram', 'memory_manager', 'retrieve', 'greeting',
     ])
     .notNull(),

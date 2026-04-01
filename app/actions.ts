@@ -133,8 +133,6 @@ export async function getUserCountryCode() {
 export async function suggestQuestions(history: any[]) {
   'use server';
 
-  console.log(history);
-
   try {
     const { text } = await generateText({
       model: scira.languageModel('scira-follow-up'),
@@ -205,9 +203,7 @@ export async function getHomeSuggestions(
     // Cache-only lookup — always returns in milliseconds (cached or static).
     // Never blocks the UI waiting for LLM generation.
     const result = await getChatSuggestionsInstant(selectedModel, isProUser);
-    const elapsed = Date.now() - t0;
     const isCached = result.length > 0 && result[0].category !== undefined;
-    console.log(`[ACTION] getHomeSuggestions (${selectedModel}) completed in ${elapsed}ms — ${result.length} suggestions (${isCached ? 'cached' : 'static fallback'})`);
 
     // On cache miss, kick off background generation so the next request is cached.
     // Fire-and-forget — does not block the response.
@@ -225,8 +221,6 @@ export async function getHomeSuggestions(
 }
 
 export async function checkImageModeration(images: string[]) {
-  console.log('[ImageModeration] Checking', images.length, 'image(s)...');
-
   const messages: ModelMessage[] = images.map((image) => ({
     role: 'user',
     content: [{ type: 'image', image: image }],
@@ -251,7 +245,6 @@ Respond ONLY with the classification and nothing else. No explanations, no addit
       messages,
     });
     const result = text.trim().toLowerCase().startsWith('safe') ? 'safe' : text.trim();
-    console.log('[ImageModeration] Result:', result);
     return result;
   } catch (error) {
     console.error('[ImageModeration] Error calling moderation API:', error);
@@ -342,10 +335,8 @@ export async function checkTextModeration(text: string): Promise<{ violation: bo
 }
 
 export async function generateTitleFromUserMessage({ message }: { message: UIMessage }) {
-  const startTime = Date.now();
   const firstTextPart = message.parts.find((part) => part.type === 'text');
   const prompt = JSON.stringify(firstTextPart && firstTextPart.type === 'text' ? firstTextPart.text : '');
-  console.log('Prompt: ', prompt);
   const { text: title } = await generateText({
     model: scira.languageModel('scira-name'),
     temperature: 1,
@@ -367,11 +358,6 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
       },
     },
   });
-
-  console.log('Title: ', title);
-
-  const durationMs = Date.now() - startTime;
-  console.log(`⏱️ [USAGE] generateTitleFromUserMessage: Model took ${durationMs}ms`);
 
   return title;
 }
@@ -448,6 +434,7 @@ const groupTools = {
     'text_translate',
     'currency_converter',
     'stock_price',
+    'stock_chart_simple',
     'nearby_places_search',
     'find_place_on_map',
     'movie_or_tv_search',
@@ -471,7 +458,7 @@ const groupTools = {
   auto: [
     'web_search', 'retrieve', 'extreme_search',
     'get_weather_data', 'datetime', 'text_translate', 'currency_converter',
-    'stock_price', 'nearby_places_search', 'find_place_on_map',
+    'stock_price', 'stock_chart_simple', 'nearby_places_search', 'find_place_on_map',
     'trending_movies', 'trending_tv', 'movie_or_tv_search',
     'generate_document', 'code_interpreter',
   ] as const,
@@ -2436,17 +2423,13 @@ export async function bulkDeleteChats(chatIds: string[]) {
 export async function updateChatVisibility(chatId: string, visibility: 'private' | 'public') {
   'use server';
 
-  console.log('🔄 updateChatVisibility called with:', { chatId, visibility });
-
   if (!chatId) {
     console.error('❌ updateChatVisibility: No chatId provided');
     throw new Error('Chat ID is required');
   }
 
   try {
-    console.log('📡 Calling updateChatVisibilityById with:', { chatId, visibility });
     const result = await updateChatVisibilityById({ chatId, visibility });
-    console.log('✅ updateChatVisibilityById successful, result:', result);
 
     // Return a serializable plain object instead of raw database result
     return {
@@ -2484,7 +2467,6 @@ export async function deleteTrailingMessages({ id }: { id: string }) {
   'use server';
   try {
     const [message] = await getMessageById({ id });
-    console.log('Message: ', message);
 
     if (!message) {
       console.error(`No message found with id: ${id}`);
@@ -2495,8 +2477,6 @@ export async function deleteTrailingMessages({ id }: { id: string }) {
       chatId: message.chatId,
       timestamp: message.createdAt,
     });
-
-    console.log(`Successfully deleted trailing messages after message ID: ${id}`);
   } catch (error) {
     console.error(`Error deleting trailing messages: ${error}`);
     throw error; // Re-throw to allow caller to handle
@@ -2619,16 +2599,12 @@ export async function getUserMessageCount(providedUser?: any) {
     const cacheKey = createMessageCountKey(user.id);
     const cached = usageCountCache.get(cacheKey);
     if (cached !== null) {
-      console.log('⏱️ [USAGE] getUserMessageCount: cache hit');
       return { count: cached, error: null };
     }
 
-    const start = Date.now();
     const count = await getMessageCount({
       userId: user.id,
     });
-    const durationMs = Date.now() - start;
-    console.log(`⏱️ [USAGE] getUserMessageCount: DB usage lookup took ${durationMs}ms`);
 
     // Cache the result
     usageCountCache.set(cacheKey, count);
@@ -2653,16 +2629,12 @@ export async function getUserExtremeSearchCount(providedUser?: any) {
     const cacheKey = createExtremeCountKey(user.id);
     const cached = usageCountCache.get(cacheKey);
     if (cached !== null) {
-      console.log('⏱️ [USAGE] getUserExtremeSearchCount: cache hit');
       return { count: cached, error: null };
     }
 
-    const start = Date.now();
     const count = await getExtremeSearchCount({
       userId: user.id,
     });
-    const durationMs = Date.now() - start;
-    console.log(`⏱️ [USAGE] getUserExtremeSearchCount: DB usage lookup took ${durationMs}ms`);
 
     // Cache the result
     usageCountCache.set(cacheKey, count);
@@ -2711,16 +2683,12 @@ export async function getExtremeSearchUsageCount(providedUser?: any) {
     const cacheKey = createExtremeCountKey(user.id);
     const cached = usageCountCache.get(cacheKey);
     if (cached !== null) {
-      console.log('⏱️ [USAGE] getExtremeSearchUsageCount: cache hit');
       return { count: cached, error: null };
     }
 
-    const start = Date.now();
     const count = await getExtremeSearchCount({
       userId: user.id,
     });
-    const durationMs = Date.now() - start;
-    console.log(`⏱️ [USAGE] getExtremeSearchUsageCount: DB usage lookup took ${durationMs}ms`);
 
     // Cache the result
     usageCountCache.set(cacheKey, count);
@@ -3174,8 +3142,6 @@ export async function createScheduledLookout({
       qstashScheduleId: undefined, // Will be updated if needed
     });
 
-    console.log('📝 Created lookout in database:', lookout.id, 'Now scheduling with QStash...');
-
     // Small delay to ensure database transaction is committed
     await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -3183,9 +3149,6 @@ export async function createScheduledLookout({
     if (lookout.id) {
       try {
         if (frequency === 'once') {
-          console.log('⏰ Creating QStash one-time execution for lookout:', lookout.id);
-          console.log('📅 Scheduled time:', nextRunAt.toISOString());
-
           const delay = Math.floor((nextRunAt.getTime() - Date.now()) / 1000); // Delay in seconds
           const minimumDelay = Math.max(delay, 5); // At least 5 seconds to ensure DB consistency
 
@@ -3207,23 +3170,12 @@ export async function createScheduledLookout({
               delay: minimumDelay,
             });
 
-            console.log(
-              '✅ QStash one-time execution scheduled for lookout:',
-              lookout.id,
-              'with delay:',
-              minimumDelay,
-              'seconds',
-            );
-
             // For consistency, we don't store a qstashScheduleId for one-time executions
             // since they use the publish API instead of schedules API
           } else {
             throw new Error('Cannot schedule for a time in the past');
           }
         } else {
-          console.log('⏰ Creating QStash recurring schedule for lookout:', lookout.id);
-          console.log('📅 Cron schedule with timezone:', cronSchedule);
-
           const scheduleResponse = await qstash.schedules.create({
             // if dev env use localhost:3000/api/lookout, else use scira.ai/api/lookout
             destination:
@@ -3241,8 +3193,6 @@ export async function createScheduledLookout({
               'Content-Type': 'application/json',
             },
           });
-
-          console.log('✅ QStash recurring schedule created:', scheduleResponse.scheduleId, 'for lookout:', lookout.id);
 
           // Update lookout with QStash schedule ID
           await updateLookout({
@@ -3419,9 +3369,6 @@ export async function updateLookoutAction({
       try {
         // Delete old schedule
         await qstash.schedules.delete(lookout.qstashScheduleId);
-
-        console.log('⏰ Recreating QStash schedule for lookout:', id);
-        console.log('📅 Updated cron schedule with timezone:', cronSchedule);
 
         // Create new schedule with updated cron
         const scheduleResponse = await qstash.schedules.create({

@@ -23,9 +23,57 @@
  */
 
 import type { LanguageModelMiddleware } from 'ai';
+import { extractThinkingTags } from '@/ai/thinking-tags';
 
 const PROTOCOL_RE = /<\|[^|]*\|>/g;
 const CALL_TOKEN = '<|call|>';
+
+let reasoningSeq = 0;
+
+/**
+ * Emit any <thinking>…</thinking> blocks found in `preamble` as reasoning-* stream
+ * parts, then emit the cleaned answer text as text-* parts.
+ */
+function emitParsedBuffer(
+  controller: TransformStreamDefaultController | ReadableStreamDefaultController,
+  preamble: string,
+  answer: string,
+  textId: string,
+  textStartChunk: unknown,
+): void {
+  // Extract reasoning blocks from the preamble that was discarded after <|call|>.
+  const { parts: preambleParts } = extractThinkingTags(preamble);
+  for (const p of preambleParts) {
+    if (p.type === 'reasoning' && p.content) {
+      const rid = `magpie-reasoning-${reasoningSeq++}`;
+      controller.enqueue({ type: 'reasoning-start', id: rid });
+      controller.enqueue({ type: 'reasoning-delta', id: rid, delta: p.content });
+      controller.enqueue({ type: 'reasoning-end', id: rid });
+    }
+    // Non-reasoning parts in the preamble are protocol noise — discard.
+  }
+
+  // Also check the answer itself for any remaining <thinking> blocks (edge case).
+  const { parts: answerParts } = extractThinkingTags(answer);
+  let hasText = false;
+  for (const p of answerParts) {
+    if (p.type === 'reasoning' && p.content) {
+      const rid = `magpie-reasoning-${reasoningSeq++}`;
+      controller.enqueue({ type: 'reasoning-start', id: rid });
+      controller.enqueue({ type: 'reasoning-delta', id: rid, delta: p.content });
+      controller.enqueue({ type: 'reasoning-end', id: rid });
+    } else if (p.type === 'text' && p.content) {
+      if (!hasText) {
+        controller.enqueue(textStartChunk);
+        hasText = true;
+      }
+      controller.enqueue({ type: 'text-delta', id: textId, delta: p.content });
+    }
+  }
+  if (hasText) {
+    controller.enqueue({ type: 'text-end', id: textId });
+  }
+}
 
 export const magpieProtocolMiddleware: LanguageModelMiddleware = {
   specificationVersion: 'v3',
@@ -37,22 +85,32 @@ export const magpieProtocolMiddleware: LanguageModelMiddleware = {
     let latestTextStartChunk: any = null;
     let buffer = '';
 
+    const logMiddleware = process.env.LOG_MAGPIE_MIDDLEWARE === '1';
+
     const emitBuffer = (controller: TransformStreamDefaultController) => {
       if (!latestTextId || !latestTextStartChunk || !buffer) return;
 
-      let answer: string;
+      if (logMiddleware) {
+        console.log('[MAGPiE middleware] full buffer:\n', JSON.stringify(buffer));
+      }
+
       const lastCallIdx = buffer.lastIndexOf(CALL_TOKEN);
+      let preamble: string;
+      let answer: string;
       if (lastCallIdx !== -1) {
-        answer = buffer.slice(lastCallIdx + CALL_TOKEN.length);
+        preamble = buffer.slice(0, lastCallIdx).replace(PROTOCOL_RE, '');
+        answer = buffer.slice(lastCallIdx + CALL_TOKEN.length).replace(PROTOCOL_RE, '').trim();
       } else {
-        answer = buffer;
+        preamble = '';
+        answer = buffer.replace(PROTOCOL_RE, '').trim();
       }
-      const cleaned = answer.replace(PROTOCOL_RE, '').trim();
-      if (cleaned) {
-        controller.enqueue(latestTextStartChunk);
-        controller.enqueue({ type: 'text-delta', id: latestTextId, delta: cleaned });
-        controller.enqueue({ type: 'text-end', id: latestTextId });
+
+      if (logMiddleware) {
+        console.log('[MAGPiE middleware] preamble:\n', JSON.stringify(preamble));
+        console.log('[MAGPiE middleware] answer:\n', JSON.stringify(answer));
       }
+
+      emitParsedBuffer(controller, preamble, answer, latestTextId, latestTextStartChunk);
     };
 
     const transformed = stream.pipeThrough(
@@ -71,7 +129,13 @@ export const magpieProtocolMiddleware: LanguageModelMiddleware = {
           }
 
           if (chunk.type === 'text-delta') {
-            // Buffer instead of emitting; we need the full text to parse the protocol
+            // Upstream middleware may emit text-delta without a preceding text-start (e.g. Harmony
+            // flush fallback). Without ids, emitBuffer would no-op and the user sees a blank reply.
+            if (!latestTextId) {
+              const id = chunk.id ?? 'magpie-text';
+              latestTextId = id;
+              latestTextStartChunk = { type: 'text-start', id };
+            }
             buffer += chunk.delta ?? '';
             return;
           }
@@ -104,16 +168,19 @@ export const magpieProtocolMiddleware: LanguageModelMiddleware = {
               pump();
             },
             (err) => {
-              // Stream errored — emit whatever we buffered before closing
+              // Stream errored — emit whatever we buffered (including any reasoning) before closing
               if (latestTextId && latestTextStartChunk && buffer) {
                 const lastCallIdx = buffer.lastIndexOf(CALL_TOKEN);
-                const answer = lastCallIdx !== -1 ? buffer.slice(lastCallIdx + CALL_TOKEN.length) : buffer;
-                const cleaned = answer.replace(PROTOCOL_RE, '').trim();
-                if (cleaned) {
-                  controller.enqueue(latestTextStartChunk);
-                  controller.enqueue({ type: 'text-delta', id: latestTextId, delta: cleaned });
-                  controller.enqueue({ type: 'text-end', id: latestTextId });
+                let preamble: string;
+                let answer: string;
+                if (lastCallIdx !== -1) {
+                  preamble = buffer.slice(0, lastCallIdx).replace(PROTOCOL_RE, '');
+                  answer = buffer.slice(lastCallIdx + CALL_TOKEN.length).replace(PROTOCOL_RE, '').trim();
+                } else {
+                  preamble = '';
+                  answer = buffer.replace(PROTOCOL_RE, '').trim();
                 }
+                emitParsedBuffer(controller, preamble, answer, latestTextId, latestTextStartChunk);
               }
               controller.error(err);
             },

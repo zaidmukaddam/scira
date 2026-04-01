@@ -14,6 +14,7 @@ interface ReasoningPartViewProps {
   isFullscreen: boolean;
   setIsFullscreen: (v: boolean) => void;
   setIsExpanded: (v: boolean) => void;
+  thinkingLabel?: string;
 }
 
 // Type definition for table flags
@@ -179,7 +180,7 @@ const isEmptyContent = (content: string): boolean => {
 };
 
 export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
-  ({ part, sectionKey, parallelTool, isExpanded, isFullscreen, setIsFullscreen, setIsExpanded }) => {
+  ({ part, sectionKey, parallelTool, isExpanded, isFullscreen, setIsFullscreen, setIsExpanded, thinkingLabel }) => {
     const scrollRef = useRef<HTMLDivElement>(null);
     const isComplete = part.state === 'done';
 
@@ -236,14 +237,14 @@ export const ReasoningPartView: React.FC<ReasoningPartViewProps> = React.memo(
                     <div className="size-2.5 text-muted-foreground">
                       <SpinnerIcon />
                     </div>
-                    <span className="text-xs font-normal">Thinking</span>
+                    <span className="text-xs font-normal">{thinkingLabel ?? 'Thinking'}</span>
                     {parallelTool && <span className="text-xs font-normal opacity-60">({parallelTool})</span>}
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-1.5">
                   <Sparkles className="size-3 text-muted-foreground" strokeWidth={2} />
-                  <div className="text-xs font-normal text-muted-foreground">Reasoning</div>
+                  <div className="text-xs font-normal text-muted-foreground">{thinkingLabel ?? 'Reasoning'}</div>
                 </div>
               )}
             </div>

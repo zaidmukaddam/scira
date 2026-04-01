@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { and, asc, desc, eq, gt, gte, ilike, inArray, lt, type SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, gte, ilike, inArray, lt, sql, type SQL } from 'drizzle-orm';
 import {
   user,
   chat,
@@ -233,7 +233,18 @@ export async function saveMessages({ messages }: { messages: Array<Message> }) {
   if (!messages.length) return [];
 
   try {
-    return await db.insert(message).values(messages).onConflictDoNothing({ target: message.id });
+    // Upsert: retries or duplicate saves with the same message id must update content,
+    // otherwise onConflictDoNothing leaves stale parts and the UI can look empty or wrong.
+    return await db
+      .insert(message)
+      .values(messages)
+      .onConflictDoUpdate({
+        target: message.id,
+        set: {
+          parts: sql`excluded.parts`,
+          attachments: sql`excluded.attachments`,
+        },
+      });
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to save messages');
   }

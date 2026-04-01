@@ -8,6 +8,11 @@ import Parallel from 'parallel-web';
 import FirecrawlApp, { SearchResultWeb, SearchResultNews, SearchResultImages, Document } from '@mendable/firecrawl-js';
 import { tavily, type TavilyClient } from '@tavily/core';
 
+/** Max queries per tool invocation — fewer = faster (each query may run in parallel). */
+export const WEB_SEARCH_MAX_QUERIES_PER_CALL = 4;
+/** Default results per query when omitted (lower = faster). */
+export const WEB_SEARCH_DEFAULT_MAX_RESULTS_PER_QUERY = 6;
+
 const extractDomain = (url: string | null | undefined): string => {
   if (!url || typeof url !== 'string') return '';
   const urlPattern = /^https?:\/\/([^/?#]+)(?:[/?#]|$)/i;
@@ -117,8 +122,7 @@ class ParallelSearchStrategy implements SearchStrategy {
       dataStream?: UIMessageStreamWriter<ChatMessage>;
     },
   ) {
-    // Limit queries to first 5 for Parallel AI
-    const limitedQueries = queries.slice(0, 5);
+    const limitedQueries = queries.slice(0, WEB_SEARCH_MAX_QUERIES_PER_CALL);
     console.log('Using Parallel AI batch processing for queries:', limitedQueries);
 
     // Send start notifications for all queries
@@ -139,7 +143,7 @@ class ParallelSearchStrategy implements SearchStrategy {
     try {
       const perQueryPromises = limitedQueries.map(async (query, index) => {
         const currentQuality = options.quality[index] || options.quality[0] || 'default';
-        const currentMaxResults = options.maxResults[index] || options.maxResults[0] || 10;
+        const currentMaxResults = options.maxResults[index] || options.maxResults[0] || WEB_SEARCH_DEFAULT_MAX_RESULTS_PER_QUERY;
 
         try {
           // Run Parallel AI search and Firecrawl images concurrently per query
@@ -147,7 +151,7 @@ class ParallelSearchStrategy implements SearchStrategy {
             this.parallel.beta.search({
               objective: query,
               mode: currentQuality === 'best' ? 'agentic' : 'one-shot',
-              max_results: Math.max(currentMaxResults, 10),
+              max_results: Math.min(20, Math.max(1, currentMaxResults)),
               excerpts: {
                 max_chars_per_result: 5000,
               },
@@ -267,7 +271,7 @@ class TavilySearchStrategy implements SearchStrategy {
   ) {
     const searchPromises = queries.map(async (query, index) => {
       const currentTopic = options.topics[index] || options.topics[0] || 'general';
-      const currentMaxResults = options.maxResults[index] || options.maxResults[0] || 10;
+      const currentMaxResults = options.maxResults[index] || options.maxResults[0] || WEB_SEARCH_DEFAULT_MAX_RESULTS_PER_QUERY;
       const currentQuality = options.quality[index] || options.quality[0] || 'default';
 
       try {
@@ -388,7 +392,7 @@ class FirecrawlSearchStrategy implements SearchStrategy {
   ) {
     const searchPromises = queries.map(async (query, index) => {
       const currentTopic = options.topics[index] || options.topics[0] || 'general';
-      const currentMaxResults = options.maxResults[index] || options.maxResults[0] || 10;
+      const currentMaxResults = options.maxResults[index] || options.maxResults[0] || WEB_SEARCH_DEFAULT_MAX_RESULTS_PER_QUERY;
 
       try {
         options.dataStream?.write({
@@ -484,7 +488,7 @@ class FirecrawlSearchStrategy implements SearchStrategy {
           console.warn(`Firecrawl out of credits for query "${query}", falling back to alternative provider.`);
           try {
             const fallbackResult = await this.fallback.search([query], {
-              maxResults: [options.maxResults[index] || options.maxResults[0] || 10],
+              maxResults: [options.maxResults[index] || options.maxResults[0] || WEB_SEARCH_DEFAULT_MAX_RESULTS_PER_QUERY],
               topics: [options.topics[index] || options.topics[0] || 'general'],
               quality: [options.quality[index] || options.quality[0] || 'default'],
               dataStream: options.dataStream,
@@ -539,7 +543,7 @@ class ExaSearchStrategy implements SearchStrategy {
   ) {
     const searchPromises = queries.map(async (query, index) => {
       const currentTopic = options.topics[index] || options.topics[0] || 'general';
-      const currentMaxResults = options.maxResults[index] || options.maxResults[0] || 10;
+      const currentMaxResults = options.maxResults[index] || options.maxResults[0] || WEB_SEARCH_DEFAULT_MAX_RESULTS_PER_QUERY;
       const currentQuality = options.quality[index] || options.quality[0] || 'default';
 
       try {
@@ -557,7 +561,7 @@ class ExaSearchStrategy implements SearchStrategy {
 
         const data = await this.exa.search(query, {
           type: currentQuality === 'best' ? 'deep' : 'auto',
-          numResults: currentMaxResults < 10 ? 10 : currentMaxResults,
+          numResults: Math.min(25, Math.max(1, currentMaxResults)),
           category: currentTopic === 'news' ? 'news' : undefined,
         });
 
@@ -655,13 +659,14 @@ export function webSearchTool(
   searchProvider: 'exa' | 'parallel' | 'tavily' | 'firecrawl' = 'exa',
 ) {
   return tool({
-    description: `This is the default tool of the app to be used to search the web for information with multiple queries(5-10), max results(15-20), topics, and quality.
+    description: `Search the web for current information. **Speed**: prefer **1–2 queries** per call; use **3–4** only for genuinely multi-part questions. More queries = slower responses. Each query may return multiple sources.
+    - **How to run a search**: Invoke this tool via the assistant's function-calling / tool API only. Writing JSON, example payloads, or "planned" queries in your reasoning or answer text does NOT execute a search — you must issue a real tool call.
     Very important Rules:
     ...${searchProvider === 'parallel' ? 'The First Query should be the objective and the rest of the queries should be related to the objective' : ''}...
     - The queries should always be in the same language as the user's message.
-    - And count of the queries should be 5-10 always!
-    - Assert to max number of results for each query to be 15-20.
-    - Your knowledge base is zero, so you must gather as much information as possible from the tools you have.
+    - Avoid redundant queries — one strong query often beats many overlapping ones.
+    - Prefer **maxResults** around **5–8** per query unless breadth is critical (lower = faster).
+    - Your knowledge base is zero, so you must gather information from tools when needed, without over-searching.
     - **Prohibition**: NEVER use the retrieve tool after running web_search tool
     - Do not use the best quality unless absolutly required since it is time expensive.
     - ⚠️ CRITICAL: ALWAYS include date/time context in search queries:
@@ -673,14 +678,20 @@ export function webSearchTool(
     `,
     inputSchema: z.object({
       queries: z
-        .array(z.string().describe('Array of search queries to look up on the web. Default is 5, minimum is 1. For follow-up questions a single focused query is fine; for broad research use 3-5.'))
+        .array(
+          z
+            .string()
+            .describe(
+              'Search queries. Prefer 1–2 per call for speed; at most a few for broad research.',
+            ),
+        )
         .min(1),
       maxResults: z
         .array(
           z
             .number()
             .describe(
-              'Array of maximum number of results to return per query. Default is 10. Minimum is 10. Maximum is 15.',
+              'Max results per query (about 5–10 is a good balance; lower is faster).',
             ),
         )
         .optional(),
@@ -714,6 +725,11 @@ export function webSearchTool(
       topics?: ('general' | 'news' | undefined)[];
       quality?: ('default' | 'best' | undefined)[];
     }) => {
+      const cappedQueries = queries.slice(0, WEB_SEARCH_MAX_QUERIES_PER_CALL);
+      if (cappedQueries.length === 0) {
+        return { searches: [] };
+      }
+
       // Initialize all clients
       const clients = {
         exa: new Exa(serverEnv.EXA_API_KEY),
@@ -722,7 +738,7 @@ export function webSearchTool(
         tvly: tavily({ apiKey: serverEnv.TAVILY_API_KEY }),
       };
 
-      console.log('Queries:', queries);
+      console.log('Queries:', cappedQueries);
       console.log('Max Results:', maxResults);
       console.log('Topics:', topics);
       console.log('Quality:', quality);
@@ -730,19 +746,20 @@ export function webSearchTool(
 
       // Create and use the appropriate search strategy
       const strategy = createSearchStrategy(searchProvider, clients);
-      if (!maxResults) {
-        maxResults = new Array(queries.length).fill(10);
-      }
-      if (!topics) {
-        topics = new Array(queries.length).fill('general');
-      }
-      if (!quality) {
-        quality = new Array(queries.length).fill('default');
-      }
-      return await strategy.search(queries, {
-        maxResults: maxResults as number[],
-        topics: topics as ('general' | 'news')[],
-        quality: quality as ('default' | 'best')[],
+      const n = cappedQueries.length;
+      const pad = <T>(arr: T[] | undefined, fill: T): T[] =>
+        !arr?.length
+          ? Array.from({ length: n }, () => fill)
+          : cappedQueries.map((_, i) => arr[i] ?? arr[0] ?? fill);
+
+      const maxResultsPadded = pad(maxResults as number[] | undefined, WEB_SEARCH_DEFAULT_MAX_RESULTS_PER_QUERY);
+      const topicsPadded = pad(topics as ('general' | 'news')[] | undefined, 'general');
+      const qualityPadded = pad(quality as ('default' | 'best')[] | undefined, 'default');
+
+      return await strategy.search(cappedQueries, {
+        maxResults: maxResultsPadded,
+        topics: topicsPadded as ('general' | 'news')[],
+        quality: qualityPadded as ('default' | 'best')[],
         dataStream,
       });
     },

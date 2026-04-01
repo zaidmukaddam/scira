@@ -259,14 +259,14 @@ export async function POST(request: NextRequest) {
         'coin_ohlc',
         'coin_data_by_contract',
         // Location & Travel
-        'weather',
+        'get_weather_data',
         'find_place_on_map',
         'nearby_places_search',
         'flight_tracker',
         'flight_live_tracker',
         'travel_advisor',
         // Entertainment
-        'movie_tv_search',
+        'movie_or_tv_search',
         'trending_movies',
         'trending_tv',
         // Utilities

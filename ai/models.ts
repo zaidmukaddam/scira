@@ -39,7 +39,7 @@ export interface Model {
 // value no longer matches any active model (e.g. after a model is removed).
 // Must be a value that exists in the models array below, requires no auth,
 // and has freeUnlimited: true so it works for all users on first visit.
-// Note: MAGPiE tools are handled server-side via SCX agent loop. Llama 4 is the free default.
+// Llama 4 is the free default for all users.
 export const DEFAULT_MODEL = 'llama-4';
 
 // Active models shown in the UI
@@ -122,10 +122,7 @@ export const models: Model[] = [
     requiresAuth: false,
     freeUnlimited: true,
     maxOutputTokens: 8192,
-    // MAGPiE tools are executed server-side by the SCX agent loop.
-    // The magpieProvider fetch wrapper (createMagpieNormalizedFetch) converts
-    // Scira's OpenAI function schemas to SCX type IDs before the request is sent,
-    // exactly mirroring what platform.scx.ai does in its custom fetch.
+    // MAGPiE: OpenAI function tools in POST body; streamText executes stock_price / web_search locally when the model emits tool_calls.
     supportsFunctionCalling: true,
     supportsParallelToolCalling: false,
     documentSupport: false,

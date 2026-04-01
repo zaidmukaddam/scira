@@ -8,7 +8,7 @@ import { DocumentCard } from '@/components/document-card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { deleteTrailingMessages, generateSpeech, branchOutChat } from '@/app/actions';
 import { toast } from 'sonner';
 import { Wave } from '@foobar404/wave';
@@ -162,6 +162,8 @@ interface MessagePartRendererProps {
   regenerate: UseChatHelpers<ChatMessage>['regenerate'];
   onHighlight?: (text: string) => void;
   annotations?: DataUIPart<CustomUIDataTypes>[];
+  /** Current UI model; used when message.metadata.model is missing (e.g. while streaming). */
+  selectedModel?: string;
 }
 
 export const MessagePartRenderer = memo<MessagePartRendererProps>(
@@ -188,6 +190,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
     regenerate,
     onHighlight,
     annotations,
+    selectedModel,
   }) => {
     useDataStream();
     const [isRegenerating, setIsRegenerating] = useState(false);
@@ -752,11 +755,21 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
         ? (parts.find((p: ChatMessage['parts'][number]) => p.type.includes('tool-'))?.type.split('-')[1] ?? null)
         : null;
 
-      const isExpanded = reasoningVisibilityMap[sectionKey] ?? !isComplete;
+      // Default expanded so reasoning is visible without an extra click (SCX playground shows thinking openly).
+      const isExpanded = reasoningVisibilityMap[sectionKey] ?? true;
       const isFullscreen = reasoningFullscreenMap[sectionKey] ?? false;
 
       const setIsExpanded = (v: boolean) => setReasoningVisibilityMap((prev) => ({ ...prev, [sectionKey]: v }));
       const setIsFullscreen = (v: boolean) => setReasoningFullscreenMap((prev) => ({ ...prev, [sectionKey]: v }));
+
+      const metaModel = message?.metadata?.model;
+      const isStreamingThisAssistant =
+        message.role === 'assistant' &&
+        messageIndex === messages.length - 1 &&
+        (status === 'streaming' || status === 'submitted');
+      const effectiveModel = metaModel ?? (isStreamingThisAssistant ? selectedModel : undefined);
+      const isMagpie = effectiveModel?.toLowerCase() === 'magpie' || effectiveModel === 'magpie-legal';
+      const thinkingLabel = isMagpie ? 'thinking like an australian' : undefined;
 
       return (
         <ReasoningPartView
@@ -768,6 +781,7 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
           isFullscreen={isFullscreen}
           setIsExpanded={setIsExpanded}
           setIsFullscreen={setIsFullscreen}
+          thinkingLabel={thinkingLabel}
         />
       );
     }
@@ -1362,6 +1376,14 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
               case 'output-available':
                 return <WeatherChart result={part.output} key={`${messageIndex}-${partIndex}-tool`} />;
+              case 'output-error':
+                return (
+                  <ToolErrorDisplay
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    errorText={part.errorText}
+                    toolName="Weather"
+                  />
+                );
             }
             break;
 
@@ -2550,10 +2572,72 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
                 );
             }
             break;
+
+          default: {
+            // Bespoke UI above covers most tools; remaining `tool-*` types (e.g. flight_tracker,
+            // rag_search, mcp_search) still render here so reasoning + tool calls never show a blank message.
+            const toolPart = part as {
+              type: string;
+              state: string;
+              input?: unknown;
+              output?: unknown;
+              errorText?: string;
+            };
+            const toolType = toolPart.type;
+            if (!toolType.startsWith('tool-')) {
+              break;
+            }
+            const toolLabel = toolType.replace(/^tool-/, '').replace(/_/g, ' ');
+            switch (toolPart.state) {
+              case 'input-streaming':
+                return (
+                  <div key={`${messageIndex}-${partIndex}-tool`} className="text-sm text-neutral-500">
+                    Preparing {toolLabel}...
+                  </div>
+                );
+              case 'input-available':
+                return (
+                  <SearchLoadingState
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    icon={Globe}
+                    text={`Running ${toolLabel}...`}
+                    color="blue"
+                  />
+                );
+              case 'output-available':
+                return (
+                  <Card key={`${messageIndex}-${partIndex}-tool`} className="my-4">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm capitalize">{toolLabel}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-sm pt-0">
+                      {typeof toolPart.output === 'object' && toolPart.output !== null ? (
+                        <pre className="text-xs overflow-auto max-h-96 bg-muted p-2 rounded-md whitespace-pre-wrap">
+                          {JSON.stringify(toolPart.output, null, 2)}
+                        </pre>
+                      ) : (
+                        <div className="text-muted-foreground">{String(toolPart.output ?? '')}</div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              case 'output-error':
+                return (
+                  <div
+                    key={`${messageIndex}-${partIndex}-tool`}
+                    className="my-4 rounded-lg border border-destructive/50 bg-destructive/5 p-3 text-sm text-destructive"
+                  >
+                    {toolLabel} failed
+                    {typeof toolPart.errorText === 'string' ? `: ${toolPart.errorText}` : ''}
+                  </div>
+                );
+              default:
+                return null;
+            }
+          }
         }
       } else {
         // Legacy tool invocation without state - show as loading or fallback
-        console.warn('Legacy tool part without state:', part);
         return (
           <div
             key={`${messageIndex}-${partIndex}-tool-legacy`}
@@ -2565,13 +2649,6 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
         );
       }
     }
-
-    // Log unhandled part types for debugging
-    console.log(
-      'Unhandled part type:',
-      typeof part === 'object' && part !== null && 'type' in part ? part.type : 'unknown',
-      part,
-    );
 
     return null;
   },
@@ -2590,12 +2667,8 @@ export const MessagePartRenderer = memo<MessagePartRendererProps>(
       prevProps.isOwner === nextProps.isOwner &&
       prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
       prevProps.chatId === nextProps.chatId &&
-      isEqual(prevProps.annotations, nextProps.annotations);
-
-    // Debug logging (can be removed in production)
-    if (!areEqual) {
-      console.log('MessagePartRenderer re-rendering');
-    }
+      isEqual(prevProps.annotations, nextProps.annotations) &&
+      prevProps.selectedModel === nextProps.selectedModel;
 
     return areEqual;
   },

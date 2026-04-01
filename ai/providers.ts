@@ -1,8 +1,8 @@
 import 'server-only';
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { customProvider, extractReasoningMiddleware, wrapLanguageModel } from 'ai';
-import { magpieProtocolMiddleware } from '@/ai/magpie-middleware';
 import { coderToolMiddleware } from '@/ai/coder-middleware';
+import { magpieProtocolMiddleware } from '@/ai/magpie-middleware';
 import type { JSONValue } from 'ai';
 
 // ─── Base URL ────────────────────────────────────────────────────────────────
@@ -10,58 +10,122 @@ import type { JSONValue } from 'ai';
 const SCX_BASE = (process.env.SCX_API_URL ?? 'https://api.scx.ai').replace(/\/v1\/?$/, '');
 const SCX_KEY = process.env.SCX_API_KEY ?? '';
 
-// ─── SCX tool type IDs supported by the server-side agent loop ───────────────
-// These are the tools the SCX API can execute server-side for MAGPiE.
-// When Scira sends an OpenAI function-call schema, the MAGPiE fetch wrapper
-// converts it to this format so the SCX agent loop handles execution —
-// mirroring exactly what platform.scx.ai does in its custom fetch.
-const SCX_SUPPORTED_TOOL_TYPES = new Set([
-  'web_search', 'x_search', 'academic_search', 'youtube_search', 'reddit_search',
-  'retrieve', 'mcp_search', 'trove_search',
-  'movie_tv_search', 'trending_movies', 'trending_tv', 'mermaid_diagram',
-  'find_place_on_map', 'nearby_places_search', 'weather',
-  'text_translate', 'code_interpreter',
-  'flight_tracker', 'flight_live_tracker',
-  'stock_price', 'stock_chart', 'currency_converter',
-  'coin_data', 'coin_data_by_contract', 'coin_ohlc',
-  'travel_advisor', 'datetime', 'memory_manager', 'greeting',
-]);
+/** Model IDs that receive `transformMagpieRequestBody` (tool_choice mapping) + SSE line splitting. */
+const MAGPIE_MODEL_IDS = new Set(['MAGPiE', 'magpie-small']);
 
-// ─── Magpie SSE normalizer + tool schema converter ───────────────────────────
-// Magpie streams with multiple `data:` lines per SSE event (no blank-line
-// separator between them). Per the SSE spec those lines are concatenated with
-// "\n", so JSON.parse("{chunk1}\n{chunk2}") fails. This fetch wrapper ensures
-// every `data:` line is flushed as its own standalone SSE event.
-//
-// Additionally, the SCX API does NOT accept OpenAI function-call schemas for
-// MAGPiE. Instead it accepts SCX type IDs: [{ type: 'web_search' }, ...].
-// This wrapper converts any OpenAI tools in the request body to that format.
+/**
+ * MAGPiE request tweaks (SSE body before POST to SCX).
+ *
+ * We keep OpenAI **function** tool definitions as emitted by the AI SDK — do not rewrite to
+ * compact `{ type: 'web_search' }`. Compact tools were preventing the stream from surfacing
+ * standard `tool_calls`, so local `streamText` tool execution never ran.
+ *
+ * Optional: map explicit `tool_choice` when the gateway expects a different tool id.
+ */
+const SCIRA_FUNCTION_TO_SCX_TOOL_CHOICE: Record<string, string> = {
+  web_search: 'web_search',
+  stock_price: 'stock_price',
+};
+
+/** When SCX stream uses different tool ids than Scira `tool()` keys, map here (empty = skip SSE JSON rewrite). */
+const SCX_TOOL_NAME_TO_SCIRA: Record<string, string> = {};
+
+function transformMagpieRequestBody(body: Record<string, unknown>): void {
+  const tc = body.tool_choice;
+  if (tc && typeof tc === 'object') {
+    const o = tc as Record<string, unknown>;
+    if (o.type === 'tool' && typeof o.toolName === 'string') {
+      const mapped = SCIRA_FUNCTION_TO_SCX_TOOL_CHOICE[o.toolName];
+      if (mapped) {
+        body.tool_choice = { type: 'tool', toolName: mapped };
+      }
+    }
+    // Do not strip tool_choice for 'auto' / 'required' — SCX may rely on it for tool use.
+  }
+}
+
+function rewriteStreamToolFunctionNames(node: unknown): void {
+  if (node === null || node === undefined) return;
+  if (Array.isArray(node)) {
+    for (const x of node) rewriteStreamToolFunctionNames(x);
+    return;
+  }
+  if (typeof node !== 'object') return;
+
+  const o = node as Record<string, unknown>;
+
+  if (Array.isArray(o.tool_calls)) {
+    for (const tc of o.tool_calls) {
+      if (tc && typeof tc === 'object') {
+        const t = tc as { type?: string; function?: { name?: string; arguments?: string } };
+        if (t.function?.name) {
+          const scira = SCX_TOOL_NAME_TO_SCIRA[t.function.name] ?? t.function.name;
+          t.function.name = scira;
+        }
+      }
+    }
+  }
+
+  const fn = o.function;
+  if (fn && typeof fn === 'object') {
+    const f = fn as { name?: string };
+    if (typeof f.name === 'string' && f.name.length > 0) {
+      const scira = SCX_TOOL_NAME_TO_SCIRA[f.name] ?? f.name;
+      f.name = scira;
+    }
+  }
+
+  for (const k of Object.keys(o)) {
+    rewriteStreamToolFunctionNames(o[k]);
+  }
+}
+
+function rewriteSseDataLineJson(line: string): string {
+  if (!line.startsWith('data: ')) return line;
+  const raw = line.slice(6);
+  if (raw.trim() === '[DONE]') return line;
+  try {
+    const obj = JSON.parse(raw) as unknown;
+    rewriteStreamToolFunctionNames(obj);
+    return `data: ${JSON.stringify(obj)}`;
+  } catch {
+    return line;
+  }
+}
+
+// ─── Magpie SSE normalizer + MAGPiE tool wire format ────────────────────────
+// 1) SSE: Magpie can emit multiple `data:` lines per logical event without a
+//    blank-line separator, so JSON.parse("{a}\n{b}") fails. We flush each `data:`
+//    line as its own SSE event.
+// 2) MAGPiE: optional SSE JSON tool-name rewrite when SCX_TOOL_NAME_TO_SCIRA is non-empty.
 function createMagpieNormalizedFetch(): typeof fetch {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
+  const sseRename =
+    Object.keys(SCX_TOOL_NAME_TO_SCIRA).length > 0;
   return async (url, init) => {
-    // Convert OpenAI function schemas → SCX type IDs before sending
-    if (init?.body && typeof init.body === 'string') {
+    let nextInit = init;
+    let rewriteStreamToolIds = false;
+
+    if (init?.method === 'POST' && init.body && typeof init.body === 'string') {
       try {
-        const body = JSON.parse(init.body);
-        if (Array.isArray(body.tools) && body.tools.length > 0) {
-          const scxTools = body.tools
-            .filter((t: { type: string; function?: { name: string } }) =>
-              t.type === 'function' && t.function?.name && SCX_SUPPORTED_TOOL_TYPES.has(t.function.name)
-            )
-            .map((t: { function: { name: string } }) => ({ type: t.function.name }));
-          body.tools = scxTools.length > 0 ? scxTools : undefined;
-          delete body.tool_choice; // SCX agent loop manages tool selection
-          init = { ...init, body: JSON.stringify(body) };
+        const body = JSON.parse(init.body) as Record<string, unknown>;
+        const mid = String(body.model ?? '');
+        if (MAGPIE_MODEL_IDS.has(mid)) {
+          transformMagpieRequestBody(body);
+          rewriteStreamToolIds = sseRename;
+          nextInit = { ...init, body: JSON.stringify(body) };
         }
       } catch {
-        // If body parsing fails, pass through unchanged
+        /* pass through */
       }
     }
 
-    const response = await fetch(url, init);
+    const response = await fetch(url, nextInit);
     if (!response.body) return response;
-    if (!(response.headers.get('content-type') ?? '').includes('text/event-stream')) return response;
+    if (!(response.headers.get('content-type') ?? '').includes('text/event-stream')) {
+      return response;
+    }
 
     let buffer = '';
     const transformedBody = response.body.pipeThrough(
@@ -73,15 +137,21 @@ function createMagpieNormalizedFetch(): typeof fetch {
           let output = '';
           for (const line of lines) {
             if (line.startsWith('data: ')) {
-              output += line + '\n\n'; // each data: line → its own SSE event
+              const normalized = rewriteStreamToolIds ? rewriteSseDataLineJson(line) : line;
+              output += normalized + '\n\n';
             }
-            // blank lines are dropped; we manage separators ourselves
           }
           if (output) controller.enqueue(encoder.encode(output));
         },
         flush(controller) {
           const rem = buffer.trim();
-          if (rem) controller.enqueue(encoder.encode((rem.startsWith('data: ') ? rem + '\n\n' : rem + '\n')));
+          if (!rem) return;
+          if (rem.startsWith('data: ')) {
+            const normalized = rewriteStreamToolIds ? rewriteSseDataLineJson(rem) : rem;
+            controller.enqueue(encoder.encode(normalized + '\n\n'));
+          } else {
+            controller.enqueue(encoder.encode(rem + '\n'));
+          }
         },
       }),
     );
@@ -103,7 +173,8 @@ type ScxChatModelId =
   | 'Llama-3.3-Swallow-70B-Instruct-v0.4'
   | 'gpt-oss-120b'
   | 'coder'
-  | 'MAGPiE';
+  | 'MAGPiE'
+  | 'magpie-small';
 
 type ScxEmbeddingModelId = 'E5-Mistral-7B-Instruct';
 
@@ -117,15 +188,8 @@ const scxProvider = createOpenAICompatible<
   baseURL: `${SCX_BASE}/v1`,
   apiKey: SCX_KEY,
   includeUsage: true,
-});
-
-// Separate provider for MAGPiE with the SSE-normalizing fetch.
-// API model ID is 'MAGPiE' (case-sensitive as returned by /v1/models).
-const magpieProvider = createOpenAICompatible<'MAGPiE', 'MAGPiE', never, never>({
-  name: 'scx-magpie',
-  baseURL: `${SCX_BASE}/v1`,
-  apiKey: SCX_KEY,
-  includeUsage: true,
+  // Shared fetch: SSE line splitting for all SCX streaming models; MAGPiE-only
+  // request/response tool rewriting is gated on model id inside createMagpieNormalizedFetch.
   fetch: createMagpieNormalizedFetch(),
 });
 
@@ -261,9 +325,7 @@ export async function doTranscribe({
 // Reasoning middleware notes:
 // - deepseek-r1 / gpt-oss-120b: emit <think>...</think> blocks in content;
 //   extractReasoningMiddleware converts them to `reasoning` stream parts.
-// - magpie: streams reasoning_content + content as separate delta fields (OpenAI
-//   compatible format). Uses a dedicated provider with SSE-normalizing fetch so
-//   the SDK can parse multiple data: lines per event correctly.
+// - magpie: SSE line splitting + magpieProtocol (<|call|>) + extractReasoning (<think>).
 // - deepseek-v3 / v3.1 / llama models: no reasoning output, pass through as-is.
 // Re-export model helpers so components importing from '@/ai/providers' still work
 export {
@@ -303,9 +365,13 @@ export const scx = customProvider({
       model: scxProvider.languageModel('coder'),
       middleware: [coderToolMiddleware],
     }),
+    // MAGPiE: magpieProtocol (<|call|>) + extractReasoning; OpenAI function tools preserved in POST body.
     magpie: wrapLanguageModel({
-      model: magpieProvider.languageModel('MAGPiE'),
-      middleware: [magpieProtocolMiddleware],
+      model: scxProvider.languageModel('MAGPiE'),
+      middleware: [
+        extractReasoningMiddleware({ tagName: 'redacted_thinking' }),
+        magpieProtocolMiddleware,
+      ],
     }),
     // Internal utility aliases (follow-up suggestions, chat naming, prompt enhancement)
     'scira-follow-up': scxProvider.languageModel('Llama-4-Maverick-17B-128E-Instruct'),

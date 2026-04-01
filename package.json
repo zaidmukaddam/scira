@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint",
     "fix": "prettier --write . --ignore-path .gitignore",
-    "knip": "knip"
+    "knip": "knip",
+    "test:magpie-stream": "node scripts/magpie-stream-smoke.mjs"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "3.0.2",
@@ -95,7 +96,7 @@
     "ai": "6.0.5",
     "ai-retry": "^1.0.1",
     "amadeus": "^11.0.0",
-    "axios": "^1.13.2",
+    "axios": "1.13.2",
     "bcryptjs": "^3.0.3",
     "better-auth": "1.4.10",
     "canvas-confetti": "^1.9.4",
@@ -199,6 +200,9 @@
     "typescript": "^5.9.3"
   },
   "pnpm": {
+    "overrides": {
+      "axios": "1.13.2"
+    },
     "onlyBuiltDependencies": [
       "@parcel/watcher",
       "@tailwindcss/oxide",
@@ -212,7 +216,8 @@
   },
   "overrides": {
     "react-is": "^19.0.0-rc-69d4b800-20241021",
-    "baseline-browser-mapping": "latest"
+    "baseline-browser-mapping": "latest",
+    "axios": "1.13.2"
   },
   "imports": {
     "#default-font/*": "./node_modules/@mathjax/mathjax-newcm-font/mjs/*"

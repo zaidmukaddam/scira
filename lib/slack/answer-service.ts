@@ -246,7 +246,7 @@ async function generateAnswerWithTools(question: string, context: string): Promi
   const tools = {
     web_search: webSearchTool,
     datetime: datetimeTool,
-    weather: weatherTool,
+    get_weather_data: weatherTool,
     currency_converter: currencyConverterTool,
   };
 
