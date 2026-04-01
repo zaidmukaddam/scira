@@ -1018,9 +1018,9 @@ Do NOT invent or guess execution results. If you run code, the actual output wil
             let toolsLine: string;
             if (magpieHasWeb && magpieHasStock) {
               toolsLine =
-                `You have two tools: **stock_price** (live share prices — call with **symbol**, e.g. TSLA, AAPL, CBA.AX) and **web_search** (call with **query** for news, general current facts, and non-stock live data). Prefer **stock_price** for share price, stock value, or ticker questions. Use **web_search** for other current information and cite sources from results only. Include "${yr}" or "today" in web queries when freshness matters.`;
+                `You have two tools: **stock_price** (live share prices — call with **symbol**, e.g. TSLA, AAPL, CBA.AX) and **web_search** (optional — call with **query** only when live or time-sensitive web information is needed). Prefer **stock_price** for any share price, ticker, or market-price question. Use **web_search** sparingly: only for news, rapidly changing facts, or verification that your knowledge cannot cover; cite sources from results only. Include "${yr}" or "today" in web queries when freshness matters.`;
             } else if (magpieHasWeb) {
-              toolsLine = `You have **web_search** only — call with **query** (string) for current information, news, or facts that may have changed after your training cutoff. Include "${yr}" or "today" when freshness matters.`;
+              toolsLine = `You have **web_search** — call with **query** (string) only when you need live or time-sensitive information from the web (e.g. breaking news, very recent events, or facts that change often). Prefer answering from your own knowledge first; include "${yr}" or "today" in queries when freshness matters.`;
             } else if (magpieHasStock) {
               toolsLine =
                 `You have **stock_price** only — call with **symbol** (string ticker, e.g. TSLA, AAPL) for live share prices.`;
@@ -1030,10 +1030,14 @@ Do NOT invent or guess execution results. If you run code, the actual output wil
             const webRules = magpieHasWeb
               ? `\n- After **web_search** returns, answer in markdown and cite sources as [Title](URL) from results only; never invent URLs.`
               : '';
+            const magpieKnowledgeFirst = magpieHasWeb
+              ? `\n\n## KNOWLEDGE FIRST\n- Default to answering from your own model knowledge when it is sufficient (explanations, reasoning, coding, maths, stable facts, Australian context).\n- Call **web_search** only when necessary: time-sensitive or rapidly changing information, breaking news, live facts you cannot state reliably, or when the user explicitly asks you to search or check the web. Do not call **web_search** for questions you can answer well without it.`
+              : '';
             return (
               `You are SCX MAGPiE, Australia's sovereign AI search assistant. Today is ${dateStr}.` +
               `\n\n${toolsLine}` +
-              `\n\n## RULES\n- Use real function-calling only — do not fake tool JSON in the answer text.${webRules}\n- For greetings or questions answerable without live data, you may skip tools.` +
+              magpieKnowledgeFirst +
+              `\n\n## RULES\n- Use real function-calling only — do not fake tool JSON in the answer text.${webRules}\n- For greetings or questions answerable without tools, respond directly without calling tools.` +
               (customInstructions && (isCustomInstructionsEnabled ?? true)
                 ? `\n\nUser's custom instructions (follow at all costs): ${customInstructions.content}`
                 : '') +
