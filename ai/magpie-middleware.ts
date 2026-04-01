@@ -114,7 +114,7 @@ function splitBufferAndEmit(
   logMiddleware: boolean,
 ): void {
   if (logMiddleware) {
-    console.log('[MAGPiE middleware] full buffer:\n', JSON.stringify(buffer));
+    console.log('[MAGPiE middleware] buffer chars=', buffer.length);
   }
 
   const lastCallIdx = buffer.lastIndexOf(CALL_TOKEN);
@@ -132,8 +132,7 @@ function splitBufferAndEmit(
   answer = stripSpuriousStandaloneToolJsonLines(answer);
 
   if (logMiddleware) {
-    console.log('[MAGPiE middleware] preamble:\n', JSON.stringify(preamble));
-    console.log('[MAGPiE middleware] answer:\n', JSON.stringify(answer));
+    console.log('[MAGPiE middleware] preamble chars=', preamble.length, 'answer chars=', answer.length);
   }
 
   emitParsedBuffer(controller, preamble, answer, latestTextId, latestTextStartChunk);

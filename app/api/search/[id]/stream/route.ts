@@ -72,16 +72,19 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
    */
   if (!stream) {
     const messages = await getMessagesByChatId({ id: chatId });
-    console.log('Messages: ', messages);
     const mostRecentMessage = messages.at(-1);
 
     if (!mostRecentMessage) {
-      console.log('No most recent message found');
+      if (process.env.LOG_DB_QUERIES === '1') {
+        console.log('[stream/resume] No most recent message for chat', chatId);
+      }
       return new Response(emptyDataStream, { status: 200 });
     }
 
     if (mostRecentMessage.role !== 'assistant') {
-      console.log('Most recent message is not an assistant message');
+      if (process.env.LOG_DB_QUERIES === '1') {
+        console.log('[stream/resume] Most recent message is not assistant');
+      }
       return new Response(emptyDataStream, { status: 200 });
     }
 

@@ -109,8 +109,6 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export function convertToUIMessages(messages: Message[]): ChatMessage[] {
-  console.log('Messages: ', messages);
-
   return messages.map((message) => {
     // Handle the parts array which comes from JSON in the database
     const partsArray = Array.isArray(message.parts) ? message.parts : [];
@@ -244,9 +242,6 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   const { id } = params;
 
-  console.log('🔍 [PAGE] Starting chat page load for:', id);
-  const pageStartTime = Date.now();
-
   // Run user auth and chat existence check in parallel.
   // fetchChatWithBackoff retries for up to 15 s to handle the race condition
   // where the client navigates to /search/[id] before POST /api/search has
@@ -280,9 +275,6 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
 
   const initialMessages = convertToUIMessages(messagesFromDb);
   const isOwner = user ? user.id === chat.userId : false;
-
-  const pageLoadTime = (Date.now() - pageStartTime) / 1000;
-  console.log(`⏱️  [PAGE] Total page load time: ${pageLoadTime.toFixed(2)}s`);
 
   return (
     <ChatInterface

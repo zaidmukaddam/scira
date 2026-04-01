@@ -5,6 +5,12 @@ import { chat, type User, message, type Message, type Chat } from './schema';
 import { ChatSDKError } from '../errors';
 import { db, getReadReplica } from './index';
 
+function logDbQuery(...args: Parameters<typeof console.log>) {
+  if (process.env.LOG_DB_QUERIES === '1') {
+    console.log(...args);
+  }
+}
+
 // Combined query to get chat and initial messages in one database call
 export async function getChatWithInitialMessages({
   id,
@@ -20,7 +26,7 @@ export async function getChatWithInitialMessages({
   hasMoreMessages: boolean;
 }> {
   try {
-    console.log('🔍 [DB-OPTIMIZED] getChatWithInitialMessages: Starting combined query (db.query.chat)...');
+    logDbQuery('🔍 [DB-OPTIMIZED] getChatWithInitialMessages: Starting combined query (db.query.chat)...');
     const startTime = Date.now();
 
 
@@ -46,7 +52,7 @@ export async function getChatWithInitialMessages({
     const limitedMessages = hasMoreMessages ? messages.slice(0, messageLimit) : messages;
 
     const queryTime = (Date.now() - startTime) / 1000;
-    console.log(`⏱️  [DB-OPTIMIZED] getChatWithInitialMessages: db.query.chat took ${queryTime.toFixed(2)}s`);
+    logDbQuery(`⏱️  [DB-OPTIMIZED] getChatWithInitialMessages: db.query.chat took ${queryTime.toFixed(2)}s`);
 
     return {
       chat: record,
@@ -77,7 +83,7 @@ export async function getChatWithUserAndInitialMessages({
   hasMoreMessages: boolean;
 }> {
   try {
-    console.log('🔍 [DB-OPTIMIZED] getChatWithUserAndInitialMessages: Starting optimized query (db.query.chat)...');
+    logDbQuery('🔍 [DB-OPTIMIZED] getChatWithUserAndInitialMessages: Starting optimized query (db.query.chat)...');
     const startTime = Date.now();
 
 
@@ -107,7 +113,7 @@ export async function getChatWithUserAndInitialMessages({
     const limitedMessages = hasMoreMessages ? messages.slice(0, messageLimit) : messages;
 
     const queryTime = (Date.now() - startTime) / 1000;
-    console.log(
+    logDbQuery(
       `⏱️  [DB-OPTIMIZED] getChatWithUserAndInitialMessages: db.query.chat (with user + messages) took ${queryTime.toFixed(
         2,
       )}s`,
@@ -145,7 +151,7 @@ export async function getChatsWithInitialMessages({
       return {};
     }
 
-    console.log('🔍 [DB-OPTIMIZED] getChatsWithInitialMessages: Starting batch query (db.query.chat)...');
+    logDbQuery('🔍 [DB-OPTIMIZED] getChatsWithInitialMessages: Starting batch query (db.query.chat)...');
     const startTime = Date.now();
 
 
@@ -191,7 +197,7 @@ export async function getChatsWithInitialMessages({
     });
 
     const queryTime = (Date.now() - startTime) / 1000;
-    console.log(
+    logDbQuery(
       `⏱️  [DB-OPTIMIZED] getChatsWithInitialMessages: db.query.chat batch query took ${queryTime.toFixed(2)}s`,
     );
 
@@ -209,7 +215,7 @@ export async function getChatVisibilityAndOwnership({ id, userId }: { id: string
   canAccess: boolean;
 }> {
   try {
-    console.log('🔍 [DB-OPTIMIZED] getChatVisibilityAndOwnership: Starting visibility check (db.query.chat)...');
+    logDbQuery('🔍 [DB-OPTIMIZED] getChatVisibilityAndOwnership: Starting visibility check (db.query.chat)...');
     const startTime = Date.now();
 
 
@@ -237,7 +243,7 @@ export async function getChatVisibilityAndOwnership({ id, userId }: { id: string
     const canAccess = record.visibility === 'public' || isOwner;
 
     const queryTime = (Date.now() - startTime) / 1000;
-    console.log(
+    logDbQuery(
       `⏱️  [DB-OPTIMIZED] getChatVisibilityAndOwnership: db.query.chat visibility check took ${queryTime.toFixed(2)}s`,
     );
 

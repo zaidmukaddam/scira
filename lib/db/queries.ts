@@ -193,12 +193,13 @@ export async function getChatByIdForValidation({ id }: { id: string }): Promise<
 
 export async function getChatById({ id }: { id: string }) {
   try {
-    console.log('🔍 [DB-DETAIL] getChatById: Starting query...');
+    const logDb = process.env.LOG_DB_QUERIES === '1';
+    if (logDb) console.log('🔍 [DB-DETAIL] getChatById: Starting query...');
     const cacheQueryStart = Date.now();
     // Use direct select instead of relational query for better performance
     const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id)).limit(1);
     const cacheQueryTime = (Date.now() - cacheQueryStart) / 1000;
-    console.log(`⏱️  [DB-DETAIL] getChatById: Query (with cache) took ${cacheQueryTime.toFixed(2)}s`);
+    if (logDb) console.log(`⏱️  [DB-DETAIL] getChatById: Query (with cache) took ${cacheQueryTime.toFixed(2)}s`);
     return selectedChat || null;
   } catch (error) {
     throw new ChatSDKError('bad_request:database', 'Failed to get chat by id');

@@ -17,7 +17,13 @@ import { toast } from 'sonner';
 import { v7 as uuidv7 } from 'uuid';
 
 // Internal app imports
-import { suggestQuestions, updateChatVisibility, getChatMeta, hasAcceptedTerms/*, getHomeSuggestions*/ } from '@/app/actions';
+import {
+  suggestQuestions,
+  updateChatVisibility,
+  getChatMeta,
+  hasAcceptedTerms,
+  waitForChatMessagesPersisted,
+} from '@/app/actions';
 import { ExamplePrompts } from '@/components/chat-interface-components';
 import { ExampleCategories } from '@/components/example-categories';
 import { DynamicGreeting } from '@/components/dynamic-greeting';
@@ -77,6 +83,24 @@ import { chatReducer, createInitialState } from '@/components/chat-state';
 import { useDataStream } from './data-stream-provider';
 import { DefaultChatTransport } from 'ai';
 import { ChatMessage } from '@/lib/types';
+
+const TOOL_TERMINAL_STATES = new Set(['output-available', 'output-error']);
+
+/** True while any tool part has not finished (e.g. web_search still fetching sources). */
+function threadHasInFlightToolWork(msgs: ChatMessage[]): boolean {
+  for (const m of msgs) {
+    if (m.role !== 'assistant' || !m.parts) continue;
+    for (const part of m.parts) {
+      const p = part as { type?: string; state?: string };
+      if (typeof p.type === 'string' && p.type.startsWith('tool-')) {
+        if (!p.state || !TOOL_TERMINAL_STATES.has(p.state)) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
 
 interface ChatInterfaceProps {
   initialChatId?: string;
@@ -476,11 +500,7 @@ const ChatInterface = memo(
     const extremeSearchProviderRef = useRef(extremeSearchProvider);
     const selectedConnectorsRef = useRef(selectedConnectors);
 
-    // Tracks whether the last message is an assistant response.
-    // Used by the visibilitychange handler to avoid calling resumeStream() when
-    // the response already arrived while the tab was backgrounded — doing so
-    // would fetch a now-empty server-side stream and wipe the rendered messages.
-    const lastMessageRoleRef = useRef<string | undefined>(undefined);
+    const messagesRef = useRef<ChatMessage[]>([]);
 
     // Update refs whenever state changes - this ensures we always have current values
     selectedModelRef.current = selectedModel;
@@ -550,33 +570,42 @@ const ChatInterface = memo(
         setDataStream((ds) => (ds ? [...ds, dataPart] : []));
       },
       onFinish: async ({ message }) => {
-        // If this is a new chat, do the proper Next.js navigation to /search/[chatId].
-        // The URL was already updated via replaceState when the first message was sent,
-        // but we still need router.replace so Next.js loads server components and
-        // initialMessages from DB (for future remounts, resumable-stream, etc.).
+        // If this is a new chat, sync URL with /search/[chatId].
+        // replaceState already set the bar to /search/[id] when the first message
+        // appeared — doing a full router.replace() remounts the tree and reloads
+        // initialMessages from the DB, which can flash empty if persistence lags.
+        // When the browser URL already matches, only refresh React Query caches.
         if (!initialChatId) {
-          const navigateToChat = () => {
-            router.replace(`/search/${chatId}`);
-            // Still invalidate queries so the sidebar refreshes on the new page
+          const targetPath = `/search/${chatId}`;
+
+          const invalidateAfterNavigation = () => {
             if (user) {
               queryClient.invalidateQueries({ queryKey: ['user-usage', user.id] });
               queryClient.refetchQueries({ queryKey: ['recent-chats', user.id] });
             }
           };
 
+          const navigateToChat = async () => {
+            if (typeof window !== 'undefined' && window.location.pathname === targetPath) {
+              invalidateAfterNavigation();
+              return;
+            }
+            await waitForChatMessagesPersisted(chatId);
+            router.replace(targetPath);
+            invalidateAfterNavigation();
+          };
+
           if (document.hidden) {
-            // User switched to another tab while the stream was completing.
-            // Defer the navigation until they return to avoid silently changing
-            // the URL under them while they are away.
             const onVisible = () => {
               if (!document.hidden) {
-                navigateToChat();
-                document.removeEventListener('visibilitychange', onVisible);
+                void navigateToChat().finally(() => {
+                  document.removeEventListener('visibilitychange', onVisible);
+                });
               }
             };
             document.addEventListener('visibilitychange', onVisible);
           } else {
-            navigateToChat();
+            await navigateToChat();
           }
           return;
         }
@@ -626,6 +655,10 @@ const ChatInterface = memo(
         console.error('Chat error:', error.cause, error.message);
       },
       messages: initialMessages || [],
+    });
+
+    useEffect(() => {
+      messagesRef.current = messages as ChatMessage[];
     });
 
     // Compute active chat id used in header and data fetching (after messages/chatId exist)
@@ -700,12 +733,6 @@ const ChatInterface = memo(
       }
     }, [initialChatId, messages.length, chatId]);
 
-    // Keep the last-message role ref in sync so the visibility handler always
-    // sees the current value without needing messages in its dependency array.
-    useEffect(() => {
-      lastMessageRoleRef.current = (messages as ChatMessage[]).at(-1)?.role;
-    });
-
     // When the user returns to the tab, try to reconnect an interrupted stream.
     // The browser suspends SSE connections in backgrounded tabs; on resume the
     // hook may be stuck in 'streaming'/'submitted' but receiving no data.
@@ -714,14 +741,46 @@ const ChatInterface = memo(
         if (document.hidden) return;
         if (status !== 'streaming' && status !== 'submitted') return;
 
-        // If there is already an assistant message rendered, the stream finished
-        // while the tab was hidden and the response is already on screen.
-        // Calling resumeStream() in this state fetches a completed (empty)
-        // server-side stream, which causes useChat to reset the messages array
-        // and wipe the response the user is about to read.
-        // Instead, just call stop() to clear the stuck status flag.
-        if (lastMessageRoleRef.current === 'assistant') {
+        const msgs = messagesRef.current;
+
+        // Do not abort while tools are still running (web_search, etc.). Previously we called
+        // stop() whenever the last message was assistant, which killed the stream during
+        // "Searching the web…" after the user returned to the tab.
+        if (threadHasInFlightToolWork(msgs)) {
+          return;
+        }
+
+        // Active generation: never stop on focus (reasoning + tool phases are still streaming).
+        if (status === 'streaming') {
+          return;
+        }
+
+        const last = msgs.at(-1);
+
+        // Assistant as last message and stream not active: likely finished while backgrounded.
+        // resumeStream() would fetch an empty completed stream and wipe messages — use stop()
+        // only in this idle "submitted" stuck case.
+        if (last?.role === 'assistant') {
           stop();
+          return;
+        }
+
+        let lastUserIndex = -1;
+        for (let i = msgs.length - 1; i >= 0; i--) {
+          if (msgs[i].role === 'user') {
+            lastUserIndex = i;
+            break;
+          }
+        }
+        const hasAssistantAfterLastUser =
+          lastUserIndex >= 0 && msgs.slice(lastUserIndex + 1).some((m) => m.role === 'assistant');
+
+        if (hasAssistantAfterLastUser) {
+          stop();
+          return;
+        }
+
+        if (msgs.length === 1 && msgs[0].role === 'user') {
           return;
         }
 

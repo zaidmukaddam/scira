@@ -38,6 +38,7 @@ import {
   getChatsPaginated,
   searchChatsByTitleQuery,
 } from '@/lib/db/queries';
+import { getChatWithInitialMessages } from '@/lib/db/chat-queries';
 import { extractChatPreview } from '@/lib/search-utils';
 import { getDiscountConfig } from '@/lib/discount';
 import { get } from '@vercel/edge-config';
@@ -108,6 +109,31 @@ export async function getChatMeta(chatId: string) {
     console.error('Error in getChatMeta:', error);
     return null;
   }
+}
+
+/** Poll until message rows exist for this chat (reduces empty RSC after client navigation). */
+export async function waitForChatMessagesPersisted(
+  chatId: string,
+  options?: { minMessages?: number; timeoutMs?: number },
+): Promise<boolean> {
+  const minMessages = options?.minMessages ?? 1;
+  const timeoutMs = options?.timeoutMs ?? 10000;
+  const deadline = Date.now() + timeoutMs;
+  let delayMs = 50;
+
+  while (Date.now() < deadline) {
+    try {
+      const { messages } = await getChatWithInitialMessages({ id: chatId, messageLimit: minMessages });
+      if (messages.length >= minMessages) {
+        return true;
+      }
+    } catch {
+      // keep polling
+    }
+    await new Promise((r) => setTimeout(r, delayMs));
+    delayMs = Math.min(Math.floor(delayMs * 1.5), 500);
+  }
+  return false;
 }
 
 // Get user's country code from geolocation
