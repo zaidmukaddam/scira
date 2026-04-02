@@ -835,7 +835,7 @@ function BoxAgentResultInner({
     if (containerRef.current && status !== 'completed') {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [entryCount, status]);
 
   const isMobile = useIsMobile();

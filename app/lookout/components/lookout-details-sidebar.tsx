@@ -82,13 +82,17 @@ export function LookoutDetailsSidebar({
   const averageDuration =
     runHistory.length > 0 ? runHistory.reduce((sum, run) => sum + (run.duration || 0), 0) / runHistory.length : 0;
 
-  const lastWeekRuns = runHistory.filter(
-    (run) => new Date(run.runAt) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-  ).length;
+  const [showAnalytics, setShowAnalytics] = React.useState(false);
+  const [lastWeekRuns, setLastWeekRuns] = React.useState(0);
+
+  // Calculate last week runs outside of render to avoid impure function call
+  React.useEffect(() => {
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const runs = runHistory.filter((run) => new Date(run.runAt) > weekAgo).length;
+    setLastWeekRuns(runs);
+  }, [runHistory]);
 
   const runningLookouts = allLookouts.filter((l) => l.status === 'running');
-
-  const [showAnalytics, setShowAnalytics] = React.useState(false);
 
   const getStatusIcon = (status: string) => {
     const iconMap: Record<string, { icon: typeof CheckmarkCircle01Icon; className: string }> = {

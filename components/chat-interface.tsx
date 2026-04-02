@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @next/next/no-img-element */
+ 
 
 // React and React-related imports
 import React, { memo, useCallback, useEffect, useMemo, useRef, useReducer, useState } from 'react';
