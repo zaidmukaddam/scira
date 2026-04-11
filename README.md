@@ -144,6 +144,7 @@ Research at the speed of thought. The agentic research platform that plans, retr
 - [Parallel](https://parallel.ai/) - Web and Reddit search
 - [Tavily](https://tavily.com/) - Web search and financial news
 - [Valyu](https://valyu.network/) - Financial data, forex, and prediction markets
+- [UniRateAPI](https://unirateapi.com) - Free currency API with 593 currencies, 57 years historical forex data (1967-present), crypto and precious metals
 - [Supadata](https://supadata.ai/) - YouTube search, transcripts, and social media
 - [CoinGecko](https://www.coingecko.com/) - Cryptocurrency market data
 - [Spotify](https://developer.spotify.com/) - Music search
