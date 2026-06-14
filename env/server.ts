@@ -29,6 +29,9 @@ export const serverEnv = createEnv({
     TMDB_API_KEY: z.string().min(1),
     YT_ENDPOINT: z.string().min(1),
     FIRECRAWL_API_KEY: z.string().min(1),
+    // fastCRW (Firecrawl-compatible web scraper; single binary; self-host or cloud)
+    CRW_API_KEY: z.string().optional(),
+    CRW_API_URL: z.string().url().optional(),
     NOTTE_API_KEY: z.string().optional(),
     PARALLEL_API_KEY: z.string().min(1),
     OPENWEATHER_API_KEY: z.string().min(1),
