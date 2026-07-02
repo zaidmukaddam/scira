@@ -539,7 +539,8 @@ class ExaSearchStrategy implements SearchProviderStrategy {
       const { results } = await this.exa.search(query, {
         numResults: 8,
         type: 'auto',
-        ...(exaCategory && { category: exaCategory }),
+        // 'tweet' was dropped from the exa-js category union; cast keeps runtime behavior
+        ...(exaCategory && { category: exaCategory as Exclude<ExaCategory, 'tweet'> }),
         ...(include_domains && { include_domains }),
         ...(startPublishedDate && { startPublishedDate }),
         ...(endPublishedDate && { endPublishedDate }),

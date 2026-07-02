@@ -1,13 +1,13 @@
 'use client';
 
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, Suspense } from 'react';
 import Link from 'next/link';
+import { SidebarSettingsNav } from '@/components/settings/settings-nav';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   PlusIcon,
   GearIcon,
   CodeIcon,
-  SignIn,
   XLogoIcon,
   GithubLogoIcon,
   InstagramLogoIcon,
@@ -18,13 +18,7 @@ import {
   BugIcon,
   UsersIcon,
 } from '@phosphor-icons/react';
-import {
-  Crown02Icon,
-  BinocularsIcon,
-  SearchList02Icon,
-  FolderLibraryIcon,
-  Mail02Icon,
-} from '@hugeicons/core-free-icons';
+import { BinocularsIcon, SearchList02Icon, FolderLibraryIcon, Mail02Icon } from '@hugeicons/core-free-icons';
 import { HugeiconsIcon } from '@/components/ui/hugeicons';
 import {
   RocketIcon as VercelIcon,
@@ -68,7 +62,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
-  SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -322,91 +315,6 @@ function UserDropdownContent({
                 infoOpen ? 'border-border/60' : 'border-transparent',
               )}
             >
-              <Link
-                href="/about"
-                onClick={closeMobileSidebar}
-                className="flex items-center gap-3 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-colors duration-150"
-              >
-                <InfoIcon size={16} weight="regular" />
-                <span>About</span>
-              </Link>
-              <Link
-                href="/blog"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={closeMobileSidebar}
-                className="flex items-center gap-3 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-colors duration-150"
-              >
-                <BookIcon size={16} weight="regular" />
-                <span>Blog</span>
-              </Link>
-              <Link
-                href="/terms"
-                onClick={closeMobileSidebar}
-                className="flex items-center gap-3 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-colors duration-150"
-              >
-                <FileTextIcon size={16} weight="regular" />
-                <span>Terms</span>
-              </Link>
-              <Link
-                href="/privacy-policy"
-                onClick={closeMobileSidebar}
-                className="flex items-center gap-3 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-colors duration-150"
-              >
-                <ShieldIcon size={16} weight="regular" />
-                <span>Privacy</span>
-              </Link>
-              <div className="h-px bg-border/40 my-1" />
-              <a
-                href="https://git.new/scira"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={closeMobileSidebar}
-                className="flex items-center gap-3 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-colors duration-150"
-              >
-                <GithubLogoIcon size={16} weight="regular" />
-                <span>GitHub</span>
-              </a>
-              <a
-                href="https://x.com/sciraai"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={closeMobileSidebar}
-                className="flex items-center gap-3 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-colors duration-150"
-              >
-                <XLogoIcon size={16} weight="regular" />
-                <span>X.com</span>
-              </a>
-              <a
-                href="https://www.instagram.com/scira.ai"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={closeMobileSidebar}
-                className="flex items-center gap-3 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-colors duration-150"
-              >
-                <InstagramLogoIcon size={16} weight="regular" />
-                <span>Instagram</span>
-              </a>
-              <a
-                href="https://scira.userjot.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={closeMobileSidebar}
-                className="flex items-center gap-3 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-colors duration-150"
-              >
-                <BugIcon size={16} weight="regular" />
-                <span>Feedback</span>
-              </a>
-              <a
-                href="https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzaidmukaddam%2Fscira"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={closeMobileSidebar}
-                className="flex items-center gap-3 px-2.5 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-accent/30 hover:text-foreground transition-colors duration-150"
-              >
-                <VercelIcon size={16} />
-                <span>Deploy</span>
-              </a>
             </div>
           </div>
         </div>
@@ -547,46 +455,7 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
   // Group chats by date
   const groupedChats = useMemo(() => groupChatsByDate(unpinnedRecentChats), [unpinnedRecentChats]);
 
-  const signedOutLinks: SignedOutLink[] = [
-    {
-      id: 'about',
-      label: 'About',
-      icon: InfoIcon,
-      href: '/about',
-    },
-    {
-      id: 'blog',
-      label: 'Blog',
-      icon: BookIcon,
-      href: '/blog',
-    },
-    {
-      id: 'terms',
-      label: 'Terms',
-      icon: FileTextIcon,
-      href: '/terms',
-    },
-    {
-      id: 'privacy',
-      label: 'Privacy',
-      icon: ShieldIcon,
-      href: '/privacy-policy',
-    },
-    {
-      id: 'github',
-      label: 'GitHub',
-      icon: GithubLogoIcon,
-      href: 'https://git.new/scira',
-      external: true,
-    },
-    {
-      id: 'feedback',
-      label: 'Feedback',
-      icon: BugIcon,
-      href: 'https://scira.userjot.com',
-      external: true,
-    },
-  ];
+  const signedOutLinks: SignedOutLink[] = [];
 
   const invalidateRecentChats = () => {
     if (user?.id) {
@@ -827,6 +696,33 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
             </SidebarMenuButton>
           </SidebarMenuItem>
 
+          {/* Settings */}
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              tooltip="Settings"
+              className={cn(
+                'hover:bg-primary/10 transition-all duration-200',
+                pathname === '/settings' ? 'bg-primary/15 text-foreground font-medium' : '',
+              )}
+            >
+              <Link
+                prefetch
+                href="/settings"
+                onClick={closeMobileSidebar}
+                className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full"
+              >
+                <GearIcon size={18} weight="regular" />
+                <span className="group-data-[collapsible=icon]:hidden">Settings</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* Settings sections — shown in place of a page-local second sidebar */}
+          <Suspense fallback={null}>
+            <SidebarSettingsNav showAccountSections={Boolean(user)} onNavigate={closeMobileSidebar} />
+          </Suspense>
+
           {user && (
             <SidebarMenuItem>
               <SidebarMenuButton
@@ -1001,22 +897,6 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
               </SidebarMenuButton>
             </SidebarMenuItem>
           )}
-
-          {/* API */}
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="API" className="hover:bg-primary/10 transition-all duration-200">
-              <a
-                href="https://api.scira.ai/"
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={closeMobileSidebar}
-                className="flex items-center gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:w-full"
-              >
-                <CodeIcon size={18} weight="regular" />
-                <span className="group-data-[collapsible=icon]:hidden">API</span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
 
           {/* Guest Info Links when signed out */}
           {!user &&
@@ -1303,55 +1183,11 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
             </>
           )}
         </SidebarMenu>
-
-        {/* Upgrade */}
-        {user && !isProUser && (
-          <SidebarGroup className="p-0 mt-auto">
-            <SidebarGroupContent>
-              {/* Expanded state */}
-              <div className="group-data-[collapsible=icon]:hidden">
-                <Link
-                  prefetch={true}
-                  href="/pricing"
-                  onClick={closeMobileSidebar}
-                  className="relative flex flex-col gap-1.5 rounded-2xl p-4 pb-3 bg-muted hover:bg-muted/80 transition-colors overflow-hidden group/upgrade"
-                >
-                  <span className="text-base font-medium">Upgrade to Pro</span>
-                  <span className="text-xs text-muted-foreground pr-12">
-                    Unlimited searches, 100+ apps, voice & more
-                  </span>
-                  <div className="absolute -bottom-2 -right-2 flex items-center justify-center size-14 rounded-full bg-background group-hover/upgrade:scale-110 transition-transform duration-300">
-                    <HugeiconsIcon icon={Crown02Icon} size={22} className="text-foreground" />
-                  </div>
-                </Link>
-              </div>
-
-              {/* Collapsed state */}
-              <div className="hidden group-data-[collapsible=icon]:block">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Link
-                      prefetch={true}
-                      href="/pricing"
-                      onClick={closeMobileSidebar}
-                      className="flex items-center justify-center size-8 mx-auto rounded-full bg-muted hover:bg-muted/80 transition-colors"
-                    >
-                      <HugeiconsIcon icon={Crown02Icon} size={16} className="text-foreground" />
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" align="center">
-                    Upgrade to Pro
-                  </TooltipContent>
-                </Tooltip>
-              </div>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
       </SidebarContent>
 
-      {/* Footer - User Account with Dropdown Menu */}
-      <SidebarFooter className="group-data-[collapsible=icon]:border-none border-t border-border p-0 gap-0">
-        {user ? (
+      {/* Footer - User Account with Dropdown Menu (hidden while auth is disabled) */}
+      {user && (
+        <SidebarFooter className="group-data-[collapsible=icon]:border-none border-t border-border p-0 gap-0">
           <SidebarMenu className="gap-0">
             <SidebarMenuItem>
               {/* Expanded state - full user card as dropdown trigger */}
@@ -1488,49 +1324,8 @@ export const AppSidebar = memo(({ user, onHistoryClick, isProUser }: AppSidebarP
               </div>
             </SidebarMenuItem>
           </SidebarMenu>
-        ) : (
-          <SidebarMenu className="gap-0 p-2">
-            {/* Expanded state */}
-            <SidebarMenuItem className="group-data-[collapsible=icon]:hidden">
-              <Link
-                prefetch={true}
-                href="/sign-in"
-                onClick={closeMobileSidebar}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 bg-primary/5 hover:bg-primary/10 transition-colors"
-              >
-                <div className="flex items-center justify-center size-7 rounded-lg bg-primary/10">
-                  <SignIn size={16} weight="regular" className="text-primary" />
-                </div>
-                <div className="flex flex-col gap-0.5 min-w-0">
-                  <span className="text-sm font-medium truncate">Sign In</span>
-                  <span className="font-pixel text-[8px] text-muted-foreground uppercase tracking-wider truncate">
-                    Free &middot; No credit card
-                  </span>
-                </div>
-              </Link>
-            </SidebarMenuItem>
-
-            {/* Collapsed state */}
-            <SidebarMenuItem className="hidden group-data-[collapsible=icon]:block">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
-                    prefetch={true}
-                    href="/sign-in"
-                    onClick={closeMobileSidebar}
-                    className="flex items-center justify-center size-8 mx-auto rounded-md bg-primary/10 hover:bg-primary/15 transition-colors"
-                  >
-                    <SignIn size={16} weight="regular" className="text-primary" />
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right" align="center">
-                  Sign In
-                </TooltipContent>
-              </Tooltip>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        )}
-      </SidebarFooter>
+        </SidebarFooter>
+      )}
 
       {user && (
         <>

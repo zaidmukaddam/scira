@@ -2642,22 +2642,31 @@ export const models: Model[] = [
   },
 ];
 
+// TODO(auth): Authentication and paid plans are temporarily disabled for the
+// self-hosted/local-first build. Set to false to restore sign-in requirements
+// and Pro/Max model gating (also see AUTH_DISABLED in app/api/search/route.ts
+// and the protected routes in proxy.ts).
+export const AUTH_DISABLED = true;
+
 // Helper functions for model access checks
 export function getModelConfig(modelValue: string) {
   return models.find((model) => model.value === modelValue);
 }
 
 export function requiresAuthentication(modelValue: string): boolean {
+  if (AUTH_DISABLED) return false;
   const model = getModelConfig(modelValue);
   return model?.requiresAuth || false;
 }
 
 export function requiresProSubscription(modelValue: string): boolean {
+  if (AUTH_DISABLED) return false;
   const model = getModelConfig(modelValue);
   return model?.pro || false;
 }
 
 export function requiresMaxSubscription(modelValue: string): boolean {
+  if (AUTH_DISABLED) return false;
   const model = getModelConfig(modelValue);
   return model?.max || false;
 }
@@ -2709,6 +2718,11 @@ export function canUseModel(
 
   if (!model) {
     return { canUse: false, reason: 'Model not found' };
+  }
+
+  // TODO(auth): remove this early return to restore plan-based model access
+  if (AUTH_DISABLED) {
+    return { canUse: true };
   }
 
   // Check if model requires authentication

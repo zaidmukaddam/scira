@@ -18,7 +18,8 @@ import {
 } from 'ai';
 import { pipeJsonRender } from '@json-render/core';
 import {
-  scira,
+  getSciraProvider,
+  type UserProviderKeys,
   requiresAuthentication,
   requiresProSubscription,
   requiresMaxSubscription,
@@ -66,6 +67,37 @@ import { unauthenticatedRateLimit, getClientIdentifier } from '@/lib/rate-limit'
 import { loadConfiguredTools } from '@/lib/search/tool-loader';
 import { CohereChatModelOptions } from '@ai-sdk/cohere';
 import { xai } from '@ai-sdk/xai';
+
+// TODO(auth): Authentication is temporarily disabled for the self-hosted build.
+// Set to false (together with AUTH_DISABLED in ai/models.ts) to restore
+// sign-in requirements, rate limits, and subscription gating.
+const AUTH_DISABLED = true;
+
+const USER_PROVIDER_KEY_IDS = ['openai', 'anthropic', 'google', 'groq', 'xai', 'mistral'] as const;
+
+/**
+ * Parses user-configured provider API keys from the `x-provider-api-keys`
+ * header (set by the Settings page / chat client). Keys are optional and
+ * override server env keys for the matching providers.
+ */
+function parseUserProviderKeys(req: Request): UserProviderKeys | undefined {
+  const header = req.headers.get('x-provider-api-keys');
+  if (!header) return undefined;
+  try {
+    const parsed = JSON.parse(header);
+    if (!parsed || typeof parsed !== 'object') return undefined;
+    const keys: UserProviderKeys = {};
+    for (const id of USER_PROVIDER_KEY_IDS) {
+      const value = parsed[id];
+      if (typeof value === 'string' && value.trim() && value.length <= 512) {
+        keys[id] = value.trim();
+      }
+    }
+    return Object.keys(keys).length > 0 ? keys : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 interface CriticalChecksResult {
   canProceed: boolean;
@@ -184,11 +216,7 @@ function initializeChatAndChecks({
         ) {
           throw new ChatSDKError('rate_limit:model', 'Daily Anthropic limit reached for Max users.');
         }
-        if (
-          isMaxGoogleModel &&
-          googleUsageResult.count !== undefined &&
-          googleUsageResult.count >= 80
-        ) {
+        if (isMaxGoogleModel && googleUsageResult.count !== undefined && googleUsageResult.count >= 80) {
           throw new ChatSDKError('rate_limit:model', 'Monthly Gemini limit reached for Max users.');
         }
 
@@ -288,11 +316,7 @@ function initializeChatAndChecks({
       ) {
         throw new ChatSDKError('rate_limit:model', 'Daily Anthropic limit reached for Max users.');
       }
-      if (
-        isMaxGoogleModel &&
-        googleUsageResult.count !== undefined &&
-        googleUsageResult.count >= 80
-      ) {
+      if (isMaxGoogleModel && googleUsageResult.count !== undefined && googleUsageResult.count >= 80) {
         throw new ChatSDKError('rate_limit:model', 'Monthly Gemini limit reached for Max users.');
       }
 
@@ -423,6 +447,10 @@ export async function POST(req: Request) {
     return new ChatSDKError('bad_request:api', 'Messages array is required and cannot be empty').toResponse();
   }
 
+  // Provider instance honoring any user-configured API keys from Settings.
+  const userProviderKeys = parseUserProviderKeys(req);
+  const sciraProvider = getSciraProvider(userProviderKeys);
+
   const incomingMessages = requestMessages as ChatMessage[];
   const requestLastUserMessage = [...incomingMessages].reverse().find((message) => message.role === 'user');
 
@@ -453,10 +481,16 @@ export async function POST(req: Request) {
   // Start all independent operations in parallel immediately
   opStart = Date.now();
   const lightweightUserPromise = getLightweightUser();
-  // Use lightweight validation query - only fetches id and userId
-  const chatQueryPromise = isTemporaryChat ? Promise.resolve(null) : getChatByIdForValidation({ id });
+  // Use lightweight validation query - only fetches id and userId.
+  // Anonymous chats are never persisted, so skip the DB entirely without a user
+  // (keeps the app usable without a database while auth is disabled).
+  const chatQueryPromise = isTemporaryChat
+    ? Promise.resolve(null)
+    : lightweightUserPromise.then((user) => (user ? getChatByIdForValidation({ id }) : null));
   const persistedMessagesPromise =
-    isTemporaryChat || incomingMessages.length > 1 ? Promise.resolve<ChatMessage[]>([]) : getMessagesByChatId({ id });
+    isTemporaryChat || incomingMessages.length > 1
+      ? Promise.resolve<ChatMessage[]>([])
+      : lightweightUserPromise.then((user) => (user ? getMessagesByChatId({ id }) : []));
   const isDev = process.env.NODE_ENV === 'development';
   const rateLimitPromise = lightweightUserPromise.then((user) => {
     if (user || isDev) return null;
@@ -479,7 +513,8 @@ export async function POST(req: Request) {
   recordTiming('create_full_user_promise', opStart);
 
   // Rate limit check for unauthenticated users (skip in dev environment)
-  if (!lightweightUser && !isDev) {
+  // TODO(auth): AUTH_DISABLED skips the unauthenticated rate limit for the self-hosted build
+  if (!AUTH_DISABLED && !lightweightUser && !isDev) {
     opStart = Date.now();
     const rateLimitResult = await rateLimitPromise;
     if (!rateLimitResult) {
@@ -498,26 +533,30 @@ export async function POST(req: Request) {
   }
 
   // Early exit checks (no DB operations needed)
-  if (!lightweightUser) {
-    if (requiresAuthentication(model)) {
-      return new ChatSDKError('unauthorized:model', `${model} requires authentication`).toResponse();
-    }
-    if (group === 'extreme') {
-      return new ChatSDKError('unauthorized:auth', 'Authentication required to use Extreme Search mode').toResponse();
-    }
-    if (group === 'mcp') {
-      return new ChatSDKError('unauthorized:auth', 'Authentication required to use MCP mode').toResponse();
-    }
-  } else {
-    // Fast auth checks using lightweight user (no additional DB calls)
-    if (requiresMaxSubscription(model) && !lightweightUser.isMaxUser) {
-      return new ChatSDKError('upgrade_required:model', `${model} requires a Max subscription`).toResponse();
-    }
-    if (requiresProSubscription(model) && !lightweightUser.isProUser && !lightweightUser.isMaxUser) {
-      return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
-    }
-    if (group === 'mcp' && !lightweightUser.isProUser && !lightweightUser.isMaxUser) {
-      return new ChatSDKError('upgrade_required:auth', 'MCP mode requires a Pro subscription').toResponse();
+  // TODO(auth): AUTH_DISABLED bypasses sign-in and subscription gating; the
+  // requires*() helpers also return false while ai/models.ts AUTH_DISABLED is set.
+  if (!AUTH_DISABLED) {
+    if (!lightweightUser) {
+      if (requiresAuthentication(model)) {
+        return new ChatSDKError('unauthorized:model', `${model} requires authentication`).toResponse();
+      }
+      if (group === 'extreme') {
+        return new ChatSDKError('unauthorized:auth', 'Authentication required to use Extreme Search mode').toResponse();
+      }
+      if (group === 'mcp') {
+        return new ChatSDKError('unauthorized:auth', 'Authentication required to use MCP mode').toResponse();
+      }
+    } else {
+      // Fast auth checks using lightweight user (no additional DB calls)
+      if (requiresMaxSubscription(model) && !lightweightUser.isMaxUser) {
+        return new ChatSDKError('upgrade_required:model', `${model} requires a Max subscription`).toResponse();
+      }
+      if (requiresProSubscription(model) && !lightweightUser.isProUser && !lightweightUser.isMaxUser) {
+        return new ChatSDKError('upgrade_required:model', `${model} requires a Pro subscription`).toResponse();
+      }
+      if (group === 'mcp' && !lightweightUser.isProUser && !lightweightUser.isMaxUser) {
+        return new ChatSDKError('upgrade_required:auth', 'MCP mode requires a Pro subscription').toResponse();
+      }
     }
   }
 
@@ -958,7 +997,7 @@ export async function POST(req: Request) {
       }
 
       const result = streamText({
-        model: shouldUseXaiMultiAgent ? xai.responses('grok-4.20-multi-agent') : scira.languageModel(model),
+        model: shouldUseXaiMultiAgent ? xai.responses('grok-4.20-multi-agent') : sciraProvider.languageModel(model),
         messages: processedMessages,
         ...getModelParameters(shouldUseXaiMultiAgent ? 'grok-4.20-multi-agent' : model),
         stopWhen: stepCountIs(shouldUseXaiMultiAgent ? 5 : group === 'mcp' ? 50 : 5),
@@ -1505,7 +1544,7 @@ export async function POST(req: Request) {
           }
 
           const { output: repairedArgs } = await generateText({
-            model: scira.languageModel('scira-default'),
+            model: sciraProvider.languageModel('scira-default'),
             output: Output.object({ schema: tool.inputSchema }),
             prompt: [
               `The model tried to call the tool "${toolCall.toolName}"` + ` with the following arguments:`,
@@ -1558,8 +1597,7 @@ export async function POST(req: Request) {
                     step.toolCalls?.some((toolCall) => toolCall && toolCall.toolName === 'extreme_search'),
                   );
                 const shouldTrackAnthropicUsage = getModelProvider(model) === 'anthropic' && lightweightUser.isMaxUser;
-                const shouldTrackGoogleUsage =
-                  getModelProvider(model) === 'google' && lightweightUser.isMaxUser;
+                const shouldTrackGoogleUsage = getModelProvider(model) === 'google' && lightweightUser.isMaxUser;
 
                 if (
                   shouldTrackMessageUsage ||

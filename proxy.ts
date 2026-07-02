@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCookie } from 'better-auth/cookies';
 
 const authRoutes = ['/sign-in', '/sign-up'];
-const protectedRoutes = ['/settings', '/searches'];
+// TODO(auth): Authentication is temporarily disabled for the self-hosted build.
+// Restore ['/settings', '/searches'] (and the /settings guard below) to
+// re-enable route protection.
+const protectedRoutes: string[] = [];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -32,11 +35,9 @@ export async function proxy(request: NextRequest) {
 
   const sessionCookie = getSessionCookie(request);
 
-  // Allow /settings as a real page; still protect it behind auth
+  // TODO(auth): /settings is open while authentication is disabled. Restore the
+  // sessionCookie redirect here to protect it again.
   if (pathname === '/settings') {
-    if (!sessionCookie) {
-      return NextResponse.redirect(new URL('/sign-in', request.url));
-    }
     return NextResponse.next();
   }
 

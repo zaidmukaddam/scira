@@ -713,7 +713,8 @@ function createBuildWebSearchTool(dataStream: UIMessageStreamWriter<ChatMessage>
           const { results: exaResults } = await exa.search(query, {
             numResults: 6,
             type: 'instant',
-            ...(exaCategory && { category: exaCategory }),
+            // 'tweet' was dropped from the exa-js category union; cast keeps runtime behavior
+            ...(exaCategory && { category: exaCategory as Exclude<typeof exaCategory, 'tweet'> }),
             ...(includeDomains && { include_domains: includeDomains }),
             ...(startPublishedDate && { startPublishedDate }),
             ...(endPublishedDate && { endPublishedDate }),

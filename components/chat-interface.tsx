@@ -65,6 +65,7 @@ import {
 // Hook imports
 import { useAutoResume } from '@/hooks/use-auto-resume';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { PROVIDER_KEYS_HEADER, getProviderKeysHeaderValue } from '@/lib/local-settings';
 import { useUsageData } from '@/hooks/use-usage-data';
 import { useUser } from '@/contexts/user-context';
 import { useOptimizedScroll } from '@/hooks/use-optimized-scroll';
@@ -226,10 +227,7 @@ const ChatInterface = memo(
       false,
     );
 
-    const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'firecrawl'>(
-      'scira-search-provider',
-      'firecrawl',
-    );
+    const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'firecrawl'>('scira-search-provider', 'firecrawl');
 
     const [extremeSearchModel] = useLocalStorage<
       'scira-ext-1' | 'scira-ext-2' | 'scira-ext-4' | 'scira-ext-5' | 'scira-ext-6' | 'scira-ext-7' | 'scira-ext-8'
@@ -603,8 +601,11 @@ const ChatInterface = memo(
         prepareSendMessagesRequest({ messages, body }) {
           const latestUserMessage = [...messages].reverse().find((message) => message.role === 'user');
           const shouldTrimRequestHistory = Boolean(user && !isTemporaryChatRef.current && latestUserMessage);
+          // User-configured provider API keys from Settings (local-first storage).
+          const providerKeysHeader = getProviderKeysHeaderValue();
 
           return {
+            ...(providerKeysHeader ? { headers: { [PROVIDER_KEYS_HEADER]: providerKeysHeader } } : {}),
             body: {
               id: chatId,
               messages: shouldTrimRequestHistory && latestUserMessage ? [latestUserMessage] : messages,
@@ -1616,19 +1617,6 @@ const ChatInterface = memo(
                           }`,
                     )}
                   >
-                    {/* Passive sign-in nudge — floats above the form when messages exist */}
-                    {!user && messages.length > 0 && (
-                      <div className="absolute -top-9 left-1/2 -translate-x-1/2 pointer-events-none flex items-center justify-center w-full">
-                        <Link
-                          href="/sign-in"
-                          className="pointer-events-auto inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium text-muted-foreground bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-accent hover:text-foreground shadow-sm transition-all"
-                        >
-                          This chat won&apos;t be saved · Sign in for history
-                          <ArrowRight className="size-3 shrink-0" />
-                        </Link>
-                      </div>
-                    )}
-
                     <FormComponent
                       chatId={chatId}
                       user={user!}

@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 // /components/ui/form-component.tsx
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'motion/react';
 import { sileo } from 'sileo';
 import { all } from 'better-all';
@@ -37,6 +38,7 @@ import {
   ArrowUpRight,
   Search,
   ChevronDown,
+  ChevronRight,
   Plus,
   Ghost,
   Star,
@@ -83,6 +85,7 @@ import { ChatMessage } from '@/lib/types';
 import { useLocation } from '@/hooks/use-location';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useSyncedPreferences } from '@/hooks/use-synced-preferences';
+import { useModelAvailability } from '@/hooks/use-provider-keys';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { CONNECTOR_CONFIGS, CONNECTOR_ICONS, type ConnectorProvider } from '@/lib/connectors';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -439,6 +442,23 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
 
     const isSubscriptionLoading = useMemo(() => user && !subscriptionData, [user, subscriptionData]);
 
+    // Providers are usable when a key is saved in Settings or configured on the server,
+    // the provider is enabled, and the model itself is enabled in Settings.
+    const { isModelProviderConfigured, isModelEnabled, isLoading: isAvailabilityLoading } = useModelAvailability();
+
+    const notifyMissingKey = useCallback((providerName: string) => {
+      sileo.error({
+        title: `${providerName} API key required`,
+        description: `Add your ${providerName} API key in Settings to use this model.`,
+        button: {
+          title: 'Open Settings',
+          onClick: () => {
+            window.location.href = '/settings?tab=providers';
+          },
+        },
+      });
+    }, []);
+
     const [countryCode, setCountryCode] = useState<string | null>(null);
 
     // Fetch country code on mount
@@ -452,7 +472,20 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       };
     }, []);
 
-    const availableModels = useMemo(() => getFilteredModels(countryCode || undefined), [countryCode]);
+    // Only models from active providers (enabled + configured key) appear in the picker.
+    const availableModels = useMemo(
+      () => getFilteredModels(countryCode || undefined).filter((model) => isModelEnabled(model)),
+      [countryCode, isModelEnabled],
+    );
+
+    // If the selected model's provider was disabled or lost its key, fall back
+    // to the first available model once availability has settled.
+    useEffect(() => {
+      if (isAvailabilityLoading || availableModels.length === 0) return;
+      if (!availableModels.some((m) => m.value === selectedModel)) {
+        setSelectedModel(availableModels[0].value);
+      }
+    }, [availableModels, isAvailabilityLoading, selectedModel, setSelectedModel]);
 
     const [showUpgradeDialogState, setShowUpgradeDialogState] = useState(false);
     const [showSignInDialog, setShowSignInDialog] = useState(false);
@@ -969,6 +1002,13 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
           return;
         }
 
+        const provider = model.provider || getModelProvider(model.value, model.label);
+        if (!isModelProviderConfigured(provider)) {
+          haptics.trigger('warning');
+          notifyMissingKey(PROVIDERS[provider].name);
+          return;
+        }
+
         console.log('Selected model:', model.value);
         setSelectedModel(model.value.trim());
         haptics.trigger('selection');
@@ -977,7 +1017,18 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
           onModelSelect(model);
         }
       },
-      [availableModels, user, isProUser, isMaxUser, isSubscriptionLoading, setSelectedModel, onModelSelect, haptics],
+      [
+        availableModels,
+        user,
+        isProUser,
+        isMaxUser,
+        isSubscriptionLoading,
+        setSelectedModel,
+        onModelSelect,
+        haptics,
+        isModelProviderConfigured,
+        notifyMissingKey,
+      ],
     );
 
     // Get providers that have models in the current filtered set
@@ -1113,6 +1164,12 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                 return;
               }
 
+              const provider = model.provider || getModelProvider(model.value, model.label);
+              if (!isModelProviderConfigured(provider)) {
+                notifyMissingKey(PROVIDERS[provider].name);
+                return;
+              }
+
               handleModelChange(model.value);
               setOpen(false);
             }
@@ -1140,6 +1197,8 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         handleModelChange,
         activeProviders,
         selectedProvider,
+        isModelProviderConfigured,
+        notifyMissingKey,
       ],
     );
 
@@ -1150,6 +1209,7 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
       const requiresPro = requiresProSubscription(model.value) && !isProUser;
       const isLocked = requiresAuth || requiresPro || requiresMax;
       const modelProvider = model.provider || getModelProvider(model.value, model.label);
+      const needsApiKey = !isLocked && !isModelProviderConfigured(modelProvider);
       const isSelected = selectedModel === model.value;
       const isAutoRouter = model.value === 'scira-auto';
       const isFocused = focusedIndex === index;
@@ -1172,6 +1232,11 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
         if (requiresPro) {
           setSelectedProModel(model);
           setShowUpgradeDialog(true);
+          return;
+        }
+
+        if (needsApiKey) {
+          notifyMissingKey(PROVIDERS[modelProvider].name);
           return;
         }
 
@@ -1242,6 +1307,18 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                 </span>
               )}
               {requiresAuth && !user && <LockIcon className="size-3 text-muted-foreground/60" />}
+              {needsApiKey && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 leading-none">
+                      KEY
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs">
+                    Requires a {PROVIDERS[modelProvider].name} API key — add one in Settings
+                  </TooltipContent>
+                </Tooltip>
+              )}
               {isAutoRouter && (
                 <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-primary/10 text-primary leading-none">
                   AUTO
@@ -1404,41 +1481,14 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
                           isMobile ? 'p-2 shrink-0' : 'p-1.5 w-full',
                           isActive
                             ? 'bg-primary/10 text-primary'
-                            : 'hover:bg-accent/60 text-muted-foreground/60 hover:text-foreground',
+                            : 'hover:bg-accent/60 text-foreground/85 hover:text-foreground',
                         )}
                       >
                         <span className="relative">
-                          {hasNew && (
-                            <span className="absolute inset-0 -m-0.5 rounded-full bg-amber-400/15 dark:bg-amber-500/10 blur-[3px]" />
-                          )}
                           {isAll ? (
                             <HugeiconsIcon icon={StarIcon} size={isMobile ? 16 : 14} />
                           ) : (
                             <ProviderIcon provider={provider as ModelProvider} size={isMobile ? 16 : 14} />
-                          )}
-                          {hasNew && (
-                            <svg
-                              className="absolute -top-1.5 -right-1.5 size-2.5 text-amber-500 dark:text-amber-400"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                            >
-                              <path
-                                d="M6 5.5C6 5.224 5.776 5 5.5 5s-.5.224-.5.5c0 .98-.217 1.573-.572 1.928C4.073 7.783 3.48 8 2.5 8c-.276 0-.5.224-.5.5s.224.5.5.5c.98 0 1.573.217 1.928.572C4.783 9.927 5 10.52 5 11.5c0 .276.224.5.5.5s.5-.224.5-.5c0-.98.217-1.573.572-1.928C6.927 9.217 7.52 9 8.5 9c.276 0 .5-.224.5-.5S8.776 8 8.5 8c-.98 0-1.573-.217-1.928-.572C6.217 7.073 6 6.48 6 5.5Z"
-                                fill="currentColor"
-                              />
-                              <path
-                                d="M11 1.5c0-.276-.224-.5-.5-.5s-.5.224-.5.5c0 .633-.141.975-.333 1.167-.192.192-.534.333-1.167.333-.276 0-.5.224-.5.5s.224.5.5.5c.633 0 .975.141 1.167.333.192.192.333.534.333 1.167 0 .276.224.5.5.5s.5-.224.5-.5c0-.633.141-.975.333-1.167.192-.192.534-.333 1.167-.333.276 0 .5-.224.5-.5s-.224-.5-.5-.5c-.633 0-.975-.141-1.167-.333C11.141 2.475 11 2.133 11 1.5Z"
-                                fill="currentColor"
-                              />
-                              <path
-                                fillRule="evenodd"
-                                clipRule="evenodd"
-                                d="M21 15c-5.556 0-8-2.444-8-8 0 5.556-2.444 8-8 8 5.556 0 8 2.444 8 8 0-5.556 2.444-8 8-8Z"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                                strokeLinejoin="round"
-                              />
-                            </svg>
                           )}
                         </span>
                       </button>
@@ -1511,29 +1561,6 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               </div>
             )}
 
-            {/* Upgrade Banner (for non-pro users) */}
-            {!isProUser && (
-              <div
-                onClick={() => {
-                  setShowUpgradeDialog(true);
-                }}
-                className="mx-2 mb-1 p-2 rounded-lg bg-linear-to-r from-primary/6 via-secondary/4 to-accent/6 border border-primary/15 cursor-pointer hover:border-primary/30 transition-colors duration-200 shrink-0"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-[11px] font-medium">Unlock all models</span>
-                      <ProBadge className="scale-[0.7] origin-left" />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">Starting at ${PRICING.PRO_MONTHLY}/mo</p>
-                  </div>
-                  <Button type="button" size="sm" className="h-6 text-[10px] px-2.5 rounded-md shrink-0">
-                    Upgrade
-                  </Button>
-                </div>
-              </div>
-            )}
-
             {/* Model List */}
             <div
               ref={modelListRef}
@@ -1542,9 +1569,16 @@ const ModelSwitcher: React.FC<ModelSwitcherProps> = React.memo(
               className="flex-1 overflow-y-auto px-1 py-0.5 min-h-0"
             >
               {displayModels.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 gap-2">
+                <div className="flex flex-col items-center justify-center py-10 gap-2 px-4 text-center">
                   <Search className="size-5 text-muted-foreground/30" />
-                  <p className="text-xs text-muted-foreground/60">No models found</p>
+                  <p className="text-xs text-muted-foreground/60">
+                    {availableModels.length === 0 ? 'No providers configured' : 'No models found'}
+                  </p>
+                  {availableModels.length === 0 && (
+                    <Link href="/settings?tab=providers" className="text-xs text-primary hover:underline">
+                      Add a provider API key in Settings
+                    </Link>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-px">
@@ -3435,6 +3469,7 @@ const FormComponent: React.FC<FormComponentProps> = ({
   const [plusMenuOpen, setPlusMenuOpen] = useState(false);
   const [plusMenuCanScroll, setPlusMenuCanScroll] = useState(true);
   const plusMenuScrollRef = useRef<HTMLDivElement>(null);
+  const [sourcesSubmenuOpen, setSourcesSubmenuOpen] = useState(false);
   const location = useLocation();
   const isMobile = useIsMobile();
   const haptics = useWebHaptics();
@@ -5834,28 +5869,32 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           <div className="my-1 mx-2 border-t border-border/40" />
                           <div className="px-3 pt-1.5 pb-0.5">
                             <span className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">
-                              Search Modes
+                              Sources
                             </span>
                           </div>
-                          {plusMenuGroups.map((group, i) => {
+                          {plusMenuGroups.map((group) => {
                             const sel = selectedGroup === group.id && !isExtreme;
                             return (
                               <button
                                 key={group.id}
-                                className={cn(
-                                  'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-accent transition-colors',
-                                  sel && 'bg-accent',
-                                )}
+                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-accent transition-colors"
                                 onClick={() => handlePlusMenuGroupSelect(group)}
                               >
                                 <FlexibleIcon icon={group.icon} size={16} color="currentColor" strokeWidth={1.5} />
                                 <span className="flex-1 text-[13px]">{group.name}</span>
                                 {'requirePro' in group && group.requirePro && !isProUser && (
-                                  <span className="text-[9px] px-1 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                                  <span className="text-[9px] px-1 py-0.5 rounded bg-primary/10 text-primary font-medium shrink-0">
                                     Pro
                                   </span>
                                 )}
-                                {sel && <Check className="size-3.5 text-primary" />}
+                                <div
+                                  className={cn(
+                                    'size-4 rounded-sm border-2 flex items-center justify-center transition-colors shrink-0',
+                                    sel ? 'bg-primary border-primary' : 'border-border bg-transparent',
+                                  )}
+                                >
+                                  {sel && <Check className="size-2.5 text-primary-foreground" strokeWidth={3} />}
+                                </div>
                               </button>
                             );
                           })}
@@ -6068,27 +6107,41 @@ const FormComponent: React.FC<FormComponentProps> = ({
                           </Tooltip>
                         )}
                         <div className="my-0.5 mx-2 border-t border-border/40" />
-                        <div className="px-2.5 pt-1.5 pb-0.5">
-                          <span className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-widest">
-                            Search Modes
-                          </span>
-                        </div>
-                        <div className="relative">
-                          <div
-                            ref={plusMenuScrollRef}
-                            onScroll={handlePlusMenuScroll}
-                            className="max-h-32 overflow-y-auto"
+                        <div
+                          className="relative"
+                          onMouseEnter={() => setSourcesSubmenuOpen(true)}
+                          onMouseLeave={() => setSourcesSubmenuOpen(false)}
+                        >
+                          <button
+                            className={cn(
+                              'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-left hover:bg-accent transition-colors',
+                              sourcesSubmenuOpen && 'bg-accent',
+                            )}
                           >
-                            {plusMenuGroups.map((group) => {
-                              const sel = selectedGroup === group.id && !isExtreme;
-                              return (
-                                <Tooltip key={group.id} delayDuration={200}>
-                                  <TooltipTrigger asChild>
+                            <HugeiconsIcon icon={GlobalSearchIcon} size={16} color="currentColor" strokeWidth={1.5} />
+                            <span className="flex-1 text-[13px]">Sources</span>
+                            {!isExtreme && plusMenuGroups.some((g) => g.id === selectedGroup) && (
+                              <span className="flex items-center justify-center size-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold leading-none">
+                                1
+                              </span>
+                            )}
+                            <ChevronRight className="size-3.5 text-muted-foreground/50" />
+                          </button>
+                          <AnimatePresence>
+                            {sourcesSubmenuOpen && (
+                              <motion.div
+                                initial={{ opacity: 0, x: -4, scale: 0.97 }}
+                                animate={{ opacity: 1, x: 0, scale: 1 }}
+                                exit={{ opacity: 0, x: -4, scale: 0.97 }}
+                                transition={{ duration: 0.12, ease: 'easeOut' }}
+                                className="absolute left-full top-0 ml-1 w-52 rounded-lg bg-popover border border-border/60 shadow-lg z-50 p-1 overflow-y-auto max-h-80"
+                              >
+                                {plusMenuGroups.map((group) => {
+                                  const sel = selectedGroup === group.id && !isExtreme;
+                                  return (
                                     <button
-                                      className={cn(
-                                        'w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-left hover:bg-accent transition-colors',
-                                        sel && 'bg-accent',
-                                      )}
+                                      key={group.id}
+                                      className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-left hover:bg-accent transition-colors"
                                       onClick={() => handlePlusMenuGroupSelect(group)}
                                     >
                                       <FlexibleIcon
@@ -6099,25 +6152,24 @@ const FormComponent: React.FC<FormComponentProps> = ({
                                       />
                                       <span className="flex-1 text-[13px]">{group.name}</span>
                                       {'requirePro' in group && group.requirePro && !isProUser && (
-                                        <span className="text-[9px] px-1 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                                        <span className="text-[9px] px-1 py-0.5 rounded bg-primary/10 text-primary font-medium shrink-0">
                                           Pro
                                         </span>
                                       )}
-                                      {sel && <Check className="size-3.5 text-primary" />}
+                                      <div
+                                        className={cn(
+                                          'size-4 rounded-sm border-2 flex items-center justify-center transition-colors shrink-0',
+                                          sel ? 'bg-primary border-primary' : 'border-border bg-transparent',
+                                        )}
+                                      >
+                                        {sel && <Check className="size-2.5 text-primary-foreground" strokeWidth={3} />}
+                                      </div>
                                     </button>
-                                  </TooltipTrigger>
-                                  <TooltipContent side="right" sideOffset={8} className="max-w-48 py-1.5 px-2.5">
-                                    <span className="text-[10px] leading-snug">{group.description}</span>
-                                  </TooltipContent>
-                                </Tooltip>
-                              );
-                            })}
-                          </div>
-                          {plusMenuCanScroll && (
-                            <div className="pointer-events-none absolute bottom-0 inset-x-0 flex justify-center pb-0.5 pt-4 bg-linear-to-t from-popover via-popover/80 to-transparent rounded-b-lg">
-                              <ChevronDown className="size-3.5 text-muted-foreground animate-bounce" />
-                            </div>
-                          )}
+                                  );
+                                })}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
                       </PopoverContent>
                     </Popover>
