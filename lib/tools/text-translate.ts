@@ -83,6 +83,7 @@ const detectedLanguageSchema = z.object({
 async function detectLanguageCode(text: string): Promise<string> {
   try {
     const { output } = await generateText({
+      experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
       model: scira.languageModel('scira-default'),
       output: Output.object({ schema: detectedLanguageSchema }),
       prompt: `Detect the ISO 639-1 language code (2-letter) of the following text.\n\nText:\n${text}`,
@@ -140,6 +141,7 @@ export const textTranslateTool = tool({
       
       console.log('[text-translate] Calling model with', images.length, 'images...');
       const { text: translatedText } = await generateText({
+        experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
         model: scira.languageModel('scira-gemini-3-flash'),
         messages: [
           {
@@ -182,6 +184,7 @@ export const textTranslateTool = tool({
 
     console.log('[text-translate] Calling TranslateGemma for text-only translation...');
     const { text: translatedText } = await generateText({
+      experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
       model: cohere('command-a-translate-08-2025'),
       prompt: promptText,
       temperature: 0,

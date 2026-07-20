@@ -612,6 +612,7 @@ async function extremeSearch(
   // plan out the research
 
   const { output: result } = await generateText({
+    experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
     model: scira.languageModel('scira-ext-1'),
     output: Output.object({
       schema: z.object({
@@ -706,6 +707,7 @@ ${hasFilesForPlanning ? '- Include file search steps when the uploaded files are
 
   // Create the autonomous research agent with tools
   const { text: _ } = await generateText({
+    experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
     model: scira.languageModel(modelId),
     stopWhen: [stepCountIs(75), hasToolCall('done')],
     activeTools: baseActiveTools as any,
@@ -1636,6 +1638,7 @@ ${JSON.stringify(plan)}
               }
 
               const { text, sources } = await generateText({
+                experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
                 model: xai.responses('grok-4-1-fast-non-reasoning'),
                 system: `You are a helpful assistant that searches for X content with all the tools available to you. Do not use user search tool. Max limit of results is 30. You can search for the thread or the content of the post. You can also search for the content of the post using thread fetch tool. NO NEED TO WRITE A SINGLE WORD AFTER RUNNING THE TOOLs AT ALL COSTS!!`,
                 messages: [

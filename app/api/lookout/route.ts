@@ -731,6 +731,7 @@ export async function POST(req: Request) {
 
         // Start streaming
         const result = streamText({
+          experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
           model: scira.languageModel('scira-default'),
           messages: await convertToModelMessages([userMessage]),
           stopWhen: stepCountIs(2),

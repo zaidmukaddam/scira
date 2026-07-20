@@ -15,6 +15,7 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
   console.log('Prompt: ', prompt);
 
   const { text: title } = await generateText({
+    experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
     model: scira.languageModel('scira-name'),
     system: `You are an expert title generator. You are given a message and you need to generate a short title based on it.
 

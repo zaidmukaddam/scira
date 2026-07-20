@@ -159,6 +159,7 @@ export async function suggestQuestions(history: any[]) {
   console.log(history);
 
   const { output } = await generateText({
+    experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
     model: scira.languageModel('scira-follow-up'),
     providerOptions: {
       google: {
@@ -234,6 +235,7 @@ export async function checkImageModeration(images: string[]) {
   }));
 
   const { text } = await generateText({
+    experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
     model: groq('meta-llama/llama-guard-4-12b'),
     messages,
     providerOptions: {
@@ -251,6 +253,7 @@ export async function generateTitleFromUserMessage({ message }: { message: UIMes
   const prompt = JSON.stringify(firstTextPart && firstTextPart.type === 'text' ? firstTextPart.text : '');
   console.log('Prompt: ', prompt);
   const { text: title } = await generateText({
+    experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
     model: scira.languageModel('scira-name'),
     system: `You are an expert title generator. You are given a message and you need to generate a short title based on it.
 
@@ -342,6 +345,7 @@ Output requirements:
 - No quotes, no commentary, no markdown, and no preface.`;
 
     const { text } = await generateText({
+      experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
       model: scira.languageModel('scira-enhance'),
       temperature: 0.6,
       topP: 0.95,
@@ -1728,6 +1732,7 @@ Based on your analysis, provide your response in the following JSON formats if y
 `;
 
     const { text } = await generateText({
+      experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
       model: scira.languageModel('scira-arch-router'),
       messages: [{ role: 'user', content: taskInstruction + formatPrompt }],
       maxOutputTokens: 200,

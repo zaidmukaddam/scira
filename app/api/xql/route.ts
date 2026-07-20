@@ -93,6 +93,7 @@ const xqlTool = tool({
     }
 
     const result = await generateText({
+      experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
       model: xai.responses('grok-4-1-fast-non-reasoning'),
       prompt: query,
       stopWhen: stepCountIs(1),
@@ -136,6 +137,7 @@ export async function POST(req: Request) {
   }
 
   const result = streamText({
+    experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
     model: scira.languageModel('scira-default'),
     messages: await convertToModelMessages(messages),
     stopWhen: hasToolCall('xql'),

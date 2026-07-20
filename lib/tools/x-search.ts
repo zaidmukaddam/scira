@@ -114,6 +114,7 @@ export function xSearchTool(dataStream?: UIMessageStreamWriter<ChatMessage>) {
             // are not directly supported in the new xai.tools.xSearch API.
 
             const { text, sources } = await generateText({
+              experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
               model: xai.responses('grok-4-1-fast-non-reasoning'),
               system: `You are a helpful assistant that searches for X content with all the tools available to you. Do not use user search tool. Max limit of results is 30. You can search for the thread or the content of the post. You can also search for the content of the post using thread fetch tool. Go deep to find the latest information on the topic. NO NEED TO WRITE A SINGLE WORD AFTER RUNNING THE TOOLs AT ALL COSTS!!`,
               messages: [{

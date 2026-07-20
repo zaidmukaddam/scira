@@ -88,6 +88,7 @@ export async function POST(req: Request) {
         : ['web_search' as const, 'x_search' as const];
 
   const { text, steps } = await generateText({
+    experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
     model: scira.languageModel(model),
     system: systemPrompt,
     stopWhen: stepCountIs(2),
