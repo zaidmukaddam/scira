@@ -87,7 +87,11 @@ Based on your analysis, provide your response in the following JSON formats if y
 `;
 
     const { text } = await generateText({
-      experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
+      experimental_telemetry: {
+        isEnabled: process.env.AGENTPOND_ENABLED === 'true',
+        recordInputs: true,
+        recordOutputs: true,
+      },
       model: scira.languageModel('scira-arch-router'),
       messages: [{ role: 'user', content: taskInstruction + formatPrompt }],
       maxOutputTokens: 200,

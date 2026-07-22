@@ -210,7 +210,11 @@ export async function POST(req: NextRequest) {
     // - Includes quarterly searches (Q1-Q4) to get month distribution
     // - Returns citations/sources only (NO structured output here)
     const { text, sources } = await generateText({
-      experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
+      experimental_telemetry: {
+        isEnabled: process.env.AGENTPOND_ENABLED === 'true',
+        recordInputs: true,
+        recordOutputs: true,
+      },
       model: xai.responses('grok-4-fast'),
       system: `You are generating an \"X Wrapped\" for @${cleanUsername} for ${year}.
 
@@ -370,7 +374,11 @@ Hard rules:
     // - Must be grounded ONLY in tweet texts we fetched (no invention)
     // - Uses text from first generateText call for additional context
     const { output } = await generateText({
-      experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
+      experimental_telemetry: {
+        isEnabled: process.env.AGENTPOND_ENABLED === 'true',
+        recordInputs: true,
+        recordOutputs: true,
+      },
       model: xai('grok-4-fast-non-reasoning'),
       system: `You are writing an \"X Wrapped\" summary based strictly on provided X post texts and search context.
 

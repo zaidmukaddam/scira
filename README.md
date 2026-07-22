@@ -177,6 +177,13 @@ npx agentpond@0.6.0 init --platform vercel
 Follow the generated prompt, connect a private Blob store, enable Vercel System
 Environment Variables, and set `AGENTPOND_ENABLED=true`. After an AI request:
 
+The AI SDK telemetry settings explicitly enable `recordInputs` and
+`recordOutputs`. This records input and output values for each instrumented
+call, which may include prompts, messages, tool data, and generated content. A
+private Blob store restricts access but does not redact these values. Review
+the [Vercel AI SDK telemetry documentation](https://ai-sdk.dev/docs/ai-sdk-core/telemetry)
+before enabling tracing.
+
 ```bash
 npx agentpond@0.6.0 sync
 npx agentpond@0.6.0 traces list --limit 10

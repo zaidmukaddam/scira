@@ -958,7 +958,11 @@ export async function POST(req: Request) {
       }
 
       const result = streamText({
-        experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
+        experimental_telemetry: {
+          isEnabled: process.env.AGENTPOND_ENABLED === 'true',
+          recordInputs: true,
+          recordOutputs: true,
+        },
         model: shouldUseXaiMultiAgent ? xai.responses('grok-4.20-multi-agent') : scira.languageModel(model),
         messages: processedMessages,
         ...getModelParameters(shouldUseXaiMultiAgent ? 'grok-4.20-multi-agent' : model),
@@ -1506,7 +1510,11 @@ export async function POST(req: Request) {
           }
 
           const { output: repairedArgs } = await generateText({
-            experimental_telemetry: { isEnabled: process.env.AGENTPOND_ENABLED === 'true' },
+            experimental_telemetry: {
+              isEnabled: process.env.AGENTPOND_ENABLED === 'true',
+              recordInputs: true,
+              recordOutputs: true,
+            },
             model: scira.languageModel('scira-default'),
             output: Output.object({ schema: tool.inputSchema }),
             prompt: [
