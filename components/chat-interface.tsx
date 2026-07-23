@@ -627,7 +627,7 @@ const ChatInterface = memo(
           };
         },
       }),
-      experimental_throttle: 100,
+      experimental_throttle: 40,
       onData: (dataPart) => {
         console.log('onData<Client>', dataPart);
         // Handle auto-routed model info from server

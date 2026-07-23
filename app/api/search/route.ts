@@ -15,6 +15,7 @@ import {
   FilePart,
   InferUIMessageChunk,
   AsyncIterableStream,
+  smoothStream,
 } from 'ai';
 import { pipeJsonRender } from '@json-render/core';
 import {
@@ -1015,7 +1016,10 @@ export async function POST(req: Request) {
         maxRetries: 10,
         abortSignal: abortController.signal,
         activeTools: shouldUseXaiMultiAgent ? ['xai_web_search', 'xai_x_search'] : streamActiveTools,
-        experimental_transform: markdownJoinerTransform(),
+        // smoothStream paces bursty provider deltas into evenly-spaced word chunks;
+        // markdownJoinerTransform must run last so it stays the final gate against
+        // partial markdown syntax (e.g. "[link") reaching the client.
+        experimental_transform: [smoothStream({ chunking: 'word', delayInMs: 15 }), markdownJoinerTransform()],
         system:
           instructions +
           (customInstructions && (isCustomInstructionsEnabled ?? true)
