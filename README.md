@@ -140,6 +140,7 @@ Research at the speed of thought. The agentic research platform that plans, retr
 - [Shadcn/UI](https://ui.shadcn.com/) - UI components
 - [Exa.AI](https://exa.ai/) - Web search, academic search, and content retrieval
 - [Firecrawl](https://firecrawl.dev/) - Web scraping with structured extraction
+- [fastCRW](https://fastcrw.com/) - Firecrawl-compatible web scraper (single binary; self-host or cloud)
 - [Parallel](https://parallel.ai/) - Web and Reddit search
 - [Tavily](https://tavily.com/) - Web search and financial news
 - [Valyu](https://valyu.network/) - Financial data, forex, and prediction markets
