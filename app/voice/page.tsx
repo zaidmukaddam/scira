@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useState, useCallback, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowUp, Mic, MicOff, Globe, MessageCircle, Wrench, ChevronDown, ChevronUp, MessageSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -173,7 +173,7 @@ export default function VoicePage() {
     transcriptBottomRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [conversation, showTranscript]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const storedVoice = readStoredVoice();
     const storedMuted = readStoredMuted();
     const storedTranscript = readStoredTranscriptVisible();

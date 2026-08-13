@@ -43,7 +43,6 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
   useEffect(() => {
     // Central place to hook real error reporting (Sentry, PostHog, etc.)
     // e.g. reportError(error);
-    // eslint-disable-next-line no-console
     console.error('[GlobalErrorBoundary]', error);
   }, [error]);
 

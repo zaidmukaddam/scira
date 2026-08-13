@@ -1,5 +1,5 @@
 // /components/reddit-search.tsx
-/* eslint-disable @next/next/no-img-element */
+ 
 import React, { useState } from 'react';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { Drawer, DrawerContent } from '@/components/ui/drawer';

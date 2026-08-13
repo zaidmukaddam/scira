@@ -8,6 +8,7 @@ jiti.import('./env/server.ts');
 jiti.import('./env/client.ts');
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   compiler: {
     // if NODE_ENV is production, remove console.log
     removeConsole:

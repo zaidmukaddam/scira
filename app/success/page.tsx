@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Check, ArrowRight, Loader2, Infinity, Cpu, FileText, Eye, RefreshCw, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useEffect, useRef, useState } from 'react';
 import confetti from 'canvas-confetti';
 import { useSession } from '@/lib/auth-client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -98,7 +98,7 @@ export default function SuccessPage() {
     : "Your subscription is now active. Here's what you've unlocked.";
 
   // Trigger confetti when plan status is confirmed
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (isProUser && !hasTriggeredConfetti.current) {
       hasTriggeredConfetti.current = true;
       setShowContent(true);

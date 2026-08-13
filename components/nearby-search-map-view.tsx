@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+ 
 import 'leaflet/dist/leaflet.css';
 import React, { useState, memo, useCallback } from 'react';
 import { cn } from '@/lib/utils';

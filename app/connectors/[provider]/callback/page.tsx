@@ -56,9 +56,12 @@ export default function ConnectorCallbackPage() {
 
     if (provider && providerConfig) {
       processCallback();
-    } else {
-      setStatus('error');
-      setMessage('Invalid connector provider');
+    } else if (provider && !providerConfig) {
+      // Invalid connector provider - defer state update to avoid cascading renders
+      void Promise.resolve().then(() => {
+        setStatus('error');
+        setMessage('Invalid connector provider');
+      });
     }
   }, [router, provider, providerConfig]);
 

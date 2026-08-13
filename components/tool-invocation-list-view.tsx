@@ -1,4 +1,4 @@
-/* eslint-disable @next/next/no-img-element */
+ 
 'use client';
 
 import React, { memo, useEffect, useState, lazy } from 'react';

@@ -25,8 +25,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 # Copy all source files
 COPY . .
-# Copy environment variables for build configuration
-COPY .env .env
+# Prepare build-time environment file from available sources
+RUN if [ -f .env.local ]; then cp .env.local .env; \
+	elif [ -f .env ]; then cp .env .env; \
+	else cp .env.example .env; fi
 # Build the Next.js application
 RUN npm run build
 

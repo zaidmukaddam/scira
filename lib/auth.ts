@@ -481,7 +481,7 @@ export const auth = betterAuth({
             await handleSubscriptionWebhook(payload, 'active');
 
             // If this is a Max subscription (not Pro), revoke any active Polar subscription
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             const d: any = payload.data;
             const productId = d?.product_id || d?.product_cart?.[0]?.product_id;
             const proProductId = process.env.NEXT_PUBLIC_PREMIUM_TIER;
