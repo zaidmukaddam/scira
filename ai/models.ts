@@ -32,7 +32,8 @@ export type ModelProvider =
   | 'stepfun'
   | 'sarvam'
   | 'inception'
-  | 'nvidia';
+  | 'nvidia'
+  | 'litellm';
 
 export interface ProviderInfo {
   id: ModelProvider;
@@ -64,6 +65,7 @@ export const PROVIDERS: Record<ModelProvider, ProviderInfo> = {
   sarvam: { id: 'sarvam', name: 'Sarvam', icon: 'sarvam', hasNew: true },
   inception: { id: 'inception', name: 'Inception', icon: 'inception', hasNew: true },
   nvidia: { id: 'nvidia', name: 'NVIDIA', icon: 'nvidia', hasNew: true },
+  litellm: { id: 'litellm', name: 'LiteLLM', icon: 'litellm', hasNew: true },
 };
 
 export interface Model {
@@ -2640,6 +2642,23 @@ export const models: Model[] = [
     isNew: true,
     provider: 'inception',
   },
+  // LiteLLM (AI Gateway)
+  {
+    value: 'scira-litellm',
+    label: 'LiteLLM',
+    description: 'LiteLLM AI gateway - routes to 100+ LLM providers via a unified proxy',
+    vision: false,
+    reasoning: false,
+    experimental: true,
+    category: 'Pro',
+    pdf: false,
+    pro: true,
+    requiresAuth: true,
+    freeUnlimited: false,
+    maxOutputTokens: 16000,
+    isNew: true,
+    provider: 'litellm',
+  },
 ];
 
 // Helper functions for model access checks
@@ -2983,6 +3002,11 @@ export function getModelProvider(modelValue: string, label?: string): ModelProvi
   // Inception (Mercury)
   if (value.includes('mercury')) {
     return 'inception';
+  }
+
+  // LiteLLM
+  if (value.includes('litellm')) {
+    return 'litellm';
   }
 
   // Default fallback

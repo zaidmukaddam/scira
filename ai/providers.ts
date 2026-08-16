@@ -15,6 +15,12 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { createRetryable } from 'ai-retry';
 import { createWorkersAI } from 'workers-ai-provider';
 
+const litellmProvider = createOpenAICompatible({
+  name: 'litellm',
+  baseURL: process.env.LITELLM_BASE_URL || 'http://localhost:4000/v1',
+  apiKey: process.env.LITELLM_API_KEY,
+});
+
 const ark = createOpenAICompatible({
   name: 'ark',
   baseURL: 'https://ark.ap-southeast.bytepluses.com/api/v3',
@@ -475,6 +481,7 @@ export const scira = customProvider({
       middleware,
     }),
     'scira-mercury-2': gateway('inception/mercury-2'),
+    'scira-litellm': litellmProvider.chatModel(process.env.LITELLM_MODEL || 'gpt-4o-mini'),
   },
 });
 

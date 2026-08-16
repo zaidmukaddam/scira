@@ -339,6 +339,8 @@ const ProviderIcon = ({
       );
     case 'nvidia':
       return <NVIDIA {...iconProps} />;
+    case 'litellm':
+      return <span className={cn('shrink-0 leading-none', className)} style={{ fontSize: size }}>🚅</span>;
     default:
       return (
         <svg {...iconProps} viewBox="0 0 24 24" fill="currentColor">
