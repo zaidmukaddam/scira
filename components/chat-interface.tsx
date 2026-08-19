@@ -226,7 +226,7 @@ const ChatInterface = memo(
       false,
     );
 
-    const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'firecrawl'>(
+    const [searchProvider, _] = useLocalStorage<'exa' | 'parallel' | 'firecrawl' | 'you'>(
       'scira-search-provider',
       'firecrawl',
     );

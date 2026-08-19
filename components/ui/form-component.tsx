@@ -2752,6 +2752,11 @@ const WEB_SEARCH_PROVIDERS: Array<{
     label: 'Parallel AI',
     description: 'Base and premium web search with Parallel’s Firecrawl image support.',
   },
+  {
+    value: 'you',
+    label: 'You.com',
+    description: 'Independent index with extracted page passages; no API key required.',
+  },
 ];
 
 const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(

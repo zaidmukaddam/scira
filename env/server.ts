@@ -25,6 +25,8 @@ export const serverEnv = createEnv({
     ELEVENLABS_API_KEY: z.string().min(1),
     TAVILY_API_KEY: z.string().min(1),
     EXA_API_KEY: z.string().min(1),
+    // Optional: You.com search works against its keyless endpoint without one.
+    YDC_API_KEY: z.string().optional(),
     VALYU_API_KEY: z.string().min(1),
     TMDB_API_KEY: z.string().min(1),
     YT_ENDPOINT: z.string().min(1),

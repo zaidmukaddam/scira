@@ -592,12 +592,190 @@ class ExaSearchStrategy implements SearchStrategy {
   }
 }
 
+// You.com search strategy
+//
+// You.com runs its own web index and returns several extracted passages per
+// result rather than a single meta description, so results carry usable
+// context without a separate scrape. It has no SDK, so this talks to the REST
+// API directly.
+//
+// Keyless by default: with no YDC_API_KEY the public agents endpoint is used
+// (free tier). A key switches to the full Search API, which is where the
+// higher limits and livecrawl live. The keyless endpoint rejects an auth
+// header, so the endpoint and headers are always chosen together.
+const YOU_KEYED_URL = 'https://api.you.com/v1/search';
+const YOU_KEYLESS_URL = 'https://api.you.com/v1/agents/search';
+const YOU_MAX_COUNT = 100;
+
+interface YouSearchResult {
+  url?: string;
+  title?: string;
+  description?: string;
+  snippets?: string[];
+  page_age?: string;
+  thumbnail_url?: string;
+}
+
+interface YouSearchResponse {
+  results?: {
+    web?: YouSearchResult[];
+    news?: YouSearchResult[];
+  };
+}
+
+// Web hits carry extracted page passages; news hits carry only a description.
+const youSnippet = (result: YouSearchResult): string => {
+  const passages = (result.snippets ?? []).filter((snippet) => snippet.trim() !== '');
+  return (passages.length > 0 ? passages.join(' ') : (result.description ?? '')).substring(0, 1000);
+};
+
+// You.com's `freshness` accepts a YYYY-MM-DDtoYYYY-MM-DD range.
+const formatDateRangeForYou = (startDate: string): string => {
+  const toIsoDay = (value: string | Date): string => new Date(value).toISOString().slice(0, 10);
+  return `${toIsoDay(startDate)}to${toIsoDay(new Date())}`;
+};
+
+class YouSearchStrategy implements SearchStrategy {
+  constructor(private apiKey: string | undefined) {}
+
+  private async fetchQuery(query: string, params: Record<string, string | number>): Promise<YouSearchResponse> {
+    const hasKey = Boolean(this.apiKey);
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+      // Identifies Scira to You.com. This is the only attribution signal on
+      // the keyless endpoint, where there is no key to tie usage to.
+      'User-Agent': 'Scira youdotcom-integration/zaidmukaddam-scira',
+    };
+    if (hasKey) {
+      headers['X-API-Key'] = this.apiKey as string;
+    }
+
+    const url = new URL(hasKey ? YOU_KEYED_URL : YOU_KEYLESS_URL);
+    url.searchParams.set('query', query);
+    for (const [key, value] of Object.entries(params)) {
+      url.searchParams.set(key, String(value));
+    }
+
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      throw new Error(`You.com API error: HTTP ${response.status}`);
+    }
+    return (await response.json()) as YouSearchResponse;
+  }
+
+  async search(
+    queries: string[],
+    options: {
+      maxResults: number[];
+      topics: ('general' | 'news')[];
+      quality: ('default' | 'best')[];
+      startDates?: (string | null)[];
+      dataStream?: UIMessageStreamWriter<ChatMessage>;
+    },
+  ) {
+    const searchPromises = queries.map(async (query, index) => {
+      const currentTopic = options.topics[index] || options.topics[0] || 'general';
+      const currentMaxResults = options.maxResults[index] || options.maxResults[0] || 10;
+      const currentQuality = options.quality[index] || options.quality[0] || 'default';
+      const currentStartDate = options.startDates?.[index] || options.startDates?.[0] || null;
+
+      try {
+        options.dataStream?.write({
+          type: 'data-query_completion',
+          data: {
+            query,
+            index,
+            total: queries.length,
+            status: 'started',
+            resultsCount: 0,
+            imagesCount: 0,
+          },
+        });
+
+        const params: Record<string, string | number> = {
+          count: Math.min(Math.max(currentMaxResults, 10), YOU_MAX_COUNT),
+        };
+        if (currentStartDate) {
+          params.freshness = formatDateRangeForYou(currentStartDate);
+        }
+        // Livecrawl is billed per page and is not available on the keyless
+        // tier, so it is opt-in via `quality: 'best'` and only when keyed.
+        if (currentQuality === 'best' && this.apiKey) {
+          params.livecrawl = currentTopic === 'news' ? 'news' : 'web';
+        }
+
+        const data = await this.fetchQuery(query, params);
+        const web = data.results?.web ?? [];
+        const news = data.results?.news ?? [];
+        // A `news` topic should lead with the news section; both are returned
+        // either way so nothing the API found is discarded.
+        const ordered = currentTopic === 'news' ? [...news, ...web] : [...web, ...news];
+
+        const results = deduplicateByDomainAndUrl(
+          ordered
+            .filter((result): result is YouSearchResult & { url: string } => Boolean(result.url))
+            .map((result) => ({
+              url: result.url,
+              title: cleanTitle(result.title || ''),
+              content: youSnippet(result),
+              published_date: result.page_age || undefined,
+              author: undefined,
+            })),
+        );
+
+        const images = deduplicateByDomainAndUrl(
+          ordered
+            .filter((result) => Boolean(result.thumbnail_url))
+            .map((result) => ({
+              url: result.thumbnail_url as string,
+              description: cleanTitle(result.title || ''),
+            }))
+            .filter((image) => image.url && image.description),
+        );
+
+        options.dataStream?.write({
+          type: 'data-query_completion',
+          data: {
+            query,
+            index,
+            total: queries.length,
+            status: 'completed',
+            resultsCount: results.length,
+            imagesCount: images.length,
+          },
+        });
+
+        return { query, results, images };
+      } catch (error) {
+        console.error(`You.com search error for query "${query}":`, error);
+
+        options.dataStream?.write({
+          type: 'data-query_completion',
+          data: {
+            query,
+            index,
+            total: queries.length,
+            status: 'error',
+            resultsCount: 0,
+            imagesCount: 0,
+          },
+        });
+
+        return { query, results: [], images: [] };
+      }
+    });
+
+    const searchResults = await Promise.all(searchPromises);
+    return { searches: searchResults };
+  }
+}
+
 // Search provider factory
-const WEB_SEARCH_PROVIDERS = ['exa', 'parallel', 'firecrawl'] as const;
+const WEB_SEARCH_PROVIDERS = ['exa', 'parallel', 'firecrawl', 'you'] as const;
 type WebSearchProvider = (typeof WEB_SEARCH_PROVIDERS)[number];
 
 const normalizeWebSearchProvider = (provider: string): WebSearchProvider => {
-  if (provider === 'parallel' || provider === 'firecrawl' || provider === 'exa') {
+  if (provider === 'parallel' || provider === 'firecrawl' || provider === 'exa' || provider === 'you') {
     return provider;
   }
   return 'exa';
@@ -615,6 +793,8 @@ const createSearchStrategy = (
     parallel: () => new ParallelSearchStrategy(clients.parallel, clients.firecrawl),
     firecrawl: () => new FirecrawlSearchStrategy(clients.firecrawl),
     exa: () => new ExaSearchStrategy(clients.exa, clients.firecrawl),
+    // No client to reuse: You.com has no SDK and the key is optional.
+    you: () => new YouSearchStrategy(serverEnv.YDC_API_KEY),
   };
 
   return strategies[provider]();

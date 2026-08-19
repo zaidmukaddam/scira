@@ -232,6 +232,10 @@ const FirecrawlIcon = ({ className }: { className?: string }) => (
   <span className={cn('text-base sm:text-lg mb-3! pr-1!', className)}>🔥</span>
 );
 
+const YouIcon = ({ className }: { className?: string }) => (
+  <Image src="/you-color.svg" alt="You.com" width={16} height={16} className={className} />
+);
+
 // Search Provider Options
 const searchProviders = [
   {
@@ -253,6 +257,13 @@ const searchProviders = [
     label: 'Parallel AI',
     description: 'Base and premium web search along with Firecrawl image search support',
     icon: ParallelIcon,
+    default: false,
+  },
+  {
+    value: 'you',
+    label: 'You.com',
+    description: 'Independent index with extracted page passages; works without an API key',
+    icon: YouIcon,
     default: false,
   },
 ] as const;
@@ -307,7 +318,7 @@ export function PreferencesSection({
   isCustomInstructionsEnabled?: boolean;
   setIsCustomInstructionsEnabledAction?: (value: boolean | ((val: boolean) => boolean)) => void;
 }) {
-  const [searchProvider, setSearchProvider] = useSyncedPreferences<'exa' | 'parallel' | 'firecrawl'>(
+  const [searchProvider, setSearchProvider] = useSyncedPreferences<'exa' | 'parallel' | 'firecrawl' | 'you'>(
     'scira-search-provider',
     'exa',
   );
