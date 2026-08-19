@@ -232,12 +232,8 @@ const FirecrawlIcon = ({ className }: { className?: string }) => (
   <span className={cn('text-base sm:text-lg mb-3! pr-1!', className)}>🔥</span>
 );
 
-// Text mark rather than an SVG asset: no official You.com mark is published in
-// a form suitable for this slot. Swap in `/you-color.svg` if one is added.
 const YouIcon = ({ className }: { className?: string }) => (
-  <span className={cn('text-xs font-semibold tracking-tight', className)} aria-hidden="true">
-    You
-  </span>
+  <Image src="/you-color.svg" alt="You.com" width={16} height={16} className={className} />
 );
 
 // Search Provider Options
