@@ -359,33 +359,11 @@ export const scira = customProvider({
       model: zai('glm-5-turbo'),
       middleware,
     }),
-    'scira-minimax': wrapLanguageModel({
-      model: novita.chatModel('minimaxai/minimax-m1-80k'),
-      middleware,
-    }),
-    'scira-minimax-m2': wrapLanguageModel({
-      model: gateway('minimax/minimax-m2'),
-      middleware,
-    }),
-    'scira-minimax-m2.1': wrapLanguageModel({
-      model: gateway('minimax/minimax-m2.1'),
-      middleware,
-    }),
-    'scira-minimax-m2.1-lightning': wrapLanguageModel({
-      model: gateway('minimax/minimax-m2.1-lightning'),
-      middleware,
-    }),
-    'scira-minimax-m2.7': wrapLanguageModel({
+    'scira-minimax-m3': minimax.chatModel('MiniMax-M3'),
+    'scira-minimax-m2.7': minimax.chatModel('MiniMax-M2.7'),
+    'scira-minimax-m2.7-highspeed': wrapLanguageModel({
       model: minimax.chatModel('MiniMax-M2.7-highspeed'),
       middleware,
-    }),
-    'scira-minimax-m2.5': createRetryable({
-      model: baseten.chatModel('MiniMaxAI/MiniMax-M2.5'),
-      retries: [
-        minimax.chatModel('MiniMax-M2.5-highspeed'),
-        novita.chatModel('minimax/minimax-m2.5'),
-        gateway('minimax/minimax-m2.5'),
-      ],
     }),
     'scira-cmd-a': cohere('command-a-03-2025'),
     'scira-cmd-a-think': cohere('command-a-reasoning-08-2025'),

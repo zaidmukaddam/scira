@@ -127,7 +127,7 @@ Research at the speed of thought. The agentic research platform that plans, retr
 - **Zhipu (GLM)**: GLM 4.5, GLM 4.5 Air, GLM 4.6, GLM 4.6V, GLM 4.7, GLM 4.7 Flash
 - **Cohere**: Command A, Command A Thinking
 - **MoonShot**: Kimi K2, Kimi K2.5
-- **Minimax**: M1 80K, M2, M2.1, M2.1 Lightning
+- **Minimax**: M3, M2.7, M2.7 Highspeed
 - **ByteDance**: Seed 1.6, Seed 1.6 Flash, Seed 1.8
 - **Arcee**: Trinity Mini, Trinity Large
 - **Others**: Vercel v0 (1.0/1.5), Amazon Nova 2 Lite, Xiaomi Mimo V2 Flash, StepFun Step 3.5 Flash, Kwaipilot KAT-Coder-Pro V1
