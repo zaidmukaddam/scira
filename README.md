@@ -79,7 +79,7 @@ Research at the speed of thought. The agentic research platform that plans, retr
 ### Tools (28 tools)
 
 #### Search & Retrieval
-- **Web search** — Multi-query parallel web search with deduplication using Exa, Firecrawl, Parallel, and Tavily
+- **Web search** — Multi-query parallel web search with deduplication using Exa, Firecrawl, Parallel, Linkup, and Tavily
 - **Extreme search** — LLM-driven deep research agent with multi-step planning, code execution, and R2 artifact storage
 - **Academic search** — Search academic papers and research using Exa and Firecrawl
 - **Reddit search** — Search Reddit with configurable time ranges using Parallel
@@ -141,6 +141,7 @@ Research at the speed of thought. The agentic research platform that plans, retr
 - [Exa.AI](https://exa.ai/) - Web search, academic search, and content retrieval
 - [Firecrawl](https://firecrawl.dev/) - Web scraping with structured extraction
 - [Parallel](https://parallel.ai/) - Web and Reddit search
+- [Linkup](https://www.linkup.so/) - Web search
 - [Tavily](https://tavily.com/) - Web search and financial news
 - [Valyu](https://valyu.network/) - Financial data, forex, and prediction markets
 - [Supadata](https://supadata.ai/) - YouTube search, transcripts, and social media

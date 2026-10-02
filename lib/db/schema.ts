@@ -342,7 +342,7 @@ export const userPreferences = pgTable('user_preferences', {
     .references(() => user.id, { onDelete: 'cascade' }),
   preferences: json('preferences')
     .$type<{
-      'scira-search-provider'?: 'exa' | 'parallel' | 'firecrawl';
+      'scira-search-provider'?: 'exa' | 'parallel' | 'firecrawl' | 'linkup';
       'scira-extreme-search-model'?:
         | 'scira-ext-1'
         | 'scira-ext-2'

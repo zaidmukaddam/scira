@@ -6,6 +6,7 @@ import { UIMessageStreamWriter } from 'ai';
 import { ChatMessage } from '../types';
 import Parallel from 'parallel-web';
 import FirecrawlApp, { SearchResultWeb, SearchResultNews, SearchResultImages, Document } from '@mendable/firecrawl-js';
+import { LinkupClient, TextSearchResult, ImageSearchResult } from 'linkup-sdk';
 import { all } from 'better-all';
 import { getBetterAllOptions } from '@/lib/better-all';
 
@@ -14,6 +15,7 @@ let _searchClients: {
   exa: Exa;
   parallel: Parallel;
   firecrawl: FirecrawlApp;
+  linkup: LinkupClient;
 } | null = null;
 
 function getSearchClients() {
@@ -22,6 +24,7 @@ function getSearchClients() {
       exa: new Exa(serverEnv.EXA_API_KEY),
       parallel: new Parallel({ apiKey: serverEnv.PARALLEL_API_KEY }),
       firecrawl: new FirecrawlApp({ apiKey: serverEnv.FIRECRAWL_API_KEY }),
+      linkup: new LinkupClient({ apiKey: serverEnv.LINKUP_API_KEY ?? '' }),
     };
   }
   return _searchClients;
@@ -592,12 +595,134 @@ class ExaSearchStrategy implements SearchStrategy {
   }
 }
 
+// Linkup search strategy
+class LinkupSearchStrategy implements SearchStrategy {
+  constructor(private linkup: LinkupClient) {}
+
+  async search(
+    queries: string[],
+    options: {
+      maxResults: number[];
+      topics: ('general' | 'news')[];
+      quality: ('default' | 'best')[];
+      startDates?: (string | null)[];
+      dataStream?: UIMessageStreamWriter<ChatMessage>;
+    },
+  ) {
+    const searchPromises = queries.map(async (query, index) => {
+      const currentMaxResults = options.maxResults[index] || options.maxResults[0] || 10;
+      const currentQuality = options.quality[index] || options.quality[0] || 'default';
+      const currentStartDate = options.startDates?.[index] || options.startDates?.[0] || null;
+      const linkup = this.linkup;
+
+      try {
+        options.dataStream?.write({
+          type: 'data-query_completion',
+          data: {
+            query,
+            index,
+            total: queries.length,
+            status: 'started',
+            resultsCount: 0,
+            imagesCount: 0,
+          },
+        });
+
+        const { results, images } = await all(
+          {
+            data: async function () {
+              return linkup.search({
+                query,
+                depth: currentQuality === 'best' ? 'deep' : 'standard',
+                outputType: 'searchResults',
+                maxResults: currentMaxResults,
+                includeImages: true,
+                ...(currentStartDate && { fromDate: new Date(currentStartDate) }),
+              });
+            },
+            results: async function () {
+              const data = await this.$.data;
+              return deduplicateByDomainAndUrl(
+                data.results
+                  .filter((result): result is TextSearchResult => result.type === 'text')
+                  .map((result) => ({
+                    url: result.url,
+                    title: cleanTitle(result.name || ''),
+                    content: (result.content || '').substring(0, 1000),
+                    published_date: undefined,
+                    author: undefined,
+                  })),
+              );
+            },
+            images: async function () {
+              const data = await this.$.data;
+              return data.results
+                .filter((result): result is ImageSearchResult => result.type === 'image')
+                .map((result) => ({
+                  url: result.url,
+                  description: cleanTitle(result.name || ''),
+                }))
+                .filter((item) => item.url);
+            },
+          },
+          getBetterAllOptions(),
+        );
+
+        options.dataStream?.write({
+          type: 'data-query_completion',
+          data: {
+            query,
+            index,
+            total: queries.length,
+            status: 'completed',
+            resultsCount: results.length,
+            imagesCount: images.length,
+          },
+        });
+
+        return {
+          query,
+          results,
+          images: deduplicateByDomainAndUrl(images),
+        };
+      } catch (error) {
+        console.error(`Linkup search error for query "${query}":`, error);
+
+        options.dataStream?.write({
+          type: 'data-query_completion',
+          data: {
+            query,
+            index,
+            total: queries.length,
+            status: 'error',
+            resultsCount: 0,
+            imagesCount: 0,
+          },
+        });
+
+        return {
+          query,
+          results: [],
+          images: [],
+        };
+      }
+    });
+
+    const searchMap = await all(
+      Object.fromEntries(searchPromises.map((promise, index) => [`q:${index}`, async () => promise])),
+      getBetterAllOptions(),
+    );
+    const searchResults = queries.map((_, index) => searchMap[`q:${index}`]);
+    return { searches: searchResults };
+  }
+}
+
 // Search provider factory
-const WEB_SEARCH_PROVIDERS = ['exa', 'parallel', 'firecrawl'] as const;
+const WEB_SEARCH_PROVIDERS = ['exa', 'parallel', 'firecrawl', 'linkup'] as const;
 type WebSearchProvider = (typeof WEB_SEARCH_PROVIDERS)[number];
 
 const normalizeWebSearchProvider = (provider: string): WebSearchProvider => {
-  if (provider === 'parallel' || provider === 'firecrawl' || provider === 'exa') {
+  if (provider === 'parallel' || provider === 'firecrawl' || provider === 'exa' || provider === 'linkup') {
     return provider;
   }
   return 'exa';
@@ -609,12 +734,14 @@ const createSearchStrategy = (
     exa: Exa;
     parallel: Parallel;
     firecrawl: FirecrawlApp;
+    linkup: LinkupClient;
   },
 ): SearchStrategy => {
   const strategies = {
     parallel: () => new ParallelSearchStrategy(clients.parallel, clients.firecrawl),
     firecrawl: () => new FirecrawlSearchStrategy(clients.firecrawl),
     exa: () => new ExaSearchStrategy(clients.exa, clients.firecrawl),
+    linkup: () => new LinkupSearchStrategy(clients.linkup),
   };
 
   return strategies[provider]();

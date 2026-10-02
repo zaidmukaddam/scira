@@ -63,6 +63,7 @@ export const searchProviderInfo = {
   parallel: 'Parallel AI',
   exa: 'Exa, one of the best web search APIs for AI',
   firecrawl: 'Firecrawl',
+  linkup: 'Linkup',
 } as const;
 
 export type SearchProvider = keyof typeof searchProviderInfo;

@@ -1606,7 +1606,7 @@ export async function getUserPreferences(providedUser?: User | null) {
 
 export async function saveUserPreferences(
   preferences: Partial<{
-    'scira-search-provider'?: 'exa' | 'parallel' | 'firecrawl';
+    'scira-search-provider'?: 'exa' | 'parallel' | 'firecrawl' | 'linkup';
     'scira-extreme-search-model'?:
       | 'scira-ext-1'
       | 'scira-ext-2'

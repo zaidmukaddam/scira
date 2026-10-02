@@ -144,6 +144,7 @@
     "jsonrepair": "^3.13.3",
     "katex": "^0.16.39",
     "leaflet": "^1.9.4",
+    "linkup-sdk": "^3.7.0",
     "lucide-react": "^0.577.0",
     "luxon": "^3.7.2",
     "marked": "^17.0.4",

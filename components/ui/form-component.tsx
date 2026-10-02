@@ -2752,6 +2752,11 @@ const WEB_SEARCH_PROVIDERS: Array<{
     label: 'Parallel AI',
     description: 'Base and premium web search with Parallel’s Firecrawl image support.',
   },
+  {
+    value: 'linkup',
+    label: 'Linkup',
+    description: 'Real-time web search with citable sources and image results.',
+  },
 ];
 
 const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(

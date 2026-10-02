@@ -1192,7 +1192,7 @@ export async function upsertUserPreferences({
 }: {
   userId: string;
   preferences: Partial<{
-    'scira-search-provider'?: 'exa' | 'parallel' | 'firecrawl';
+    'scira-search-provider'?: 'exa' | 'parallel' | 'firecrawl' | 'linkup';
     'scira-extreme-search-model'?:
       | 'scira-ext-1'
       | 'scira-ext-2'

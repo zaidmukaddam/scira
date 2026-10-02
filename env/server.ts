@@ -31,6 +31,7 @@ export const serverEnv = createEnv({
     FIRECRAWL_API_KEY: z.string().min(1),
     NOTTE_API_KEY: z.string().optional(),
     PARALLEL_API_KEY: z.string().min(1),
+    LINKUP_API_KEY: z.string().optional(),
     OPENWEATHER_API_KEY: z.string().min(1),
     GOOGLE_MAPS_API_KEY: z.string().min(1),
     AMADEUS_API_KEY: z.string().min(1),
