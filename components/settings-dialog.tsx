@@ -232,6 +232,10 @@ const FirecrawlIcon = ({ className }: { className?: string }) => (
   <span className={cn('text-base sm:text-lg mb-3! pr-1!', className)}>🔥</span>
 );
 
+const OutcrawlIcon = ({ className }: { className?: string }) => (
+  <Image src="/outcrawl-icon.svg" alt="Outcrawl" width={16} height={16} className={cn('rounded-sm', className)} />
+);
+
 // Search Provider Options
 const searchProviders = [
   {
@@ -253,6 +257,13 @@ const searchProviders = [
     label: 'Parallel AI',
     description: 'Base and premium web search along with Firecrawl image search support',
     icon: ParallelIcon,
+    default: false,
+  },
+  {
+    value: 'outcrawl',
+    label: 'Outcrawl',
+    description: 'Web search through the Outcrawl search API, with title, link and snippet for each result',
+    icon: OutcrawlIcon,
     default: false,
   },
 ] as const;
@@ -307,7 +318,7 @@ export function PreferencesSection({
   isCustomInstructionsEnabled?: boolean;
   setIsCustomInstructionsEnabledAction?: (value: boolean | ((val: boolean) => boolean)) => void;
 }) {
-  const [searchProvider, setSearchProvider] = useSyncedPreferences<'exa' | 'parallel' | 'firecrawl'>(
+  const [searchProvider, setSearchProvider] = useSyncedPreferences<'exa' | 'parallel' | 'firecrawl' | 'outcrawl'>(
     'scira-search-provider',
     'exa',
   );
@@ -393,7 +404,7 @@ export function PreferencesSection({
   const enabled = isCustomInstructionsEnabled ?? true;
   const setEnabled = setIsCustomInstructionsEnabledAction ?? (() => {});
 
-  const handleSearchProviderChange = (newProvider: 'exa' | 'parallel' | 'firecrawl') => {
+  const handleSearchProviderChange = (newProvider: 'exa' | 'parallel' | 'firecrawl' | 'outcrawl') => {
     setSearchProvider(newProvider);
     sileo.success({
       title: `Search provider changed to ${
@@ -401,7 +412,9 @@ export function PreferencesSection({
           ? 'Exa'
           : newProvider === 'parallel'
             ? 'Parallel AI'
-            : 'Firecrawl'
+            : newProvider === 'outcrawl'
+              ? 'Outcrawl'
+              : 'Firecrawl'
       }`,
       description: 'This will be used for all future searches',
       icon: <Search className="h-4 w-4" />,

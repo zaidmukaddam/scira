@@ -2752,6 +2752,11 @@ const WEB_SEARCH_PROVIDERS: Array<{
     label: 'Parallel AI',
     description: 'Base and premium web search with Parallel’s Firecrawl image support.',
   },
+  {
+    value: 'outcrawl',
+    label: 'Outcrawl',
+    description: 'Web search through the Outcrawl search API, with title, link and snippet for each result.',
+  },
 ];
 
 const GroupModeToggle: React.FC<GroupSelectorProps> = React.memo(
