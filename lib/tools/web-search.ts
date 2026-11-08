@@ -439,6 +439,113 @@ class FirecrawlSearchStrategy implements SearchStrategy {
   }
 }
 
+// Outcrawl search strategy
+const OUTCRAWL_SEARCH_URL = 'https://api.outcrawl.ai/v1/search';
+const OUTCRAWL_MAX_RESULTS = 20;
+
+type OutcrawlHit = { url?: string; title?: string; snippet?: string };
+
+class OutcrawlSearchStrategy implements SearchStrategy {
+  constructor(private apiKey: string | undefined) {}
+
+  async search(
+    queries: string[],
+    options: {
+      maxResults: number[];
+      topics: ('general' | 'news')[];
+      quality: ('default' | 'best')[];
+      startDates?: (string | null)[];
+      dataStream?: UIMessageStreamWriter<ChatMessage>;
+    },
+  ) {
+    const searchPromises = queries.map(async (query, index) => {
+      const currentMaxResults = options.maxResults[index] || options.maxResults[0] || 10;
+
+      try {
+        if (!this.apiKey) {
+          throw new Error('OUTCRAWL_API_KEY is not set');
+        }
+
+        options.dataStream?.write({
+          type: 'data-query_completion',
+          data: {
+            query,
+            index,
+            total: queries.length,
+            status: 'started',
+            resultsCount: 0,
+            imagesCount: 0,
+          },
+        });
+
+        const response = await fetch(OUTCRAWL_SEARCH_URL, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ query, limit: Math.min(currentMaxResults, OUTCRAWL_MAX_RESULTS) }),
+          signal: AbortSignal.timeout(30_000),
+        });
+        if (!response.ok) {
+          throw new Error(`Outcrawl search failed with status ${response.status}`);
+        }
+
+        const data = (await response.json()) as { hits?: OutcrawlHit[] };
+        const hits = (data.hits ?? []).filter(
+          (hit): hit is OutcrawlHit & { url: string } => typeof hit.url === 'string' && hit.url.length > 0,
+        );
+        const results = deduplicateByDomainAndUrl(
+          hits.map((hit) => ({
+            url: hit.url,
+            title: cleanTitle(hit.title || ''),
+            content: hit.snippet || '',
+            published_date: undefined,
+            author: undefined,
+          })),
+        );
+
+        options.dataStream?.write({
+          type: 'data-query_completion',
+          data: {
+            query,
+            index,
+            total: queries.length,
+            status: 'completed',
+            resultsCount: results.length,
+            imagesCount: 0,
+          },
+        });
+
+        return { query, results, images: [] };
+      } catch (error) {
+        console.error(`Outcrawl search error for query "${query}":`, error);
+
+        options.dataStream?.write({
+          type: 'data-query_completion',
+          data: {
+            query,
+            index,
+            total: queries.length,
+            status: 'error',
+            resultsCount: 0,
+            imagesCount: 0,
+          },
+        });
+
+        return { query, results: [], images: [] };
+      }
+    });
+
+    const searchMap = await all(
+      Object.fromEntries(searchPromises.map((promise, index) => [`q:${index}`, async () => promise])),
+      getBetterAllOptions(),
+    );
+    const searchResults = queries.map((_, index) => searchMap[`q:${index}`]);
+    return { searches: searchResults };
+  }
+}
+
 // Exa search strategy
 class ExaSearchStrategy implements SearchStrategy {
   constructor(
@@ -593,11 +700,11 @@ class ExaSearchStrategy implements SearchStrategy {
 }
 
 // Search provider factory
-const WEB_SEARCH_PROVIDERS = ['exa', 'parallel', 'firecrawl'] as const;
+const WEB_SEARCH_PROVIDERS = ['exa', 'parallel', 'firecrawl', 'outcrawl'] as const;
 type WebSearchProvider = (typeof WEB_SEARCH_PROVIDERS)[number];
 
 const normalizeWebSearchProvider = (provider: string): WebSearchProvider => {
-  if (provider === 'parallel' || provider === 'firecrawl' || provider === 'exa') {
+  if (provider === 'parallel' || provider === 'firecrawl' || provider === 'outcrawl' || provider === 'exa') {
     return provider;
   }
   return 'exa';
@@ -615,6 +722,7 @@ const createSearchStrategy = (
     parallel: () => new ParallelSearchStrategy(clients.parallel, clients.firecrawl),
     firecrawl: () => new FirecrawlSearchStrategy(clients.firecrawl),
     exa: () => new ExaSearchStrategy(clients.exa, clients.firecrawl),
+    outcrawl: () => new OutcrawlSearchStrategy(serverEnv.OUTCRAWL_API_KEY),
   };
 
   return strategies[provider]();
